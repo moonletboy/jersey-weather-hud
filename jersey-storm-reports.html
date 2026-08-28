@@ -216,7 +216,7 @@
   </header>
 
   <nav class="tabs">
-    <a href="jersey-weather-ops.html">LIVE OPS</a>
+    <a href="index.html">LIVE OPS</a>
     <a href="jersey-storm-reports.html" class="active">STORM REPORTS</a>
   </nav>
 
@@ -236,10 +236,6 @@
       <h3>SUBMIT REPORT</h3>
       <div class="bar"></div>
       <div class="tag">PUBLIC INPUT</div>
-    </div>
-
-    <div class="dev-banner">
-      ⚠ DEV NOTE — this form currently saves reports to this browser only (localStorage demo mode), so submissions won't be visible to other visitors yet. Wire <code>submitReport()</code> / <code>loadReports()</code> in the script to a real backend (Google Form + Sheet, Formspree, Supabase, etc.) before going live.
     </div>
 
     <div class="form-panel">
@@ -348,33 +344,40 @@
   };
 
   /* ============================================================
-     DATA LAYER — SWAP THIS FOR A REAL BACKEND WHEN READY
-     Currently: browser localStorage (demo only — reports are
-     private to this browser and NOT shared with other visitors).
-
-     To go live, replace the two functions below with e.g.:
-       submitReport(report) -> fetch(GOOGLE_FORM_URL, {method:'POST', mode:'no-cors', body: formData})
-       loadReports()        -> fetch published Google Sheet CSV, or Formspree/Supabase API, then parse
-     Keep the report object shape the same (type, parish, severity,
-     description, reporter, media, timestamp) so the rest of the
-     page doesn't need to change.
+     DATA LAYER — live via a free Google Sheet backend
+     Paste your deployed Google Apps Script Web App URL below.
+     See the setup steps for the exact script to use.
      ============================================================ */
-  const STORAGE_KEY = 'jwc_storm_reports';
+  const REPORTS_API_URL = 'https://script.google.com/macros/s/AKfycbxEhXvU54C_U3fUflVh6q5w_S4rlmxIPXBmaxT0eCW9B7aULqIWuiXOAHvjGsbi-peZLw/exec';
+
+  let cachedReports = seedDemoReports(); // shown instantly while the live feed loads
 
   function loadReports(){
-    let data;
-    try{ data = JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ data = null; }
-    if(!data || !Array.isArray(data) || data.length === 0){
-      data = seedDemoReports();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return [...cachedReports].sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+  }
+
+  async function syncReports(){
+    try{
+      const res = await fetch(REPORTS_API_URL);
+      const data = await res.json();
+      if(Array.isArray(data) && data.length){
+        cachedReports = data;
+        renderFeed();
+        renderStats();
+      }
+    }catch(e){
+      console.error('Could not reach the live report feed — showing local/demo data instead', e);
     }
-    return data.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
   }
 
   function submitReport(report){
-    const all = loadReports();
-    all.unshift(report);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    cachedReports.unshift(report); // optimistic local update so it appears instantly
+    const fd = new FormData();
+    Object.keys(report).forEach(k => fd.append(k, report[k]));
+    fetch(REPORTS_API_URL, { method:'POST', body: fd })
+      .then(r=>r.json())
+      .then(()=> syncReports()) // re-sync so this device also sees the canonical server copy
+      .catch(err=> console.error('Report failed to reach the server — it will only show on this device for now', err));
   }
 
   function seedDemoReports(){
@@ -521,6 +524,8 @@
 
   renderFeed();
   renderStats();
+  syncReports();
+  setInterval(syncReports, 60000); // pick up other people's reports every minute
 </script>
 </body>
 </html>
