@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWC STORM REPORTS — Jersey Weather Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05080d;
+    --bg-panel:#0b131c;
+    --bg-panel-2:#0e1822;
+    --line:rgba(76,211,255,0.14);
+    --cyan:#4cd3ff;
+    --green:#2de1a0;
+    --amber:#ffb020;
+    --red:#ff4b5c;
+    --text:#e9f6f5;
+    --dim:#5f7c88;
+    --dim2:#3a4e58;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,75,92,0.07), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(76,211,255,0.06), transparent 50%),
+      var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+    z-index:0;
+    mask-image: radial-gradient(ellipse at 50% 0%, black, transparent 75%);
+  }
+  .scanline{
+    position:fixed; left:0; right:0; height:120px;
+    background:linear-gradient(180deg, transparent, rgba(255,75,92,0.05), transparent);
+    animation:scan 8s linear infinite;
+    pointer-events:none; z-index:1;
+  }
+  @keyframes scan{ 0%{top:-120px;} 100%{top:100vh;} }
+
+  .wrap{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:22px 20px 70px; }
+
+  /* HEADER */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px; margin-bottom:18px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:38px;height:38px; border-radius:8px;
+    background:conic-gradient(from 0deg, var(--red), var(--amber), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    animation:spin 6s linear infinite;
+    box-shadow:0 0 18px rgba(255,75,92,0.5);
+  }
+  .brand-mark::after{
+    content:"◉"; color:#05080d; font-size:16px; font-weight:900;
+    animation:spin 6s linear infinite reverse;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .brand h1{ font-family:'Orbitron', sans-serif; font-weight:900; font-size:19px; letter-spacing:2px; color:var(--text); }
+  .brand span{ display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:2px; }
+  .status{ display:flex; align-items:center; gap:18px; font-size:12px; color:var(--dim); }
+  .live-pill{ display:flex; align-items:center; gap:7px; border:1px solid var(--red); color:var(--red); padding:5px 11px; border-radius:20px; letter-spacing:2px; font-weight:700; font-size:11px; }
+  .live-dot{ width:7px;height:7px;border-radius:50%; background:var(--red); animation:pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  #clock{ color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; }
+
+  nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
+  nav.tabs a{
+    font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
+    color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+    transition:all .2s ease;
+  }
+  nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
+  nav.tabs a.active{ color:var(--bg); background:var(--red); border-color:var(--red); font-weight:700; }
+
+  /* HERO */
+  .hero2{ padding:14px 4px 40px; border-bottom:1px solid var(--line); margin-bottom:36px; }
+  .hero2 h2{ font-family:'Orbitron',sans-serif; font-size:30px; letter-spacing:1px; margin-bottom:8px; }
+  .hero2 h2 span{ color:var(--red); }
+  .hero2 p{ color:var(--dim); font-size:12.5px; max-width:640px; line-height:1.7; margin-bottom:22px; }
+  .hero-stats2{ display:flex; gap:32px; flex-wrap:wrap; }
+  .hero-stats2 div{ min-width:100px; }
+  .hero-stats2 .val{ font-family:'Orbitron',sans-serif; font-size:26px; font-weight:800; color:var(--red); }
+  .hero-stats2 .lbl{ font-size:10px; color:var(--dim); letter-spacing:2px; margin-top:4px; }
+
+  .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .sec-head h3{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap; color:var(--text); }
+  .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
+  .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--red); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+
+  section{ margin-bottom:50px; }
+
+  .dev-banner{
+    border:1px dashed var(--amber); background:rgba(255,176,32,0.06); color:var(--amber);
+    font-size:11px; letter-spacing:0.5px; padding:12px 16px; border-radius:8px; margin-bottom:22px; line-height:1.6;
+  }
+
+  /* FORM */
+  .form-panel{
+    background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line); border-radius:14px; padding:26px;
+  }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:700px){ .form-grid{ grid-template-columns:1fr; } }
+  .field{ display:flex; flex-direction:column; gap:8px; }
+  .field.full{ grid-column:1/-1; }
+  .field label{ font-size:10px; letter-spacing:2px; color:var(--dim); }
+  .field select, .field input, .field textarea{
+    background:var(--bg); border:1px solid var(--line); color:var(--text);
+    font-family:'JetBrains Mono', monospace; font-size:13px; padding:11px 12px; border-radius:7px;
+    outline:none; transition:border-color .2s ease;
+  }
+  .field select:focus, .field input:focus, .field textarea:focus{ border-color:var(--cyan); }
+  .field textarea{ resize:vertical; min-height:80px; }
+  .severity-group{ display:flex; gap:8px; flex-wrap:wrap; }
+  .sev-btn{
+    flex:1; min-width:90px; text-align:center; padding:10px 8px; border-radius:7px; border:1px solid var(--line);
+    background:var(--bg); color:var(--dim); font-size:11px; letter-spacing:1px; font-weight:700; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .sev-btn[data-sev="Minor"].active{ background:rgba(45,225,160,0.15); border-color:var(--green); color:var(--green); }
+  .sev-btn[data-sev="Moderate"].active{ background:rgba(255,176,32,0.15); border-color:var(--amber); color:var(--amber); }
+  .sev-btn[data-sev="Severe"].active{ background:rgba(255,107,53,0.15); border-color:#ff6b35; color:#ff6b35; }
+  .sev-btn[data-sev="Extreme"].active{ background:rgba(255,75,92,0.18); border-color:var(--red); color:var(--red); box-shadow:0 0 12px rgba(255,75,92,0.4); }
+  .submit-row{ display:flex; align-items:center; justify-content:space-between; margin-top:22px; flex-wrap:wrap; gap:12px; }
+  .submit-btn{
+    font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:2px; font-weight:700;
+    background:linear-gradient(120deg, var(--red), #ff6b35); color:#05080d; border:none;
+    padding:14px 30px; border-radius:8px; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .submit-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(255,75,92,0.35); }
+  .submit-btn:active{ transform:translateY(0); }
+  .form-note{ font-size:10px; color:var(--dim2); letter-spacing:0.5px; }
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--green); color:#05080d; font-weight:800; font-size:12px; letter-spacing:1px;
+    padding:12px 22px; border-radius:8px; opacity:0; transition:all .3s ease; z-index:50; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* FILTER BAR */
+  .filter-bar{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+  .filter-bar select{
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text); font-family:'JetBrains Mono',monospace;
+    font-size:11px; padding:9px 12px; border-radius:6px; outline:none;
+  }
+  .filter-bar .count{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-left:auto; }
+
+  /* FEED */
+  .feed{ display:flex; flex-direction:column; gap:14px; }
+  .report-card{
+    background:var(--bg-panel); border:1px solid var(--line); border-left:3px solid var(--dim2);
+    border-radius:10px; padding:18px 20px; opacity:0; transform:translateY(10px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .report-card.show{ opacity:1; transform:translateY(0); }
+  .report-card.sev-Minor{ border-left-color:var(--green); }
+  .report-card.sev-Moderate{ border-left-color:var(--amber); }
+  .report-card.sev-Severe{ border-left-color:#ff6b35; }
+  .report-card.sev-Extreme{ border-left-color:var(--red); }
+  .rc-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .rc-type{ display:flex; align-items:center; gap:10px; }
+  .rc-icon{ font-size:20px; }
+  .rc-type-name{ font-weight:800; font-size:13px; letter-spacing:0.5px; }
+  .rc-parish{ font-size:10px; color:var(--cyan); letter-spacing:1px; margin-top:2px; }
+  .rc-meta{ text-align:right; font-size:10px; color:var(--dim); }
+  .rc-sev-badge{ display:inline-block; font-size:9px; letter-spacing:1px; font-weight:800; padding:2px 8px; border-radius:4px; margin-top:4px; }
+  .sev-Minor .rc-sev-badge{ background:rgba(45,225,160,0.15); color:var(--green); }
+  .sev-Moderate .rc-sev-badge{ background:rgba(255,176,32,0.15); color:var(--amber); }
+  .sev-Severe .rc-sev-badge{ background:rgba(255,107,53,0.15); color:#ff6b35; }
+  .sev-Extreme .rc-sev-badge{ background:rgba(255,75,92,0.18); color:var(--red); }
+  .rc-desc{ font-size:12.5px; color:var(--text); line-height:1.6; margin-bottom:10px; }
+  .rc-bottom{ display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--dim2); letter-spacing:0.5px; }
+  .rc-bottom a{ color:var(--cyan); text-decoration:none; }
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--dim); font-size:12px; letter-spacing:1px; border:1px dashed var(--line); border-radius:10px; }
+
+  footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
+  footer b{ color:var(--dim); }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>JERSEY WEATHER CHAT</h1>
+        <span>STORM REPORT NETWORK</span>
+      </div>
+    </div>
+    <div class="status">
+      <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+      <div id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a href="jersey-weather-ops.html">LIVE OPS</a>
+    <a href="jersey-storm-reports.html" class="active">STORM REPORTS</a>
+  </nav>
+
+  <div class="hero2">
+    <h2>FILE A <span>STORM REPORT</span></h2>
+    <p>Seeing hail, flooding, storm damage, or a lightning strike near you? Log it below — every report helps build a real-time, crowdsourced picture of severe weather across Jersey's twelve parishes.</p>
+    <div class="hero-stats2">
+      <div><div class="val" id="statToday">0</div><div class="lbl">REPORTS TODAY</div></div>
+      <div><div class="val" id="statTotal">0</div><div class="lbl">TOTAL LOGGED</div></div>
+      <div><div class="val" id="statParish">&mdash;</div><div class="lbl">MOST ACTIVE PARISH</div></div>
+      <div><div class="val" id="statLast">&mdash;</div><div class="lbl">LAST REPORT</div></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h3>SUBMIT REPORT</h3>
+      <div class="bar"></div>
+      <div class="tag">PUBLIC INPUT</div>
+    </div>
+
+    <div class="dev-banner">
+      ⚠ DEV NOTE — this form currently saves reports to this browser only (localStorage demo mode), so submissions won't be visible to other visitors yet. Wire <code>submitReport()</code> / <code>loadReports()</code> in the script to a real backend (Google Form + Sheet, Formspree, Supabase, etc.) before going live.
+    </div>
+
+    <div class="form-panel">
+      <form id="reportForm">
+        <div class="form-grid">
+          <div class="field">
+            <label>REPORT TYPE</label>
+            <select id="f-type" required>
+              <option value="">Select type&hellip;</option>
+              <option value="Hail">🧊 Hail</option>
+              <option value="Damaging Wind">💨 Damaging Wind</option>
+              <option value="Flooding">🌊 Flooding</option>
+              <option value="Lightning Strike">⚡ Lightning Strike</option>
+              <option value="Funnel Cloud / Waterspout">🌪️ Funnel Cloud / Waterspout</option>
+              <option value="Heavy Snow / Ice">❄️ Heavy Snow / Ice</option>
+              <option value="Storm Damage">🏚️ Storm Damage</option>
+              <option value="Other">📋 Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>PARISH</label>
+            <select id="f-parish" required>
+              <option value="">Select parish&hellip;</option>
+              <option>St Helier</option>
+              <option>St Saviour</option>
+              <option>St Clement</option>
+              <option>Grouville</option>
+              <option>St Martin</option>
+              <option>Trinity</option>
+              <option>St John</option>
+              <option>St Mary</option>
+              <option>St Ouen</option>
+              <option>St Peter</option>
+              <option>St Brelade</option>
+              <option>St Lawrence</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>SEVERITY</label>
+            <div class="severity-group" id="sevGroup">
+              <div class="sev-btn" data-sev="Minor">MINOR</div>
+              <div class="sev-btn" data-sev="Moderate">MODERATE</div>
+              <div class="sev-btn" data-sev="Severe">SEVERE</div>
+              <div class="sev-btn" data-sev="Extreme">EXTREME</div>
+            </div>
+          </div>
+          <div class="field full">
+            <label>WHAT DID YOU SEE?</label>
+            <textarea id="f-desc" placeholder="e.g. Golf-ball sized hail for ~5 minutes, minor damage to greenhouse roof&hellip;" required></textarea>
+          </div>
+          <div class="field">
+            <label>NAME / HANDLE (OPTIONAL)</label>
+            <input type="text" id="f-name" placeholder="Anonymous">
+          </div>
+          <div class="field">
+            <label>PHOTO / VIDEO LINK (OPTIONAL)</label>
+            <input type="url" id="f-media" placeholder="https://&hellip;">
+          </div>
+        </div>
+        <div class="submit-row">
+          <div class="form-note">Reports are public and will display on this page and the Live Ops dashboard.</div>
+          <button type="submit" class="submit-btn">TRANSMIT REPORT</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h3>INCOMING REPORTS</h3>
+      <div class="bar"></div>
+      <div class="tag">LIVE FEED</div>
+    </div>
+    <div class="filter-bar">
+      <select id="filterType"><option value="">All Types</option></select>
+      <select id="filterParish"><option value="">All Parishes</option></select>
+      <select id="filterSev">
+        <option value="">All Severities</option>
+        <option>Minor</option><option>Moderate</option><option>Severe</option><option>Extreme</option>
+      </select>
+      <div class="count" id="feedCount">0 reports</div>
+    </div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <footer>
+    <div>JERSEY WEATHER CHAT &middot; COMMUNITY STORM REPORT NETWORK</div>
+    <div>REPORTS ARE CROWDSOURCED AND UNVERIFIED &middot; FOR EMERGENCIES ALWAYS CALL 999</div>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast">REPORT TRANSMITTED ✔</div>
+
+<script>
+  // ---------- CLOCK ----------
+  function tickClock(){
+    const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
+    document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  const TYPE_ICONS = {
+    'Hail':'🧊','Damaging Wind':'💨','Flooding':'🌊','Lightning Strike':'⚡',
+    'Funnel Cloud / Waterspout':'🌪️','Heavy Snow / Ice':'❄️','Storm Damage':'🏚️','Other':'📋'
+  };
+
+  /* ============================================================
+     DATA LAYER — SWAP THIS FOR A REAL BACKEND WHEN READY
+     Currently: browser localStorage (demo only — reports are
+     private to this browser and NOT shared with other visitors).
+
+     To go live, replace the two functions below with e.g.:
+       submitReport(report) -> fetch(GOOGLE_FORM_URL, {method:'POST', mode:'no-cors', body: formData})
+       loadReports()        -> fetch published Google Sheet CSV, or Formspree/Supabase API, then parse
+     Keep the report object shape the same (type, parish, severity,
+     description, reporter, media, timestamp) so the rest of the
+     page doesn't need to change.
+     ============================================================ */
+  const STORAGE_KEY = 'jwc_storm_reports';
+
+  function loadReports(){
+    let data;
+    try{ data = JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ data = null; }
+    if(!data || !Array.isArray(data) || data.length === 0){
+      data = seedDemoReports();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    return data.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+  }
+
+  function submitReport(report){
+    const all = loadReports();
+    all.unshift(report);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  }
+
+  function seedDemoReports(){
+    const now = Date.now();
+    return [
+      { id:'d1', type:'Damaging Wind', parish:'St Ouen', severity:'Severe', description:'Gusts brought down a large tree branch across La Route des Mielles. Road partially blocked.', reporter:'CoastalWatch', media:'', timestamp:new Date(now-45*60000).toISOString() },
+      { id:'d2', type:'Flooding', parish:'St Helier', severity:'Moderate', description:'Surface flooding on the Esplanade after heavy rain, ankle-deep in places near the bus station.', reporter:'Anonymous', media:'', timestamp:new Date(now-2.5*3600000).toISOString() },
+      { id:'d3', type:'Lightning Strike', parish:'Trinity', severity:'Minor', description:'Frequent lightning over the north coast, no reported damage.', reporter:'SkyGazerJE', media:'', timestamp:new Date(now-5*3600000).toISOString() },
+      { id:'d4', type:'Hail', parish:'St Brelade', severity:'Moderate', description:'Pea-sized hail for around 10 minutes during this afternoon\'s squall.', reporter:'Anonymous', media:'', timestamp:new Date(now-19*3600000).toISOString() }
+    ];
+  }
+
+  // ---------- FORM ----------
+  let selectedSev = '';
+  document.querySelectorAll('.sev-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedSev = btn.dataset.sev;
+    });
+  });
+
+  document.getElementById('reportForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const type = document.getElementById('f-type').value;
+    const parish = document.getElementById('f-parish').value;
+    const desc = document.getElementById('f-desc').value.trim();
+    if(!type || !parish || !desc || !selectedSev){
+      alert('Please fill in type, parish, severity and a description.');
+      return;
+    }
+    const report = {
+      id: 'r' + Date.now(),
+      type, parish, severity: selectedSev,
+      description: desc,
+      reporter: document.getElementById('f-name').value.trim() || 'Anonymous',
+      media: document.getElementById('f-media').value.trim(),
+      timestamp: new Date().toISOString()
+    };
+    submitReport(report);
+    this.reset();
+    document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('active'));
+    selectedSev = '';
+    showToast();
+    renderFeed();
+    renderStats();
+  });
+
+  function showToast(){
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+
+  // ---------- FEED RENDER ----------
+  function timeAgo(iso){
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff/60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins/60);
+    if(hrs < 24) return hrs + 'h ago';
+    return Math.floor(hrs/24) + 'd ago';
+  }
+
+  function populateFilters(reports){
+    const typeSel = document.getElementById('filterType');
+    const parishSel = document.getElementById('filterParish');
+    const types = [...new Set(reports.map(r=>r.type))];
+    const parishes = [...new Set(reports.map(r=>r.parish))].sort();
+    if(typeSel.options.length <= 1){
+      types.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=TYPE_ICONS[t]+' '+t; typeSel.appendChild(o); });
+    }
+    if(parishSel.options.length <= 1){
+      parishes.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; parishSel.appendChild(o); });
+    }
+  }
+
+  function renderFeed(){
+    const reports = loadReports();
+    populateFilters(reports);
+    const ft = document.getElementById('filterType').value;
+    const fp = document.getElementById('filterParish').value;
+    const fs = document.getElementById('filterSev').value;
+    const filtered = reports.filter(r =>
+      (!ft || r.type===ft) && (!fp || r.parish===fp) && (!fs || r.severity===fs)
+    );
+    const feed = document.getElementById('feed');
+    feed.innerHTML = '';
+    document.getElementById('feedCount').textContent = filtered.length + ' report' + (filtered.length!==1?'s':'');
+    if(filtered.length === 0){
+      feed.innerHTML = '<div class="empty-state">NO REPORTS MATCH THESE FILTERS &mdash; BE THE FIRST TO FILE ONE ABOVE</div>';
+      return;
+    }
+    filtered.forEach((r,i)=>{
+      const card = document.createElement('div');
+      card.className = 'report-card sev-' + r.severity;
+      card.innerHTML = `
+        <div class="rc-top">
+          <div class="rc-type">
+            <div class="rc-icon">${TYPE_ICONS[r.type]||'📋'}</div>
+            <div>
+              <div class="rc-type-name">${r.type}</div>
+              <div class="rc-parish">${r.parish.toUpperCase()}</div>
+            </div>
+          </div>
+          <div class="rc-meta">
+            ${timeAgo(r.timestamp)}
+            <div class="rc-sev-badge">${r.severity.toUpperCase()}</div>
+          </div>
+        </div>
+        <div class="rc-desc">${escapeHtml(r.description)}</div>
+        <div class="rc-bottom">
+          <span>Filed by ${escapeHtml(r.reporter)}</span>
+          ${r.media ? `<a href="${escapeHtml(r.media)}" target="_blank" rel="noopener">View Media &rarr;</a>` : ''}
+        </div>
+      `;
+      feed.appendChild(card);
+      setTimeout(()=> card.classList.add('show'), i*70);
+    });
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function renderStats(){
+    const reports = loadReports();
+    const todayCount = reports.filter(r => (Date.now() - new Date(r.timestamp).getTime()) < 24*3600000).length;
+    document.getElementById('statToday').textContent = todayCount;
+    document.getElementById('statTotal').textContent = reports.length;
+    const parishCounts = {};
+    reports.forEach(r => parishCounts[r.parish] = (parishCounts[r.parish]||0)+1);
+    const topParish = Object.entries(parishCounts).sort((a,b)=>b[1]-a[1])[0];
+    document.getElementById('statParish').textContent = topParish ? topParish[0] : '—';
+    document.getElementById('statLast').textContent = reports.length ? timeAgo(reports[0].timestamp) : '—';
+  }
+
+  ['filterType','filterParish','filterSev'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', renderFeed);
+  });
+
+  renderFeed();
+  renderStats();
+</script>
+</body>
+</html>
