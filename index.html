@@ -129,6 +129,10 @@
   .radar-hero .temp{ font-family:'Orbitron',sans-serif; font-size:52px; font-weight:900; color:var(--text); text-shadow:0 0 22px rgba(76,211,255,0.35); line-height:1; }
   .radar-hero .temp span{ font-size:22px; color:var(--cyan); vertical-align:top; }
   .radar-hero .cond{ font-size:11px; letter-spacing:2px; color:var(--green); margin-top:6px; }
+  .ice-icon{ display:inline-block; animation: iceSpin 3s linear infinite; }
+  .ice-warn{ color:var(--red, #ff4b5c); animation: icePulse 1.2s ease-in-out infinite; }
+  @keyframes iceSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  @keyframes icePulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
   .blip{ position:absolute; width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blipfade 3s ease-in-out infinite; }
 
   .hero-info h2{ font-family:'Orbitron',sans-serif; font-size:26px; letter-spacing:1px; margin-bottom:6px; }
@@ -137,6 +141,13 @@
   .hero-stats div{ min-width:90px; }
   .hero-stats .val{ font-size:20px; font-weight:800; color:var(--cyan); }
   .hero-stats .lbl{ font-size:10px; color:var(--dim); letter-spacing:2px; margin-top:3px; }
+  .advice-text{ font-size:9.5px; color:var(--dim); line-height:1.4; margin-top:5px; max-width:160px; }
+  #pressureIcon{ display:inline-block; }
+  .wind-arrow{ display:inline-block; animation: windBob 1.6s ease-in-out infinite; }
+  @keyframes windBob{ 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
+  #pressureIcon.fast{ animation: pressureBounce 1s ease-in-out infinite; }
+  @keyframes pressureBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+  .hero-stats .val{ position:relative; }
 
   /* SECTION LABELS */
   .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
@@ -194,12 +205,24 @@
   .wind-legend span{ display:flex; align-items:center; gap:4px; }
   .wind-legend i{ width:6px;height:6px;border-radius:50%; display:inline-block; }
 
+  .warning-banner{
+    display:flex; align-items:flex-start; gap:16px;
+    background:var(--bg-panel); border:1px solid var(--green); border-left:5px solid var(--green);
+    border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
+  }
+  .warning-icon{ font-size:26px; color:var(--green); flex:0 0 auto; line-height:1; }
+  .warning-body{ flex:1; }
+  .warning-title{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:2px; color:var(--green); margin-bottom:6px; }
+  .warning-text{ font-size:12px; color:var(--text); line-height:1.6; margin-bottom:8px; }
+  .warning-disclaimer{ font-size:10px; color:var(--dim); line-height:1.6; }
+  .warning-disclaimer a{ color:var(--cyan); }
+
   /* STORM SECTION */
   .storm-wrap{
     background:linear-gradient(160deg, rgba(255,176,32,0.05), rgba(11,19,28,0.4));
     border:1px solid rgba(255,176,32,0.25); border-radius:14px; padding:24px;
   }
-  .storm-grid{ display:grid; grid-template-columns:repeat(3,1fr) 1.4fr; gap:16px; }
+  .storm-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
   @media (max-width:900px){ .storm-grid{ grid-template-columns:1fr 1fr; } }
   .stat-card{ background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:18px; }
   .stat-card .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
@@ -214,7 +237,7 @@
   .skewt-fallback a{ color:var(--cyan); text-decoration:none; border:1px solid var(--cyan); padding:6px 12px; border-radius:6px; display:inline-block; margin-top:10px; font-size:10px; letter-spacing:1px; }
 
   /* IMAGERY */
-  .imagery-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .imagery-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
   @media (max-width:960px){ .imagery-grid{ grid-template-columns:1fr; } }
   .panel{
     border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg-panel); position:relative;
@@ -230,6 +253,26 @@
   .corner.br{ bottom:6px; right:6px; border-left:0; border-top:0; }
 
   footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
+
+  .news-ticker{
+    width:100%; box-sizing:border-box;
+    background:linear-gradient(90deg, var(--bg-panel), var(--bg-panel-2));
+    border-top:1px solid var(--line);
+    padding:12px 20px;
+    display:flex; align-items:center; gap:16px;
+    overflow:hidden;
+  }
+  .news-ticker-tag{
+    flex:0 0 auto; font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:2px;
+    color:var(--bg); background:var(--cyan); padding:4px 10px; border-radius:4px; font-weight:800;
+  }
+  .news-ticker-headline{
+    flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    color:var(--text); text-decoration:none; font-size:12.5px;
+    animation: tickerFade 0.6s ease;
+  }
+  .news-ticker-headline:hover{ color:var(--cyan); text-decoration:underline; }
+  @keyframes tickerFade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
   footer b{ color:var(--dim); }
 
   @keyframes blipfade{ 0%,100%{opacity:0.2;} 50%{opacity:1;} }
@@ -256,6 +299,7 @@
   <nav class="tabs">
     <a href="index.html" class="active">LIVE OPS</a>
     <a href="jersey-storm-reports.html">STORM REPORTS</a>
+    <a href="jersey-weather-stations.html">WX STATIONS</a>
   </nav>
 
   <div class="hero">
@@ -271,13 +315,14 @@
       </div>
     </div>
     <div class="hero-info">
-      <h2>SAINT HELIER STATION</h2>
+      <h2>JERSEY RIGHT NOW</h2>
       <div class="loc">49.18&deg;N &middot; 2.11&deg;W &middot; JERSEY, CI</div>
       <div class="hero-stats">
-        <div><div class="val" id="statFeels">--&deg;</div><div class="lbl">FEELS LIKE</div></div>
-        <div><div class="val" id="statHumidity">--%</div><div class="lbl">HUMIDITY</div></div>
-        <div><div class="val" id="statUV">--</div><div class="lbl">UV INDEX</div></div>
-        <div><div class="val" id="statAQI">--</div><div class="lbl">AIR QUALITY</div></div>
+        <div><div class="val" id="statFeels">--&deg;</div><div class="lbl" id="feelsLbl">FEELS LIKE</div><div class="advice-text" id="feelsAdvice"></div></div>
+        <div><div class="val" id="statWind">-- <span id="windDirIcon" class="wind-arrow">&uarr;</span></div><div class="lbl">WIND</div><div class="advice-text" id="windDetail">&mdash;</div></div>
+        <div><div class="val" id="statPressure">-- mb <span id="pressureIcon">&rarr;</span></div><div class="lbl" id="pressureLbl">PRESSURE</div></div>
+        <div><div class="val" id="statUV">--</div><div class="lbl" id="uvLbl">UV INDEX</div><div class="advice-text" id="uvAdvice"></div></div>
+        <div><div class="val" id="statAQI">--</div><div class="lbl" id="aqiLbl">AIR QUALITY</div><div class="advice-text" id="aqiAdvice"></div></div>
       </div>
     </div>
   </div>
@@ -311,6 +356,23 @@
     </div>
   </section>
 
+  <!-- WEATHER WARNINGS -->
+  <section>
+    <div class="sec-head">
+      <h3>WEATHER WARNINGS</h3>
+      <div class="bar"></div>
+      <div class="tag">JERSEY MET</div>
+    </div>
+    <div class="warning-banner" id="warningBanner">
+      <div class="warning-icon" id="warningIcon">&check;</div>
+      <div class="warning-body">
+        <div class="warning-title" id="warningTitle">NO WARNINGS IN FORCE</div>
+        <div class="warning-text" id="warningText"></div>
+        <div class="warning-disclaimer">Source: Jersey Met Office / Government of Jersey. Automated check, may lag behind the official page. <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">View official warnings page &rarr;</a></div>
+      </div>
+    </div>
+  </section>
+
   <!-- THUNDERSTORM -->
   <section>
     <div class="sec-head storm">
@@ -335,11 +397,10 @@
           <div><span class="val" id="v-dp">--</span><span class="unit">&deg;C</span></div>
           <div class="verdict" id="verdict-dp">&mdash;</div>
         </div>
-        <div class="skewt-card">
-          <div class="lbl">SKEW-T LOG-P &mdash; NEAREST SOUNDING (HERSTMONCEUX, UK)</div>
-          <div class="skewt-img-wrap" id="skewtWrap">
-            <img id="skewtImg" alt="Latest Skew-T sounding">
-          </div>
+        <div class="stat-card">
+          <div class="lbl">CONVECTIVE INHIBITION (CIN)</div>
+          <div><span class="val" id="v-cin">--</span><span class="unit">J/kg</span></div>
+          <div class="verdict" id="verdict-cin">&mdash;</div>
         </div>
       </div>
     </div>
@@ -355,7 +416,7 @@
     <div class="imagery-grid">
       <div class="panel">
         <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-        <div class="panel-head"><span>RAINFALL RADAR &middot; 200MI</span><span class="dot"></span></div>
+        <div class="panel-head"><span>RAINFALL RADAR (PAN &amp; ZOOM) &middot; 200MI</span><span class="dot"></span></div>
         <div id="radar-map" style="width:100%;height:340px;"></div>
       </div>
       <div class="panel">
@@ -365,17 +426,27 @@
       </div>
       <div class="panel">
         <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-        <div class="panel-head"><span>LIGHTNING STRIKES &middot; LIVE</span><span class="dot"></span></div>
+        <div class="panel-head"><span>LIGHTNING STRIKES (PAN &amp; ZOOM) &middot; LIVE</span><span class="dot"></span></div>
         <div id="lightning-embed" style="width:100%;height:340px;"></div>
+      </div>
+      <div class="panel">
+        <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+        <div class="panel-head"><span>EARTHQUAKES (PAN &amp; ZOOM) &middot; 500MI</span><span class="dot"></span></div>
+        <div id="quake-map" style="width:100%;height:340px;"></div>
       </div>
     </div>
   </section>
 
   <footer>
-    <div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE / LIGHTNING) &middot; UNIVERSITY OF WYOMING (SOUNDING)</div>
+    <div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS (EARTHQUAKES) &middot; GOV.JE (WARNINGS)</div>
     <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
   </footer>
 
+</div>
+
+<div class="news-ticker">
+  <span class="news-ticker-tag">GLOBAL WEATHER NEWS</span>
+  <a href="#" id="newsTickerLink" class="news-ticker-headline" target="_blank" rel="noopener">Loading headlines&hellip;</a>
 </div>
 
 <script>
@@ -403,8 +474,21 @@
     }
     requestAnimationFrame(step);
   }
-  const CYAN='#4cd3ff', GREEN='#2de1a0', AMBER='#ffb020', RED='#ff4b5c';
+  const CYAN='#4cd3ff', GREEN='#2de1a0', AMBER='#ffb020', RED='#ff4b5c', YELLOW='#e0d341', ORANGE='#ff8c30', VIOLET='#b98aff';
 
+  function feelsLikeCategory(f){
+    if(f < 5) return {label:'COLD \u2014 PRECAUTIONS NEEDED', color:CYAN, advice:'Dress in warm layers and limit time outdoors.', link:'https://www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/', linkText:'Cold weather advice'};
+    if(f < 12) return {label:'COOL \u2014 UNCOMFORTABLE', color:YELLOW, advice:'', link:null};
+    if(f <= 24) return {label:'COMFORTABLE', color:GREEN, advice:'', link:null};
+    if(f <= 30) return {label:'WARM \u2014 UNCOMFORTABLE', color:AMBER, advice:'', link:null};
+    return {label:'HOT \u2014 PRECAUTIONS NEEDED', color:RED, advice:'Stay hydrated, seek shade, and avoid exertion during peak heat.', link:'https://www.nhs.uk/live-well/seasonal-health/heatwave-how-to-cope-in-hot-weather/', linkText:'Hot weather advice'};
+  }
+  function aqiAdviceCategory(aqi){
+    if(aqi<=50) return {label:'GOOD', color:GREEN, advice:''};
+    if(aqi<=100) return {label:'MODERATE', color:YELLOW, advice:''};
+    if(aqi<=150) return {label:'POOR', color:ORANGE, advice:'If you have asthma, COPD, or a heart/lung condition, reduce prolonged outdoor exertion and keep relief medication on hand.'};
+    return {label:'VERY POOR', color:RED, advice:'At-risk groups (respiratory/heart conditions, elderly, children, pregnant) should avoid outdoor exertion and consider staying indoors with windows closed.'};
+  }
   function aqiCategory(aqi){
     if(aqi<=50) return {label:'GOOD', color:GREEN};
     if(aqi<=100) return {label:'MODERATE', color:AMBER};
@@ -414,11 +498,11 @@
     return {label:'HAZARDOUS', color:RED};
   }
   function uvCategory(uv){
-    if(uv<3) return {label:'LOW', color:GREEN};
-    if(uv<6) return {label:'MODERATE', color:AMBER};
-    if(uv<8) return {label:'HIGH', color:AMBER};
-    if(uv<11) return {label:'VERY HIGH', color:RED};
-    return {label:'EXTREME', color:RED};
+    if(uv<3) return {label:'LOW', color:GREEN, fairSkinAdvice:'Minimal risk for fair skin \u2014 no special protection generally needed.'};
+    if(uv<6) return {label:'MODERATE', color:YELLOW, fairSkinAdvice:'Fair skin: use SPF 30+ and seek shade in strong midday sun.'};
+    if(uv<8) return {label:'HIGH', color:ORANGE, fairSkinAdvice:'Fair skin: SPF 30+ essential, cover up, seek shade 11am\u20133pm.'};
+    if(uv<11) return {label:'VERY HIGH', color:RED, fairSkinAdvice:'Fair skin can burn in under 15 min \u2014 avoid sun 11am\u20133pm.'};
+    return {label:'EXTREME', color:VIOLET, fairSkinAdvice:'Fair skin can burn in under 10 min \u2014 stay in shade/indoors if possible.'};
   }
   function windColor(mph){
     if(mph<13) return GREEN;
@@ -443,10 +527,113 @@
   // ---------- WEATHER FETCH ----------
   const LAT=49.1805, LON=-2.1058;
 
+  // TEST MODE — forces AQI to "Very Poor" and Feels Like to 38°C so you
+  // can verify the precaution text renders correctly. Set to false
+  // (and re-upload) once you've checked it, so the page shows real data.
+  const TEST_MODE = true;
+
+  let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014' };
+  let heroFaceIndex = 0;
+
+  /* ============================================================
+     WEATHER WARNINGS
+     Set WARNINGS_API_URL to your Apps Script deployment URL
+     (same one used for storm reports).
+     Manual override: set MANUAL_OVERRIDE_ACTIVE = true and fill
+     in MANUAL_WARNING_SEVERITY / MANUAL_WARNING_TEXT to force a
+     specific warning regardless of what the automated check finds
+     — useful if gov.je's page structure ever changes and breaks
+     the parser, or you want to post a warning immediately without
+     waiting for the automated check to catch up.
+     ============================================================ */
+  const WARNINGS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+  let MANUAL_OVERRIDE_ACTIVE = false;
+  let MANUAL_WARNING_SEVERITY = 'none'; // none | yellow | orange | red
+  let MANUAL_WARNING_TEXT = '';
+
+  const SEVERITY_STYLES = {
+    none:   { color:GREEN,  bg:'rgba(45,225,160,0.06)',  icon:'\u2713', label:'NO WARNINGS IN FORCE' },
+    yellow: { color:YELLOW, bg:'rgba(224,211,65,0.08)',  icon:'\u26a0', label:'BE AWARE' },
+    orange: { color:ORANGE, bg:'rgba(255,140,48,0.08)',  icon:'\u26a0', label:'TAKE PRECAUTIONS' },
+    red:    { color:RED,    bg:'rgba(255,75,92,0.10)',   icon:'\u26d4', label:'STAY INDOORS' }
+  };
+
+  function renderWarningBanner(severity, text){
+    const s = SEVERITY_STYLES[severity] || SEVERITY_STYLES.none;
+    const banner = document.getElementById('warningBanner');
+    banner.style.borderColor = s.color;
+    banner.style.background = s.bg;
+    const icon = document.getElementById('warningIcon');
+    icon.textContent = s.icon; icon.style.color = s.color;
+    const title = document.getElementById('warningTitle');
+    title.textContent = s.label; title.style.color = s.color;
+    document.getElementById('warningText').textContent = text || '';
+  }
+
+  async function loadWarnings(){
+    if(MANUAL_OVERRIDE_ACTIVE){
+      renderWarningBanner(MANUAL_WARNING_SEVERITY, MANUAL_WARNING_TEXT);
+      return;
+    }
+    try{
+      const res = await fetch(WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=warnings');
+      const data = await res.json();
+      if(data.ok === false || data.severity === 'unknown') throw new Error('proxy reported failure');
+      renderWarningBanner(data.severity, data.text);
+    }catch(e){
+      console.error('warnings fetch failed, using manual fallback', e);
+      renderWarningBanner(MANUAL_WARNING_SEVERITY, MANUAL_WARNING_TEXT);
+    }
+  }
+
+  function wmoIcon(code){
+    if([95,96,99].includes(code)) return {icon:'\u26c8\ufe0f', label:'THUNDERSTORM'};
+    if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return {icon:'\ud83c\udf27\ufe0f', label:'RAIN'};
+    if([71,73,75,77,85,86].includes(code)) return {icon:'\u2744\ufe0f', label:'SNOW'};
+    if([45,48].includes(code)) return {icon:'\ud83c\udf2b\ufe0f', label:'FOG'};
+    if(code===3) return {icon:'\u2601\ufe0f', label:'OVERCAST'};
+    if(code===2) return {icon:'\u26c5', label:'PARTLY CLOUDY'};
+    if(code===1) return {icon:'\ud83c\udf24\ufe0f', label:'MOSTLY CLEAR'};
+    return {icon:'\u2600\ufe0f', label:'CLEAR SKY'};
+  }
+
+  function renderHeroFace(){
+    if(liveData.temp === null) return;
+    const tempEl = document.getElementById('heroTemp');
+    const condEl = document.getElementById('heroCond');
+    const face = heroFaceIndex % 4;
+    // windy override: if very windy, show the windy face instead of the generic condition icon
+    const isWindy = liveData.wind >= 25;
+
+    if(face === 0){
+      if(liveData.ice){
+        tempEl.innerHTML = '<span class="ice-icon">\u2744\ufe0f</span>';
+        condEl.innerHTML = '<span class="ice-warn">\u26a0 ICE RISK</span>';
+      } else {
+        tempEl.innerHTML = Math.round(liveData.temp) + '<span>&deg;C</span>';
+        condEl.textContent = liveData.trend;
+      }
+    } else if(face === 1){
+      tempEl.innerHTML = Math.round(liveData.wind) + '<span> MPH</span>';
+      condEl.textContent = 'WIND SPEED \u00b7 GUST ' + Math.round(liveData.gust) + ' MPH';
+    } else if(face === 2){
+      tempEl.innerHTML = liveData.uv.toFixed(1);
+      condEl.textContent = 'UV INDEX';
+    } else {
+      if(isWindy){
+        tempEl.innerHTML = '\ud83d\udca8';
+        condEl.textContent = 'WINDY';
+      } else {
+        tempEl.innerHTML = liveData.condIcon;
+        condEl.textContent = liveData.condLabel;
+      }
+    }
+  }
+
   // ---------- LIVE IMAGERY (radar / satellite / lightning) ----------
   function initImagery(){
     // Radar — Leaflet + RainViewer, centered on Jersey with a 200mi ring
-    const map = L.map('radar-map', {zoomControl:false, attributionControl:false, dragging:true, scrollWheelZoom:false})
+    const map = L.map('radar-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
       .setView([LAT, LON], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:10}).addTo(map);
     L.circle([LAT,LON], {radius: 200*1609.34, color:'#4cd3ff', weight:1, fillOpacity:0}).addTo(map);
@@ -467,23 +654,100 @@
 
     // Lightning — Blitzortung.org's own live map (they officially permit iframe embedding of this map)
     document.getElementById('lightning-embed').innerHTML =
-      `<iframe src="https://map.blitzortung.org/index.php?interactive=0&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#6/${LAT}/${LON}"
+      `<iframe src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=1&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#6/${LAT}/${LON}"
          frameborder="0" style="width:100%;height:100%;border:0;"></iframe>`;
+
+    // Earthquakes — live USGS feed, 500mi radius, real client-side query (free, open, CORS-friendly)
+    const quakeMap = L.map('quake-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
+      .setView([LAT, LON], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:10}).addTo(quakeMap);
+    L.circle([LAT,LON], {radius: 500*1609.34, color:'#b98aff', weight:1, fillOpacity:0}).addTo(quakeMap);
+    L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(quakeMap);
+    const quakeRadiusKm = 500 * 1.60934;
+    const quakeUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${LAT}&longitude=${LON}&maxradiuskm=${quakeRadiusKm}&minmagnitude=1&starttime=` +
+      new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
+    fetch(quakeUrl)
+      .then(r=>r.json())
+      .then(gj=>{
+        gj.features.forEach(f=>{
+          const [qlon, qlat, depth] = f.geometry.coordinates;
+          const mag = f.properties.mag;
+          const color = mag>=5 ? '#ff4b5c' : mag>=4 ? '#ff8c30' : mag>=3 ? '#e0d341' : '#2de1a0';
+          L.circleMarker([qlat, qlon], {
+            radius: 5 + Math.max(mag,0)*2.5, color:color, weight:2, fillColor:color, fillOpacity:0.35
+          }).bindPopup(`<b>M${mag.toFixed(1)}</b> \u2014 ${f.properties.place}<br>${new Date(f.properties.time).toLocaleString('en-GB')}<br>Depth: ${depth.toFixed(0)} km`)
+            .addTo(quakeMap);
+        });
+      })
+      .catch(e => console.error('earthquake feed failed', e));
   }
 
   async function loadWeather(){
     try{
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m&hourly=cape,lifted_index,dew_point_2m&wind_speed_unit=mph&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition&past_hours=2&wind_speed_unit=mph&timezone=auto`;
       const res = await fetch(url);
       const data = await res.json();
       const cur = data.current;
+      if(TEST_MODE){ cur.apparent_temperature = 38; } // TEST OVERRIDE — remove/disable once verified
 
-      // hero
-      document.getElementById('heroTemp').innerHTML = Math.round(cur.temperature_2m) + '<span>&deg;C</span>';
-      document.getElementById('heroCond').textContent = 'HUMIDITY ' + Math.round(cur.relative_humidity_2m) + '% &middot; FEELS ' + Math.round(cur.apparent_temperature) + '&deg;';
+      // trend: compare current temp to ~1hr ago
+      const hTimesTrend = data.hourly.time;
+      const nowIsoTrend = cur.time.slice(0,13);
+      let nowIdxTrend = hTimesTrend.findIndex(t => t.slice(0,13) === nowIsoTrend);
+      if(nowIdxTrend < 0) nowIdxTrend = data.hourly.temperature_2m.length - 1;
+      const pastIdxTrend = Math.max(0, nowIdxTrend - 1);
+      const tempDiff = cur.temperature_2m - data.hourly.temperature_2m[pastIdxTrend];
+      const trend = tempDiff >= 1.5 ? 'TEMP RISING QUICKLY' : tempDiff <= -1.5 ? 'TEMP FALLING QUICKLY' : 'TEMP STEADY';
+
+      const cond = wmoIcon(cur.weather_code);
+      liveData = {
+        temp: cur.temperature_2m,
+        trend: trend,
+        ice: cur.temperature_2m <= 0,
+        wind: cur.wind_speed_10m,
+        gust: cur.wind_gusts_10m,
+        uv: cur.uv_index,
+        condIcon: cond.icon,
+        condLabel: cond.label
+      };
+      renderHeroFace();
+
       document.getElementById('statFeels').textContent = Math.round(cur.apparent_temperature) + '\u00b0';
-      document.getElementById('statHumidity').textContent = Math.round(cur.relative_humidity_2m) + '%';
+      const feelsCat = feelsLikeCategory(cur.apparent_temperature);
+      const feelsLblEl = document.getElementById('feelsLbl');
+      feelsLblEl.textContent = feelsCat.label;
+      feelsLblEl.style.color = feelsCat.color;
+      const feelsAdviceEl = document.getElementById('feelsAdvice');
+      if(feelsCat.advice){
+        feelsAdviceEl.innerHTML = feelsCat.advice + ' Reactions to temperature vary by person \u2014 general guidance only.' +
+          (feelsCat.link ? ` <a href="${feelsCat.link}" target="_blank" rel="noopener" style="color:${feelsCat.color}">${feelsCat.linkText} \u2192</a>` : '');
+      } else {
+        feelsAdviceEl.innerHTML = '';
+      }
+      feelsAdviceEl.style.color = feelsCat.color;
+      const compassDirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      const compass = deg => compassDirs[Math.round(deg/22.5) % 16];
+      document.getElementById('statWind').innerHTML = Math.round(cur.wind_speed_10m) +
+        ' <span id="windDirIcon" class="wind-arrow" style="transform:rotate(' + (cur.wind_direction_10m+180) + 'deg)">&uarr;</span>';
+      document.getElementById('windDetail').textContent = 'GUST ' + Math.round(cur.wind_gusts_10m) + ' MPH \u00b7 ' + compass(cur.wind_direction_10m);
       document.getElementById('statUV').textContent = cur.uv_index.toFixed(1);
+      const heroUvc = uvCategory(cur.uv_index);
+      const uvLblEl = document.getElementById('uvLbl');
+      uvLblEl.textContent = 'UV \u00b7 ' + heroUvc.label;
+      uvLblEl.style.color = heroUvc.color;
+      const uvAdviceEl = document.getElementById('uvAdvice');
+      uvAdviceEl.textContent = heroUvc.fairSkinAdvice;
+      uvAdviceEl.style.color = heroUvc.color;
+
+      // pressure trend
+      const pDiff = cur.pressure_msl - data.hourly.pressure_msl[pastIdxTrend];
+      const pIcon = document.getElementById('pressureIcon');
+      const pLbl = document.getElementById('pressureLbl');
+      document.getElementById('statPressure').innerHTML = Math.round(cur.pressure_msl) + ' mb <span id="pressureIcon" class="' + (Math.abs(pDiff)>=3?'fast':'') + '">' +
+        (pDiff >= 0.5 ? '&uarr;' : pDiff <= -0.5 ? '&darr;' : '&rarr;') + '</span>';
+      if(pDiff >= 3){ pLbl.textContent = 'RISING QUICKLY'; pLbl.style.color = 'var(--amber)'; }
+      else if(pDiff <= -3){ pLbl.textContent = 'FALLING QUICKLY'; pLbl.style.color = 'var(--red)'; }
+      else { pLbl.textContent = 'PRESSURE'; pLbl.style.color = ''; }
 
       // tiles: temp
       animateNum(document.getElementById('g-temp').querySelector('b'), Math.round(cur.temperature_2m), 0, '\u00b0');
@@ -525,10 +789,12 @@
       const cape = data.hourly.cape[idx];
       const li = data.hourly.lifted_index[idx];
       const dp = data.hourly.dew_point_2m[idx];
+      const cin = data.hourly.convective_inhibition[idx];
 
       document.getElementById('v-cape').textContent = Math.round(cape);
       document.getElementById('v-li').textContent = li.toFixed(1);
       document.getElementById('v-dp').textContent = dp.toFixed(1);
+      document.getElementById('v-cin').textContent = Math.round(cin);
 
       const cv = capeVerdict(cape);
       const lv = liVerdict(li);
@@ -539,6 +805,11 @@
       const dEl = document.getElementById('verdict-dp');
       const dpLabel = dp>=18 ? 'MUGGY / HUMID AIR' : dp>=12 ? 'COMFORTABLE MOISTURE' : 'DRY AIR MASS';
       dEl.textContent = dpLabel; dEl.style.color = CYAN; dEl.style.border = '1px solid '+CYAN;
+      const cinEl = document.getElementById('verdict-cin');
+      // CIN is a "lid" on convection: near 0 = no cap (storms form freely if CAPE present), very negative = strongly capped
+      const cinLabel = cin >= -10 ? 'NO CAP \u2014 UNRESTRICTED' : cin >= -50 ? 'WEAK CAP' : cin >= -150 ? 'MODERATE CAP' : 'STRONG CAP \u2014 SUPPRESSED';
+      const cinColor = cin >= -10 ? RED : cin >= -50 ? AMBER : cin >= -150 ? CYAN : GREEN;
+      cinEl.textContent = cinLabel; cinEl.style.color = cinColor; cinEl.style.border = '1px solid '+cinColor;
 
     }catch(e){
       document.getElementById('heroCond').textContent = 'SIGNAL LOST — RETRYING';
@@ -551,54 +822,56 @@
       const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi&timezone=auto`;
       const res = await fetch(url);
       const data = await res.json();
-      const aqi = Math.round(data.current.us_aqi);
+      let aqi = Math.round(data.current.us_aqi);
+      if(TEST_MODE){ aqi = 175; } // TEST OVERRIDE — remove/disable once verified, 175 = "Very Poor"
       const cat = aqiCategory(aqi);
       document.getElementById('statAQI').textContent = aqi;
       animateNum(document.getElementById('g-aqi').querySelector('b'), aqi, 0, '');
       setGauge('g-aqi', Math.min(100, aqi/300*100), cat.color);
       document.getElementById('s-aqi').textContent = cat.label + ' (US AQI)';
+
+      const heroAqiCat = aqiAdviceCategory(aqi);
+      const aqiLblEl = document.getElementById('aqiLbl');
+      aqiLblEl.textContent = 'AIR QUALITY \u00b7 ' + heroAqiCat.label;
+      aqiLblEl.style.color = heroAqiCat.color;
+      const aqiAdviceEl = document.getElementById('aqiAdvice');
+      aqiAdviceEl.textContent = heroAqiCat.advice ? (heroAqiCat.advice + ' General guidance only, not medical advice.') : '';
+      aqiAdviceEl.style.color = heroAqiCat.color;
     }catch(e){
       console.error('air quality fetch failed', e);
     }
   }
 
-  // ---------- SKEW-T (Univ. of Wyoming sounding, nearest station: Herstmonceux 03882) ----------
-  function loadSkewT(){
-    const img = document.getElementById('skewtImg');
-    const wrap = document.getElementById('skewtWrap');
-    const now = new Date();
-    // synoptic hours are 00Z and 12Z; try most recent first, step back on failure
-    let attempts = [];
-    for(let i=0;i<6;i++){
-      const t = new Date(now.getTime() - i*6*60*60*1000);
-      const hourUTC = t.getUTCHours();
-      const synHour = hourUTC >= 12 ? 12 : 0;
-      attempts.push({y:t.getUTCFullYear(), m:t.getUTCMonth()+1, d:t.getUTCDate(), h:synHour});
-    }
-    // dedupe consecutive identical
-    attempts = attempts.filter((a,i,arr)=> i===0 || !(a.y===arr[i-1].y && a.m===arr[i-1].m && a.d===arr[i-1].d && a.h===arr[i-1].h));
+  // ---------- NEWS TICKER ----------
+  let newsHeadlines = [];
+  let newsIndex = 0;
 
-    let tryIdx = 0;
-    function pad(n){ return n.toString().padStart(2,'0'); }
-    function buildUrl(a){
-      const from = pad(a.d)+pad(a.h);
-      return `https://weather.uwyo.edu/cgi-bin/sounding?region=europe&TYPE=GIF%3ASKEWT&YEAR=${a.y}&MONTH=${pad(a.m)}&FROM=${from}&TO=${from}&STNM=03882`;
-    }
-    function tryNext(){
-      if(tryIdx >= attempts.length){
-        wrap.innerHTML = `<div class="skewt-fallback">Live sounding image unavailable right now.<br>Herstmonceux (03882) is the nearest radiosonde station to Jersey.<br><a href="https://weather.uwyo.edu/upperair/sounding.html?region=europe&TYPE=GIF%3ASKEWT&STNM=03882" target="_blank" rel="noopener">Open Live Sounding Archive &rarr;</a></div>`;
-        return;
+  async function loadNews(){
+    try{
+      const feedUrl = 'https://news.google.com/rss/search?q=weather&hl=en-GB&gl=GB&ceid=GB:en';
+      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl) + '&count=15';
+      const res = await fetch(url);
+      const data = await res.json();
+      if(data.status === 'ok' && data.items && data.items.length){
+        newsHeadlines = data.items.map(it => ({ title: it.title, link: it.link }));
+        newsIndex = 0;
+        showNextHeadline();
       }
-      const testImg = new Image();
-      testImg.onload = function(){
-        if(testImg.naturalWidth < 50){ tryIdx++; tryNext(); return; } // Wyoming returns tiny error gif on no data
-        img.src = testImg.src;
-        img.style.display = 'block';
-      };
-      testImg.onerror = function(){ tryIdx++; tryNext(); };
-      testImg.src = buildUrl(attempts[tryIdx]);
+    }catch(e){
+      console.error('news ticker fetch failed', e);
     }
-    tryNext();
+  }
+
+  function showNextHeadline(){
+    if(!newsHeadlines.length) return;
+    const item = newsHeadlines[newsIndex % newsHeadlines.length];
+    const link = document.getElementById('newsTickerLink');
+    link.textContent = item.title;
+    link.href = item.link;
+    link.style.animation = 'none';
+    void link.offsetWidth; // restart the fade-in animation
+    link.style.animation = 'tickerFade 0.6s ease';
+    newsIndex++;
   }
 
   // ---------- reveal tiles on load ----------
@@ -616,7 +889,7 @@
   function refreshAll(){
     loadWeather();
     loadAirQuality();
-    loadSkewT();
+    loadWarnings();
     stampRefresh();
   }
 
@@ -624,6 +897,10 @@
   refreshAll();
   initImagery();
   setInterval(refreshAll, 10*60*1000);
+  setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000); // auto-rotate hero dial face
+  loadNews();
+  setInterval(showNextHeadline, 6000); // rotate through headlines already loaded
+  setInterval(loadNews, 30*60*1000); // refresh the headline list itself
 </script>
 </body>
 </html>
