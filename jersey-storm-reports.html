@@ -332,7 +332,7 @@
       <div class="bar"></div>
       <div class="tag">BY PARISH</div>
     </div>
-    <p class="map-explainer">Each pin marks a parish with active reports. Pin colour shows the worst severity reported there; pin size grows with the number of reports. Tap a pin to see the breakdown.</p>
+    <p class="map-explainer">Each pin marks a report. Pins use the reporter's exact location when shared (with permission); older reports without a captured location show at their parish's centre instead. Pin colour reflects that report's severity. Tap a pin for details.</p>
     <div id="report-map" style="width:100%;height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--line);"></div>
   </section>
 
@@ -399,32 +399,29 @@
   function renderMap(){
     if(!reportMap){
       reportMap = L.map('report-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.pngkey=cb1_2j49_1_a24cd99f8829db6f2edd261d', { maxZoom:14 }).addTo(reportMap);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(reportMap);
       reportMapLayer = L.layerGroup().addTo(reportMap);
     }
     reportMapLayer.clearLayers();
 
     const reports = loadReports();
-    const byParish = {};
     reports.forEach(r => {
-      if(!byParish[r.parish]) byParish[r.parish] = [];
-      byParish[r.parish].push(r);
-    });
-
-    Object.entries(byParish).forEach(([parish, list]) => {
-      const coords = PARISH_CENTROIDS[parish];
+      // real captured coordinates take priority; falls back to the parish
+      // centroid for older reports submitted before geolocation was added
+      const hasRealLocation = r.lat && r.lon && !isNaN(parseFloat(r.lat)) && !isNaN(parseFloat(r.lon));
+      const coords = hasRealLocation
+        ? [parseFloat(r.lat), parseFloat(r.lon)]
+        : PARISH_CENTROIDS[r.parish];
       if(!coords) return;
-      const worst = list.reduce((a,b)=> (SEV_RANK[b.severity]||0) > (SEV_RANK[a.severity]||0) ? b : a);
-      const color = SEV_COLOR[worst.severity] || '#4cd3ff';
+      const color = SEV_COLOR[r.severity] || '#4cd3ff';
       const marker = L.circleMarker(coords, {
-        radius: 10 + Math.min(list.length, 8) * 2,
-        color: color, weight: 2, fillColor: color, fillOpacity: 0.35
+        radius: hasRealLocation ? 8 : 10, color: color, weight: 2, fillColor: color, fillOpacity: 0.4
       }).addTo(reportMapLayer);
-      const typesSummary = [...new Set(list.map(r=>TYPE_ICONS[r.type]||'📋'))].join(' ');
       marker.bindPopup(`
-        <b>${parish}</b><br>
-        ${list.length} report${list.length!==1?'s':''} ${typesSummary}<br>
-        Worst: <span style="color:${color}">${worst.severity}</span>
+        <b>${r.type}</b> \u2014 ${r.parish}<br>
+        Severity: <span style="color:${color}">${r.severity}</span><br>
+        ${escapeHtml(r.description)}<br>
+        <small>${hasRealLocation ? 'Exact reported location' : 'Approximate (parish centre)'}</small>
       `);
     });
   }
@@ -520,7 +517,18 @@
     document.getElementById('damageDetailsField').style.display = (this.value === 'No damage') ? 'none' : '';
   });
 
-  document.getElementById('reportForm').addEventListener('submit', function(e){
+  function getLocation(){
+    return new Promise(resolve => {
+      if(!navigator.geolocation){ resolve({lat:'', lon:''}); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({lat:pos.coords.latitude, lon:pos.coords.longitude}),
+        () => resolve({lat:'', lon:''}), // denied or failed — fall back gracefully
+        {timeout:5000}
+      );
+    });
+  }
+
+  document.getElementById('reportForm').addEventListener('submit', async function(e){
     e.preventDefault();
     const type = document.getElementById('f-type').value;
     const parish = document.getElementById('f-parish').value;
@@ -530,6 +538,7 @@
       return;
     }
     const isQuake = type === 'Earthquake Report';
+    const loc = await getLocation(); // real coordinates when available/permitted, blank otherwise
     const report = {
       id: 'r' + Date.now(),
       type, parish, severity: selectedSev,
@@ -538,6 +547,7 @@
       damageDetails: isQuake ? document.getElementById('f-damage-details').value.trim() : '',
       reporter: document.getElementById('f-name').value.trim() || 'Anonymous',
       media: document.getElementById('f-media').value.trim(),
+      lat: loc.lat, lon: loc.lon,
       timestamp: new Date().toISOString()
     };
     submitReport(report);
