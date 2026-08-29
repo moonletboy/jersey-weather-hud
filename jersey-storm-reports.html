@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -108,6 +109,7 @@
   .sec-head h3{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap; color:var(--text); }
   .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
   .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--red); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+  .map-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:14px; max-width:640px; }
 
   section{ margin-bottom:50px; }
 
@@ -330,6 +332,7 @@
       <div class="bar"></div>
       <div class="tag">BY PARISH</div>
     </div>
+    <p class="map-explainer">Each pin marks a parish with active reports. Pin colour shows the worst severity reported there; pin size grows with the number of reports. Tap a pin to see the breakdown.</p>
     <div id="report-map" style="width:100%;height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--line);"></div>
   </section>
 
@@ -396,7 +399,7 @@
   function renderMap(){
     if(!reportMap){
       reportMap = L.map('report-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(reportMap);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.pngkey=cb1_2j49_1_a24cd99f8829db6f2edd261d', { maxZoom:14 }).addTo(reportMap);
       reportMapLayer = L.layerGroup().addTo(reportMap);
     }
     reportMapLayer.clearLayers();
