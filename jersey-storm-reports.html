@@ -6,6 +6,8 @@
 <title>JWC STORM REPORTS — Jersey Weather Command</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{
     --bg:#05080d;
@@ -141,6 +143,9 @@
   .sev-btn[data-sev="Moderate"].active{ background:rgba(255,176,32,0.15); border-color:var(--amber); color:var(--amber); }
   .sev-btn[data-sev="Severe"].active{ background:rgba(255,107,53,0.15); border-color:#ff6b35; color:#ff6b35; }
   .sev-btn[data-sev="Extreme"].active{ background:rgba(255,75,92,0.18); border-color:var(--red); color:var(--red); box-shadow:0 0 12px rgba(255,75,92,0.4); }
+  .sev-btn[data-sev="Light Shaking"].active{ background:rgba(45,225,160,0.15); border-color:var(--green); color:var(--green); }
+  .sev-btn[data-sev="Moderate Shaking"].active{ background:rgba(255,176,32,0.15); border-color:var(--amber); color:var(--amber); }
+  .sev-btn[data-sev="Heavy Shaking"].active{ background:rgba(255,75,92,0.18); border-color:var(--red); color:var(--red); box-shadow:0 0 12px rgba(255,75,92,0.4); }
   .submit-row{ display:flex; align-items:center; justify-content:space-between; margin-top:22px; flex-wrap:wrap; gap:12px; }
   .submit-btn{
     font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:2px; font-weight:700;
@@ -218,11 +223,12 @@
   <nav class="tabs">
     <a href="index.html">LIVE OPS</a>
     <a href="jersey-storm-reports.html" class="active">STORM REPORTS</a>
+    <a href="jersey-weather-stations.html">WX STATIONS</a>
   </nav>
 
   <div class="hero2">
     <h2>FILE A <span>STORM REPORT</span></h2>
-    <p>Seeing hail, flooding, storm damage, or a lightning strike near you? Log it below — every report helps build a real-time, crowdsourced picture of severe weather across Jersey's twelve parishes.</p>
+    <p>Seeing hail, flooding, storm damage, or a lightning strike near you? Log it below — every report helps build a real-time, crowdsourced picture of severe weather across Jersey's twelve parishes. This data may be viewed by emergency authorities so be as accurate as you can be.</p>
     <div class="hero-stats2">
       <div><div class="val" id="statToday">0</div><div class="lbl">REPORTS TODAY</div></div>
       <div><div class="val" id="statTotal">0</div><div class="lbl">TOTAL LOGGED</div></div>
@@ -252,6 +258,7 @@
               <option value="Funnel Cloud / Waterspout">🌪️ Funnel Cloud / Waterspout</option>
               <option value="Heavy Snow / Ice">❄️ Heavy Snow / Ice</option>
               <option value="Storm Damage">🏚️ Storm Damage</option>
+              <option value="Earthquake Report">🌎 Earthquake Report</option>
               <option value="Other">📋 Other</option>
             </select>
           </div>
@@ -283,8 +290,21 @@
             </div>
           </div>
           <div class="field full">
-            <label>WHAT DID YOU SEE?</label>
+            <label>WHAT DID YOU EXPERIENCE (FELT/HEARD/SEE)?</label>
             <textarea id="f-desc" placeholder="e.g. Golf-ball sized hail for ~5 minutes, minor damage to greenhouse roof&hellip;" required></textarea>
+          </div>
+          <div class="field full" id="damageField" style="display:none;">
+            <label>WAS THERE ANY DAMAGE?</label>
+            <select id="f-damage">
+              <option value="No damage">No damage</option>
+              <option value="Minor">Minor</option>
+              <option value="Moderate">Moderate</option>
+              <option value="Heavy">Heavy</option>
+            </select>
+          </div>
+          <div class="field full" id="damageDetailsField" style="display:none;">
+            <label>DAMAGE DETAILS</label>
+            <textarea id="f-damage-details" placeholder="Describe the damage&hellip; (you can also add photos via the link field below)"></textarea>
           </div>
           <div class="field">
             <label>NAME / HANDLE (OPTIONAL)</label>
@@ -301,6 +321,15 @@
         </div>
       </form>
     </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h3>REPORT MAP</h3>
+      <div class="bar"></div>
+      <div class="tag">BY PARISH</div>
+    </div>
+    <div id="report-map" style="width:100%;height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--line);"></div>
   </section>
 
   <section>
@@ -343,12 +372,65 @@
     'Funnel Cloud / Waterspout':'🌪️','Heavy Snow / Ice':'❄️','Storm Damage':'🏚️','Other':'📋'
   };
 
+  const PARISH_CENTROIDS = {
+    'St Helier': [49.1858, -2.1058],
+    'St Saviour': [49.1928, -2.0817],
+    'St Clement': [49.1775, -2.0728],
+    'Grouville': [49.1806, -2.0362],
+    'St Martin': [49.2103, -2.0453],
+    'Trinity': [49.2214, -2.0728],
+    'St John': [49.2372, -2.1019],
+    'St Mary': [49.2350, -2.1494],
+    'St Ouen': [49.2158, -2.2119],
+    'St Peter': [49.1975, -2.1889],
+    'St Brelade': [49.1775, -2.1994],
+    'St Lawrence': [49.2019, -2.1494]
+  };
+  const SEV_COLOR = { Minor:'#2de1a0', Moderate:'#ffb020', Severe:'#ff6b35', Extreme:'#ff4b5c' };
+  const SEV_RANK = { Minor:1, Moderate:2, Severe:3, Extreme:4 };
+
+  let reportMap = null;
+  let reportMapLayer = null;
+
+  function renderMap(){
+    if(!reportMap){
+      reportMap = L.map('report-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(reportMap);
+      reportMapLayer = L.layerGroup().addTo(reportMap);
+    }
+    reportMapLayer.clearLayers();
+
+    const reports = loadReports();
+    const byParish = {};
+    reports.forEach(r => {
+      if(!byParish[r.parish]) byParish[r.parish] = [];
+      byParish[r.parish].push(r);
+    });
+
+    Object.entries(byParish).forEach(([parish, list]) => {
+      const coords = PARISH_CENTROIDS[parish];
+      if(!coords) return;
+      const worst = list.reduce((a,b)=> (SEV_RANK[b.severity]||0) > (SEV_RANK[a.severity]||0) ? b : a);
+      const color = SEV_COLOR[worst.severity] || '#4cd3ff';
+      const marker = L.circleMarker(coords, {
+        radius: 10 + Math.min(list.length, 8) * 2,
+        color: color, weight: 2, fillColor: color, fillOpacity: 0.35
+      }).addTo(reportMapLayer);
+      const typesSummary = [...new Set(list.map(r=>TYPE_ICONS[r.type]||'📋'))].join(' ');
+      marker.bindPopup(`
+        <b>${parish}</b><br>
+        ${list.length} report${list.length!==1?'s':''} ${typesSummary}<br>
+        Worst: <span style="color:${color}">${worst.severity}</span>
+      `);
+    });
+  }
+
   /* ============================================================
      DATA LAYER — live via a free Google Sheet backend
      Paste your deployed Google Apps Script Web App URL below.
      See the setup steps for the exact script to use.
      ============================================================ */
-  const REPORTS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+  const REPORTS_API_URL = 'https://script.google.com/macros/s/AKfycbxEhXvU54C_U3fUflVh6q5w_S4rlmxIPXBmaxT0eCW9B7aULqIWuiXOAHvjGsbi-peZLw/exec';
 
   let cachedReports = seedDemoReports(); // shown instantly while the live feed loads
 
@@ -391,13 +473,41 @@
   }
 
   // ---------- FORM ----------
+  const SEV_SETS = {
+    default: [ ['Minor','MINOR'], ['Moderate','MODERATE'], ['Severe','SEVERE'], ['Extreme','EXTREME'] ],
+    earthquake: [ ['Light Shaking','LIGHT SHAKING'], ['Moderate Shaking','MODERATE SHAKING'], ['Heavy Shaking','HEAVY SHAKING'] ]
+  };
   let selectedSev = '';
-  document.querySelectorAll('.sev-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedSev = btn.dataset.sev;
+
+  function renderSevButtons(set){
+    const group = document.getElementById('sevGroup');
+    group.innerHTML = '';
+    selectedSev = '';
+    SEV_SETS[set].forEach(([value,label])=>{
+      const btn = document.createElement('div');
+      btn.className = 'sev-btn';
+      btn.dataset.sev = value;
+      btn.textContent = label;
+      btn.addEventListener('click', ()=>{
+        group.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedSev = value;
+      });
+      group.appendChild(btn);
     });
+  }
+  renderSevButtons('default');
+
+  document.getElementById('f-type').addEventListener('change', function(){
+    const isQuake = this.value === 'Earthquake Report';
+    renderSevButtons(isQuake ? 'earthquake' : 'default');
+    document.getElementById('damageField').style.display = isQuake ? '' : 'none';
+    document.getElementById('damageDetailsField').style.display = 'none';
+    document.getElementById('f-damage').value = 'No damage';
+  });
+
+  document.getElementById('f-damage').addEventListener('change', function(){
+    document.getElementById('damageDetailsField').style.display = (this.value === 'No damage') ? 'none' : '';
   });
 
   document.getElementById('reportForm').addEventListener('submit', function(e){
@@ -409,18 +519,22 @@
       alert('Please fill in type, parish, severity and a description.');
       return;
     }
+    const isQuake = type === 'Earthquake Report';
     const report = {
       id: 'r' + Date.now(),
       type, parish, severity: selectedSev,
       description: desc,
+      damage: isQuake ? document.getElementById('f-damage').value : '',
+      damageDetails: isQuake ? document.getElementById('f-damage-details').value.trim() : '',
       reporter: document.getElementById('f-name').value.trim() || 'Anonymous',
       media: document.getElementById('f-media').value.trim(),
       timestamp: new Date().toISOString()
     };
     submitReport(report);
     this.reset();
-    document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('active'));
-    selectedSev = '';
+    renderSevButtons('default');
+    document.getElementById('damageField').style.display = 'none';
+    document.getElementById('damageDetailsField').style.display = 'none';
     showToast();
     renderFeed();
     renderStats();
