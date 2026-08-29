@@ -399,7 +399,7 @@
   function renderMap(){
     if(!reportMap){
       reportMap = L.map('report-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(reportMap);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.pngkey=cb1_2j49_1_a24cd99f8829db6f2edd261d', { maxZoom:14 }).addTo(reportMap);
       reportMapLayer = L.layerGroup().addTo(reportMap);
     }
     reportMapLayer.clearLayers();
