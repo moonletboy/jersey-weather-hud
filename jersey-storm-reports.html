@@ -433,7 +433,7 @@
      ============================================================ */
   const REPORTS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
 
-  let cachedReports = seedDemoReports(); // shown instantly while the live feed loads
+  let cachedReports = []; // populated by the live sync once it loads
 
   function loadReports(){
     // Sort by id (a millisecond epoch number under the hood) rather than the
@@ -467,16 +467,6 @@
       .then(r=>r.json())
       .then(()=> syncReports()) // re-sync so this device also sees the canonical server copy
       .catch(err=> console.error('Report failed to reach the server — it will only show on this device for now', err));
-  }
-
-  function seedDemoReports(){
-    const now = Date.now();
-    return [
-      { id:'d1', type:'Damaging Wind', parish:'St Ouen', severity:'Severe', description:'Gusts brought down a large tree branch across La Route des Mielles. Road partially blocked.', reporter:'CoastalWatch', media:'', timestamp:new Date(now-45*60000).toISOString() },
-      { id:'d2', type:'Flooding', parish:'St Helier', severity:'Moderate', description:'Surface flooding on the Esplanade after heavy rain, ankle-deep in places near the bus station.', reporter:'Anonymous', media:'', timestamp:new Date(now-2.5*3600000).toISOString() },
-      { id:'d3', type:'Lightning Strike', parish:'Trinity', severity:'Minor', description:'Frequent lightning over the north coast, no reported damage.', reporter:'SkyGazerJE', media:'', timestamp:new Date(now-5*3600000).toISOString() },
-      { id:'d4', type:'Hail', parish:'St Brelade', severity:'Moderate', description:'Pea-sized hail for around 10 minutes during this afternoon\'s squall.', reporter:'Anonymous', media:'', timestamp:new Date(now-19*3600000).toISOString() }
-    ];
   }
 
   // ---------- FORM ----------
