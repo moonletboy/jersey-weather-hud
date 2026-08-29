@@ -103,11 +103,11 @@ display:flex; flex-direction:column; align-items:center; gap:22px;
 padding:30px 10px 46px; border-bottom:1px solid var(--line); margin-bottom:36px;
 }
 .radar-hero{
-position:relative; width:220px; height:220px; margin:0 auto;
+position:relative; width:280px; height:280px; margin:0 auto;
 border-radius:50%;
 border:1px solid var(--line);
 background:
-repeating-radial-gradient(circle, transparent 0, transparent 34px, var(--line) 35px),
+repeating-radial-gradient(circle, transparent 0, transparent 42px, var(--line) 43px),
 var(--bg-panel);
 }
 .radar-hero .sweep{
@@ -120,10 +120,11 @@ mix-blend-mode:screen;
 .radar-hero .ring{ position:absolute; inset:0; border-radius:50%; border:1px solid rgba(76,211,255,0.25); }
 .radar-hero .center{
 position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-text-align:center; padding:0 16px;
+text-align:center; padding:0 20px;
 }
-.radar-hero .icon-big{ font-size:58px; line-height:1; }
-.radar-hero .cond{ font-size:13px; letter-spacing:2px; color:var(--green); margin-top:10px; }
+.radar-hero .dial-value{ font-family:'Orbitron',sans-serif; font-size:54px; font-weight:900; color:var(--text); text-shadow:0 0 22px rgba(76,211,255,0.35); line-height:1; }
+.radar-hero .dial-value .unit{ font-size:20px; color:var(--cyan); vertical-align:top; margin-left:2px; }
+.radar-hero .cond{ font-size:13px; letter-spacing:2px; color:var(--green); margin-top:12px; }
 .radar-hero .loc-mini{ font-size:9px; letter-spacing:1.5px; color:var(--dim); margin-top:6px; }
 .ice-icon{ display:inline-block; animation: iceSpin 3s linear infinite; }
 .ice-warn{ color:var(--red, #ff4b5c); animation: icePulse 1.2s ease-in-out infinite; }
@@ -223,6 +224,24 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
 .warning-disclaimer{ font-size:10px; color:var(--dim); line-height:1.6; }
 .warning-disclaimer a{ color:var(--cyan); }
 /* STORM SECTION */
+/* 5-DAY FORECAST */
+.forecast-scroll{ display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch; }
+.forecast-scroll::-webkit-scrollbar{ height:6px; }
+.forecast-scroll::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+.day-card{
+flex:0 0 auto; width:240px;
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:18px;
+}
+.day-card .day-label{ font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:2px; color:var(--cyan); }
+.day-card .day-date{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-bottom:12px; }
+.day-card .day-icon{ font-size:36px; text-align:center; margin-bottom:6px; }
+.day-card .day-temps{ display:flex; justify-content:center; align-items:baseline; gap:8px; margin-bottom:6px; }
+.day-card .day-temps .hi{ font-family:'Orbitron',sans-serif; font-size:24px; font-weight:800; color:var(--text); }
+.day-card .day-temps .lo{ font-size:14px; color:var(--dim); }
+.day-card .day-cond{ text-align:center; font-size:10px; letter-spacing:1.5px; color:var(--green); margin-bottom:10px; }
+.day-row{ display:flex; justify-content:space-between; gap:8px; font-size:10.5px; padding:6px 0; border-top:1px solid var(--line); color:var(--dim); letter-spacing:0.5px; }
+.day-row .v{ color:var(--text); font-weight:700; text-align:right; }
 .storm-wrap{
 background:linear-gradient(160deg, rgba(255,176,32,0.05), rgba(11,19,28,0.4));
 border:1px solid rgba(255,176,32,0.25); border-radius:14px; padding:24px;
@@ -308,7 +327,7 @@ footer b{ color:var(--dim); }
 <div class="blip" style="top:65%; left:38%; animation-delay:1.3s;"></div>
 <div class="blip" style="top:48%; left:78%; animation-delay:2.1s;"></div>
 <div class="center">
-<div class="icon-big" id="heroIcon">&#10052;&#65039;</div>
+<div class="dial-value" id="heroValue">--<span class="unit">&deg;C</span></div>
 <div class="cond" id="heroCond">ACQUIRING SIGNAL&hellip;</div>
 <div class="loc-mini">49.18&deg;N &middot; 2.11&deg;W &middot; JERSEY, CI</div>
 </div>
@@ -331,6 +350,7 @@ footer b{ color:var(--dim); }
 </div>
 <div class="stat-block-sub" id="windBlockDir">DIRECTION &mdash;</div>
 <div class="stat-block-trend" id="windBlockBeaufort">&mdash;</div>
+<div class="stat-block-sub" id="windBlockEffect">&mdash;</div>
 </div>
 <div class="stat-block">
 <div class="stat-block-label">AIR PRESSURE</div>
@@ -382,6 +402,17 @@ footer b{ color:var(--dim); }
 </div>
 <div class="sub" id="s-wind">MPH</div>
 </div>
+</div>
+</section>
+<!-- 5-DAY FORECAST -->
+<section>
+<div class="sec-head">
+<h3>5-DAY FORECAST</h3>
+<div class="bar"></div>
+<div class="tag">EXTENDED OUTLOOK</div>
+</div>
+<div class="forecast-scroll" id="forecastScroll">
+<div style="color:var(--dim); font-size:11px; padding:10px;">LOADING FORECAST&hellip;</div>
 </div>
 </section>
 <!-- WEATHER WARNINGS -->
@@ -530,19 +561,19 @@ if(mph<25) return AMBER;
 return RED;
 }
 function beaufortScale(mph){
-if(mph<1) return {force:0, label:'CALM'};
-if(mph<4) return {force:1, label:'LIGHT AIR'};
-if(mph<8) return {force:2, label:'LIGHT BREEZE'};
-if(mph<13) return {force:3, label:'GENTLE BREEZE'};
-if(mph<19) return {force:4, label:'MODERATE BREEZE'};
-if(mph<25) return {force:5, label:'FRESH BREEZE'};
-if(mph<32) return {force:6, label:'STRONG BREEZE'};
-if(mph<39) return {force:7, label:'NEAR GALE'};
-if(mph<47) return {force:8, label:'GALE'};
-if(mph<55) return {force:9, label:'SEVERE GALE'};
-if(mph<64) return {force:10, label:'STORM'};
-if(mph<73) return {force:11, label:'VIOLENT STORM'};
-return {force:12, label:'HURRICANE FORCE'};
+if(mph<1) return {force:0, label:'CALM', effect:'Smoke rises vertically.'};
+if(mph<4) return {force:1, label:'LIGHT AIR', effect:'Direction shown by smoke drift, not by wind vanes.'};
+if(mph<8) return {force:2, label:'LIGHT BREEZE', effect:'Wind felt on face; leaves rustle.'};
+if(mph<13) return {force:3, label:'GENTLE BREEZE', effect:'Leaves and small twigs in constant motion; light flags extend.'};
+if(mph<19) return {force:4, label:'MODERATE BREEZE', effect:'Raises dust and loose paper; small branches move.'};
+if(mph<25) return {force:5, label:'FRESH BREEZE', effect:'Small trees in leaf begin to sway.'};
+if(mph<32) return {force:6, label:'STRONG BREEZE', effect:'Large branches in motion; umbrellas used with difficulty.'};
+if(mph<39) return {force:7, label:'NEAR GALE', effect:'Whole trees in motion; inconvenient to walk against the wind.'};
+if(mph<47) return {force:8, label:'GALE', effect:'Twigs break off trees; progress on foot is generally impeded.'};
+if(mph<55) return {force:9, label:'SEVERE GALE', effect:'Slight structural damage \u2014 chimney pots and roof slates may lift.'};
+if(mph<64) return {force:10, label:'STORM', effect:'Trees uprooted; considerable structural damage likely.'};
+if(mph<73) return {force:11, label:'VIOLENT STORM', effect:'Widespread damage to structures and vegetation.'};
+return {force:12, label:'HURRICANE FORCE', effect:'Devastation \u2014 severe widespread damage.'};
 }
 // Pressure trend text, based on rate of change per hour:
 // <1mb/hr = slowly, 1-2mb/hr = steadily, 2mb/hr+ = quickly,
@@ -584,6 +615,7 @@ const LAT=49.1805, LON=-2.1058;
 // false (and re-upload) once you've checked it, so the page shows real data.
 const TEST_MODE = true;
 let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014', aqi:null, pressure:null };
+let heroFaceIndex = 0;
 /* ============================================================
 WEATHER WARNINGS
 Set WARNINGS_API_URL to your Apps Script deployment URL
@@ -643,18 +675,38 @@ return {icon:'\u2600\ufe0f', label:'CLEAR SKY'};
 }
 function renderHeroFace(){
 if(liveData.temp === null) return;
-const iconEl = document.getElementById('heroIcon');
+const valEl = document.getElementById('heroValue');
 const condEl = document.getElementById('heroCond');
+const face = heroFaceIndex % 6;
 const isWindy = liveData.wind >= 25;
+if(face === 0){
 if(liveData.ice){
-iconEl.innerHTML = '<span class="ice-icon">\u2744\ufe0f</span>';
+valEl.innerHTML = '<span class="ice-icon">\u2744\ufe0f</span>';
 condEl.innerHTML = '<span class="ice-warn">\u26a0 ICE RISK</span>';
-} else if(isWindy){
-iconEl.textContent = '\ud83d\udca8';
+} else {
+valEl.innerHTML = Math.round(liveData.temp) + '<span class="unit">&deg;C</span>';
+condEl.textContent = liveData.trend;
+}
+} else if(face === 1){
+valEl.innerHTML = Math.round(liveData.wind) + '<span class="unit"> MPH</span>';
+condEl.textContent = 'WIND \u00b7 GUST ' + Math.round(liveData.gust) + ' MPH';
+} else if(face === 2){
+valEl.innerHTML = liveData.uv.toFixed(1);
+condEl.textContent = 'UV INDEX';
+} else if(face === 3){
+if(isWindy){
+valEl.textContent = '\ud83d\udca8';
 condEl.textContent = 'WINDY';
 } else {
-iconEl.textContent = liveData.condIcon;
+valEl.textContent = liveData.condIcon;
 condEl.textContent = liveData.condLabel;
+}
+} else if(face === 4){
+valEl.innerHTML = liveData.aqi !== null ? liveData.aqi : '--';
+condEl.textContent = 'AIR QUALITY (AQI)';
+} else {
+valEl.innerHTML = (liveData.pressure !== null ? Math.round(liveData.pressure) : '--') + '<span class="unit"> MB</span>';
+condEl.textContent = 'PRESSURE';
 }
 }
 // ---------- LIVE IMAGERY (radar / satellite / lightning) ----------
@@ -757,6 +809,7 @@ const beaufort = beaufortScale(cur.wind_speed_10m);
 const windTrendEl = document.getElementById('windBlockBeaufort');
 windTrendEl.textContent = 'FORCE ' + beaufort.force + ' \u2014 ' + beaufort.label;
 windTrendEl.style.color = windColor(cur.wind_speed_10m);
+document.getElementById('windBlockEffect').textContent = beaufort.effect;
 // --- PRESSURE BLOCK ---
 const pDiff = cur.pressure_msl - data.hourly.pressure_msl[pastIdxTrend];
 document.getElementById('pressureBlockValue').innerHTML = Math.round(cur.pressure_msl) + ' <span class="unit">MB</span>';
@@ -842,12 +895,82 @@ const res = await fetch(url);
 const data = await res.json();
 let aqi = Math.round(data.current.us_aqi);
 liveData.aqi = aqi;
+renderHeroFace();
 const cat = aqiCategory(aqi);
 animateNum(document.getElementById('g-aqi').querySelector('b'), aqi, 0, '');
 setGauge('g-aqi', Math.min(100, aqi/300*100), cat.color);
 document.getElementById('s-aqi').textContent = cat.label + ' (US AQI)';
 }catch(e){
 console.error('air quality fetch failed', e);
+}
+}
+// ---------- 5-DAY FORECAST ----------
+async function loadForecast(){
+const scrollEl = document.getElementById('forecastScroll');
+try{
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
+const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi&forecast_days=5&timezone=auto`;
+const [res, aqiRes] = await Promise.all([fetch(url), fetch(aqiUrl)]);
+const data = await res.json();
+const aqiData = await aqiRes.json();
+const days = data.daily.time; // ['2026-08-29', ...]
+const hTimes = data.hourly.time;
+const aqiTimes = aqiData.hourly.time;
+let cardsHtml = '';
+for(let i=0; i<days.length; i++){
+const dateStr = days[i];
+// gather this day's hourly indices
+const dayHourIdx = [];
+hTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayHourIdx.push(idx); });
+// find the hour with peak CAPE for a physically-consistent storm snapshot
+let peakIdx = dayHourIdx[0];
+let peakCape = -Infinity;
+dayHourIdx.forEach(idx=>{
+const c = data.hourly.cape[idx];
+if(c !== null && c > peakCape){ peakCape = c; peakIdx = idx; }
+});
+const cape = data.hourly.cape[peakIdx] ?? 0;
+const li = data.hourly.lifted_index[peakIdx] ?? 0;
+const dp = data.hourly.dew_point_2m[peakIdx] ?? 0;
+const cin = data.hourly.convective_inhibition[peakIdx] ?? 0;
+// average humidity across the day's hours
+const humVals = dayHourIdx.map(idx => data.hourly.relative_humidity_2m[idx]).filter(v => v !== null);
+const humAvg = humVals.length ? humVals.reduce((a,b)=>a+b,0)/humVals.length : null;
+// max AQI across the day's hours
+const dayAqiIdx = [];
+aqiTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayAqiIdx.push(idx); });
+const aqiVals = dayAqiIdx.map(idx => aqiData.hourly.us_aqi[idx]).filter(v => v !== null);
+const aqiMax = aqiVals.length ? Math.round(Math.max(...aqiVals)) : null;
+const cond = wmoIcon(data.daily.weather_code[i]);
+const dayName = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {weekday:'short', timeZone:'Europe/London'}).toUpperCase();
+const dayDate = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'Europe/London'});
+const cv = capeVerdict(cape);
+const lv = liVerdict(li);
+const beau = beaufortScale(data.daily.wind_speed_10m_max[i]);
+cardsHtml += `
+<div class="day-card">
+<div class="day-label">${i===0?'TODAY':dayName}</div>
+<div class="day-date">${dayDate}</div>
+<div class="day-icon">${cond.icon}</div>
+<div class="day-temps"><span class="hi">${Math.round(data.daily.temperature_2m_max[i])}\u00b0</span><span class="lo">${Math.round(data.daily.temperature_2m_min[i])}\u00b0</span></div>
+<div class="day-cond">${cond.label}</div>
+<div class="day-row"><span>FEELS LIKE</span><span class="v">${Math.round(data.daily.apparent_temperature_max[i])}\u00b0</span></div>
+<div class="day-row"><span>HUMIDITY</span><span class="v">${humAvg!==null?Math.round(humAvg)+'%':'\u2014'}</span></div>
+<div class="day-row"><span>WIND / GUST</span><span class="v">${Math.round(data.daily.wind_speed_10m_max[i])} / ${Math.round(data.daily.wind_gusts_10m_max[i])} MPH</span></div>
+<div class="day-row"><span>BEAUFORT</span><span class="v">F${beau.force} ${beau.label}</span></div>
+<div class="day-row"><span>UV MAX</span><span class="v">${data.daily.uv_index_max[i].toFixed(1)}</span></div>
+<div class="day-row"><span>AIR QUALITY</span><span class="v">${aqiMax!==null?aqiMax:'\u2014'}</span></div>
+<div class="day-row"><span>RAIN</span><span class="v">${data.daily.precipitation_sum[i].toFixed(1)} mm \u00b7 ${Math.round(data.daily.precipitation_probability_max[i])}%</span></div>
+<div class="day-row"><span>CAPE (PEAK)</span><span class="v" style="color:${cv.color}">${Math.round(cape)} J/kg</span></div>
+<div class="day-row"><span>LIFTED INDEX</span><span class="v" style="color:${lv.color}">${li.toFixed(1)}\u00b0C</span></div>
+<div class="day-row"><span>DEW POINT</span><span class="v">${dp.toFixed(1)}\u00b0C</span></div>
+<div class="day-row"><span>CIN</span><span class="v">${Math.round(cin)} J/kg</span></div>
+</div>`;
+}
+scrollEl.innerHTML = cardsHtml;
+}catch(e){
+console.error('forecast fetch failed', e);
+scrollEl.innerHTML = '<div style="color:var(--red); font-size:11px; padding:10px;">FORECAST UNAVAILABLE \u2014 RETRYING NEXT REFRESH</div>';
 }
 }
 // ---------- NEWS TICKER ----------
@@ -893,12 +1016,14 @@ function refreshAll(){
 loadWeather();
 loadAirQuality();
 loadWarnings();
+loadForecast();
 stampRefresh();
 }
 revealTiles();
 refreshAll();
 initImagery();
 setInterval(refreshAll, 10*60*1000);
+setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000); // auto-rotate hero dial face
 loadNews();
 setInterval(showNextHeadline, 6000); // rotate through headlines already loaded
 setInterval(loadNews, 30*60*1000); // refresh the headline list itself
