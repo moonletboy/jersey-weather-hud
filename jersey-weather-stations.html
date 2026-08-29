@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWC WX STATIONS — Jersey Weather Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --bg:#05080d;
+    --bg-panel:#0b131c;
+    --bg-panel-2:#0e1822;
+    --line:rgba(76,211,255,0.14);
+    --cyan:#4cd3ff;
+    --green:#2de1a0;
+    --amber:#ffb020;
+    --red:#ff4b5c;
+    --text:#e9f6f5;
+    --dim:#5f7c88;
+    --dim2:#3a4e58;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(76,211,255,0.07), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(45,225,160,0.06), transparent 50%),
+      var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+    z-index:0;
+    mask-image: radial-gradient(ellipse at 50% 0%, black, transparent 75%);
+  }
+  .scanline{
+    position:fixed; left:0; right:0; height:120px;
+    background:linear-gradient(180deg, transparent, rgba(76,211,255,0.05), transparent);
+    animation:scan 8s linear infinite;
+    pointer-events:none; z-index:1;
+  }
+  @keyframes scan{ 0%{top:-120px;} 100%{top:100vh;} }
+
+  .wrap{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:22px 20px 70px; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px; margin-bottom:18px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:38px;height:38px; border-radius:8px;
+    background:conic-gradient(from 0deg, var(--cyan), var(--green), var(--cyan));
+    display:flex; align-items:center; justify-content:center;
+    animation:spin 6s linear infinite;
+    box-shadow:0 0 18px rgba(76,211,255,0.5);
+  }
+  .brand-mark::after{
+    content:"◉"; color:#05080d; font-size:16px; font-weight:900;
+    animation:spin 6s linear infinite reverse;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .brand h1{ font-family:'Orbitron', sans-serif; font-weight:900; font-size:19px; letter-spacing:2px; color:var(--text); }
+  .brand span{ display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:2px; }
+  .status{ display:flex; align-items:center; gap:18px; font-size:12px; color:var(--dim); }
+  .live-pill{ display:flex; align-items:center; gap:7px; border:1px solid var(--cyan); color:var(--cyan); padding:5px 11px; border-radius:20px; letter-spacing:2px; font-weight:700; font-size:11px; }
+  .live-dot{ width:7px;height:7px;border-radius:50%; background:var(--cyan); animation:pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  #clock{ color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; }
+
+  nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
+  nav.tabs a{
+    font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
+    color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+    transition:all .2s ease;
+  }
+  nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
+  nav.tabs a.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700; }
+
+  .hero2{ padding:14px 4px 40px; border-bottom:1px solid var(--line); margin-bottom:36px; }
+  .hero2 h2{ font-family:'Orbitron',sans-serif; font-size:30px; letter-spacing:1px; margin-bottom:8px; }
+  .hero2 h2 span{ color:var(--cyan); }
+  .hero2 p{ color:var(--dim); font-size:12.5px; max-width:680px; line-height:1.7; margin-bottom:10px; }
+
+  .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .sec-head h3{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap; color:var(--text); }
+  .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
+  .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--cyan); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+
+  section{ margin-bottom:50px; }
+
+  .dev-banner{
+    border:1px dashed var(--amber); background:rgba(255,176,32,0.06); color:var(--amber);
+    font-size:11px; letter-spacing:0.5px; padding:12px 16px; border-radius:8px; margin-bottom:22px; line-height:1.6;
+  }
+
+  .link-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:16px; }
+  .link-card{
+    background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line); border-radius:12px; padding:20px;
+    text-decoration:none; color:var(--text); transition:border-color .2s ease, transform .2s ease;
+  }
+  .link-card:hover{ border-color:var(--cyan); transform:translateY(-2px); }
+  .link-card .name{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:1px; color:var(--cyan); margin-bottom:8px; }
+  .link-card .desc{ font-size:11.5px; color:var(--dim); line-height:1.6; }
+
+  #stations-map{ width:100%; height:400px; border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+
+  footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
+  footer b{ color:var(--dim); }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>JERSEY WEATHER CHAT</h1>
+        <span>PERSONAL WEATHER STATIONS</span>
+      </div>
+    </div>
+    <div class="status">
+      <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+      <div id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a href="index.html">LIVE OPS</a>
+    <a href="jersey-storm-reports.html">STORM REPORTS</a>
+    <a href="jersey-weather-stations.html" class="active">WX STATIONS</a>
+  </nav>
+
+  <div class="hero2">
+    <h2>LOCAL PERSONAL <span>WEATHER STATIONS</span></h2>
+    <p>Jersey has a growing network of privately-run personal weather stations (PWS) reporting live conditions from back gardens, farms, and rooftops across the island. Browse full station networks below, or check the map for known local stations.</p>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h3>NETWORK LINKS</h3>
+      <div class="bar"></div>
+      <div class="tag">EXTERNAL</div>
+    </div>
+    <div class="link-grid">
+      <a class="link-card" href="https://www.wunderground.com/wundermap" target="_blank" rel="noopener">
+        <div class="name">Weather Underground</div>
+        <div class="desc">Crowd-sourced PWS map — search "Jersey, Channel Islands" to browse live stations near you.</div>
+      </a>
+      <a class="link-card" href="https://www.ecowitt.net/home/map" target="_blank" rel="noopener">
+        <div class="name">Ecowitt</div>
+        <div class="desc">Live map of public Ecowitt stations worldwide, including several reporting from Jersey.</div>
+      </a>
+      <a class="link-card" href="https://www.pwsweather.com/stationmap.php" target="_blank" rel="noopener">
+        <div class="name">PWSWeather</div>
+        <div class="desc">Another major PWS network with a public station map.</div>
+      </a>
+      <a class="link-card" href="https://wow.metoffice.gov.uk/" target="_blank" rel="noopener">
+        <div class="name">Met Office WOW</div>
+        <div class="desc">UK Met Office's citizen-observation network — accepts and displays reports from Jersey too.</div>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h3>KNOWN STATION LOCATIONS</h3>
+      <div class="bar"></div>
+      <div class="tag">MAP</div>
+    </div>
+    <div class="dev-banner">
+      ⚠ There's no free live feed of PWS locations, so this map is a manually-maintained list. To add a station, edit the STATIONS array near the top of the script in this file with its name, coordinates, and a link.
+    </div>
+    <div id="stations-map"></div>
+  </section>
+
+  <footer>
+    JERSEY WEATHER CHAT &middot; PERSONAL WEATHER STATION DIRECTORY<br>
+    <b>Station data:</b> manually curated &middot; <b>Network links:</b> Weather Underground, Ecowitt, PWSWeather, Met Office WOW
+  </footer>
+</div>
+
+<script>
+  function tickClock(){
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-GB', { hour12:false, timeZone:'Europe/London' });
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  // Edit this list to add known local personal weather stations.
+  const STATIONS = [
+    { name:'St Helier Harbour (example)', lat:49.1830, lon:-2.1136, link:'https://www.wunderground.com/wundermap' },
+    { name:'St Brelade (example)', lat:49.1775, lon:-2.1994, link:'https://www.wunderground.com/wundermap' },
+    { name:'St Ouen (example)', lat:49.2158, lon:-2.2119, link:'https://www.wunderground.com/wundermap' }
+  ];
+
+  const map = L.map('stations-map').setView([49.19, -2.13], 11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(map);
+
+  STATIONS.forEach(s => {
+    const marker = L.circleMarker([s.lat, s.lon], {
+      radius:9, color:'#4cd3ff', weight:2, fillColor:'#4cd3ff', fillOpacity:0.35
+    }).addTo(map);
+    marker.bindPopup(`<b>${s.name}</b>${s.link ? `<br><a href="${s.link}" target="_blank" rel="noopener">View data →</a>` : ''}`);
+  });
+</script>
+</body>
+</html>
