@@ -630,7 +630,19 @@ waiting for the automated check to catch up.
 const WARNINGS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
 let MANUAL_OVERRIDE_ACTIVE = true;
 let MANUAL_WARNING_SEVERITY = 'orange'; // none | yellow | orange | red
-let MANUAL_WARNING_TEXT = '2 warnings in force. ORANGE \u2014 Channel Islands Shipping Area Wind Warning (issued 08:45 UTC Sat 29 Aug): SW wind F7, gusts to 45kt, imminent. Travel disruption likely; possible damage to moored boats in exposed locations. YELLOW \u2014 Jersey Tide/Coastal Flood Warning (issued 10:18 Sat 29 Aug): minor disruption possible along the south coast around high tide this evening (8:19pm, 11.0m). Coastal routes, promenades and cycle paths may be affected by spray/waves, mainly 1\u20132 hrs either side of high tide.';
+let MANUAL_WARNING_TEXT = '1 warning in force. YELLOW \u2014 Channel Islands Shipping Area Wind Warning
+Issued at 14:20 UTC Saturday 29 August 2026
+
+SW wind F6 with gusts to 40kt continuing.
+
+When to expect this
+Imminent means 0 to 6 hours from time of issue
+Soon means 6 to 12 hours from time of issue
+Later means more than 12 hours from time of issue
+Impacts
+Disruption to sea travel is possible.
+Damage to moored boats is possible in exposed locations.
+Check the latest weather forecast.';
 const SEVERITY_STYLES = {
 none: { color:GREEN, bg:'rgba(45,225,160,0.06)', icon:'\u2713', label:'NO WARNINGS IN FORCE' },
 yellow: { color:YELLOW, bg:'rgba(224,211,65,0.08)', icon:'\u26a0', label:'BE AWARE' },
