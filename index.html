@@ -99,11 +99,11 @@ nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
 nav.tabs a.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700; }
 /* HERO */
 .hero{
-display:grid; grid-template-columns:260px 1fr; gap:36px; align-items:center;
+display:grid; grid-template-columns:300px 1fr; gap:36px; align-items:center;
 padding:30px 10px 46px; border-bottom:1px solid var(--line); margin-bottom:36px;
 }
 .radar-hero{
-position:relative; width:240px; height:240px; margin:0 auto;
+position:relative; width:280px; height:280px; margin:0 auto;
 border-radius:50%;
 border:1px solid var(--line);
 background:
@@ -501,7 +501,7 @@ const LAT=49.1805, LON=-2.1058;
 // NEEDED" warning text and the freeze/ice icon render correctly. Set to
 // false (and re-upload) once you've checked it, so the page shows real data.
 const TEST_MODE = true;
-let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014' };
+let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014', aqi:null, pressure:null };
 let heroFaceIndex = 0;
 /* ============================================================
 WEATHER WARNINGS
@@ -564,7 +564,7 @@ function renderHeroFace(){
 if(liveData.temp === null) return;
 const tempEl = document.getElementById('heroTemp');
 const condEl = document.getElementById('heroCond');
-const face = heroFaceIndex % 4;
+const face = heroFaceIndex % 6;
 // windy override: if very windy, show the windy face instead of the generic condition icon
 const isWindy = liveData.wind >= 25;
 if(face === 0){
@@ -581,7 +581,7 @@ condEl.textContent = 'WIND SPEED \u00b7 GUST ' + Math.round(liveData.gust) + ' M
 } else if(face === 2){
 tempEl.innerHTML = liveData.uv.toFixed(1);
 condEl.textContent = 'UV INDEX';
-} else {
+} else if(face === 3){
 if(isWindy){
 tempEl.innerHTML = '\ud83d\udca8';
 condEl.textContent = 'WINDY';
@@ -589,6 +589,12 @@ condEl.textContent = 'WINDY';
 tempEl.innerHTML = liveData.condIcon;
 condEl.textContent = liveData.condLabel;
 }
+} else if(face === 4){
+tempEl.innerHTML = liveData.aqi !== null ? liveData.aqi : '--';
+condEl.textContent = 'AIR QUALITY (AQI)';
+} else {
+tempEl.innerHTML = (liveData.pressure !== null ? Math.round(liveData.pressure) : '--') + '<span> MB</span>';
+condEl.textContent = 'PRESSURE';
 }
 }
 // ---------- LIVE IMAGERY (radar / satellite / lightning) ----------
@@ -663,7 +669,9 @@ wind: cur.wind_speed_10m,
 gust: cur.wind_gusts_10m,
 uv: cur.uv_index,
 condIcon: cond.icon,
-condLabel: cond.label
+condLabel: cond.label,
+aqi: liveData.aqi,
+pressure: cur.pressure_msl
 };
 renderHeroFace();
 document.getElementById('statFeels').textContent = Math.round(cur.apparent_temperature) + '\u00b0';
@@ -766,6 +774,8 @@ const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LA
 const res = await fetch(url);
 const data = await res.json();
 let aqi = Math.round(data.current.us_aqi);
+liveData.aqi = aqi;
+renderHeroFace();
 const cat = aqiCategory(aqi);
 document.getElementById('statAQI').textContent = aqi;
 animateNum(document.getElementById('g-aqi').querySelector('b'), aqi, 0, '');
