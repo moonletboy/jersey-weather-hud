@@ -153,9 +153,6 @@ border:1px solid var(--line); border-radius:12px; padding:18px 20px;
 .uv-legend{ display:flex; gap:4px; margin-top:13px; border-radius:6px; overflow:hidden; }
 .uv-seg{ flex:1; text-align:center; font-size:8px; letter-spacing:0.5px; padding:6px 2px; color:#05080d; font-weight:800; opacity:0.32; transition:opacity .3s ease; }
 .uv-seg.active{ opacity:1; box-shadow:0 0 12px rgba(0,0,0,0.25) inset; }
-/* On wider screens (tablet/laptop+), lay the dial and stat blocks out
-side-by-side instead of the full mobile stack, and arrange the four
-stat blocks in a 2x2 grid so desktop keeps a wider, less scroll-heavy view. */
 @media (min-width:860px){
 .hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
 .hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
@@ -223,7 +220,6 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
 .warning-text{ font-size:12px; color:var(--text); line-height:1.6; margin-bottom:8px; }
 .warning-disclaimer{ font-size:10px; color:var(--dim); line-height:1.6; }
 .warning-disclaimer a{ color:var(--cyan); }
-/* STORM SECTION */
 /* 5-DAY FORECAST */
 .forecast-scroll{ display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch; }
 .forecast-scroll::-webkit-scrollbar{ height:6px; }
@@ -253,7 +249,6 @@ border:1px solid rgba(255,176,32,0.25); border-radius:14px; padding:24px;
 .stat-card .val{ font-family:'Orbitron',sans-serif; font-size:30px; font-weight:800; }
 .stat-card .unit{ font-size:11px; color:var(--dim); margin-left:4px; }
 .stat-card .verdict{ margin-top:10px; font-size:10px; letter-spacing:1px; padding:3px 8px; border-radius:4px; display:inline-block; font-weight:700; }
-/* CONVECTIVE OUTLOOK EXPLAINER TOOLTIPS */
 .tip-wrap{ position:relative; cursor:help; outline:none; }
 .info-dot{
 display:inline-flex; align-items:center; justify-content:center;
@@ -302,24 +297,18 @@ border:1px solid var(--line); border-radius:12px; overflow:hidden; background:va
 .corner.bl{ bottom:6px; left:6px; border-right:0; border-top:0; }
 .corner.br{ bottom:6px; right:6px; border-left:0; border-top:0; }
 footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
-.news-ticker{
-width:100%; box-sizing:border-box;
-background:linear-gradient(90deg, var(--bg-panel), var(--bg-panel-2));
-border-top:1px solid var(--line);
-padding:12px 20px;
-display:flex; align-items:center; gap:16px;
-overflow:hidden;
+.news-panel{ grid-column:1 / -1; }
+.globe-spin{ display:inline-block; animation: spin 6s linear infinite; margin-right:7px; }
+.news-panel-body{ padding:26px 26px; min-height:70px; display:flex; align-items:center; }
+.news-panel-headline{
+font-size:19px; line-height:1.5; color:var(--text); text-decoration:none;
+animation: tickerFade 0.6s ease; font-weight:600;
 }
-.news-ticker-tag{
-flex:0 0 auto; font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:2px;
-color:var(--bg); background:var(--cyan); padding:4px 10px; border-radius:4px; font-weight:800;
+.news-panel-headline:hover{ color:var(--cyan); text-decoration:underline; }
+@media (max-width:640px){
+.news-panel-headline{ font-size:15.5px; line-height:1.5; }
+.news-panel-body{ padding:18px 18px; min-height:auto; }
 }
-.news-ticker-headline{
-flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-color:var(--text); text-decoration:none; font-size:12.5px;
-animation: tickerFade 0.6s ease;
-}
-.news-ticker-headline:hover{ color:var(--cyan); text-decoration:underline; }
 @keyframes tickerFade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
 footer b{ color:var(--dim); }
 @keyframes blipfade{ 0%,100%{opacity:0.2;} 50%{opacity:1;} }
@@ -542,16 +531,19 @@ footer b{ color:var(--dim); }
 <div class="panel-head"><span>EARTHQUAKES (PAN &amp; ZOOM) &middot; 500MI</span><span class="dot"></span></div>
 <div id="quake-map" style="width:100%;height:340px;"></div>
 </div>
+<div class="panel news-panel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="panel-head"><span><span class="globe-spin">&#127760;</span>GLOBAL WEATHER NEWS</span><span class="dot"></span></div>
+<div class="news-panel-body">
+<a href="#" id="newsTickerLink" class="news-panel-headline" target="_blank" rel="noopener">Loading headlines&hellip;</a>
+</div>
+</div>
 </div>
 </section>
 <footer>
 <div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS (EARTHQUAKES) &middot; GOV.JE (WARNINGS)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
-</div>
-<div class="news-ticker">
-<span class="news-ticker-tag">GLOBAL WEATHER NEWS</span>
-<a href="#" id="newsTickerLink" class="news-ticker-headline" target="_blank" rel="noopener">Loading headlines&hellip;</a>
 </div>
 <script>
 // ---------- CLOCK ----------
@@ -626,9 +618,6 @@ if(mph<64) return {force:10, label:'STORM', effect:'Trees uprooted; considerable
 if(mph<73) return {force:11, label:'VIOLENT STORM', effect:'Widespread damage to structures and vegetation.'};
 return {force:12, label:'HURRICANE FORCE', effect:'Devastation \u2014 severe widespread damage.'};
 }
-// Pressure trend text, based on rate of change per hour:
-// <1mb/hr = slowly, 1-2mb/hr = steadily, 2mb/hr+ = quickly,
-// falling faster than 3mb/hr = possible bomb cyclogenesis warning.
 function pressureTrendText(diffPerHour){
 const abs = Math.abs(diffPerHour);
 const rising = diffPerHour > 0;
@@ -661,23 +650,9 @@ return {label:'EXTREMELY UNSTABLE', color:RED};
 }
 // ---------- WEATHER FETCH ----------
 const LAT=49.1805, LON=-2.1058;
-// TEST MODE — forces a cold snap so you can verify the "COLD — PRECAUTIONS
-// NEEDED" warning text and the freeze/ice icon render correctly. Set to
-// false (and re-upload) once you've checked it, so the page shows real data.
 const TEST_MODE = true;
 let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014', aqi:null, pressure:null };
 let heroFaceIndex = 0;
-/* ============================================================
-WEATHER WARNINGS
-Set WARNINGS_API_URL to your Apps Script deployment URL
-(same one used for storm reports).
-Manual override: set MANUAL_OVERRIDE_ACTIVE = true and fill
-in MANUAL_WARNING_SEVERITY / MANUAL_WARNING_TEXT to force a
-specific warning regardless of what the automated check finds
-— useful if gov.je's page structure ever changes and breaks
-the parser, or you want to post a warning immediately without
-waiting for the automated check to catch up.
-============================================================ */
 const WARNINGS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
 let MANUAL_OVERRIDE_ACTIVE = true;
 let MANUAL_WARNING_SEVERITY = 'orange'; // none | yellow | orange | red
@@ -762,7 +737,6 @@ condEl.textContent = 'PRESSURE';
 }
 // ---------- LIVE IMAGERY (radar / satellite / lightning) ----------
 function initImagery(){
-// Radar — Leaflet + RainViewer, centered on Jersey with a 200mi ring
 const map = L.map('radar-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
 .setView([LAT, LON], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
@@ -776,15 +750,12 @@ const frame = rv.radar.past[rv.radar.past.length-1];
 L.tileLayer(`${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {opacity:0.75, maxZoom:10}).addTo(map);
 })
 .catch(()=>{});
-// Satellite — Windy embed (pan & zoom)
 document.getElementById('sat-embed').innerHTML =
 `<iframe src="https://embed.windy.com/embed2.html?lat=${LAT}&lon=${LON}&detailLat=${LAT}&detailLon=${LON}&width=650&height=650&zoom=6&level=surface&overlay=satellite&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0C&radarRange=-1"
 frameborder="0" style="width:100%;height:100%;border:0;"></iframe>`;
-// Lightning — Blitzortung.org's own live map (they officially permit iframe embedding of this map)
 document.getElementById('lightning-embed').innerHTML =
 `<iframe src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=1&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#6/${LAT}/${LON}"
 frameborder="0" style="width:100%;height:100%;border:0;"></iframe>`;
-// Earthquakes — live USGS feed, 500mi radius, real client-side query (free, open, CORS-friendly)
 const quakeMap = L.map('quake-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
 .setView([LAT, LON], 5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(quakeMap);
@@ -814,8 +785,7 @@ const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${
 const res = await fetch(url);
 const data = await res.json();
 const cur = data.current;
-if(TEST_MODE){ cur.apparent_temperature = -2; cur.temperature_2m = -2; } // TEST OVERRIDE — remove/disable once verified — testing cold/ice warning
-// trend: compare current temp to ~1hr ago
+if(TEST_MODE){ cur.apparent_temperature = -2; cur.temperature_2m = -2; }
 const hTimesTrend = data.hourly.time;
 const nowIsoTrend = cur.time.slice(0,13);
 let nowIdxTrend = hTimesTrend.findIndex(t => t.slice(0,13) === nowIsoTrend);
@@ -837,7 +807,6 @@ aqi: liveData.aqi,
 pressure: cur.pressure_msl
 };
 renderHeroFace();
-// --- TEMP BLOCK ---
 document.getElementById('tempBlockValue').innerHTML = Math.round(cur.temperature_2m) + '<span class="unit">\u00b0C</span>';
 const feelsCat = feelsLikeCategory(cur.apparent_temperature);
 document.getElementById('tempBlockSub').textContent = 'FEELS LIKE ' + Math.round(cur.apparent_temperature) + '\u00b0 \u00b7 ' + feelsCat.label;
@@ -849,7 +818,6 @@ tempTrendEl.innerHTML = trend + '. ' + feelsCat.advice +
 tempTrendEl.textContent = trend;
 }
 tempTrendEl.style.color = feelsCat.advice ? feelsCat.color : '';
-// --- WIND BLOCK ---
 const compassDirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 const compass = deg => compassDirs[Math.round(deg/22.5) % 16];
 document.getElementById('windBlockValue').innerHTML = Math.round(cur.wind_speed_10m) + ' <span class="unit">MPH</span>';
@@ -861,7 +829,6 @@ const windTrendEl = document.getElementById('windBlockBeaufort');
 windTrendEl.textContent = 'FORCE ' + beaufort.force + ' \u2014 ' + beaufort.label;
 windTrendEl.style.color = windColor(cur.wind_speed_10m);
 document.getElementById('windBlockEffect').textContent = beaufort.effect;
-// --- PRESSURE BLOCK ---
 const pDiff = cur.pressure_msl - data.hourly.pressure_msl[pastIdxTrend];
 document.getElementById('pressureBlockValue').innerHTML = Math.round(cur.pressure_msl) + ' <span class="unit">MB</span>';
 const pIcon = document.getElementById('pressureIcon');
@@ -872,7 +839,6 @@ const pTrendEl = document.getElementById('pressureBlockTrend');
 pTrendEl.textContent = pTrend.text;
 pTrendEl.style.color = pTrend.color;
 pTrendEl.className = 'stat-block-trend' + (pTrend.severe ? ' severe' : '');
-// --- UV BLOCK ---
 document.getElementById('uvBlockValue').textContent = cur.uv_index.toFixed(1);
 const heroUvc = uvCategory(cur.uv_index);
 document.getElementById('uvBlockAdvice').textContent = heroUvc.fairSkinAdvice;
@@ -880,24 +846,19 @@ const uvSegIndex = cur.uv_index < 3 ? 0 : cur.uv_index < 6 ? 1 : cur.uv_index < 
 for(let i=0; i<5; i++){
 document.getElementById('uvSeg'+i).classList.toggle('active', i === uvSegIndex);
 }
-// tiles: temp
 animateNum(document.getElementById('g-temp').querySelector('b'), Math.round(cur.temperature_2m), 0, '\u00b0');
 setGauge('g-temp', Math.min(100, Math.max(0,(cur.temperature_2m+5)/40*100)), CYAN);
 document.getElementById('s-temp').textContent = 'AMBIENT AIR TEMP';
-// humidity
 animateNum(document.getElementById('g-hum').querySelector('b'), Math.round(cur.relative_humidity_2m), 0, '%');
 setGauge('g-hum', cur.relative_humidity_2m, CYAN);
 document.getElementById('s-hum').textContent = 'RELATIVE HUMIDITY';
-// heat index / feels like
 animateNum(document.getElementById('g-heat').querySelector('b'), Math.round(cur.apparent_temperature), 0, '\u00b0');
 setGauge('g-heat', Math.min(100, Math.max(0,(cur.apparent_temperature+5)/40*100)), AMBER);
 document.getElementById('s-heat').textContent = 'FEELS-LIKE TEMP';
-// uv
 const uvc = uvCategory(cur.uv_index);
 animateNum(document.getElementById('g-uv').querySelector('b'), cur.uv_index, 1, '');
 setGauge('g-uv', Math.min(100, cur.uv_index/12*100), uvc.color);
 document.getElementById('s-uv').textContent = uvc.label + ' EXPOSURE';
-// wind speed + gust — dual ring dial, scaled to 60mph
 const windSpeed = cur.wind_speed_10m;
 const windGust = cur.wind_gusts_10m;
 const windEl = document.getElementById('g-wind');
@@ -907,7 +868,6 @@ windEl.style.setProperty('--wind-c', windColor(windSpeed));
 windEl.style.setProperty('--gust-c', windColor(windGust));
 document.getElementById('wind-center').innerHTML = Math.round(windSpeed) + '<small id="wind-gust-label">G' + Math.round(windGust) + '</small>';
 document.getElementById('s-wind').textContent = 'MPH SUSTAINED / GUST';
-// storm indices: find closest hourly index to now
 const hTimes = data.hourly.time;
 const nowIso = cur.time.slice(0,13);
 let idx = hTimes.findIndex(t => t.slice(0,13) === nowIso);
@@ -930,7 +890,6 @@ const dEl = document.getElementById('verdict-dp');
 const dpLabel = dp>=18 ? 'MUGGY / HUMID AIR' : dp>=12 ? 'COMFORTABLE MOISTURE' : 'DRY AIR MASS';
 dEl.textContent = dpLabel; dEl.style.color = CYAN; dEl.style.border = '1px solid '+CYAN;
 const cinEl = document.getElementById('verdict-cin');
-// CIN is a "lid" on convection: near 0 = no cap (storms form freely if CAPE present), very negative = strongly capped
 const cinLabel = cin >= -10 ? 'NO CAP \u2014 UNRESTRICTED' : cin >= -50 ? 'WEAK CAP' : cin >= -150 ? 'MODERATE CAP' : 'STRONG CAP \u2014 SUPPRESSED';
 const cinColor = cin >= -10 ? RED : cin >= -50 ? AMBER : cin >= -150 ? CYAN : GREEN;
 cinEl.textContent = cinLabel; cinEl.style.color = cinColor; cinEl.style.border = '1px solid '+cinColor;
@@ -955,7 +914,6 @@ document.getElementById('s-aqi').textContent = cat.label + ' (US AQI)';
 console.error('air quality fetch failed', e);
 }
 }
-// ---------- 5-DAY FORECAST ----------
 async function loadForecast(){
 const scrollEl = document.getElementById('forecastScroll');
 try{
@@ -964,16 +922,14 @@ const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=$
 const [res, aqiRes] = await Promise.all([fetch(url), fetch(aqiUrl)]);
 const data = await res.json();
 const aqiData = await aqiRes.json();
-const days = data.daily.time; // ['2026-08-29', ...]
+const days = data.daily.time;
 const hTimes = data.hourly.time;
 const aqiTimes = aqiData.hourly.time;
 let cardsHtml = '';
 for(let i=0; i<days.length; i++){
 const dateStr = days[i];
-// gather this day's hourly indices
 const dayHourIdx = [];
 hTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayHourIdx.push(idx); });
-// find the hour with peak CAPE for a physically-consistent storm snapshot
 let peakIdx = dayHourIdx[0];
 let peakCape = -Infinity;
 dayHourIdx.forEach(idx=>{
@@ -984,10 +940,8 @@ const cape = data.hourly.cape[peakIdx] ?? 0;
 const li = data.hourly.lifted_index[peakIdx] ?? 0;
 const dp = data.hourly.dew_point_2m[peakIdx] ?? 0;
 const cin = data.hourly.convective_inhibition[peakIdx] ?? 0;
-// average humidity across the day's hours
 const humVals = dayHourIdx.map(idx => data.hourly.relative_humidity_2m[idx]).filter(v => v !== null);
 const humAvg = humVals.length ? humVals.reduce((a,b)=>a+b,0)/humVals.length : null;
-// max AQI across the day's hours
 const dayAqiIdx = [];
 aqiTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayAqiIdx.push(idx); });
 const aqiVals = dayAqiIdx.map(idx => aqiData.hourly.us_aqi[idx]).filter(v => v !== null);
@@ -1048,11 +1002,10 @@ const link = document.getElementById('newsTickerLink');
 link.textContent = item.title;
 link.href = item.link;
 link.style.animation = 'none';
-void link.offsetWidth; // restart the fade-in animation
+void link.offsetWidth;
 link.style.animation = 'tickerFade 0.6s ease';
 newsIndex++;
 }
-// ---------- reveal tiles on load ----------
 function revealTiles(){
 document.querySelectorAll('.tile').forEach((el,i)=>{
 setTimeout(()=> el.classList.add('show'), i*120);
@@ -1073,10 +1026,10 @@ revealTiles();
 refreshAll();
 initImagery();
 setInterval(refreshAll, 10*60*1000);
-setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000); // auto-rotate hero dial face
+setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000);
 loadNews();
-setInterval(showNextHeadline, 6000); // rotate through headlines already loaded
-setInterval(loadNews, 30*60*1000); // refresh the headline list itself
+setInterval(showNextHeadline, 6000);
+setInterval(loadNews, 30*60*1000);
 </script>
 </body>
 </html>
