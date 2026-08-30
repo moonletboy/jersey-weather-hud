@@ -89,6 +89,19 @@ padding:5px 11px; border-radius:20px; letter-spacing:2px; font-weight:700; font-
 .live-dot{ width:7px;height:7px;border-radius:50%; background:var(--red); animation:pulse 1.4s ease-in-out infinite; }
 @keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(255,75,92,0.6);} 50%{opacity:0.4;} }
 #clock{ color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; }
+.fb-banner{
+display:flex; align-items:center; gap:10px;
+background:linear-gradient(90deg, rgba(24,119,242,0.12), rgba(24,119,242,0.03));
+border:1px solid rgba(24,119,242,0.35); border-radius:10px;
+padding:10px 16px; margin-bottom:22px;
+}
+.fb-icon{
+flex:0 0 auto; width:26px; height:26px; border-radius:50%;
+background:#1877F2; display:flex; align-items:center; justify-content:center;
+}
+.fb-text{ font-size:11.5px; color:var(--text); letter-spacing:0.3px; line-height:1.5; }
+.fb-text b{ color:var(--cyan); }
+@media (max-width:560px){ .fb-text{ font-size:10.5px; } }
 nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
 nav.tabs a{
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
@@ -321,8 +334,8 @@ footer b{ color:var(--dim); }
 <div class="brand">
 <div class="brand-mark"></div>
 <div>
-<h1>JERSEY WEATHER CHAT</h1>
-<span>LIVE OPS &middot; CHANNEL ISLANDS</span>
+<h1>JERSEY WEATHER CHAT LIVE OPS</h1>
+<span>CHANNEL ISLANDS</span>
 </div>
 </div>
 <div class="status">
@@ -330,6 +343,12 @@ footer b{ color:var(--dim); }
 <div id="clock">--:--:--</div>
 </div>
 </header>
+<div class="fb-banner">
+<span class="fb-icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
+</span>
+<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community.</span>
+</div>
 <nav class="tabs">
 <a href="index.html" class="active">LIVE OPS</a>
 <a href="jersey-storm-reports.html">STORM REPORTS</a>
