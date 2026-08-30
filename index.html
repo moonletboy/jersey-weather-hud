@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,6 +253,33 @@ border:1px solid rgba(255,176,32,0.25); border-radius:14px; padding:24px;
 .stat-card .val{ font-family:'Orbitron',sans-serif; font-size:30px; font-weight:800; }
 .stat-card .unit{ font-size:11px; color:var(--dim); margin-left:4px; }
 .stat-card .verdict{ margin-top:10px; font-size:10px; letter-spacing:1px; padding:3px 8px; border-radius:4px; display:inline-block; font-weight:700; }
+/* CONVECTIVE OUTLOOK EXPLAINER TOOLTIPS */
+.tip-wrap{ position:relative; cursor:help; outline:none; }
+.info-dot{
+display:inline-flex; align-items:center; justify-content:center;
+width:13px; height:13px; border-radius:50%; border:1px solid var(--dim);
+color:var(--dim); font-size:9px; margin-left:4px; vertical-align:middle;
+}
+.tip{
+position:absolute; bottom:calc(100% + 10px); left:50%;
+transform:translateX(-50%) translateY(6px);
+width:230px; max-width:70vw;
+background:#04070a; border:1px solid var(--line); border-radius:10px; padding:14px;
+opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+z-index:30; box-shadow:0 12px 30px rgba(0,0,0,0.55); text-align:left;
+}
+.tip-wrap:hover .tip, .tip-wrap:focus .tip, .tip-wrap:focus-within .tip{
+opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);
+}
+.tip-title{ font-family:'Orbitron',sans-serif; font-size:10.5px; letter-spacing:1px; color:var(--cyan); margin-bottom:8px; line-height:1.4; }
+.tip-text{ font-size:10.5px; color:var(--text); line-height:1.55; margin-bottom:11px; }
+.tip-bar{ position:relative; height:8px; border-radius:4px; }
+.tip-marker{ position:absolute; top:-3px; width:2px; height:14px; background:#fff; box-shadow:0 0 6px #fff; left:0%; }
+.tip-scale{ display:flex; justify-content:space-between; font-size:8px; color:var(--dim); margin-top:5px; letter-spacing:0.5px; }
+.cape-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 22%, #ffb020 55%, #ff4b5c 80%, #ff4b5c 100%); }
+.li-bar{ background:linear-gradient(90deg, #ff4b5c 0%, #ffb020 40%, #2de1a0 100%); }
+.dp-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 48%, #ffb020 72%, #ffb020 100%); }
+.cin-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 25%, #ffb020 75%, #ff4b5c 95%, #ff4b5c 100%); }
 .skewt-card{ background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:14px; grid-row:span 1; display:flex; flex-direction:column; }
 .skewt-card .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
 .skewt-img-wrap{ flex:1; display:flex; align-items:center; justify-content:center; background:#04070a; border-radius:6px; min-height:220px; overflow:hidden; position:relative; }
@@ -435,31 +461,55 @@ footer b{ color:var(--dim); }
 <!-- THUNDERSTORM -->
 <section>
 <div class="sec-head storm">
-<h3>CONVECTIVE OUTLOOK</h3>
+<h3>CURRENT CONVECTIVE OUTLOOK</h3>
 <div class="bar"></div>
 <div class="tag">THUNDERSTORM DATA</div>
 </div>
 <div class="storm-wrap">
 <div class="storm-grid">
-<div class="stat-card">
-<div class="lbl">CAPE</div>
+<div class="stat-card tip-wrap" tabindex="0">
+<div class="lbl">CAPE <span class="info-dot">?</span></div>
 <div><span class="val" id="v-cape">--</span><span class="unit">J/kg</span></div>
 <div class="verdict" id="verdict-cape">&mdash;</div>
+<div class="tip">
+<div class="tip-title">CAPE &middot; Convective Available Potential Energy</div>
+<div class="tip-text">The fuel available for a thunderstorm's updraft. Higher values mean more energy is available for storms to grow explosively.</div>
+<div class="tip-bar cape-bar"><span class="tip-marker" id="mk-cape"></span></div>
+<div class="tip-scale"><span>0</span><span>1000</span><span>2500</span><span>4000+</span></div>
 </div>
-<div class="stat-card">
-<div class="lbl">LIFTED INDEX (LI)</div>
+</div>
+<div class="stat-card tip-wrap" tabindex="0">
+<div class="lbl">LIFTED INDEX (LI) <span class="info-dot">?</span></div>
 <div><span class="val" id="v-li">--</span><span class="unit">&deg;C</span></div>
 <div class="verdict" id="verdict-li">&mdash;</div>
+<div class="tip">
+<div class="tip-title">Lifted Index &middot; Atmospheric Stability</div>
+<div class="tip-text">Compares a rising air parcel to its surroundings. Positive = stable air, storms unlikely. Negative = unstable air, storms more likely &mdash; the more negative, the greater the risk.</div>
+<div class="tip-bar li-bar"><span class="tip-marker" id="mk-li"></span></div>
+<div class="tip-scale"><span>-10 (unstable)</span><span>+5 (stable)</span></div>
 </div>
-<div class="stat-card">
-<div class="lbl">DEW POINT (DP)</div>
+</div>
+<div class="stat-card tip-wrap" tabindex="0">
+<div class="lbl">DEW POINT (DP) <span class="info-dot">?</span></div>
 <div><span class="val" id="v-dp">--</span><span class="unit">&deg;C</span></div>
 <div class="verdict" id="verdict-dp">&mdash;</div>
+<div class="tip">
+<div class="tip-title">Dew Point &middot; Moisture in the Air</div>
+<div class="tip-text">The temperature air must cool to for moisture to condense. Higher dew points mean muggier air and more fuel for storms &mdash; below 12&deg;C is dry, above 18&deg;C is humid/muggy.</div>
+<div class="tip-bar dp-bar"><span class="tip-marker" id="mk-dp"></span></div>
+<div class="tip-scale"><span>0&deg; dry</span><span>25&deg; muggy</span></div>
 </div>
-<div class="stat-card">
-<div class="lbl">CONVECTIVE INHIBITION (CIN)</div>
+</div>
+<div class="stat-card tip-wrap" tabindex="0">
+<div class="lbl">CONVECTIVE INHIBITION (CIN) <span class="info-dot">?</span></div>
 <div><span class="val" id="v-cin">--</span><span class="unit">J/kg</span></div>
 <div class="verdict" id="verdict-cin">&mdash;</div>
+<div class="tip">
+<div class="tip-title">CIN &middot; The "Lid" on Storm Formation</div>
+<div class="tip-text">A cap that suppresses storms even when CAPE is present. Near zero means little to no cap &mdash; storms can form freely. Very negative means a strong cap holding storms down.</div>
+<div class="tip-bar cin-bar"><span class="tip-marker" id="mk-cin"></span></div>
+<div class="tip-scale"><span>-200 (capped)</span><span>0 (no cap)</span></div>
+</div>
 </div>
 </div>
 </div>
