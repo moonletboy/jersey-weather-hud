@@ -6,6 +6,8 @@
 <title>JWC SPACE WEATHER — Jersey Weather Command</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
 --bg:#05080d;
@@ -185,6 +187,11 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease; margin
 .kp-table th{ color:var(--dim); letter-spacing:1px; font-weight:700; font-size:10px; }
 .kp-table td{ color:var(--text); }
 .kp-table tr.current-row td{ color:var(--green); font-weight:800; background:rgba(45,225,160,0.06); }
+.vantage-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:16px; max-width:720px; }
+.vantage-list{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:16px; }
+.vantage-card{ background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+.vantage-card .vname{ font-family:'Orbitron',sans-serif; font-size:11.5px; letter-spacing:1px; color:var(--green); margin-bottom:6px; }
+.vantage-card .vdesc{ font-size:11px; color:var(--dim); line-height:1.5; }
 footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
 footer b{ color:var(--dim); }
 </style>
@@ -307,6 +314,24 @@ footer b{ color:var(--dim); }
 </div>
 </section>
 
+<!-- VANTAGE POINTS -->
+<section>
+<div class="sec-head">
+<h3>BEST VANTAGE POINTS</h3>
+<div class="bar"></div>
+<div class="tag">JERSEY</div>
+</div>
+<p class="vantage-explainer">Aurora appears low on the <b>northern</b> horizon, so the best spots are elevated, north-facing, and away from light pollution. These north-coast headlands give the clearest, darkest sightlines out over the sea &mdash; tap a marker for details.</p>
+<div id="vantage-map" style="width:100%;height:340px;border-radius:12px;overflow:hidden;border:1px solid var(--line);"></div>
+<div class="vantage-list">
+<div class="vantage-card"><div class="vname">GROSNEZ POINT</div><div class="vdesc">Jersey's northwest tip &mdash; wide open sea horizon, minimal light pollution, elevated castle ruins headland.</div></div>
+<div class="vantage-card"><div class="vname">PLEMONT POINT</div><div class="vdesc">High north-coast headland with an unobstructed view out to sea, well away from St Helier's glow.</div></div>
+<div class="vantage-card"><div class="vname">SOREL POINT</div><div class="vdesc">The highest point on the island's north coast &mdash; a popular local stargazing spot for a reason.</div></div>
+<div class="vantage-card"><div class="vname">BONNE NUIT / RONEZ</div><div class="vdesc">Elevated headland with a clear north-facing sea view and dark surroundings.</div></div>
+<div class="vantage-card"><div class="vname">BOULEY BAY</div><div class="vdesc">Steep north-coast bay with an open horizon; the viewpoint car park at the top gives good elevation.</div></div>
+</div>
+</section>
+
 <footer>
 <div>DATA: NOAA SPACE WEATHER PREDICTION CENTER (KP INDEX, SOLAR WIND, OVATION AURORA MODEL)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 5 MIN</div>
@@ -423,19 +448,33 @@ document.getElementById('heroCond').textContent = 'SIGNAL LOST \u2014 RETRYING';
 }
 
 // ---------- SOLAR WIND MAG (Bz, Bt) ----------
-function findCol(headers, name){
-return headers.indexOf(name);
+// NOAA retired the old mag-1-minute/plasma-1-minute endpoints in April 2026
+// and replaced them with these — parsing defensively below since NOAA may
+// return either an array-of-objects or an old-style header-row array.
+function latestRecord(rows){
+if(!rows || !rows.length) return null;
+if(Array.isArray(rows[0])){
+// header-row array format: first row is column names
+const headers = rows[0];
+const dataRows = rows.slice(1);
+const activeIdx = headers.indexOf('active');
+const candidates = (activeIdx >= 0 ? dataRows.filter(r => r[activeIdx] === true || r[activeIdx] === 'true') : dataRows);
+const last = (candidates.length ? candidates : dataRows)[((candidates.length ? candidates : dataRows).length)-1];
+const obj = {};
+headers.forEach((h,i)=> obj[h] = last[i]);
+return obj;
+}
+// array-of-objects format
+const candidates = ('active' in rows[0]) ? rows.filter(r => r.active === true) : rows;
+return (candidates.length ? candidates : rows)[(candidates.length ? candidates : rows).length-1];
 }
 async function loadMag(){
 try{
-const res = await fetch('https://services.swpc.noaa.gov/products/solar-wind/mag-1-minute.json');
+const res = await fetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json');
 const rows = await res.json();
-const headers = rows[0];
-const last = rows[rows.length-1];
-const bzIdx = findCol(headers,'bz_gsm');
-const btIdx = findCol(headers,'bt');
-const bz = parseFloat(last[bzIdx]);
-const bt = parseFloat(last[btIdx]);
+const last = latestRecord(rows);
+const bz = parseFloat(last.bz_gsm);
+const bt = parseFloat(last.bt);
 
 document.getElementById('bzBlockValue').innerHTML = (bz>=0?'+':'') + bz.toFixed(1) + ' <span class="unit">nT</span>';
 document.getElementById('bzBlockSub').textContent = bz < 0 ? 'SOUTHWARD \u2014 FAVOURS AURORA' : 'NORTHWARD \u2014 SUPPRESSES AURORA';
@@ -451,17 +490,14 @@ console.error('Solar wind magnetic field fetch failed', e);
 }
 }
 
-// ---------- SOLAR WIND PLASMA (speed, density) ----------
+// ---------- SOLAR WIND / RTSW (speed, density) ----------
 async function loadPlasma(){
 try{
-const res = await fetch('https://services.swpc.noaa.gov/products/solar-wind/plasma-1-minute.json');
+const res = await fetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json');
 const rows = await res.json();
-const headers = rows[0];
-const last = rows[rows.length-1];
-const speedIdx = findCol(headers,'speed');
-const densIdx = findCol(headers,'density');
-const speed = parseFloat(last[speedIdx]);
-const dens = parseFloat(last[densIdx]);
+const last = latestRecord(rows);
+const speed = parseFloat(last.proton_speed);
+const dens = parseFloat(last.proton_density);
 
 document.getElementById('speedBlockValue').innerHTML = Math.round(speed) + ' <span class="unit">KM/S</span>';
 document.getElementById('speedBlockSub').textContent = speed > 600 ? 'ELEVATED \u2014 FAST STREAM' : 'TYPICAL RANGE';
@@ -477,6 +513,23 @@ setGauge('g-dens', Math.min(100, (dens/30)*100), VIOLET);
 }catch(e){
 console.error('Solar wind plasma fetch failed', e);
 }
+}
+
+// ---------- VANTAGE POINT MAP ----------
+const VANTAGE_POINTS = [
+{ name:'Grosnez Point', lat:49.2586, lon:-2.2358, desc:"Jersey's northwest tip \u2014 wide open sea horizon, minimal light pollution, elevated castle ruins headland." },
+{ name:'Plemont Point', lat:49.2465, lon:-2.1975, desc:'High north-coast headland with an unobstructed view out to sea, well away from town light glow.' },
+{ name:'Sorel Point', lat:49.2464, lon:-2.1596, desc:"The highest point on the island's north coast \u2014 a popular local stargazing spot." },
+{ name:'Bonne Nuit / Ronez', lat:49.2450, lon:-2.1290, desc:'Elevated headland with a clear north-facing sea view and dark surroundings.' },
+{ name:'Bouley Bay', lat:49.2379, lon:-2.0912, desc:'Steep north-coast bay with an open horizon; the viewpoint car park at the top gives good elevation.' }
+];
+function initVantageMap(){
+const map = L.map('vantage-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.225, -2.14], 11);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', { maxZoom:14 }).addTo(map);
+VANTAGE_POINTS.forEach(p=>{
+const marker = L.circleMarker([p.lat, p.lon], { radius:9, color:GREEN, weight:2, fillColor:GREEN, fillOpacity:0.45 }).addTo(map);
+marker.bindPopup(`<b>${p.name}</b><br>${p.desc}`);
+});
 }
 
 function refreshOvalImage(){
@@ -502,6 +555,7 @@ stampRefresh();
 }
 revealTiles();
 refreshAll();
+initVantageMap();
 setInterval(refreshAll, 5*60*1000);
 </script>
 </body>
