@@ -129,6 +129,45 @@ border:1px solid var(--line); border-radius:12px; padding:18px 20px;
 .stat-block-value{ font-family:'Orbitron',sans-serif; font-size:32px; font-weight:800; color:var(--text); line-height:1; }
 .stat-block-value .unit{ font-size:14px; color:var(--dim); font-weight:600; margin-left:3px; }
 .stat-block-sub{ font-size:11.5px; color:var(--dim); margin-top:9px; letter-spacing:0.5px; line-height:1.55; }
+.tip-wrap{ position:relative; cursor:help; outline:none; }
+.info-dot{
+display:inline-flex; align-items:center; justify-content:center;
+width:13px; height:13px; border-radius:50%; border:1px solid var(--dim);
+color:var(--dim); font-size:9px; margin-left:4px; vertical-align:middle;
+}
+.tip{
+position:absolute; bottom:calc(100% + 10px); left:0;
+width:250px; max-width:80vw;
+background:#04070a; border:1px solid var(--line); border-radius:10px; padding:14px;
+opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+transform:translateY(6px);
+z-index:30; box-shadow:0 12px 30px rgba(0,0,0,0.55); text-align:left;
+}
+.tip-wrap:hover .tip, .tip-wrap:focus .tip, .tip-wrap:focus-within .tip{
+opacity:1; pointer-events:auto; transform:translateY(0);
+}
+.tip-title{ font-family:'Orbitron',sans-serif; font-size:10.5px; letter-spacing:1px; color:var(--green); margin-bottom:8px; line-height:1.4; }
+.tip-text{ font-size:10.5px; color:var(--text); line-height:1.55; margin-bottom:11px; }
+.tip-bar{ position:relative; height:8px; border-radius:4px; }
+.tip-marker{ position:absolute; top:-3px; width:2px; height:14px; background:#fff; box-shadow:0 0 6px #fff; left:0%; transition:left .5s ease; }
+.tip-scale{ display:flex; justify-content:space-between; font-size:8px; color:var(--dim); margin-top:5px; letter-spacing:0.5px; }
+.kp-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 33%, #ffb020 55%, #ff4b5c 78%, #ff4b5c 100%); }
+.bz-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 42%, #ffb020 50%, #ff4b5c 58%, #ff4b5c 100%); }
+.speed-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 25%, #ffb020 55%, #ff4b5c 80%, #ff4b5c 100%); }
+.dens-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 25%, #ffb020 55%, #ff4b5c 80%, #ff4b5c 100%); }
+.alert-banner{
+display:flex; align-items:flex-start; gap:16px;
+background:var(--bg-panel); border:1px solid var(--green); border-left:5px solid var(--green);
+border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
+}
+.alert-banner.pulse{ animation: alertPulse 1.6s ease-in-out infinite; }
+@keyframes alertPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,75,92,0.35); } 50%{ box-shadow:0 0 0 8px rgba(255,75,92,0); } }
+.alert-icon{ font-size:26px; flex:0 0 auto; line-height:1; }
+.alert-body{ flex:1; }
+.alert-title{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:2px; margin-bottom:6px; }
+.alert-text{ font-size:12px; color:var(--text); line-height:1.6; }
+.cloud-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:16px; max-width:720px; }
+.cloud-explainer b{ color:var(--text); }
 @media (min-width:860px){
 .hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
 .hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
@@ -229,36 +268,76 @@ footer b{ color:var(--dim); }
 </div>
 </div>
 <div class="hero-stack">
-<div class="stat-block">
-<div class="stat-block-label">PLANETARY KP INDEX</div>
+<div class="stat-block tip-wrap" tabindex="0">
+<div class="stat-block-label">PLANETARY KP INDEX <span class="info-dot">?</span></div>
 <div class="stat-block-main">
 <div class="stat-block-value" id="kpBlockValue">--</div>
 </div>
 <div class="stat-block-sub" id="kpBlockSub">&mdash;</div>
+<div class="tip">
+<div class="tip-title">Kp Index &middot; Geomagnetic Activity</div>
+<div class="tip-text">A 0&ndash;9 scale measuring how disturbed Earth's magnetic field is. Higher values mean a stronger geomagnetic storm and the aurora oval expanding further from the poles &mdash; Jersey typically needs Kp 7+ to have any chance.</div>
+<div class="tip-bar kp-bar"><span class="tip-marker" id="mk-kp"></span></div>
+<div class="tip-scale"><span>0 QUIET</span><span>9 EXTREME</span></div>
 </div>
-<div class="stat-block">
-<div class="stat-block-label">IMF BZ (NORTH/SOUTH)</div>
+</div>
+<div class="stat-block tip-wrap" tabindex="0">
+<div class="stat-block-label">IMF BZ (NORTH/SOUTH) <span class="info-dot">?</span></div>
 <div class="stat-block-main">
 <div class="stat-block-value" id="bzBlockValue">-- <span class="unit">nT</span></div>
 </div>
 <div class="stat-block-sub" id="bzBlockSub">&mdash;</div>
+<div class="tip">
+<div class="tip-title">IMF Bz &middot; North-South Field Direction</div>
+<div class="tip-text">The north-south direction of the Sun's magnetic field carried by the solar wind. When it points <b>south (negative)</b> it can connect with Earth's own field, letting energy flood in and power the aurora. North (positive) does the opposite.</div>
+<div class="tip-bar bz-bar"><span class="tip-marker" id="mk-bz"></span></div>
+<div class="tip-scale"><span>-20 SOUTH (GOOD)</span><span>+20 NORTH</span></div>
 </div>
-<div class="stat-block">
-<div class="stat-block-label">SOLAR WIND SPEED</div>
+</div>
+<div class="stat-block tip-wrap" tabindex="0">
+<div class="stat-block-label">SOLAR WIND SPEED <span class="info-dot">?</span></div>
 <div class="stat-block-main">
 <div class="stat-block-value" id="speedBlockValue">-- <span class="unit">KM/S</span></div>
 </div>
 <div class="stat-block-sub" id="speedBlockSub">&mdash;</div>
+<div class="tip">
+<div class="tip-title">Solar Wind Speed</div>
+<div class="tip-text">How fast the stream of charged particles from the Sun is travelling. Typical speeds sit around 300&ndash;450 km/s; faster streams (often from coronal holes or CMEs) hit Earth's field harder and can trigger stronger geomagnetic activity.</div>
+<div class="tip-bar speed-bar"><span class="tip-marker" id="mk-speed"></span></div>
+<div class="tip-scale"><span>250 SLOW</span><span>900+ FAST</span></div>
 </div>
-<div class="stat-block">
-<div class="stat-block-label">SOLAR WIND DENSITY</div>
+</div>
+<div class="stat-block tip-wrap" tabindex="0">
+<div class="stat-block-label">SOLAR WIND DENSITY <span class="info-dot">?</span></div>
 <div class="stat-block-main">
 <div class="stat-block-value" id="densBlockValue">-- <span class="unit">P/CM&sup3;</span></div>
 </div>
 <div class="stat-block-sub" id="densBlockSub">&mdash;</div>
+<div class="tip">
+<div class="tip-title">Solar Wind Density</div>
+<div class="tip-text">How tightly packed the solar wind's particles are. A sudden jump in density &mdash; especially combined with a southward Bz &mdash; often signals a CME impact and can help trigger or intensify a geomagnetic storm.</div>
+<div class="tip-bar dens-bar"><span class="tip-marker" id="mk-dens"></span></div>
+<div class="tip-scale"><span>0 LOW</span><span>30+ HIGH</span></div>
 </div>
 </div>
 </div>
+</div>
+
+<!-- AURORA ALERT -->
+<section>
+<div class="sec-head">
+<h3>AURORA ALERT</h3>
+<div class="bar"></div>
+<div class="tag">AUTO &middot; UPDATES LIVE</div>
+</div>
+<div class="alert-banner" id="alertBanner">
+<div class="alert-icon" id="alertIcon">&#9711;</div>
+<div class="alert-body">
+<div class="alert-title" id="alertTitle">CHECKING CONDITIONS&hellip;</div>
+<div class="alert-text" id="alertText"></div>
+</div>
+</div>
+</section>
 
 <!-- LIVE GAUGES -->
 <section>
@@ -332,6 +411,21 @@ footer b{ color:var(--dim); }
 </div>
 </section>
 
+<!-- SKY CONDITIONS -->
+<section>
+<div class="sec-head">
+<h3>SKY CONDITIONS OVER JERSEY</h3>
+<div class="bar"></div>
+<div class="tag">CLOUD COVER</div>
+</div>
+<p class="cloud-explainer">All the geomagnetic activity in the world won't help if the sky is overcast &mdash; check <b>cloud cover</b> here before heading out. Look for clear or mostly-clear skies, especially to the <b>north</b>, over the viewing window.</p>
+<div class="panel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="panel-head"><span>CLOUD COVER FORECAST (PAN &amp; ZOOM)</span><span class="dot"></span></div>
+<div id="cloud-embed" style="width:100%;height:340px;"></div>
+</div>
+</section>
+
 <footer>
 <div>DATA: NOAA SPACE WEATHER PREDICTION CENTER (KP INDEX, SOLAR WIND, OVATION AURORA MODEL)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 5 MIN</div>
@@ -385,6 +479,69 @@ const frac = kp - lo;
 return KP_BOUNDARY[lo] + (KP_BOUNDARY[hi]-KP_BOUNDARY[lo])*frac;
 }
 
+// ---------- AURORA ALERT — auto-computed from the live Kp reading ----------
+function renderAlert(kp){
+const banner = document.getElementById('alertBanner');
+const icon = document.getElementById('alertIcon');
+const title = document.getElementById('alertTitle');
+const text = document.getElementById('alertText');
+let color, iconChar, titleText, bodyText, urgent = false;
+if(kp < 5){
+color = GREEN; iconChar = '\u2713';
+titleText = 'NO ALERT \u2014 QUIET CONDITIONS';
+bodyText = 'Geomagnetic activity is currently quiet. No realistic aurora chance from Jersey at this level.';
+} else if(kp < 7){
+color = AMBER; iconChar = '\u26a0';
+titleText = 'MINOR-MODERATE STORM (G1\u2013G2)';
+bodyText = 'Geomagnetic activity is elevated. Still well short of what Jersey typically needs, but worth keeping an eye on if it keeps climbing.';
+} else if(kp < 9){
+color = RED; iconChar = '\u26a0';
+titleText = 'STRONG-SEVERE STORM (G3\u2013G4)';
+bodyText = 'Activity has reached a level where aurora MAY become visible from Jersey on a clear, dark night. Check the sky conditions panel below and look north.';
+urgent = true;
+} else {
+color = RED; iconChar = '\u2757';
+titleText = 'EXTREME STORM (G5) \u2014 CHECK SKIES NOW';
+bodyText = 'Extreme geomagnetic storm in progress. This is the level where aurora has historically been seen from Jersey. Get to a dark, north-facing spot if skies are clear.';
+urgent = true;
+}
+banner.style.borderColor = color;
+banner.classList.toggle('pulse', urgent);
+icon.textContent = iconChar; icon.style.color = color;
+title.textContent = titleText; title.style.color = color;
+text.textContent = bodyText;
+}
+
+// ---------- MAIN DIAL — cycles through all 4 live datasets ----------
+let spaceData = { kp:null, kpLabel:'\u2014', kpColor:GREEN, bz:null, speed:null, density:null };
+let heroFaceIndex = 0;
+function renderHeroFace(){
+const valEl = document.getElementById('heroValue');
+const condEl = document.getElementById('heroCond');
+const face = heroFaceIndex % 4;
+if(face === 0){
+if(spaceData.kp === null) return;
+valEl.innerHTML = spaceData.kp.toFixed(1) + '<span class="unit">Kp</span>';
+condEl.textContent = spaceData.kpLabel;
+condEl.style.color = spaceData.kpColor;
+} else if(face === 1){
+if(spaceData.bz === null) return;
+valEl.innerHTML = (spaceData.bz>=0?'+':'') + spaceData.bz.toFixed(1) + '<span class="unit"> nT</span>';
+condEl.textContent = 'IMF BZ (NORTH/SOUTH)';
+condEl.style.color = spaceData.bz < 0 ? GREEN : RED;
+} else if(face === 2){
+if(spaceData.speed === null) return;
+valEl.innerHTML = Math.round(spaceData.speed) + '<span class="unit"> KM/S</span>';
+condEl.textContent = 'SOLAR WIND SPEED';
+condEl.style.color = '';
+} else {
+if(spaceData.density === null) return;
+valEl.innerHTML = spaceData.density.toFixed(1) + '<span class="unit"> P/CM&sup3;</span>';
+condEl.textContent = 'SOLAR WIND DENSITY';
+condEl.style.color = '';
+}
+}
+
 function renderVerdict(kp){
 const boundary = boundaryForKp(kp);
 const diff = boundary - JERSEY_LAT;
@@ -429,9 +586,8 @@ const last = data[data.length-1];
 const kp = parseFloat(last.kp_index ?? last.estimated_kp ?? last.kp);
 const storm = kpStormLabel(kp);
 
-document.getElementById('heroValue').innerHTML = kp.toFixed(1) + '<span class="unit">Kp</span>';
-document.getElementById('heroCond').textContent = storm.label;
-document.getElementById('heroCond').style.color = storm.color;
+spaceData.kp = kp; spaceData.kpLabel = storm.label; spaceData.kpColor = storm.color;
+renderHeroFace();
 
 document.getElementById('kpBlockValue').textContent = kp.toFixed(2);
 document.getElementById('kpBlockSub').textContent = storm.label;
@@ -439,8 +595,10 @@ document.getElementById('kpBlockSub').style.color = storm.color;
 
 animateNum(document.getElementById('g-kp').querySelector('b'), kp, 1, '');
 setGauge('g-kp', kp/9*100, storm.color);
+document.getElementById('mk-kp').style.left = Math.min(100, Math.max(0, kp/9*100)) + '%';
 
 renderVerdict(kp);
+renderAlert(kp);
 }catch(e){
 console.error('Kp index fetch failed', e);
 document.getElementById('heroCond').textContent = 'SIGNAL LOST \u2014 RETRYING';
@@ -476,12 +634,16 @@ const last = latestRecord(rows);
 const bz = parseFloat(last.bz_gsm);
 const bt = parseFloat(last.bt);
 
+spaceData.bz = bz;
+renderHeroFace();
+
 document.getElementById('bzBlockValue').innerHTML = (bz>=0?'+':'') + bz.toFixed(1) + ' <span class="unit">nT</span>';
 document.getElementById('bzBlockSub').textContent = bz < 0 ? 'SOUTHWARD \u2014 FAVOURS AURORA' : 'NORTHWARD \u2014 SUPPRESSES AURORA';
 document.getElementById('bzBlockSub').style.color = bz < -3 ? GREEN : (bz < 0 ? AMBER : '');
 
 animateNum(document.getElementById('g-bz').querySelector('b'), bz, 1, '');
 setGauge('g-bz', Math.min(100, (Math.abs(bz)/20)*100), bz < 0 ? GREEN : RED);
+document.getElementById('mk-bz').style.left = Math.min(100, Math.max(0, (bz+20)/40*100)) + '%';
 
 animateNum(document.getElementById('g-bt').querySelector('b'), bt, 1, '');
 setGauge('g-bt', Math.min(100, (bt/30)*100), CYAN);
@@ -499,6 +661,9 @@ const last = latestRecord(rows);
 const speed = parseFloat(last.proton_speed);
 const dens = parseFloat(last.proton_density);
 
+spaceData.speed = speed; spaceData.density = dens;
+renderHeroFace();
+
 document.getElementById('speedBlockValue').innerHTML = Math.round(speed) + ' <span class="unit">KM/S</span>';
 document.getElementById('speedBlockSub').textContent = speed > 600 ? 'ELEVATED \u2014 FAST STREAM' : 'TYPICAL RANGE';
 
@@ -507,9 +672,11 @@ document.getElementById('densBlockSub').textContent = dens > 10 ? 'ELEVATED DENS
 
 animateNum(document.getElementById('g-speed').querySelector('b'), Math.round(speed), 0, '');
 setGauge('g-speed', Math.min(100, (speed/900)*100), speed>600?AMBER:VIOLET);
+document.getElementById('mk-speed').style.left = Math.min(100, Math.max(0, (speed-250)/(900-250)*100)) + '%';
 
 animateNum(document.getElementById('g-dens').querySelector('b'), dens, 1, '');
 setGauge('g-dens', Math.min(100, (dens/30)*100), VIOLET);
+document.getElementById('mk-dens').style.left = Math.min(100, Math.max(0, dens/30*100)) + '%';
 }catch(e){
 console.error('Solar wind plasma fetch failed', e);
 }
@@ -530,6 +697,14 @@ VANTAGE_POINTS.forEach(p=>{
 const marker = L.circleMarker([p.lat, p.lon], { radius:9, color:GREEN, weight:2, fillColor:GREEN, fillOpacity:0.45 }).addTo(map);
 marker.bindPopup(`<b>${p.name}</b><br>${p.desc}`);
 });
+}
+
+// ---------- CLOUD COVER (Windy embed, pan & zoom) ----------
+function initCloudEmbed(){
+const LAT=49.1805, LON=-2.1058;
+document.getElementById('cloud-embed').innerHTML =
+`<iframe src="https://embed.windy.com/embed2.html?lat=${LAT}&lon=${LON}&detailLat=${LAT}&detailLon=${LON}&width=650&height=650&zoom=7&level=surface&overlay=clouds&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0C&radarRange=-1"
+frameborder="0" style="width:100%;height:100%;border:0;"></iframe>`;
 }
 
 function refreshOvalImage(){
@@ -556,7 +731,9 @@ stampRefresh();
 revealTiles();
 refreshAll();
 initVantageMap();
+initCloudEmbed();
 setInterval(refreshAll, 5*60*1000);
+setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000);
 </script>
 </body>
 </html>
