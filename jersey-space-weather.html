@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWC SPACE WEATHER — Jersey Weather Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#05080d;
+--bg-panel:#0b131c;
+--bg-panel-2:#0e1822;
+--line:rgba(45,225,160,0.14);
+--cyan:#4cd3ff;
+--green:#2de1a0;
+--amber:#ffb020;
+--red:#ff4b5c;
+--violet:#b98aff;
+--text:#e9f6f5;
+--dim:#5f7c88;
+--dim2:#3a4e58;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+background:
+radial-gradient(ellipse at 20% -10%, rgba(45,225,160,0.09), transparent 55%),
+radial-gradient(ellipse at 90% 10%, rgba(76,211,255,0.05), transparent 50%),
+var(--bg);
+color:var(--text);
+font-family:'JetBrains Mono', monospace;
+min-height:100vh;
+overflow-x:hidden;
+position:relative;
+}
+body::before{
+content:"";
+position:fixed; inset:0;
+background-image:
+linear-gradient(var(--line) 1px, transparent 1px),
+linear-gradient(90deg, var(--line) 1px, transparent 1px);
+background-size:42px 42px;
+opacity:0.35;
+pointer-events:none;
+z-index:0;
+mask-image: radial-gradient(ellipse at 50% 0%, black, transparent 75%);
+}
+.scanline{
+position:fixed; left:0; right:0; height:120px;
+background:linear-gradient(180deg, transparent, rgba(45,225,160,0.06), transparent);
+animation:scan 7s linear infinite;
+pointer-events:none; z-index:1;
+}
+@keyframes scan{ 0%{top:-120px;} 100%{top:100vh;} }
+.wrap{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:22px 20px 70px; }
+header{
+display:flex; align-items:center; justify-content:space-between;
+flex-wrap:wrap; gap:14px;
+border-bottom:1px solid var(--line);
+padding-bottom:16px; margin-bottom:18px;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+width:38px;height:38px; border-radius:8px;
+background:conic-gradient(from 0deg, var(--green), var(--violet), var(--cyan), var(--green));
+display:flex; align-items:center; justify-content:center;
+animation:spin 6s linear infinite;
+box-shadow:0 0 18px rgba(45,225,160,0.5);
+}
+.brand-mark::after{
+content:"◉"; color:#05080d; font-size:16px; font-weight:900;
+animation:spin 6s linear infinite reverse;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.brand h1{ font-family:'Orbitron', sans-serif; font-weight:900; font-size:19px; letter-spacing:2px; color:var(--text); }
+.brand span{ display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:2px; }
+.status{ display:flex; align-items:center; gap:18px; font-size:12px; color:var(--dim); }
+.live-pill{ display:flex; align-items:center; gap:7px; border:1px solid var(--green); color:var(--green); padding:5px 11px; border-radius:20px; letter-spacing:2px; font-weight:700; font-size:11px; }
+.live-dot{ width:7px;height:7px;border-radius:50%; background:var(--green); animation:pulse 1.4s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+#clock{ color:var(--green); font-size:14px; font-weight:700; letter-spacing:1px; }
+nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
+nav.tabs a{
+font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
+color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+transition:all .2s ease;
+}
+nav.tabs a:hover{ color:var(--text); border-color:var(--green); }
+nav.tabs a.active{ color:var(--bg); background:var(--green); border-color:var(--green); font-weight:700; }
+/* HERO */
+.hero{
+display:flex; flex-direction:column; align-items:center; gap:22px;
+padding:30px 10px 46px; border-bottom:1px solid var(--line); margin-bottom:36px;
+}
+.radar-hero{
+position:relative; width:280px; height:280px; margin:0 auto;
+border-radius:50%;
+border:1px solid var(--line);
+background:
+repeating-radial-gradient(circle, transparent 0, transparent 42px, var(--line) 43px),
+var(--bg-panel);
+}
+.radar-hero .sweep{
+position:absolute; inset:0; border-radius:50%;
+background:conic-gradient(from 0deg, rgba(45,225,160,0.55), transparent 34%);
+animation:sweep 5s linear infinite;
+mix-blend-mode:screen;
+}
+@keyframes sweep{ to{ transform:rotate(360deg); } }
+.radar-hero .ring{ position:absolute; inset:0; border-radius:50%; border:1px solid rgba(45,225,160,0.25); }
+.radar-hero .center{
+position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+text-align:center; padding:0 20px;
+}
+.radar-hero .dial-value{ font-family:'Orbitron',sans-serif; font-size:54px; font-weight:900; color:var(--text); text-shadow:0 0 22px rgba(45,225,160,0.4); line-height:1; }
+.radar-hero .dial-value .unit{ font-size:16px; color:var(--green); vertical-align:top; margin-left:4px; }
+.radar-hero .cond{ font-size:12.5px; letter-spacing:2px; color:var(--green); margin-top:12px; }
+.radar-hero .loc-mini{ font-size:9px; letter-spacing:1.5px; color:var(--dim); margin-top:6px; }
+.hero-stack{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:14px; }
+.stat-block{
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:18px 20px;
+}
+.stat-block-label{ font-size:10px; letter-spacing:3px; color:var(--dim); margin-bottom:9px; }
+.stat-block-main{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.stat-block-value{ font-family:'Orbitron',sans-serif; font-size:32px; font-weight:800; color:var(--text); line-height:1; }
+.stat-block-value .unit{ font-size:14px; color:var(--dim); font-weight:600; margin-left:3px; }
+.stat-block-sub{ font-size:11.5px; color:var(--dim); margin-top:9px; letter-spacing:0.5px; line-height:1.55; }
+@media (min-width:860px){
+.hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
+.hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
+}
+/* SECTION LABELS */
+.sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.sec-head h3{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap; }
+.sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
+.sec-head .tag{ font-size:10px; color:var(--bg); background:var(--green); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+section{ margin-bottom:52px; }
+/* GAUGES GRID */
+.grid5{ display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+@media (max-width:1080px){ .grid5{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:560px){ .grid5{ grid-template-columns:repeat(2,1fr); } }
+.tile{
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:10px; padding:18px 14px;
+text-align:center; position:relative; overflow:hidden;
+transition:transform .25s ease, box-shadow .25s ease;
+opacity:0; transform:translateY(14px);
+}
+.tile.show{ opacity:1; transform:translateY(0); transition:opacity .5s ease, transform .5s ease; }
+.tile:hover{ transform:translateY(-4px); box-shadow:0 10px 30px rgba(45,225,160,0.12); }
+.tile .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:12px; }
+.gauge{ width:84px; height:84px; border-radius:50%; margin:0 auto 10px; position:relative;
+background:conic-gradient(var(--gc,var(--green)) calc(var(--pct,0)*1%), rgba(255,255,255,0.06) 0); }
+.gauge::before{ content:""; position:absolute; inset:7px; border-radius:50%; background:var(--bg-panel); }
+.gauge b{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:var(--text); }
+.tile .sub{ font-size:10px; color:var(--dim2); margin-top:4px; letter-spacing:1px; }
+/* VERDICT PANEL */
+.verdict-panel{
+display:flex; align-items:flex-start; gap:16px;
+background:var(--bg-panel); border:1px solid var(--green); border-left:5px solid var(--green);
+border-radius:10px; padding:18px 20px; transition: border-color .3s ease; margin-bottom:18px;
+}
+.verdict-icon{ font-size:26px; color:var(--green); flex:0 0 auto; line-height:1; }
+.verdict-body{ flex:1; }
+.verdict-title{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:2px; color:var(--green); margin-bottom:6px; }
+.verdict-text{ font-size:12px; color:var(--text); line-height:1.6; margin-bottom:6px; }
+.verdict-sub{ font-size:10px; color:var(--dim); line-height:1.6; }
+.oval-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:16px; max-width:720px; }
+.oval-explainer b{ color:var(--text); }
+/* IMAGERY PANEL */
+.panel{ border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg-panel); position:relative; }
+.panel-head{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
+.panel-head span{ font-size:11px; letter-spacing:2px; color:var(--green); font-weight:700; }
+.panel-head .dot{ width:6px;height:6px;border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 1.6s infinite; }
+.panel img{ width:100%; display:block; }
+.corner{ position:absolute; width:14px; height:14px; border:2px solid var(--green); opacity:0.6; }
+.corner.tl{ top:6px; left:6px; border-right:0; border-bottom:0; }
+.corner.tr{ top:6px; right:6px; border-left:0; border-bottom:0; }
+.corner.bl{ bottom:6px; left:6px; border-right:0; border-top:0; }
+.corner.br{ bottom:6px; right:6px; border-left:0; border-top:0; }
+.kp-table{ width:100%; border-collapse:collapse; margin-top:16px; font-size:11px; }
+.kp-table th, .kp-table td{ padding:8px 10px; text-align:center; border-bottom:1px solid var(--line); }
+.kp-table th{ color:var(--dim); letter-spacing:1px; font-weight:700; font-size:10px; }
+.kp-table td{ color:var(--text); }
+.kp-table tr.current-row td{ color:var(--green); font-weight:800; background:rgba(45,225,160,0.06); }
+footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
+footer b{ color:var(--dim); }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+<header>
+<div class="brand">
+<div class="brand-mark"></div>
+<div>
+<h1>JERSEY WEATHER CHAT LIVE OPS</h1>
+<span>SPACE WEATHER &middot; AURORA WATCH</span>
+</div>
+</div>
+<div class="status">
+<div class="live-pill"><span class="live-dot"></span>LIVE</div>
+<div id="clock">--:--:--</div>
+</div>
+</header>
+<nav class="tabs">
+<a href="index.html">LIVE OPS</a>
+<a href="jersey-storm-reports.html">STORM REPORTS</a>
+<a href="jersey-space-weather.html" class="active">SPACE WEATHER</a>
+</nav>
+
+<div class="hero">
+<div class="radar-hero" id="radarHero">
+<div class="ring"></div>
+<div class="sweep"></div>
+<div class="center">
+<div class="dial-value" id="heroValue">--<span class="unit">Kp</span></div>
+<div class="cond" id="heroCond">ACQUIRING SIGNAL&hellip;</div>
+<div class="loc-mini">49.18&deg;N &middot; 2.11&deg;W &middot; JERSEY, CI</div>
+</div>
+</div>
+<div class="hero-stack">
+<div class="stat-block">
+<div class="stat-block-label">PLANETARY KP INDEX</div>
+<div class="stat-block-main">
+<div class="stat-block-value" id="kpBlockValue">--</div>
+</div>
+<div class="stat-block-sub" id="kpBlockSub">&mdash;</div>
+</div>
+<div class="stat-block">
+<div class="stat-block-label">IMF BZ (NORTH/SOUTH)</div>
+<div class="stat-block-main">
+<div class="stat-block-value" id="bzBlockValue">-- <span class="unit">nT</span></div>
+</div>
+<div class="stat-block-sub" id="bzBlockSub">&mdash;</div>
+</div>
+<div class="stat-block">
+<div class="stat-block-label">SOLAR WIND SPEED</div>
+<div class="stat-block-main">
+<div class="stat-block-value" id="speedBlockValue">-- <span class="unit">KM/S</span></div>
+</div>
+<div class="stat-block-sub" id="speedBlockSub">&mdash;</div>
+</div>
+<div class="stat-block">
+<div class="stat-block-label">SOLAR WIND DENSITY</div>
+<div class="stat-block-main">
+<div class="stat-block-value" id="densBlockValue">-- <span class="unit">P/CM&sup3;</span></div>
+</div>
+<div class="stat-block-sub" id="densBlockSub">&mdash;</div>
+</div>
+</div>
+</div>
+
+<!-- LIVE GAUGES -->
+<section>
+<div class="sec-head">
+<h3>LIVE SPACE WEATHER</h3>
+<div class="bar"></div>
+<div class="tag">UPDATED LIVE</div>
+</div>
+<div class="grid5" id="grid5">
+<div class="tile"><div class="lbl">KP INDEX</div><div class="gauge" id="g-kp"><b>--</b></div><div class="sub" id="s-kp">GEOMAGNETIC ACTIVITY</div></div>
+<div class="tile"><div class="lbl">IMF BZ</div><div class="gauge" id="g-bz"><b>--</b></div><div class="sub" id="s-bz">nT &middot; NORTH/SOUTH</div></div>
+<div class="tile"><div class="lbl">IMF BT</div><div class="gauge" id="g-bt"><b>--</b></div><div class="sub" id="s-bt">nT &middot; TOTAL FIELD</div></div>
+<div class="tile"><div class="lbl">SOLAR WIND SPEED</div><div class="gauge" id="g-speed"><b>--</b></div><div class="sub" id="s-speed">KM/S</div></div>
+<div class="tile"><div class="lbl">SOLAR WIND DENSITY</div><div class="gauge" id="g-dens"><b>--</b></div><div class="sub" id="s-dens">PROTONS/CM&sup3;</div></div>
+</div>
+</section>
+
+<!-- AURORA OVAL VS JERSEY -->
+<section>
+<div class="sec-head">
+<h3>AURORA OVAL &middot; JERSEY</h3>
+<div class="bar"></div>
+<div class="tag">VISIBILITY CHECK</div>
+</div>
+<p class="oval-explainer">The aurora forms an oval-shaped ring around the magnetic pole. As geomagnetic activity (Kp) rises, that ring expands further from the pole and can push south enough to reach Jersey's latitude &mdash; <b>49.18&deg;N</b>. Because Jersey sits much further south than typical aurora-viewing latitudes, this only happens during severe-to-extreme geomagnetic storms (Kp 7&ndash;9). The estimate below is a rough guide based on Kp, not a precise real-time position.</p>
+<div class="verdict-panel" id="verdictPanel">
+<div class="verdict-icon" id="verdictIcon">&#9711;</div>
+<div class="verdict-body">
+<div class="verdict-title" id="verdictTitle">CALCULATING&hellip;</div>
+<div class="verdict-text" id="verdictText"></div>
+<div class="verdict-sub" id="verdictSub"></div>
+</div>
+</div>
+<table class="kp-table" id="kpTable">
+<thead><tr><th>KP</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr></thead>
+<tbody>
+<tr><td>OVAL EDGE (&deg;N, APPROX)</td><td>66.5</td><td>64.5</td><td>62.4</td><td>60.4</td><td>58.3</td><td>56.3</td><td>54.2</td><td>52.2</td><td>50.1</td><td>48.1</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- IMAGERY -->
+<section>
+<div class="sec-head">
+<h3>LIVE AURORA FORECAST MAP</h3>
+<div class="bar"></div>
+<div class="tag">NOAA OVATION</div>
+</div>
+<div class="panel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="panel-head"><span>NORTHERN HEMISPHERE AURORA OVAL (30-MIN FORECAST)</span><span class="dot"></span></div>
+<img id="ovalImg" src="https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg" alt="NOAA aurora oval forecast, northern hemisphere">
+</div>
+</section>
+
+<footer>
+<div>DATA: NOAA SPACE WEATHER PREDICTION CENTER (KP INDEX, SOLAR WIND, OVATION AURORA MODEL)</div>
+<div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 5 MIN</div>
+</footer>
+</div>
+
+<script>
+// ---------- CLOCK ----------
+function tickClock(){
+const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
+document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
+}
+tickClock(); setInterval(tickClock, 1000);
+
+const GREEN='#2de1a0', AMBER='#ffb020', RED='#ff4b5c', CYAN='#4cd3ff', VIOLET='#b98aff';
+const JERSEY_LAT = 49.18;
+// Rough NOAA-derived table: Kp -> approximate equatorward edge of the
+// aurora oval, in degrees latitude. Used only as a simple guide.
+const KP_BOUNDARY = [66.5,64.5,62.4,60.4,58.3,56.3,54.2,52.2,50.1,48.1];
+
+function setGauge(id, pct, color){
+const el = document.getElementById(id);
+el.style.setProperty('--pct', Math.max(0, Math.min(100, pct)));
+el.style.setProperty('--gc', color);
+}
+function animateNum(el, target, decimals=0, suffix=''){
+let start=0; const dur=900; const t0=performance.now();
+function step(t){
+const p = Math.min(1, (t-t0)/dur);
+const val = start + (target-start)*p;
+el.textContent = val.toFixed(decimals) + suffix;
+if(p<1) requestAnimationFrame(step);
+}
+requestAnimationFrame(step);
+}
+
+function kpStormLabel(kp){
+if(kp < 4) return {label:'QUIET', color:GREEN};
+if(kp < 5) return {label:'UNSETTLED', color:GREEN};
+if(kp < 6) return {label:'MINOR STORM (G1)', color:AMBER};
+if(kp < 7) return {label:'MODERATE STORM (G2)', color:AMBER};
+if(kp < 8) return {label:'STRONG STORM (G3)', color:RED};
+if(kp < 9) return {label:'SEVERE STORM (G4)', color:RED};
+return {label:'EXTREME STORM (G5)', color:RED};
+}
+
+function boundaryForKp(kp){
+const lo = Math.max(0, Math.min(9, Math.floor(kp)));
+const hi = Math.min(9, lo+1);
+const frac = kp - lo;
+return KP_BOUNDARY[lo] + (KP_BOUNDARY[hi]-KP_BOUNDARY[lo])*frac;
+}
+
+function renderVerdict(kp){
+const boundary = boundaryForKp(kp);
+const diff = boundary - JERSEY_LAT;
+const panel = document.getElementById('verdictPanel');
+const icon = document.getElementById('verdictIcon');
+const title = document.getElementById('verdictTitle');
+const text = document.getElementById('verdictText');
+const sub = document.getElementById('verdictSub');
+let color, iconChar, titleText, bodyText;
+if(diff <= 0){
+color = GREEN; iconChar = '\u2713';
+titleText = 'AURORA MAY BE VISIBLE FROM JERSEY';
+bodyText = `The estimated oval edge (~${boundary.toFixed(1)}\u00b0N) is at or south of Jersey's latitude (49.18\u00b0N). Look north, away from light pollution, if skies are clear.`;
+} else if(diff <= 4){
+color = AMBER; iconChar = '\u26a0';
+titleText = 'CLOSE, BUT UNLIKELY';
+bodyText = `The estimated oval edge (~${boundary.toFixed(1)}\u00b0N) is only ${diff.toFixed(1)}\u00b0 north of Jersey. A slight uptick in activity could bring a faint glow onto the northern horizon on a very clear, dark night.`;
+} else {
+color = RED; iconChar = '\u2716';
+titleText = 'NOT VISIBLE FROM JERSEY RIGHT NOW';
+bodyText = `The estimated oval edge (~${boundary.toFixed(1)}\u00b0N) is ${diff.toFixed(1)}\u00b0 north of Jersey's latitude. Aurora at this activity level stays confined to much higher latitudes.`;
+}
+panel.style.borderColor = color;
+icon.textContent = iconChar; icon.style.color = color;
+title.textContent = titleText; title.style.color = color;
+text.textContent = bodyText;
+sub.textContent = 'Jersey: 49.18\u00b0N \u00b7 Estimated oval edge: ~' + boundary.toFixed(1) + '\u00b0N \u00b7 Based on current Kp only, not a precise live position.';
+
+// highlight the matching column in the reference table
+document.querySelectorAll('#kpTable td').forEach(td => td.parentElement.classList.remove('current-row'));
+const roundedKp = Math.max(0, Math.min(9, Math.round(kp)));
+const row = document.querySelector('#kpTable tbody tr');
+if(row) row.classList.add('current-row');
+}
+
+// ---------- KP INDEX ----------
+async function loadKp(){
+try{
+const res = await fetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
+const data = await res.json();
+const last = data[data.length-1];
+const kp = parseFloat(last.kp_index ?? last.estimated_kp ?? last.kp);
+const storm = kpStormLabel(kp);
+
+document.getElementById('heroValue').innerHTML = kp.toFixed(1) + '<span class="unit">Kp</span>';
+document.getElementById('heroCond').textContent = storm.label;
+document.getElementById('heroCond').style.color = storm.color;
+
+document.getElementById('kpBlockValue').textContent = kp.toFixed(2);
+document.getElementById('kpBlockSub').textContent = storm.label;
+document.getElementById('kpBlockSub').style.color = storm.color;
+
+animateNum(document.getElementById('g-kp').querySelector('b'), kp, 1, '');
+setGauge('g-kp', kp/9*100, storm.color);
+
+renderVerdict(kp);
+}catch(e){
+console.error('Kp index fetch failed', e);
+document.getElementById('heroCond').textContent = 'SIGNAL LOST \u2014 RETRYING';
+}
+}
+
+// ---------- SOLAR WIND MAG (Bz, Bt) ----------
+function findCol(headers, name){
+return headers.indexOf(name);
+}
+async function loadMag(){
+try{
+const res = await fetch('https://services.swpc.noaa.gov/products/solar-wind/mag-1-minute.json');
+const rows = await res.json();
+const headers = rows[0];
+const last = rows[rows.length-1];
+const bzIdx = findCol(headers,'bz_gsm');
+const btIdx = findCol(headers,'bt');
+const bz = parseFloat(last[bzIdx]);
+const bt = parseFloat(last[btIdx]);
+
+document.getElementById('bzBlockValue').innerHTML = (bz>=0?'+':'') + bz.toFixed(1) + ' <span class="unit">nT</span>';
+document.getElementById('bzBlockSub').textContent = bz < 0 ? 'SOUTHWARD \u2014 FAVOURS AURORA' : 'NORTHWARD \u2014 SUPPRESSES AURORA';
+document.getElementById('bzBlockSub').style.color = bz < -3 ? GREEN : (bz < 0 ? AMBER : '');
+
+animateNum(document.getElementById('g-bz').querySelector('b'), bz, 1, '');
+setGauge('g-bz', Math.min(100, (Math.abs(bz)/20)*100), bz < 0 ? GREEN : RED);
+
+animateNum(document.getElementById('g-bt').querySelector('b'), bt, 1, '');
+setGauge('g-bt', Math.min(100, (bt/30)*100), CYAN);
+}catch(e){
+console.error('Solar wind magnetic field fetch failed', e);
+}
+}
+
+// ---------- SOLAR WIND PLASMA (speed, density) ----------
+async function loadPlasma(){
+try{
+const res = await fetch('https://services.swpc.noaa.gov/products/solar-wind/plasma-1-minute.json');
+const rows = await res.json();
+const headers = rows[0];
+const last = rows[rows.length-1];
+const speedIdx = findCol(headers,'speed');
+const densIdx = findCol(headers,'density');
+const speed = parseFloat(last[speedIdx]);
+const dens = parseFloat(last[densIdx]);
+
+document.getElementById('speedBlockValue').innerHTML = Math.round(speed) + ' <span class="unit">KM/S</span>';
+document.getElementById('speedBlockSub').textContent = speed > 600 ? 'ELEVATED \u2014 FAST STREAM' : 'TYPICAL RANGE';
+
+document.getElementById('densBlockValue').innerHTML = dens.toFixed(1) + ' <span class="unit">P/CM&sup3;</span>';
+document.getElementById('densBlockSub').textContent = dens > 10 ? 'ELEVATED DENSITY' : 'TYPICAL RANGE';
+
+animateNum(document.getElementById('g-speed').querySelector('b'), Math.round(speed), 0, '');
+setGauge('g-speed', Math.min(100, (speed/900)*100), speed>600?AMBER:VIOLET);
+
+animateNum(document.getElementById('g-dens').querySelector('b'), dens, 1, '');
+setGauge('g-dens', Math.min(100, (dens/30)*100), VIOLET);
+}catch(e){
+console.error('Solar wind plasma fetch failed', e);
+}
+}
+
+function refreshOvalImage(){
+const img = document.getElementById('ovalImg');
+img.src = 'https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg?t=' + Date.now();
+}
+
+function revealTiles(){
+document.querySelectorAll('.tile').forEach((el,i)=>{
+setTimeout(()=> el.classList.add('show'), i*120);
+});
+}
+function stampRefresh(){
+const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false };
+document.getElementById('lastRefresh').textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
+}
+function refreshAll(){
+loadKp();
+loadMag();
+loadPlasma();
+refreshOvalImage();
+stampRefresh();
+}
+revealTiles();
+refreshAll();
+setInterval(refreshAll, 5*60*1000);
+</script>
+</body>
+</html>
