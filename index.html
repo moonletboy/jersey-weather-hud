@@ -55,7 +55,6 @@ pointer-events:none; z-index:1;
 }
 @keyframes scan{ 0%{top:-120px;} 100%{top:100vh;} }
 .wrap{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:22px 20px 70px; }
-/* HEADER */
 header{
 display:flex; align-items:center; justify-content:space-between;
 flex-wrap:wrap; gap:14px;
@@ -102,6 +101,22 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .fb-text{ font-size:11.5px; color:var(--text); letter-spacing:0.3px; line-height:1.5; }
 .fb-text b{ color:var(--cyan); }
 @media (max-width:560px){ .fb-text{ font-size:10.5px; } }
+.special-msg{
+display:flex; align-items:flex-start; gap:14px;
+background:linear-gradient(90deg, rgba(255,75,92,0.14), rgba(255,75,92,0.03));
+border:1px solid rgba(255,75,92,0.45); border-left:5px solid var(--red);
+border-radius:10px; padding:16px 18px; margin-bottom:22px;
+}
+.special-msg-icon{ font-size:26px; flex:0 0 auto; line-height:1; animation: specialPulse 1s ease-in-out infinite; }
+.special-msg.inactive{ border-color:var(--line); border-left-color:var(--dim2); background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); }
+.special-msg.inactive .special-msg-icon{ animation:none; opacity:0.45; }
+.special-msg.inactive .special-msg-label{ color:var(--dim); }
+.special-msg.inactive .special-msg-text{ color:var(--dim); font-weight:600; }
+@keyframes specialPulse{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.45; transform:scale(1.18); } }
+.special-msg-body{ flex:1; }
+.special-msg-label{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2.5px; color:var(--red); margin-bottom:7px; font-weight:800; }
+.special-msg-text{ font-size:14.5px; font-weight:800; color:var(--text); line-height:1.5; margin-bottom:7px; }
+.special-msg-meta{ font-size:10.5px; color:var(--dim); letter-spacing:0.5px; }
 nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
 nav.tabs a{
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
@@ -110,7 +125,6 @@ transition:all .2s ease;
 }
 nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
 nav.tabs a.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700; }
-/* HERO */
 .hero{
 display:flex; flex-direction:column; align-items:center; gap:22px;
 padding:30px 10px 46px; border-bottom:1px solid var(--line); margin-bottom:36px;
@@ -170,7 +184,6 @@ border:1px solid var(--line); border-radius:12px; padding:18px 20px;
 .hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
 .hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
 }
-/* SECTION LABELS */
 .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
 .sec-head h3{
 font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap;
@@ -182,7 +195,6 @@ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-spa
 .sec-head.imagery .tag{ background:var(--cyan); }
 .sec-head.imagery h3{ color:var(--cyan); }
 section{ margin-bottom:52px; }
-/* CONDITIONS GRID */
 .grid5{ display:grid; grid-template-columns:repeat(6,1fr); gap:16px; }
 @media (max-width:1080px){ .grid5{ grid-template-columns:repeat(3,1fr); } }
 @media (max-width:560px){ .grid5{ grid-template-columns:repeat(2,1fr); } }
@@ -233,7 +245,6 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
 .warning-text{ font-size:12px; color:var(--text); line-height:1.6; margin-bottom:8px; }
 .warning-disclaimer{ font-size:10px; color:var(--dim); line-height:1.6; }
 .warning-disclaimer a{ color:var(--cyan); }
-/* 5-DAY FORECAST */
 .forecast-scroll{ display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch; }
 .forecast-scroll::-webkit-scrollbar{ height:6px; }
 .forecast-scroll::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
@@ -294,7 +305,6 @@ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);
 .skewt-img-wrap img{ max-width:100%; max-height:320px; display:block; filter:brightness(0.95) contrast(1.05); }
 .skewt-fallback{ text-align:center; padding:20px; font-size:11px; color:var(--dim); line-height:1.6; }
 .skewt-fallback a{ color:var(--cyan); text-decoration:none; border:1px solid var(--cyan); padding:6px 12px; border-radius:6px; display:inline-block; margin-top:10px; font-size:10px; letter-spacing:1px; }
-/* IMAGERY */
 .imagery-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
 @media (max-width:960px){ .imagery-grid{ grid-template-columns:1fr; } }
 .panel{
@@ -348,6 +358,14 @@ footer b{ color:var(--dim); }
 <svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
 </span>
 <span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community.</span>
+</div>
+<div class="special-msg" id="specialMsgSection">
+<div class="special-msg-icon" aria-hidden="true">&#9888;&#65039;</div>
+<div class="special-msg-body">
+<div class="special-msg-label">SPECIAL WEATHER MESSAGE</div>
+<div class="special-msg-text" id="specialMsgText"></div>
+<div class="special-msg-meta" id="specialMsgMeta"></div>
+</div>
 </div>
 <nav class="tabs">
 <a href="index.html" class="active">LIVE OPS</a>
@@ -565,14 +583,42 @@ footer b{ color:var(--dim); }
 </footer>
 </div>
 <script>
-// ---------- CLOCK ----------
+/* ============================================================
+SPECIAL WEATHER MESSAGE — edit this to post a community update
+Set SPECIAL_MSG_ACTIVE = true and fill in SPECIAL_MSG_TEXT to
+post a message from Matthew, e.g. a thunderstorm approaching.
+Name is hardcoded; date/time fill in automatically from the
+moment the page loads. Set SPECIAL_MSG_ACTIVE back to false
+when the message is no longer current — the box stays on the
+page either way, just showing "No new messages" when inactive.
+============================================================ */
+let SPECIAL_MSG_ACTIVE = false;
+let SPECIAL_MSG_TEXT = 'A thunderstorm is approaching from the west \u2014 expect heavy rain and lightning within the hour.';
+function renderSpecialMessage(){
+const section = document.getElementById('specialMsgSection');
+const icon = section.querySelector('.special-msg-icon');
+if(!SPECIAL_MSG_ACTIVE){
+section.classList.add('inactive');
+icon.textContent = '\ud83d\udcac';
+document.getElementById('specialMsgText').textContent = 'No new messages.';
+document.getElementById('specialMsgMeta').textContent = '';
+return;
+}
+section.classList.remove('inactive');
+icon.textContent = '\u26a0\ufe0f';
+document.getElementById('specialMsgText').textContent = SPECIAL_MSG_TEXT;
+const opts = { timeZone:'Europe/London', weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', hour12:false };
+document.getElementById('specialMsgMeta').textContent = 'Matthew \u00b7 ' + new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
+}
+/* ============================================================
+End of special weather message block
+============================================================ */
 function tickClock(){
 const d = new Date();
 const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
 document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-GB', opts).format(d) + ' GMT/BST';
 }
 tickClock(); setInterval(tickClock, 1000);
-// ---------- HELPERS ----------
 function setGauge(id, pct, color){
 const el = document.getElementById(id);
 el.style.setProperty('--pct', Math.max(0, Math.min(100, pct)));
@@ -667,7 +713,6 @@ if(li>=-4) return {label:'UNSTABLE', color:AMBER};
 if(li>=-7) return {label:'VERY UNSTABLE', color:RED};
 return {label:'EXTREMELY UNSTABLE', color:RED};
 }
-// ---------- WEATHER FETCH ----------
 const LAT=49.1805, LON=-2.1058;
 const TEST_MODE = true;
 let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014', aqi:null, pressure:null };
@@ -754,7 +799,6 @@ valEl.innerHTML = (liveData.pressure !== null ? Math.round(liveData.pressure) : 
 condEl.textContent = 'PRESSURE';
 }
 }
-// ---------- LIVE IMAGERY (radar / satellite / lightning) ----------
 function initImagery(){
 const map = L.map('radar-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
 .setView([LAT, LON], 6);
@@ -997,7 +1041,6 @@ console.error('forecast fetch failed', e);
 scrollEl.innerHTML = '<div style="color:var(--red); font-size:11px; padding:10px;">FORECAST UNAVAILABLE \u2014 RETRYING NEXT REFRESH</div>';
 }
 }
-// ---------- NEWS TICKER ----------
 let newsHeadlines = [];
 let newsIndex = 0;
 async function loadNews(){
@@ -1041,6 +1084,7 @@ loadWarnings();
 loadForecast();
 stampRefresh();
 }
+renderSpecialMessage();
 revealTiles();
 refreshAll();
 initImagery();
