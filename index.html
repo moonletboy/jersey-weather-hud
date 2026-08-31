@@ -102,18 +102,27 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .fb-text b{ color:var(--cyan); }
 @media (max-width:560px){ .fb-text{ font-size:10.5px; } }
 .special-msg{
+position:relative; overflow:hidden;
 display:flex; align-items:flex-start; gap:14px;
 background:linear-gradient(90deg, rgba(255,75,92,0.14), rgba(255,75,92,0.03));
 border:1px solid rgba(255,75,92,0.45); border-left:5px solid var(--red);
 border-radius:10px; padding:16px 18px; margin-bottom:22px;
 }
-.special-msg-icon{ font-size:26px; flex:0 0 auto; line-height:1; animation: specialPulse 1s ease-in-out infinite; }
-.special-msg.inactive{ border-color:var(--line); border-left-color:var(--dim2); background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); }
-.special-msg.inactive .special-msg-icon{ animation:none; opacity:0.45; }
-.special-msg.inactive .special-msg-label{ color:var(--dim); }
+.special-msg::before{
+content:"";
+position:absolute; top:0; left:-35%; width:35%; height:100%;
+background:linear-gradient(90deg, transparent, rgba(255,75,92,0.4), transparent);
+animation: specialSweep 3s linear infinite;
+pointer-events:none;
+}
+@keyframes specialSweep{ 0%{ left:-35%; } 100%{ left:100%; } }
+.special-msg-icon{ font-size:26px; flex:0 0 auto; line-height:1; animation: specialPulse 1s ease-in-out infinite; position:relative; z-index:1; }
+.special-msg.inactive::before{ animation-duration:6s; opacity:0.5; }
+.special-msg.inactive .special-msg-icon{ animation:none; opacity:0.55; }
+.special-msg.inactive .special-msg-label{ opacity:0.7; }
 .special-msg.inactive .special-msg-text{ color:var(--dim); font-weight:600; }
 @keyframes specialPulse{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.45; transform:scale(1.18); } }
-.special-msg-body{ flex:1; }
+.special-msg-body{ flex:1; position:relative; z-index:1; }
 .special-msg-label{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2.5px; color:var(--red); margin-bottom:7px; font-weight:800; }
 .special-msg-text{ font-size:14.5px; font-weight:800; color:var(--text); line-height:1.5; margin-bottom:7px; }
 .special-msg-meta{ font-size:10.5px; color:var(--dim); letter-spacing:0.5px; }
