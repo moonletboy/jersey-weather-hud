@@ -277,6 +277,25 @@ border:1px solid var(--line); border-radius:12px; padding:18px;
 background:linear-gradient(160deg, rgba(255,176,32,0.05), rgba(11,19,28,0.4));
 border:1px solid rgba(255,176,32,0.25); border-radius:14px; padding:24px;
 }
+.storm-outlook{
+display:flex; gap:18px; align-items:flex-start;
+background:linear-gradient(160deg, rgba(255,176,32,0.10), rgba(11,19,28,0.55));
+border:2px solid var(--amber); border-radius:14px; padding:22px 24px; margin-bottom:22px;
+position:relative; overflow:hidden;
+}
+.storm-outlook-icon{ font-size:42px; flex:0 0 auto; line-height:1; filter:drop-shadow(0 0 10px rgba(255,176,32,0.6)); }
+.bolt-flash{ display:inline-block; animation: boltFlash 2.6s ease-in-out infinite; }
+@keyframes boltFlash{
+0%, 88%, 100%{ opacity:0.35; transform:scale(1); }
+90%{ opacity:1; transform:scale(1.18); }
+93%{ opacity:0.5; transform:scale(1); }
+95%{ opacity:1; transform:scale(1.1); }
+97%{ opacity:0.4; transform:scale(1); }
+}
+.storm-outlook-body{ flex:1; }
+.storm-outlook-title{ font-family:'Orbitron',sans-serif; font-size:16px; letter-spacing:1.5px; font-weight:900; margin-bottom:9px; }
+.storm-outlook-desc{ font-size:12.5px; color:var(--text); line-height:1.65; margin-bottom:10px; }
+.storm-outlook-timing{ font-size:11.5px; font-weight:700; letter-spacing:0.5px; }
 .storm-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
 @media (max-width:900px){ .storm-grid{ grid-template-columns:1fr 1fr; } }
 .stat-card{ background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:18px; }
@@ -501,6 +520,14 @@ footer b{ color:var(--dim); }
 <div class="tag">THUNDERSTORM DATA</div>
 </div>
 <div class="storm-wrap">
+<div class="storm-outlook" id="stormOutlook">
+<div class="storm-outlook-icon"><span class="bolt-flash">&#9889;</span></div>
+<div class="storm-outlook-body">
+<div class="storm-outlook-title" id="stormOutlookTitle">ANALYSING CONDITIONS&hellip;</div>
+<div class="storm-outlook-desc" id="stormOutlookDesc">&mdash;</div>
+<div class="storm-outlook-timing" id="stormOutlookTiming">&mdash;</div>
+</div>
+</div>
 <div class="storm-grid">
 <div class="stat-card tip-wrap" tabindex="0">
 <div class="lbl">CAPE <span class="info-dot">?</span></div>
@@ -719,6 +746,82 @@ if(li>=-4) return {label:'UNSTABLE', color:AMBER};
 if(li>=-7) return {label:'VERY UNSTABLE', color:RED};
 return {label:'EXTREMELY UNSTABLE', color:RED};
 }
+// ---------- STORM OUTLOOK (storm type + timing) ----------
+// Bulk wind shear: the vector difference between the surface wind and the
+// wind higher up (~500hPa, roughly 5-6km up). This is the single biggest
+// factor in whether storms stay small and short-lived, or organise into
+// clusters, lines, or rotating supercells.
+function windShearMph(dir1, speed1, dir2, speed2){
+const u1 = -speed1 * Math.sin(dir1 * Math.PI/180), v1 = -speed1 * Math.cos(dir1 * Math.PI/180);
+const u2 = -speed2 * Math.sin(dir2 * Math.PI/180), v2 = -speed2 * Math.cos(dir2 * Math.PI/180);
+return Math.hypot(u2-u1, v2-v1);
+}
+function classifyStormMode(cape, cin, shearMph){
+if(cape < 300 || (cin <= -100 && cape < 1500)){
+return { tier:0, label:'STORMS UNLIKELY', color:GREEN,
+desc:'Not enough instability (or too strong a cap) for storms to develop in the current environment.' };
+}
+if(shearMph < 23){
+return { tier:1, label:'ISOLATED PULSE STORMS POSSIBLE', color: cape>=1500?AMBER:GREEN,
+desc:'Low wind shear means any storms that form will likely be brief, disorganised "pulse" storms — short-lived heavy downpours and lightning, weakening quickly, with low severe risk.' };
+}
+if(shearMph < 40){
+return { tier:2, label:'MULTICELL CLUSTERS POSSIBLE', color:AMBER,
+desc:'Moderate shear can organise storms into clusters or short lines. Expect gusty winds, heavier rain, and a higher chance of small hail than isolated storms.' };
+}
+if(shearMph < 58 || cape < 1500){
+return { tier:3, label:'ORGANISED MULTICELL / SQUALL LINE POSSIBLE', color:RED,
+desc:'Strong shear can organise storms into longer-lived clusters or a squall line. Watch for damaging wind gusts, heavier hail, and frequent lightning.' };
+}
+return { tier:4, label:'ISOLATED SUPERCELL POTENTIAL', color:RED,
+desc:'Strong instability combined with strong shear can support isolated rotating storms (supercells) — the greatest risk of large hail, damaging gusts, and (rarely, in this setup) a tornado. This is an approximate read without full directional wind-turning data, so treat as indicative rather than certain.' };
+}
+// Scans forward through today's remaining hourly data for the best chance
+// of storms actually firing — the hour with the highest CAPE among hours
+// where the cap (CIN) isn't too strong to prevent initiation.
+function findStormTiming(hourlyTimes, hourlyCape, hourlyCin, startIdx){
+let bestIdx = -1, bestCape = -1;
+const todayStr = hourlyTimes[startIdx].slice(0,10);
+for(let i = startIdx; i < hourlyTimes.length && i < startIdx + 18; i++){
+if(hourlyTimes[i].slice(0,10) !== todayStr) break; // stop at day change
+const c = hourlyCape[i], cin = hourlyCin[i];
+if(c === null || cin === null) continue;
+if(cin <= -100) continue; // too capped for initiation
+if(c > bestCape){ bestCape = c; bestIdx = i; }
+}
+return { idx: bestIdx, cape: bestCape };
+}
+function renderStormOutlook(cape, cin, cur, hourlyTimes, hourlyCape, hourlyCin, nowIdx, shearDir500, shearSpeed500){
+const shear = windShearMph(cur.wind_direction_10m, cur.wind_speed_10m, shearDir500, shearSpeed500);
+const mode = classifyStormMode(cape, cin, shear);
+const titleEl = document.getElementById('stormOutlookTitle');
+const descEl = document.getElementById('stormOutlookDesc');
+const timingEl = document.getElementById('stormOutlookTiming');
+const panel = document.getElementById('stormOutlook');
+titleEl.textContent = mode.label; titleEl.style.color = mode.color;
+descEl.textContent = mode.desc;
+panel.style.borderColor = mode.color;
+
+const isOngoing = [95,96,99].includes(cur.weather_code);
+if(isOngoing){
+timingEl.textContent = 'THUNDERSTORMS ARE CURRENTLY ONGOING AT THIS LOCATION.';
+timingEl.style.color = RED;
+} else if(mode.tier === 0){
+timingEl.textContent = 'No storm development expected for the rest of today based on current data.';
+timingEl.style.color = GREEN;
+} else {
+const timing = findStormTiming(hourlyTimes, hourlyCape, hourlyCin, nowIdx);
+if(timing.idx >= 0 && timing.cape > cape + 200){
+const t = new Date(hourlyTimes[timing.idx]);
+const timeStr = t.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/London'});
+timingEl.textContent = 'Best chance of storms forming later today: around ' + timeStr + ', when instability peaks.';
+timingEl.style.color = AMBER;
+} else {
+timingEl.textContent = 'Conditions are already near their most favourable for today — any storms are most likely around now.';
+timingEl.style.color = AMBER;
+}
+}
+}
 // ---------- WEATHER FETCH ----------
 const LAT=49.1805, LON=-2.1058;
 const TEST_MODE = false;
@@ -852,7 +955,7 @@ radius: 5 + Math.max(mag,0)*2.5, color:color, weight:2, fillColor:color, fillOpa
 }
 async function loadWeather(){
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition&past_hours=2&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa&past_hours=2&wind_speed_unit=mph&timezone=auto`;
 const res = await fetch(url);
 const data = await res.json();
 const cur = data.current;
@@ -964,6 +1067,9 @@ const cinEl = document.getElementById('verdict-cin');
 const cinLabel = cin >= -10 ? 'NO CAP \u2014 UNRESTRICTED' : cin >= -50 ? 'WEAK CAP' : cin >= -150 ? 'MODERATE CAP' : 'STRONG CAP \u2014 SUPPRESSED';
 const cinColor = cin >= -10 ? RED : cin >= -50 ? AMBER : cin >= -150 ? CYAN : GREEN;
 cinEl.textContent = cinLabel; cinEl.style.color = cinColor; cinEl.style.border = '1px solid '+cinColor;
+
+renderStormOutlook(cape, cin, cur, hTimes, data.hourly.cape, data.hourly.convective_inhibition, idx,
+data.hourly.wind_direction_500hPa[idx], data.hourly.wind_speed_500hPa[idx]);
 }catch(e){
 document.getElementById('heroCond').textContent = 'SIGNAL LOST — RETRYING';
 console.error('weather fetch failed', e);
