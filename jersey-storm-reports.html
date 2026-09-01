@@ -114,6 +114,7 @@
   .recap-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:18px; max-width:680px; }
   .recap-tabs{ display:flex; gap:8px; margin-bottom:18px; }
   .recap-tab{
+    position:relative;
     font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:1px; font-weight:700;
     padding:9px 16px; border-radius:6px; border:1px solid var(--line); color:var(--dim);
     background:transparent; cursor:pointer; transition:all .15s ease;
@@ -121,6 +122,18 @@
   .recap-tab:hover{ color:var(--text); border-color:var(--cyan); }
   .recap-tab.active[data-type="event"]{ color:#05080d; background:var(--red); border-color:var(--red); }
   .recap-tab.active[data-type="monthly"]{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
+  .recap-tab-badge{
+    position:absolute; top:-9px; right:-9px;
+    background:#ff6b35; color:#05080d; font-family:'Orbitron',sans-serif;
+    font-size:8px; font-weight:900; letter-spacing:0.5px; line-height:1;
+    padding:4px 6px; border-radius:20px; border:1.5px solid #05080d;
+    animation:recapBadgePulse 1.8s ease-in-out infinite; pointer-events:none;
+  }
+  @keyframes recapBadgePulse{
+    0%   { transform:scale(1);    box-shadow:0 0 0 0 rgba(255,107,53,0.55); }
+    60%  { transform:scale(1.08); box-shadow:0 0 0 6px rgba(255,107,53,0); }
+    100% { transform:scale(1);    box-shadow:0 0 0 0 rgba(255,107,53,0); }
+  }
   .recap-card{
     background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
     border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:18px;
@@ -281,15 +294,15 @@
 
   <section>
     <div class="sec-head">
-      <h3>EVENT RECAP</h3>
+      <h3>STORM RECAP</h3>
       <div class="bar"></div>
       <div class="tag">ARCHIVE</div>
     </div>
-    <p class="recap-explainer">Written summaries combining submitted storm reports with the actual meteorological data recorded for that period &mdash; pressure, wind and gusts, radar and lightning activity, rainfall &mdash; for either a single severe weather event or an individual monthly overview. Kept here as a running archive so the record stays available to emergency services and infrastructure planners if it's ever useful.  Event Recap and Montly Recap compiled with assistance from AI.</p>
+    <p class="recap-explainer">Written summaries combining submitted storm reports with the actual meteorological data recorded for that period &mdash; pressure, wind and gusts, radar and lightning activity, rainfall &mdash; for either a single severe weather event or a rolling monthly overview. Kept here as a running archive so the record stays available to emergency services and infrastructure planners if it's ever useful.</p>
 
     <div class="recap-tabs">
-      <button type="button" class="recap-tab active" data-type="event">EVENT RECAP</button>
-      <button type="button" class="recap-tab" data-type="monthly">MONTHLY RECAP</button>
+      <button type="button" class="recap-tab" data-type="event">EVENT RECAP</button>
+      <button type="button" class="recap-tab active" data-type="monthly">MONTHLY RECAP</button>
     </div>
 
     <div id="recapContent"></div>
@@ -387,7 +400,7 @@
 
   <section>
     <div class="sec-head">
-      <h3>REPORT MAP (PAN &amp; ZOOM)</h3>
+      <h3>REPORT MAP</h3>
       <div class="bar"></div>
       <div class="tag">BY PARISH</div>
     </div>
@@ -501,6 +514,20 @@
      body: array of paragraph strings (each renders as its own <p>)
      ============================================================ */
   const RECAPS = [
+    {
+      type: 'monthly',
+      title: 'MONTHLY RECAP — AUGUST 2026',
+      period: '1–31 Aug 2026',
+      reportCount: 0,
+      sources: 'Jersey Evening Post, Jersey Met, Met Office, gov.je',
+      body: [
+        'August opened under Jersey\u2019s fourth heatwave of the year — a record for the most heatwaves logged in a single year, beating the previous best of three set in 2022. It capped an extraordinary run of heat through 2026, with May, June and July all breaking temperature records and the Island\u2019s all-time high reaching 39.3°C on 25 June. The persistent dry spell hit small growers hard, with one St Ouen flower grower reporting 80–90% crop losses.',
+        'The settled, dry pattern broke on 26 August, when Jersey Met issued an orange thunderstorm warning for a five-hour window from 7.30pm, flagging localised flooding, hail and damaging gusts as the main risks — the most significant convective signal of the month.',
+        'The bank holiday weekend closed August on an unsettled note: a yellow tide warning went up on 30 August for strong winds arriving alongside high tide, bringing wave overtopping and sea spray to the south coast, and DFDS was forced to cancel a number of St Malo and Poole ferry sailings.'
+      ],
+      published: '1 Sep 2026',
+      publishedISO: '2026-09-01'
+    },
     // Example — copy this shape for a real entry, then delete the example:
     // {
     //   type: 'event',
@@ -512,7 +539,8 @@
     //     'First paragraph of the recap...',
     //     'Second paragraph...'
     //   ],
-    //   published: '15 Aug 2026'
+    //   published: '15 Aug 2026',
+    //   publishedISO: '2026-08-15'   // YYYY-MM-DD — drives the "NEW" tab badge, shown for 7 days from this date
     // },
   ];
 
@@ -520,7 +548,7 @@
   // freely — e.g. to note nothing severe happened this month.
   const NO_RECAP_MESSAGE = 'No storm recap currently published for this category. Check back after the next notable event or month-end.';
 
-  let activeRecapTab = 'event';
+  let activeRecapTab = 'monthly';
 
   function renderRecaps(){
     const container = document.getElementById('recapContent');
@@ -592,6 +620,31 @@
       renderRecaps();
     });
   });
+
+  // "NEW" badge on a tab when that type's most recent entry was published
+  // within the last 7 days. Purely date-driven — nothing to remove by hand.
+  const RECAP_BADGE_DAYS = 7;
+  function updateRecapTabBadges(){
+    ['event','monthly'].forEach(type => {
+      const btn = document.querySelector(`.recap-tab[data-type="${type}"]`);
+      if(!btn) return;
+      const existing = btn.querySelector('.recap-tab-badge');
+      if(existing) existing.remove();
+
+      const dated = RECAPS.filter(r => r.type === type && r.publishedISO)
+        .sort((a,b) => new Date(b.publishedISO) - new Date(a.publishedISO));
+      if(!dated.length) return;
+
+      const ageMs = Date.now() - new Date(dated[0].publishedISO + 'T00:00:00').getTime();
+      const ageDays = ageMs / 86400000;
+      if(ageDays >= 0 && ageDays <= RECAP_BADGE_DAYS){
+        const badge = document.createElement('span');
+        badge.className = 'recap-tab-badge';
+        badge.textContent = 'NEW';
+        btn.appendChild(badge);
+      }
+    });
+  }
 
   /* ============================================================
      DATA LAYER — live via a free Google Sheet backend
@@ -846,6 +899,7 @@ async function submitReport(report){
   renderStats();
   renderMap();
   renderRecaps();
+  updateRecapTabBadges();
   syncReports();
   setInterval(syncReports, 60000); // pick up other people's reports every minute
 </script>
