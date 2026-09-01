@@ -168,6 +168,35 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
 .alert-text{ font-size:12px; color:var(--text); line-height:1.6; }
 .cloud-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:16px; max-width:720px; }
 .cloud-explainer b{ color:var(--text); }
+.swx-summary-panel{
+position:relative; overflow:hidden;
+border:1px solid var(--red); border-radius:10px; padding:20px 22px; margin-bottom:20px;
+background:linear-gradient(90deg, rgba(255,75,92,0.10), rgba(255,75,92,0.02));
+}
+.swx-summary-panel::before{
+content:"";
+position:absolute; top:0; bottom:0; left:-2px; width:2px;
+background:linear-gradient(180deg, transparent, rgba(255,75,92,0.95), transparent);
+box-shadow:0 0 14px rgba(255,75,92,0.8);
+animation: swxScan 5s linear infinite;
+pointer-events:none;
+}
+@keyframes swxScan{ 0%{ left:-2px; } 100%{ left:100%; } }
+.swx-summary-title{
+font-family:'Orbitron',sans-serif; font-size:12.5px; letter-spacing:2px; color:var(--red);
+margin-bottom:10px; display:flex; align-items:center; gap:8px; position:relative; z-index:2;
+}
+.swx-summary-text{ font-size:13px; color:var(--text); line-height:1.65; position:relative; z-index:2; }
+.swx-summary-meta{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:14px; position:relative; z-index:2; }
+.swx-summary-meta b{ color:var(--red); }
+.swx-list{ max-height:520px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:8px; }
+.swx-list::-webkit-scrollbar{ width:6px; }
+.swx-list::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+.swx-card{ background:var(--bg-panel); border:1px solid var(--line); border-left:3px solid var(--dim2); border-radius:8px; padding:14px 16px; }
+.swx-card-meta{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.swx-card-time{ font-size:10px; color:var(--dim); letter-spacing:1px; }
+.swx-badge{ font-size:9px; font-weight:800; letter-spacing:1px; padding:2px 8px; border-radius:4px; }
+.swx-card-text{ font-size:11px; color:var(--text); line-height:1.6; white-space:pre-wrap; font-family:'JetBrains Mono',monospace; }
 @media (min-width:860px){
 .hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
 .hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
@@ -339,6 +368,21 @@ footer b{ color:var(--dim); }
 </div>
 </section>
 
+<!-- OFFICIAL SPACE WEATHER ALERTS -->
+<section>
+<div class="sec-head">
+<h3>OFFICIAL SPACE WEATHER ALERTS</h3>
+<div class="bar"></div>
+<div class="tag">NOAA SWPC</div>
+</div>
+<div class="swx-summary-panel">
+<div class="swx-summary-title">&#9888; LATEST OFFICIAL BULLETIN</div>
+<div class="swx-summary-text" id="swxSummaryText">Loading&hellip;</div>
+<div class="swx-summary-meta" id="swxSummaryMeta"></div>
+</div>
+<div class="swx-list" id="swxList"></div>
+</section>
+
 <!-- LIVE GAUGES -->
 <section>
 <div class="sec-head">
@@ -470,6 +514,51 @@ if(kp < 7) return {label:'MODERATE STORM (G2)', color:AMBER};
 if(kp < 8) return {label:'STRONG STORM (G3)', color:RED};
 if(kp < 9) return {label:'SEVERE STORM (G4)', color:RED};
 return {label:'EXTREME STORM (G5)', color:RED};
+}
+
+// ---------- OFFICIAL SPACE WEATHER ALERTS (NOAA SWPC) ----------
+const SWX_TYPE_COLOR = { WARNING: RED, WATCH: AMBER, ALERT: AMBER, SUMMARY: GREEN, CANCEL: CYAN };
+function swxHeadline(message){
+const lines = (message || '').split('\n').map(l => l.trim()).filter(Boolean);
+const line = lines.find(l => /^(WARNING|ALERT|WATCH|SUMMARY|CANCEL|CONTINUED)/i.test(l));
+return line || (lines[0] || 'Space weather bulletin');
+}
+function swxFormatTime(iso){
+try{
+const opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/London' };
+return new Intl.DateTimeFormat('en-GB', opts).format(new Date(iso)) + ' GMT/BST';
+}catch(e){ return iso; }
+}
+async function loadSpaceWeatherAlerts(){
+try{
+const res = await fetch('https://services.swpc.noaa.gov/products/alerts.json');
+const data = await res.json();
+const sorted = [...data].sort((a,b) => new Date(b.issue_datetime) - new Date(a.issue_datetime));
+if(!sorted.length) return;
+
+const latest = sorted[0];
+const latestColor = SWX_TYPE_COLOR[latest.alert_type] || CYAN;
+document.getElementById('swxSummaryText').textContent = swxHeadline(latest.message);
+document.getElementById('swxSummaryMeta').innerHTML =
+'<b>' + (latest.alert_type || 'ALERT') + '</b> &middot; ' + swxFormatTime(latest.issue_datetime) +
+' &middot; Product: ' + (latest.product_id || '\u2014');
+document.querySelector('.swx-summary-panel').style.borderColor = latestColor;
+
+const listEl = document.getElementById('swxList');
+listEl.innerHTML = sorted.map(item => {
+const color = SWX_TYPE_COLOR[item.alert_type] || CYAN;
+return `<div class="swx-card" style="border-left-color:${color}">
+<div class="swx-card-meta">
+<span class="swx-card-time">${swxFormatTime(item.issue_datetime)} &middot; ${item.product_id || ''}</span>
+<span class="swx-badge" style="background:${color}22; color:${color};">${item.alert_type || 'ALERT'}</span>
+</div>
+<div class="swx-card-text">${(item.message || '').replace(/</g,'&lt;')}</div>
+</div>`;
+}).join('');
+}catch(e){
+console.error('space weather alerts fetch failed', e);
+document.getElementById('swxSummaryText').textContent = 'Unable to reach NOAA SWPC right now \u2014 will retry automatically.';
+}
 }
 
 function boundaryForKp(kp){
@@ -726,6 +815,7 @@ loadKp();
 loadMag();
 loadPlasma();
 refreshOvalImage();
+loadSpaceWeatherAlerts();
 stampRefresh();
 }
 revealTiles();

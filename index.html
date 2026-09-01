@@ -102,6 +102,28 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .fb-text{ font-size:11.5px; color:var(--text); letter-spacing:0.3px; line-height:1.5; }
 .fb-text b{ color:var(--cyan); }
 @media (max-width:560px){ .fb-text{ font-size:10.5px; } }
+.special-msg-panel{
+position:relative; overflow:hidden;
+border:1px solid var(--red); border-radius:10px; padding:20px 22px; margin-bottom:22px;
+background:linear-gradient(90deg, rgba(255,75,92,0.10), rgba(255,75,92,0.02));
+display:none;
+}
+.special-msg-panel::before{
+content:"";
+position:absolute; top:0; bottom:0; left:-2px; width:2px;
+background:linear-gradient(180deg, transparent, rgba(255,75,92,0.95), transparent);
+box-shadow:0 0 14px rgba(255,75,92,0.8);
+animation: msgScan 5s linear infinite;
+pointer-events:none;
+}
+@keyframes msgScan{ 0%{ left:-2px; } 100%{ left:100%; } }
+.special-msg-title{
+font-family:'Orbitron',sans-serif; font-size:12.5px; letter-spacing:2px; color:var(--red);
+margin-bottom:10px; display:flex; align-items:center; gap:8px; position:relative; z-index:2;
+}
+.special-msg-text{ font-size:13px; color:var(--text); line-height:1.65; position:relative; z-index:2; }
+.special-msg-meta{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:14px; position:relative; z-index:2; }
+.special-msg-meta b{ color:var(--red); }
 nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
 nav.tabs a{
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
@@ -349,6 +371,11 @@ footer b{ color:var(--dim); }
 </span>
 <span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community.</span>
 </div>
+<div class="special-msg-panel" id="specialMsgPanel">
+<div class="special-msg-title">&#9888; SPECIAL WEATHER MESSAGE</div>
+<div class="special-msg-text" id="specialMsgText"></div>
+<div class="special-msg-meta" id="specialMsgMeta"></div>
+</div>
 <nav class="tabs">
 <a href="index.html" class="active">LIVE OPS</a>
 <a href="jersey-storm-reports.html">STORM REPORTS</a>
@@ -565,6 +592,31 @@ footer b{ color:var(--dim); }
 </footer>
 </div>
 <script>
+/* ============================================================
+   SPECIAL WEATHER MESSAGE — easy to edit
+   To post a message: set SPECIAL_MESSAGE_ACTIVE to true below,
+   and write your message inside SPECIAL_MESSAGE_TEXT.
+   To take it down again: set SPECIAL_MESSAGE_ACTIVE back to false.
+   The "— Matthew" signature and the date/time stamp are added
+   automatically — you don't need to type those yourself.
+   ============================================================ */
+let SPECIAL_MESSAGE_ACTIVE = false;
+let SPECIAL_MESSAGE_TEXT = 'Thunderstorms approaching from the southwest, expected to reach Jersey by early evening. Frequent lightning and heavy downpours likely — bring things in from outside.';
+
+function renderSpecialMessage(){
+const panel = document.getElementById('specialMsgPanel');
+if(!SPECIAL_MESSAGE_ACTIVE){
+panel.style.display = 'none';
+return;
+}
+panel.style.display = 'block';
+document.getElementById('specialMsgText').textContent = SPECIAL_MESSAGE_TEXT;
+const opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/London' };
+const stamp = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
+document.getElementById('specialMsgMeta').innerHTML = '<b>\u2014 Matthew</b> &middot; ' + stamp;
+}
+renderSpecialMessage();
+
 // ---------- CLOCK ----------
 function tickClock(){
 const d = new Date();
