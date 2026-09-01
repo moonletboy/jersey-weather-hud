@@ -640,7 +640,7 @@ panel.style.display = 'block';
 document.getElementById('specialMsgText').textContent = SPECIAL_MESSAGE_TEXT;
 const opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/London' };
 const stamp = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
-document.getElementById('specialMsgMeta').innerHTML = '<b>\u2014 Matthew</b> &middot; ' + stamp;
+document.getElementById('specialMsgMeta').innerHTML = '<b>\u2014 Ops system</b> &middot; ' + stamp;
 }
 renderSpecialMessage();
 
