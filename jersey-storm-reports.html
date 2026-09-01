@@ -309,8 +309,12 @@
             <textarea id="f-damage-details" placeholder="Describe the damage&hellip; (you can also add photos via the link field below)"></textarea>
           </div>
           <div class="field">
-            <label>NAME / HANDLE (OPTIONAL)</label>
-            <input type="text" id="f-name" placeholder="Anonymous">
+            <label>NAME / HANDLE</label>
+            <input type="text" id="f-name" placeholder="Your name or Facebook handle" required>
+          </div>
+          <div class="field">
+            <label>COMMUNITY PIN</label>
+            <input type="text" id="f-pin" placeholder="Ask in the Facebook group" required>
           </div>
           <div class="field">
             <label>PHOTO / VIDEO LINK (OPTIONAL)</label>
@@ -465,14 +469,24 @@
     }
   }
 
-  function submitReport(report){
-    cachedReports.unshift(report); // optimistic local update so it appears instantly
+async function submitReport(report){
     const fd = new FormData();
     Object.keys(report).forEach(k => fd.append(k, report[k]));
-    fetch(REPORTS_API_URL, { method:'POST', body: fd })
-      .then(r=>r.json())
-      .then(()=> syncReports()) // re-sync so this device also sees the canonical server copy
-      .catch(err=> console.error('Report failed to reach the server — it will only show on this device for now', err));
+    try{
+      const res = await fetch(REPORTS_API_URL, { method:'POST', body: fd });
+      const result = await res.json();
+      if(result.status !== 'ok'){
+        alert(result.message || 'Report could not be submitted \u2014 please check the PIN and try again.');
+        return false;
+      }
+      cachedReports.unshift(report); // add locally now that it's confirmed by the server
+      syncReports(); // re-sync so this device also sees the canonical server copy
+      return true;
+    }catch(err){
+      console.error('Report failed to reach the server', err);
+      alert('Could not reach the server \u2014 please check your connection and try again.');
+      return false;
+    }
   }
 
   // ---------- FORM ----------
@@ -529,8 +543,10 @@
     const type = document.getElementById('f-type').value;
     const parish = document.getElementById('f-parish').value;
     const desc = document.getElementById('f-desc').value.trim();
-    if(!type || !parish || !desc || !selectedSev){
-      alert('Please fill in type, parish, severity and a description.');
+    const name = document.getElementById('f-name').value.trim();
+    const pin = document.getElementById('f-pin').value.trim();
+    if(!type || !parish || !desc || !selectedSev || !name || !pin){
+      alert('Please fill in type, parish, severity, description, your name, and the community PIN.');
       return;
     }
     const isQuake = type === 'Earthquake Report';
@@ -541,12 +557,14 @@
       description: desc,
       damage: isQuake ? document.getElementById('f-damage').value : '',
       damageDetails: isQuake ? document.getElementById('f-damage-details').value.trim() : '',
-      reporter: document.getElementById('f-name').value.trim() || 'Anonymous',
+      reporter: name,
+      pin: pin,
       media: document.getElementById('f-media').value.trim(),
       lat: loc.lat, lon: loc.lon,
       timestamp: new Date().toISOString()
     };
-    submitReport(report);
+    const ok = await submitReport(report);
+    if(!ok) return;
     this.reset();
     renderSevButtons('default');
     document.getElementById('damageField').style.display = 'none';
