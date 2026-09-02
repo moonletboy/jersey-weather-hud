@@ -668,6 +668,40 @@ if(p<1) requestAnimationFrame(step);
 requestAnimationFrame(step);
 }
 const CYAN='#4cd3ff', GREEN='#2de1a0', AMBER='#ffb020', RED='#ff4b5c', YELLOW='#e0d341', ORANGE='#ff8c30', VIOLET='#b98aff';
+/* NWS-style temperature scale, thresholds converted from the reference chart (°F) to °C.
+   Ordered coldest → hottest. Coldest band is a pale dusty pink-grey, hottest is deep garnet red. */
+const TEMP_SCALE = [
+  { max: -23.9, color:'#cbb9b8' }, // -11°F and below
+  { max: -21.1, color:'#c19ba0' }, // -6 to -10°F
+  { max: -18.3, color:'#ab8fa6' }, // -1 to -5°F
+  { max: -15.6, color:'#7c5f7f' }, // 0-4°F
+  { max: -12.8, color:'#8464a0' }, // 5-9°F
+  { max: -10.0, color:'#6c3b7c' }, // 10-14°F
+  { max: -7.2,  color:'#4e3b78' }, // 15-19°F
+  { max: -4.4,  color:'#2a5788' }, // 20-24°F
+  { max: -1.7,  color:'#7ba7d1' }, // 25-29°F
+  { max: 1.1,   color:'#3fc1d4' }, // 30-34°F
+  { max: 3.9,   color:'#a3ddc4' }, // 35-39°F
+  { max: 6.7,   color:'#23a373' }, // 40-44°F
+  { max: 9.4,   color:'#7cb93a' }, // 45-49°F
+  { max: 12.2,  color:'#a8a83c' }, // 50-54°F
+  { max: 15.0,  color:'#d0dd8e' }, // 55-59°F
+  { max: 17.8,  color:'#fff2a8' }, // 60-64°F
+  { max: 20.6,  color:'#fbe870' }, // 65-69°F
+  { max: 23.3,  color:'#ffd700' }, // 70-74°F
+  { max: 26.1,  color:'#f7a600' }, // 75-79°F
+  { max: 28.9,  color:'#ff8c00' }, // 80-84°F
+  { max: 31.7,  color:'#e2645b' }, // 85-89°F
+  { max: 34.4,  color:'#f3676f' }, // 90-94°F
+  { max: 37.2,  color:'#d21f42' }, // 95-99°F
+  { max: 40.0,  color:'#b21f2d' }, // 100-104°F
+  { max: Infinity, color:'#7d1935' } // 105°F+
+];
+function tempScaleColor(c){
+  if(c === null || c === undefined || isNaN(c)) return CYAN;
+  for(const b of TEMP_SCALE){ if(c <= b.max) return b.color; }
+  return TEMP_SCALE[TEMP_SCALE.length-1].color;
+}
 function feelsLikeCategory(f){
 if(f < 5) return {label:'COLD \u2014 PRECAUTIONS NEEDED', color:CYAN, advice:'Dress in warm layers and limit time outdoors.', link:'https://www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/', linkText:'Cold weather advice'};
 if(f < 12) return {label:'COOL \u2014 UNCOMFORTABLE', color:YELLOW, advice:'', link:null};
@@ -879,12 +913,14 @@ const valEl = document.getElementById('heroValue');
 const condEl = document.getElementById('heroCond');
 const face = heroFaceIndex % 6;
 const isWindy = liveData.wind >= 25;
+valEl.style.color = '';
 if(face === 0){
 if(liveData.ice){
 valEl.innerHTML = '<span class="ice-icon">\u2744\ufe0f</span>';
 condEl.innerHTML = '<span class="ice-warn">\u26a0 ICE RISK</span>';
 } else {
 valEl.innerHTML = Math.round(liveData.temp) + '<span class="unit">&deg;C</span>';
+valEl.style.color = tempScaleColor(liveData.temp);
 condEl.textContent = liveData.trend;
 }
 } else if(face === 1){
@@ -982,6 +1018,7 @@ pressure: cur.pressure_msl
 };
 renderHeroFace();
 document.getElementById('tempBlockValue').innerHTML = Math.round(cur.temperature_2m) + '<span class="unit">\u00b0C</span>';
+document.getElementById('tempBlockValue').style.color = tempScaleColor(cur.temperature_2m);
 const feelsCat = feelsLikeCategory(cur.apparent_temperature);
 document.getElementById('tempBlockSub').textContent = 'FEELS LIKE ' + Math.round(cur.apparent_temperature) + '\u00b0 \u00b7 ' + feelsCat.label;
 const tempTrendEl = document.getElementById('tempBlockTrend');
@@ -1134,7 +1171,7 @@ cardsHtml += `
 <div class="day-label">${i===0?'TODAY':dayName}</div>
 <div class="day-date">${dayDate}</div>
 <div class="day-icon">${cond.icon}</div>
-<div class="day-temps"><span class="hi">${Math.round(data.daily.temperature_2m_max[i])}\u00b0</span><span class="lo">${Math.round(data.daily.temperature_2m_min[i])}\u00b0</span></div>
+<div class="day-temps"><span class="hi" style="color:${tempScaleColor(data.daily.temperature_2m_max[i])}">${Math.round(data.daily.temperature_2m_max[i])}\u00b0</span><span class="lo">${Math.round(data.daily.temperature_2m_min[i])}\u00b0</span></div>
 <div class="day-cond">${cond.label}</div>
 <div class="day-row"><span>FEELS LIKE</span><span class="v">${Math.round(data.daily.apparent_temperature_max[i])}\u00b0</span></div>
 <div class="day-row"><span>HUMIDITY</span><span class="v">${humAvg!==null?Math.round(humAvg)+'%':'\u2014'}</span></div>
