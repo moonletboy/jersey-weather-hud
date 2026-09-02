@@ -702,6 +702,13 @@ function tempScaleColor(c){
   for(const b of TEMP_SCALE){ if(c <= b.max) return b.color; }
   return TEMP_SCALE[TEMP_SCALE.length-1].color;
 }
+// Positions a tip-bar marker as a % along its scale, matching the min/max shown under each bar.
+function setTipMarker(id, value, min, max){
+  const el = document.getElementById(id);
+  if(!el || value === null || value === undefined || isNaN(value)) return;
+  const pct = Math.min(100, Math.max(0, (value - min) / (max - min) * 100));
+  el.style.left = pct + '%';
+}
 function feelsLikeCategory(f){
 if(f < 5) return {label:'COLD \u2014 PRECAUTIONS NEEDED', color:CYAN, advice:'Dress in warm layers and limit time outdoors.', link:'https://www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/', linkText:'Cold weather advice'};
 if(f < 12) return {label:'COOL \u2014 UNCOMFORTABLE', color:YELLOW, advice:'', link:null};
@@ -1091,6 +1098,10 @@ document.getElementById('v-cape').textContent = Math.round(cape);
 document.getElementById('v-li').textContent = li.toFixed(1);
 document.getElementById('v-dp').textContent = dp.toFixed(1);
 document.getElementById('v-cin').textContent = Math.round(cin);
+setTipMarker('mk-cape', cape, 0, 4000);
+setTipMarker('mk-li', li, -10, 5);
+setTipMarker('mk-dp', dp, 0, 25);
+setTipMarker('mk-cin', cin, -200, 0);
 const cv = capeVerdict(cape);
 const lv = liVerdict(li);
 const cEl = document.getElementById('verdict-cape');
