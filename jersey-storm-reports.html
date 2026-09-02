@@ -389,6 +389,10 @@
             <label>PHOTO / VIDEO LINK (OPTIONAL)</label>
             <input type="url" id="f-media" placeholder="https://&hellip;">
           </div>
+          <div class="field full">
+            <label>EMAIL (OPTIONAL &mdash; GET A COPY OF YOUR REPORT)</label>
+            <input type="email" id="f-email-copy" placeholder="you@example.com">
+          </div>
         </div>
         <div class="submit-row">
           <div class="form-note">Reports are public and will display on this page and the Live Ops dashboard.</div>
@@ -770,6 +774,7 @@ async function submitReport(report){
       reporter: name,
       pin: pin,
       media: document.getElementById('f-media').value.trim(),
+      emailCopy: document.getElementById('f-email-copy').value.trim(),
       lat: loc.lat, lon: loc.lon,
       timestamp: new Date().toISOString()
     };
