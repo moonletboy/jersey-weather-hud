@@ -779,11 +779,7 @@ footer b{ color:var(--dim); }
 <div class="panel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="panel-head"><span>SATELLITE (PAN &amp; ZOOM)</span><span class="dot"></span></div>
-<div id="sat-map" style="width:100%;height:340px;"></div>
-<div class="anim-bar">
-<button type="button" class="anim-btn" id="satPlayBtn">&#9654; PLAY LOOP</button>
-<span class="anim-time" id="satFrameTime">LIVE</span>
-</div>
+<div id="sat-embed" style="width:100%;height:340px;"></div>
 </div>
 <div class="panel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
@@ -805,7 +801,7 @@ footer b{ color:var(--dim); }
 </div>
 </section>
 <footer>
-<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR, SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS (EARTHQUAKES) &middot; GOV.JE (WARNINGS)</div>
+<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS (EARTHQUAKES) &middot; GOV.JE (WARNINGS)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
 </div>
@@ -1185,10 +1181,6 @@ const map = L.map('radar-map', {zoomControl:true, attributionControl:false, drag
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
 L.circle([LAT,LON], {radius: 200*1609.34, color:'#4cd3ff', weight:1, fillOpacity:0}).addTo(map);
 L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(map);
-const satMap = L.map('sat-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
-.setView([LAT, LON], 5);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(satMap);
-L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(satMap);
 fetch('https://api.rainviewer.com/public/weather-maps.json')
 .then(r=>r.json())
 .then(rv=>{
@@ -1221,39 +1213,11 @@ radarTimer = setInterval(() => { i = (i+1) % radarFrames.length; radarShowFrame(
 }
 });
 }
-// ---- SATELLITE LOOP ----
-const satFrames = (rv.satellite && rv.satellite.infrared) || [];
-if(satFrames.length){
-let satIdx = satFrames.length - 1;
-const satUrl = f => `${host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`;
-const satLayer = L.tileLayer(satUrl(satFrames[satIdx]), {opacity:0.9, maxZoom:10}).addTo(satMap);
-const satTimeEl = document.getElementById('satFrameTime');
-const satBtn = document.getElementById('satPlayBtn');
-function satShowFrame(i){
-satIdx = i;
-satLayer.setUrl(satUrl(satFrames[satIdx]));
-const isLast = satIdx === satFrames.length - 1;
-satTimeEl.textContent = isLast ? 'LIVE' : new Date(satFrames[satIdx].time*1000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-}
-let satTimer = null;
-satBtn.addEventListener('click', () => {
-if(satTimer){
-clearInterval(satTimer); satTimer = null;
-satBtn.classList.remove('playing'); satBtn.innerHTML = '&#9654; PLAY LOOP';
-satShowFrame(satFrames.length - 1);
-} else {
-satBtn.classList.add('playing'); satBtn.innerHTML = '&#9724; STOP';
-let i = 0;
-satShowFrame(i);
-satTimer = setInterval(() => { i = (i+1) % satFrames.length; satShowFrame(i); }, 600);
-}
-});
-} else {
-document.getElementById('satPlayBtn').disabled = true;
-document.getElementById('satFrameTime').textContent = 'UNAVAILABLE';
-}
 })
 .catch(()=>{});
+document.getElementById('sat-embed').innerHTML =
+`<iframe src="https://embed.windy.com/embed2.html?lat=${LAT}&lon=${LON}&detailLat=${LAT}&detailLon=${LON}&width=650&height=650&zoom=6&level=surface&overlay=satellite&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0C&radarRange=-1"
+frameborder="0" style="width:100%;height:100%;border:0;"></iframe>`;
 document.getElementById('lightning-embed').innerHTML =
 `<iframe src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=1&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#6/${LAT}/${LON}"
 frameborder="0" style="width:100%;height:100%;border:0;"></iframe>`;
