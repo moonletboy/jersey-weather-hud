@@ -195,6 +195,37 @@ border:1px solid var(--line); border-radius:12px; padding:18px 20px;
 }
 .rain-row{ display:flex; gap:32px; flex-wrap:wrap; }
 .rain-item-label{ font-size:9px; letter-spacing:2px; color:var(--dim2); margin-bottom:6px; }
+.rain-visual-row{ display:flex; align-items:center; gap:26px; flex-wrap:wrap; }
+.rain-bucket{ position:relative; width:50px; height:64px; flex-shrink:0; }
+.rain-bucket::before{
+content:''; position:absolute; inset:0;
+clip-path:polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+border:2px solid var(--line); border-top:none; background:rgba(255,255,255,0.03);
+box-sizing:border-box;
+}
+.rain-bucket-fill{
+position:absolute; left:2px; right:2px; bottom:2px; height:0%;
+clip-path:polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+background:linear-gradient(180deg, var(--cyan), rgba(76,211,255,0.55));
+transition:height 1.1s ease, background .6s ease;
+overflow:hidden;
+}
+.rain-bucket-wave{
+position:absolute; top:-2px; left:-15%; width:130%; height:6px;
+background:radial-gradient(circle at 8px 3px, rgba(255,255,255,0.55) 2.5px, transparent 3px) repeat-x;
+background-size:16px 6px;
+animation: waveScroll 1.6s linear infinite;
+}
+@keyframes waveScroll{ from{ background-position-x:0; } to{ background-position-x:-16px; } }
+.rain-drop{
+position:absolute; width:2px; height:9px; border-radius:1px; background:var(--cyan);
+top:-12px; opacity:0; animation: dropFall 1.5s linear infinite; animation-play-state:paused;
+}
+.rain-bucket.active .rain-drop{ animation-play-state:running; }
+.rain-drop.rd1{ left:18%; animation-delay:0s; }
+.rain-drop.rd2{ left:48%; animation-delay:.5s; }
+.rain-drop.rd3{ left:76%; animation-delay:1s; }
+@keyframes dropFall{ 0%{ top:-12px; opacity:0; } 12%{ opacity:1; } 85%{ opacity:1; } 100%{ top:88%; opacity:0; } }
 .drought-banner{
 margin-top:14px; padding:12px 14px; border-radius:8px;
 background:rgba(255,75,92,0.08); border:1px solid rgba(255,75,92,0.3);
@@ -273,6 +304,16 @@ font-size:15px; font-weight:800; color:var(--text); line-height:1.15;
 .arc-wrap{ display:flex; justify-content:center; margin:0 auto 2px; }
 .uv-needle{ transition:transform .6s ease; }
 .mini-spark{ width:100%; height:22px; display:block; margin-top:8px; }
+.history-panel{
+margin-top:16px; background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:18px 20px;
+}
+.history-head{ font-size:10px; letter-spacing:3px; color:var(--dim); margin-bottom:16px; }
+.history-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px 24px; }
+@media (max-width:700px){ .history-grid{ grid-template-columns:repeat(2,1fr); } }
+.history-item{}
+.history-lbl{ font-size:9px; letter-spacing:1.5px; color:var(--dim2); margin-bottom:6px; }
+.mini-spark-lg{ height:38px; }
 .warning-banner{
 display:flex; align-items:flex-start; gap:16px;
 background:var(--bg-panel); border:1px solid var(--green); border-left:5px solid var(--green);
@@ -495,6 +536,13 @@ footer b{ color:var(--dim); }
 </div>
 <div class="stat-block rainfall-block" id="rainfallBlock">
 <div class="stat-block-label">RAINFALL</div>
+<div class="rain-visual-row">
+<div class="rain-bucket" id="rainBucket">
+<div class="rain-bucket-fill" id="rainBucketFill"><div class="rain-bucket-wave"></div></div>
+<div class="rain-drop rd1"></div>
+<div class="rain-drop rd2"></div>
+<div class="rain-drop rd3"></div>
+</div>
 <div class="rain-row">
 <div class="rain-item">
 <div class="rain-item-label">SINCE MIDNIGHT</div>
@@ -503,6 +551,7 @@ footer b{ color:var(--dim); }
 <div class="rain-item">
 <div class="rain-item-label">YESTERDAY TOTAL</div>
 <div class="stat-block-value" id="rainYesterdayValue">--<span class="unit">MM</span></div>
+</div>
 </div>
 </div>
 <div class="stat-block-sub" id="rainDaysSub">&mdash;</div>
@@ -516,7 +565,7 @@ footer b{ color:var(--dim); }
 <!-- CURRENT CONDITIONS -->
 <section>
 <div class="sec-head">
-<h3>CURRENT CONDITIONS &amp; LAST 3 HOURS HISTORY</h3>
+<h3>CURRENT CONDITIONS</h3>
 <div class="bar"></div>
 <div class="tag">UPDATED LIVE</div>
 </div>
@@ -527,14 +576,12 @@ footer b{ color:var(--dim); }
 <div class="thermo-bulb" id="thermoBulb"></div>
 <div class="val-lg" id="g-temp"><b>--&deg;</b></div>
 <div class="sub" id="s-temp">&mdash;</div>
-<svg class="mini-spark" id="tempSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">HUMIDITY</div>
 <div class="val-lg" id="g-hum"><b>--%</b></div>
 <div class="bar-track"><div class="bar-fill" id="humBarFill"></div></div>
 <div class="sub" id="s-hum">&mdash;</div>
-<svg class="mini-spark" id="humSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">HEAT INDEX</div>
@@ -547,14 +594,12 @@ footer b{ color:var(--dim); }
 </div>
 <div class="val-lg" id="g-heat"><b>--&deg;</b></div>
 <div class="sub" id="s-heat">&mdash;</div>
-<svg class="mini-spark" id="heatSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">AIR QUALITY</div>
 <div class="val-lg" id="g-aqi"><b>--</b></div>
 <div class="bar-track bar-zoned"><div class="bar-marker" id="aqiMarker"></div></div>
 <div class="sub" id="s-aqi">&mdash;</div>
-<svg class="mini-spark" id="aqiSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">UV INDEX</div>
@@ -571,7 +616,6 @@ footer b{ color:var(--dim); }
 </div>
 <div class="val-lg" id="g-uv"><b>--</b></div>
 <div class="sub" id="s-uv">&mdash;</div>
-<svg class="mini-spark" id="uvSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WIND / GUST</div>
@@ -589,7 +633,37 @@ footer b{ color:var(--dim); }
 <span><i style="background:var(--red)"></i>GUST</span>
 </div>
 <div class="sub" id="s-wind">MPH</div>
-<svg class="mini-spark" id="windSpark" viewBox="0 0 100 28"></svg>
+</div>
+</div>
+<div class="history-panel">
+<div class="history-head">
+<span>LAST 12 HOURS HISTORY</span>
+</div>
+<div class="history-grid">
+<div class="history-item">
+<div class="history-lbl">TEMPERATURE</div>
+<svg class="mini-spark mini-spark-lg" id="tempSpark" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">HUMIDITY</div>
+<svg class="mini-spark mini-spark-lg" id="humSpark" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">HEAT INDEX</div>
+<svg class="mini-spark mini-spark-lg" id="heatSpark" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">AIR QUALITY</div>
+<svg class="mini-spark mini-spark-lg" id="aqiSpark" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">UV INDEX</div>
+<svg class="mini-spark mini-spark-lg" id="uvSpark" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">WIND / GUST</div>
+<svg class="mini-spark mini-spark-lg" id="windSpark" viewBox="0 0 100 28"></svg>
+</div>
 </div>
 </div>
 </section>
@@ -1150,8 +1224,8 @@ radarTimer = setInterval(() => { i = (i+1) % radarFrames.length; radarShowFrame(
 const satFrames = (rv.satellite && rv.satellite.infrared) || [];
 if(satFrames.length){
 let satIdx = satFrames.length - 1;
-const satUrl = f => `${host}${f.path}/256/{z}/{x}/{y}/0/0_0.png`;
-const satLayer = L.tileLayer(satUrl(satFrames[satIdx]), {opacity:0.85, maxZoom:8}).addTo(satMap);
+const satUrl = f => `${host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`;
+const satLayer = L.tileLayer(satUrl(satFrames[satIdx]), {opacity:0.9, maxZoom:10}).addTo(satMap);
 const satTimeEl = document.getElementById('satFrameTime');
 const satBtn = document.getElementById('satPlayBtn');
 function satShowFrame(i){
@@ -1207,7 +1281,7 @@ radius: 5 + Math.max(mag,0)*2.5, color:color, weight:2, fillColor:color, fillOpa
 }
 async function loadWeather(){
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa,relative_humidity_2m,apparent_temperature,uv_index,wind_speed_10m,wind_gusts_10m&past_hours=3&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa,relative_humidity_2m,apparent_temperature,uv_index,wind_speed_10m,wind_gusts_10m&past_hours=12&wind_speed_unit=mph&timezone=auto`;
 const res = await fetch(url);
 const data = await res.json();
 const cur = data.current;
@@ -1281,7 +1355,7 @@ document.getElementById('thermoBulb').style.background = tempColor;
 animateNum(document.getElementById('g-temp').querySelector('b'), Math.round(cur.temperature_2m), 0, '\u00b0');
 document.getElementById('g-temp').style.color = tempColor;
 document.getElementById('s-temp').textContent = 'AMBIENT AIR TEMP';
-const histStart = Math.max(0, nowIdxTrend - 3);
+const histStart = Math.max(0, nowIdxTrend - 12);
 renderSpark('tempSpark', data.hourly.temperature_2m.slice(histStart, nowIdxTrend+1), tempColor);
 animateNum(document.getElementById('g-hum').querySelector('b'), Math.round(cur.relative_humidity_2m), 0, '%');
 document.getElementById('humBarFill').style.width = Math.min(100, cur.relative_humidity_2m) + '%';
@@ -1351,7 +1425,7 @@ console.error('weather fetch failed', e);
 }
 async function loadAirQuality(){
 try{
-const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi&hourly=us_aqi&past_hours=3&timezone=auto`;
+const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi&hourly=us_aqi&past_hours=12&timezone=auto`;
 const res = await fetch(url);
 const data = await res.json();
 let aqi = Math.round(data.current.us_aqi);
@@ -1365,7 +1439,7 @@ document.getElementById('s-aqi').textContent = cat.label + ' (US AQI)';
 const aqiNowIso = data.current.time.slice(0,13);
 let aqiIdx = data.hourly.time.findIndex(t => t.slice(0,13) === aqiNowIso);
 if(aqiIdx < 0) aqiIdx = data.hourly.time.length - 1;
-const aqiHistStart = Math.max(0, aqiIdx - 3);
+const aqiHistStart = Math.max(0, aqiIdx - 12);
 renderSpark('aqiSpark', data.hourly.us_aqi.slice(aqiHistStart, aqiIdx+1), cat.color);
 }catch(e){
 console.error('air quality fetch failed', e);
@@ -1392,6 +1466,13 @@ const dailyLen = data.daily.time.length;
 const yesterday = dailyLen >= 2 ? data.daily.precipitation_sum[dailyLen-2] : null;
 document.getElementById('rainTodayValue').innerHTML = sinceMidnight.toFixed(1) + '<span class="unit">MM</span>';
 document.getElementById('rainYesterdayValue').innerHTML = (yesterday !== null && yesterday !== undefined ? yesterday.toFixed(1) : '--') + '<span class="unit">MM</span>';
+const bucketMax = 25;
+const fillPct = Math.min(100, (sinceMidnight/bucketMax)*100);
+const bucketColor = sinceMidnight >= 15 ? '#ff4b5c' : sinceMidnight >= 5 ? '#ffb020' : '#4cd3ff';
+const fillEl = document.getElementById('rainBucketFill');
+fillEl.style.height = fillPct + '%';
+fillEl.style.background = 'linear-gradient(180deg, ' + bucketColor + ', ' + bucketColor + '88)';
+document.getElementById('rainBucket').classList.toggle('active', sinceMidnight > 0.1);
 const completeDays = data.daily.precipitation_sum.slice(0, dailyLen-1);
 const last15 = completeDays.slice(-15);
 const dryDays = last15.filter(v => v !== null && v !== undefined && v < 0.2).length;
