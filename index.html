@@ -519,6 +519,7 @@ footer b{ color:var(--dim); }
 <span id="pressureIcon">&rarr;</span>
 </div>
 <div class="stat-block-trend" id="pressureBlockTrend">&mdash;</div>
+<svg class="mini-spark" id="pressureSpark" viewBox="0 0 100 28" style="margin-top:12px;"></svg>
 </div>
 <div class="stat-block">
 <div class="stat-block-label">UV INDEX</div>
@@ -1340,6 +1341,10 @@ const pTrendEl = document.getElementById('pressureBlockTrend');
 pTrendEl.textContent = pTrend.text;
 pTrendEl.style.color = pTrend.color;
 pTrendEl.className = 'stat-block-trend' + (pTrend.severe ? ' severe' : '');
+{
+const pHistStart = Math.max(0, nowIdxTrend - 12);
+renderSpark('pressureSpark', data.hourly.pressure_msl.slice(pHistStart, nowIdxTrend+1), pTrend.color);
+}
 document.getElementById('uvBlockValue').textContent = cur.uv_index.toFixed(1);
 const heroUvc = uvCategory(cur.uv_index);
 document.getElementById('uvBlockAdvice').textContent = heroUvc.fairSkinAdvice;
