@@ -1523,7 +1523,7 @@ console.error('rainfall fetch failed', e);
 async function loadForecast(){
 const scrollEl = document.getElementById('forecastScroll');
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
 const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi&forecast_days=5&timezone=auto`;
 const [res, aqiRes] = await Promise.all([fetch(url), fetch(aqiUrl)]);
 const data = await res.json();
@@ -1552,7 +1552,9 @@ const dayAqiIdx = [];
 aqiTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayAqiIdx.push(idx); });
 const aqiVals = dayAqiIdx.map(idx => aqiData.hourly.us_aqi[idx]).filter(v => v !== null);
 const aqiMax = aqiVals.length ? Math.round(Math.max(...aqiVals)) : null;
-const cond = wmoIcon(data.daily.weather_code[i]);
+const cond = i === 0 && data.current && data.current.weather_code !== undefined
+? wmoIcon(data.current.weather_code)
+: wmoIcon(data.daily.weather_code[i]);
 const dayName = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {weekday:'short', timeZone:'Europe/London'}).toUpperCase();
 const dayDate = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'Europe/London'});
 const cv = capeVerdict(cape);
@@ -1640,7 +1642,9 @@ return rows;
 function buildDayOverview(i){
 if(!fcData) return '<div style="color:var(--dim); font-size:12px;">Forecast data not loaded yet.</div>';
 const d = fcData.daily;
-const cond = wmoIcon(d.weather_code[i]);
+const cond = i === 0 && fcData.current && fcData.current.weather_code !== undefined
+? wmoIcon(fcData.current.weather_code)
+: wmoIcon(d.weather_code[i]);
 const hi = Math.round(d.temperature_2m_max[i]);
 const lo = Math.round(d.temperature_2m_min[i]);
 const feels = Math.round(d.apparent_temperature_max[i]);
