@@ -1194,6 +1194,17 @@ if(code===2) return {icon:'\u26c5', label:'PARTLY CLOUDY'};
 if(code===1) return {icon:'\ud83c\udf24\ufe0f', label:'MOSTLY CLEAR'};
 return {icon:'\u2600\ufe0f', label:'CLEAR SKY'};
 }
+// Same as wmoIcon, but swaps the sun for a moon on clear/mostly-clear codes
+// after dark, using Open-Meteo's own is_day flag rather than guessing from
+// the local clock (correctly handles summer/winter daylight either way).
+function wmoIconTimed(code, isDay){
+if(isDay === 0){
+if(code === 0) return {icon:'\ud83c\udf19', label:'CLEAR SKY'};
+if(code === 1) return {icon:'\ud83c\udf19', label:'MOSTLY CLEAR'};
+if(code === 2) return {icon:'\u2601\ufe0f', label:'PARTLY CLOUDY'};
+}
+return wmoIcon(code);
+}
 function renderHeroFace(){
 if(liveData.temp === null) return;
 const valEl = document.getElementById('heroValue');
@@ -1523,7 +1534,7 @@ console.error('rainfall fetch failed', e);
 async function loadForecast(){
 const scrollEl = document.getElementById('forecastScroll');
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,is_day&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
 const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi&forecast_days=5&timezone=auto`;
 const [res, aqiRes] = await Promise.all([fetch(url), fetch(aqiUrl)]);
 const data = await res.json();
@@ -1622,7 +1633,8 @@ if(!idxs.length) return '<div style="color:var(--dim); font-size:12px;">No hourl
 let rows = '<div class="hr-head"><span>TIME</span><span></span><span>SKY</span><span style="text-align:right;">WIND</span><span style="text-align:right;">RAIN</span></div>';
 idxs.forEach(idx => {
 const hour = fcData.hourly.time[idx].slice(11,16);
-const icon = wmoIcon(fcData.hourly.weather_code[idx]).icon;
+const isDay = fcData.hourly.is_day ? fcData.hourly.is_day[idx] : 1;
+const icon = wmoIconTimed(fcData.hourly.weather_code[idx], isDay).icon;
 const temp = Math.round(fcData.hourly.temperature_2m[idx]);
 const tColor = tempScaleColor(fcData.hourly.temperature_2m[idx]);
 const wind = Math.round(fcData.hourly.wind_speed_10m[idx]);
