@@ -848,6 +848,13 @@ footer b{ color:var(--dim); }
 <a href="#" id="newsTickerLink" class="news-panel-headline" target="_blank" rel="noopener">Loading headlines&hellip;</a>
 </div>
 </div>
+<div class="panel news-panel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="panel-head"><span style="color:var(--red);"><span class="globe-spin">&#127760;</span>EL NI&Ntilde;O NEWS</span><span class="dot" style="background:var(--red); box-shadow:0 0 6px var(--red);"></span></div>
+<div class="news-panel-body">
+<a href="#" id="elninoTickerLink" class="news-panel-headline" target="_blank" rel="noopener">Loading headlines&hellip;</a>
+</div>
+</div>
 </div>
 </section>
 <footer>
@@ -1701,6 +1708,34 @@ void link.offsetWidth;
 link.style.animation = 'tickerFade 0.6s ease';
 newsIndex++;
 }
+// ---------- EL NI\u00d1O NEWS TICKER ----------
+let elninoHeadlines = [];
+let elninoIndex = 0;
+async function loadElninoNews(){
+try{
+const url = WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=elnino_news';
+const res = await fetch(url);
+const data = await res.json();
+if(data.status === 'ok' && data.items && data.items.length){
+elninoHeadlines = data.items.map(it => ({ title: it.title, link: it.link }));
+elninoIndex = 0;
+showNextElninoHeadline();
+}
+}catch(e){
+console.error('el nino ticker fetch failed', e);
+}
+}
+function showNextElninoHeadline(){
+if(!elninoHeadlines.length) return;
+const item = elninoHeadlines[elninoIndex % elninoHeadlines.length];
+const link = document.getElementById('elninoTickerLink');
+link.textContent = item.title;
+link.href = item.link;
+link.style.animation = 'none';
+void link.offsetWidth;
+link.style.animation = 'tickerFade 0.6s ease';
+elninoIndex++;
+}
 function revealTiles(){
 document.querySelectorAll('.tile').forEach((el,i)=>{
 setTimeout(()=> el.classList.add('show'), i*120);
@@ -1724,8 +1759,11 @@ initImagery();
 setInterval(refreshAll, 10*60*1000);
 setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000);
 loadNews();
+loadElninoNews();
 setInterval(showNextHeadline, 6000);
+setInterval(showNextElninoHeadline, 7000);
 setInterval(loadNews, 30*60*1000);
+setInterval(loadElninoNews, 30*60*1000);
 </script>
 </body>
 </html>
