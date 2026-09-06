@@ -232,6 +232,11 @@ background:rgba(255,75,92,0.08); border:1px solid rgba(255,75,92,0.3);
 }
 .drought-title{ font-size:11px; letter-spacing:1px; font-weight:800; color:var(--red); animation: icePulse 1.4s ease-in-out infinite; }
 .drought-advice{ font-size:11px; color:var(--text); line-height:1.55; margin-top:7px; letter-spacing:0.3px; }
+.radar-read{ display:flex; align-items:center; gap:8px; margin-top:12px; font-size:11.5px; color:var(--text); }
+.radar-read-dot{ width:6px; height:6px; border-radius:50%; background:var(--dim2); flex-shrink:0; }
+.radar-read-dot.active{ background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+.radar-read-dot.rising{ background:var(--red); box-shadow:0 0 6px var(--red); }
+.radar-read-dot.easing{ background:var(--green); box-shadow:0 0 6px var(--green); }
 /* SECTION LABELS */
 .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
 .sec-head h3{
@@ -598,6 +603,10 @@ footer b{ color:var(--dim); }
 </div>
 </div>
 <div class="stat-block-sub" id="rainDaysSub">&mdash;</div>
+<div class="radar-read" id="radarReadText">
+<span class="radar-read-dot" id="radarReadDot"></span>
+<span id="radarReadLabel">Checking radar&hellip;</span>
+</div>
 <div class="drought-banner" id="droughtBanner" style="display:none;">
 <div class="drought-title">&#9888; DROUGHT CONDITIONS &mdash; 15+ DAYS WITHOUT RAIN</div>
 <div class="drought-advice">Ground conditions are tinder-dry. Avoid open flames, discarded cigarettes and garden fires &mdash; grass and gorse fires spread fast in this state. Report smoke or fires to the Fire and Rescue Service.</div>
@@ -1537,6 +1546,109 @@ renderSpark('aqiSpark', data.hourly.us_aqi.slice(aqiHistStart, aqiIdx+1), cat.co
 console.error('air quality fetch failed', e);
 }
 }
+// ---------- RADAR-BASED "RIGHT NOW" RAIN READ ----------
+// Samples the real RainViewer radar tile at Jersey's exact pixel across the
+// last few past frames (~30 min) and describes what it genuinely shows.
+// Note: RainViewer's free tier no longer includes "nowcast" (predicted future)
+// frames as of Jan 2026 — this reads real observed history only, not a forecast.
+const RADAR_TILE_ZOOM = 6;
+function latLonToTilePixel(lat, lon, zoom){
+const n = Math.pow(2, zoom);
+const xFloat = (lon + 180) / 360 * n;
+const latRad = lat * Math.PI / 180;
+const yFloat = (1 - Math.log(Math.tan(latRad) + 1/Math.cos(latRad)) / Math.PI) / 2 * n;
+const xTile = Math.floor(xFloat);
+const yTile = Math.floor(yFloat);
+const pixelX = Math.floor((xFloat - xTile) * 256);
+const pixelY = Math.floor((yFloat - yTile) * 256);
+return { xTile, yTile, pixelX, pixelY };
+}
+// Broad categorical read from a radar pixel colour — deliberately not a
+// precise dBZ decode (that risks being confidently wrong), just clear bands
+// matching RainViewer's own public colour description (blue=light through
+// to red/magenta=heavy).
+function classifyRadarPixel(r, g, b, a){
+if(a < 15) return 'none';
+if(r > 200 && g > 200 && b > 200) return 'extreme';
+if(r > 180 && b > 140 && g < 140) return 'extreme';
+if(r > 180 && g < 110 && b < 110) return 'heavy';
+if(r > 180 && g > 180 && b < 120) return 'moderate';
+if(r > 200 && g >= 110 && g < 200 && b < 90) return 'moderate';
+if(g > 90 && g >= r && g >= b) return 'light';
+if(b > 70) return 'light';
+return 'light';
+}
+async function sampleRadarFrame(host, frame, tileCoord){
+const url = `${host}${frame.path}/256/${RADAR_TILE_ZOOM}/${tileCoord.xTile}/${tileCoord.yTile}/2/1_1.png`;
+try{
+const res = await fetch(url, { mode: 'cors' });
+if(!res.ok || res.type === 'opaque') return 'unknown';
+const blob = await res.blob();
+const bitmap = await createImageBitmap(blob);
+const canvas = document.createElement('canvas');
+canvas.width = bitmap.width;
+canvas.height = bitmap.height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(bitmap, 0, 0);
+const data = ctx.getImageData(tileCoord.pixelX, tileCoord.pixelY, 1, 1).data;
+return classifyRadarPixel(data[0], data[1], data[2], data[3]);
+}catch(e){
+return 'unknown';
+}
+}
+const RADAR_INTENSITY_RANK = { none:0, light:1, moderate:2, heavy:3, extreme:4 };
+const RADAR_INTENSITY_LABEL = { none:'no rain', light:'light rain', moderate:'moderate rain', heavy:'heavy rain', extreme:'very heavy rain' };
+async function loadRadarReadText(){
+const labelEl = document.getElementById('radarReadLabel');
+const dotEl = document.getElementById('radarReadDot');
+try{
+const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+const rv = await res.json();
+const host = rv.host;
+const pastFrames = rv.radar.past || [];
+if(!pastFrames.length){
+labelEl.textContent = 'Radar data unavailable right now.';
+return;
+}
+const tileCoord = latLonToTilePixel(LAT, LON, RADAR_TILE_ZOOM);
+const recentFrames = pastFrames.slice(-4);
+const readings = [];
+for(const frame of recentFrames){
+readings.push(await sampleRadarFrame(host, frame, tileCoord));
+}
+const valid = readings.filter(r => r !== 'unknown');
+if(!valid.length){
+labelEl.textContent = 'Could not read radar imagery right now.';
+return;
+}
+const current = valid[valid.length - 1];
+const earliest = valid[0];
+const currentRank = RADAR_INTENSITY_RANK[current];
+const earliestRank = RADAR_INTENSITY_RANK[earliest];
+
+dotEl.classList.remove('active','rising','easing');
+let text;
+if(current === 'none' && earliest === 'none'){
+text = 'Radar shows no rain over Jersey right now.';
+} else if(current === 'none' && earliestRank > 0){
+text = 'Radar shows recent rain has now cleared Jersey.';
+dotEl.classList.add('easing');
+} else if(currentRank > earliestRank){
+text = `Radar shows ${RADAR_INTENSITY_LABEL[current]} over Jersey, intensifying over the last 30 minutes.`;
+dotEl.classList.add('rising');
+} else if(currentRank < earliestRank){
+text = `Radar shows ${RADAR_INTENSITY_LABEL[current]} over Jersey, easing over the last 30 minutes.`;
+dotEl.classList.add('easing');
+} else {
+text = `Radar shows ${RADAR_INTENSITY_LABEL[current]} over Jersey right now.`;
+dotEl.classList.add('active');
+}
+labelEl.textContent = text;
+}catch(e){
+console.error('radar read failed', e);
+labelEl.textContent = 'Could not read radar imagery right now.';
+}
+}
 async function loadRainfall(){
 try{
 const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=precipitation&daily=precipitation_sum&hourly=precipitation&past_days=16&forecast_days=1&timezone=auto&precipitation_unit=mm`;
@@ -1819,6 +1931,7 @@ async function refreshAll(){
 loadWeather();
 loadAirQuality();
 loadRainfall();
+loadRadarReadText();
 loadWarnings();
 await loadMetar();
 loadForecast();
