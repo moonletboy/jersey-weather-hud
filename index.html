@@ -1220,6 +1220,45 @@ if(cloudCover < 50) return wmoIconTimed(1, isDay);
 if(cloudCover < 85) return wmoIconTimed(2, isDay);
 return wmoIconTimed(3, isDay);
 }
+// Real ground observation from Jersey Airport (METAR), for "right now" only —
+// used in preference to any forecast model's guess when it's available and
+// recent. wxString covers active weather; cloudCover covers sky state.
+let metarData = null;
+async function loadMetar(){
+try{
+const url = WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=metar';
+const res = await fetch(url);
+const data = await res.json();
+if(data.status === 'ok'){
+metarData = data;
+}
+}catch(e){
+console.error('metar fetch failed', e);
+}
+}
+function metarConditionIcon(metar, isDay){
+const wx = (metar.wxString || '').toUpperCase();
+if(wx.indexOf('TS') !== -1) return {icon:'\u26c8\ufe0f', label:'THUNDERSTORM'};
+if(wx.indexOf('SN') !== -1) return {icon:'\u2744\ufe0f', label:'SNOW'};
+if(wx.indexOf('RA') !== -1 || wx.indexOf('DZ') !== -1) return {icon:'\ud83c\udf27\ufe0f', label:'RAIN'};
+if(wx.indexOf('FG') !== -1 || wx.indexOf('BR') !== -1 || metar.cloudCover === 'VV') return {icon:'\ud83c\udf2b\ufe0f', label:'FOG'};
+if(metar.cloudCover === 'OVC') return {icon:'\u2601\ufe0f', label:'OVERCAST'};
+if(metar.cloudCover === 'BKN') return {icon:'\u26c5', label:'PARTLY CLOUDY'};
+if(metar.cloudCover === 'SCT' || metar.cloudCover === 'FEW') return isDay === 0 ? {icon:'\ud83c\udf19', label:'MOSTLY CLEAR'} : {icon:'\ud83c\udf24\ufe0f', label:'MOSTLY CLEAR'};
+return isDay === 0 ? {icon:'\ud83c\udf19', label:'CLEAR SKY'} : {icon:'\u2600\ufe0f', label:'CLEAR SKY'};
+}
+// Picks the best available "right now" icon: fresh METAR (real observation,
+// within the last 90 minutes) wins; otherwise falls back to the forecast
+// model's own current reading.
+function bestLiveIcon(fallbackCode, fallbackCloudCover, isDay){
+if(metarData && metarData.obsTime){
+const ageMinutes = (Date.now()/1000 - metarData.obsTime) / 60;
+if(ageMinutes >= 0 && ageMinutes <= 90){
+return metarConditionIcon(metarData, isDay);
+}
+}
+return liveConditionIcon(fallbackCode, fallbackCloudCover, isDay);
+}
 function renderHeroFace(){
 if(liveData.temp === null) return;
 const valEl = document.getElementById('heroValue');
@@ -1579,7 +1618,7 @@ aqiTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayAqiIdx.push(idx); }
 const aqiVals = dayAqiIdx.map(idx => aqiData.hourly.us_aqi[idx]).filter(v => v !== null);
 const aqiMax = aqiVals.length ? Math.round(Math.max(...aqiVals)) : null;
 const cond = i === 0 && data.current && data.current.weather_code !== undefined
-? liveConditionIcon(data.current.weather_code, data.current.cloud_cover, data.current.is_day)
+? bestLiveIcon(data.current.weather_code, data.current.cloud_cover, data.current.is_day)
 : wmoIcon(data.daily.weather_code[i]);
 const dayName = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {weekday:'short', timeZone:'Europe/London'}).toUpperCase();
 const dayDate = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'Europe/London'});
@@ -1670,7 +1709,7 @@ function buildDayOverview(i){
 if(!fcData) return '<div style="color:var(--dim); font-size:12px;">Forecast data not loaded yet.</div>';
 const d = fcData.daily;
 const cond = i === 0 && fcData.current && fcData.current.weather_code !== undefined
-? liveConditionIcon(fcData.current.weather_code, fcData.current.cloud_cover, fcData.current.is_day)
+? bestLiveIcon(fcData.current.weather_code, fcData.current.cloud_cover, fcData.current.is_day)
 : wmoIcon(d.weather_code[i]);
 const hi = Math.round(d.temperature_2m_max[i]);
 const lo = Math.round(d.temperature_2m_min[i]);
@@ -1776,11 +1815,12 @@ function stampRefresh(){
 const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false };
 document.getElementById('lastRefresh').textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
 }
-function refreshAll(){
+async function refreshAll(){
 loadWeather();
 loadAirQuality();
 loadRainfall();
 loadWarnings();
+await loadMetar();
 loadForecast();
 stampRefresh();
 }
