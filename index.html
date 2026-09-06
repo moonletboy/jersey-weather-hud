@@ -1205,6 +1205,21 @@ if(code === 2) return {icon:'\u2601\ufe0f', label:'PARTLY CLOUDY'};
 }
 return wmoIcon(code);
 }
+// For a "right now" reading specifically: weather_code is a coarse diagnostic
+// that can round up to "overcast" even when the sky is mostly clear. Trust it
+// fully for anything with active precipitation/storm/fog/snow (cloud % alone
+// can't capture those), but for the plain clear/cloudy codes, use the actual
+// cloud_cover percentage instead — a much finer-grained figure.
+function liveConditionIcon(code, cloudCover, isDay){
+const activeWeather = [95,96,99,51,53,55,56,57,61,63,65,66,67,80,81,82,71,73,75,77,85,86,45,48];
+if(activeWeather.includes(code) || cloudCover === null || cloudCover === undefined){
+return wmoIconTimed(code, isDay);
+}
+if(cloudCover < 20) return wmoIconTimed(0, isDay);
+if(cloudCover < 50) return wmoIconTimed(1, isDay);
+if(cloudCover < 85) return wmoIconTimed(2, isDay);
+return wmoIconTimed(3, isDay);
+}
 function renderHeroFace(){
 if(liveData.temp === null) return;
 const valEl = document.getElementById('heroValue');
@@ -1534,7 +1549,7 @@ console.error('rainfall fetch failed', e);
 async function loadForecast(){
 const scrollEl = document.getElementById('forecastScroll');
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,is_day&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,is_day&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
 const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi&forecast_days=5&timezone=auto`;
 const [res, aqiRes] = await Promise.all([fetch(url), fetch(aqiUrl)]);
 const data = await res.json();
@@ -1564,7 +1579,7 @@ aqiTimes.forEach((t,idx)=>{ if(t.slice(0,10) === dateStr) dayAqiIdx.push(idx); }
 const aqiVals = dayAqiIdx.map(idx => aqiData.hourly.us_aqi[idx]).filter(v => v !== null);
 const aqiMax = aqiVals.length ? Math.round(Math.max(...aqiVals)) : null;
 const cond = i === 0 && data.current && data.current.weather_code !== undefined
-? wmoIcon(data.current.weather_code)
+? liveConditionIcon(data.current.weather_code, data.current.cloud_cover, data.current.is_day)
 : wmoIcon(data.daily.weather_code[i]);
 const dayName = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {weekday:'short', timeZone:'Europe/London'}).toUpperCase();
 const dayDate = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'Europe/London'});
@@ -1655,7 +1670,7 @@ function buildDayOverview(i){
 if(!fcData) return '<div style="color:var(--dim); font-size:12px;">Forecast data not loaded yet.</div>';
 const d = fcData.daily;
 const cond = i === 0 && fcData.current && fcData.current.weather_code !== undefined
-? wmoIcon(fcData.current.weather_code)
+? liveConditionIcon(fcData.current.weather_code, fcData.current.cloud_cover, fcData.current.is_day)
 : wmoIcon(d.weather_code[i]);
 const hi = Math.round(d.temperature_2m_max[i]);
 const lo = Math.round(d.temperature_2m_min[i]);
