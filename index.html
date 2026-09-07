@@ -867,7 +867,7 @@ footer b{ color:var(--dim); }
 </div>
 </section>
 <footer>
-<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS (EARTHQUAKES) &middot; GOV.JE (WARNINGS)</div>
+<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; GOV.JE (WARNINGS)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
 </div>
@@ -1359,22 +1359,57 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=c
 L.circle([LAT,LON], {radius: 500*1609.34, color:'#b98aff', weight:1, fillOpacity:0}).addTo(quakeMap);
 L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(quakeMap);
 const quakeRadiusKm = 500 * 1.60934;
-const quakeUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${LAT}&longitude=${LON}&maxradiuskm=${quakeRadiusKm}&minmagnitude=1&starttime=` +
-new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
-fetch(quakeUrl)
-.then(r=>r.json())
-.then(gj=>{
-gj.features.forEach(f=>{
+const quakeStartIso = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+const usgsQuakeUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${LAT}&longitude=${LON}&maxradiuskm=${quakeRadiusKm}&minmagnitude=1&starttime=` + quakeStartIso.slice(0,10);
+// USGS's global catalogue is comprehensive for major events but can be slow or
+// incomplete for smaller regional European quakes. EMSC (aggregating French
+// RENASS and other national networks) is the authoritative source for exactly
+// this kind of nearby event, so both are queried and merged.
+const emscQuakeUrl = `https://www.seismicportal.eu/fdsnws/event/1/query?format=json&lat=${LAT}&lon=${LON}&maxradius=${(quakeRadiusKm/111.32).toFixed(2)}&minmag=1&start=${quakeStartIso.slice(0,19)}`;
+
+function normalizeUsgsQuake(f){
 const [qlon, qlat, depth] = f.geometry.coordinates;
-const mag = f.properties.mag;
+return { lat: qlat, lon: qlon, depth: depth, mag: f.properties.mag, place: f.properties.place, time: f.properties.time, source: 'USGS' };
+}
+function normalizeEmscQuake(f){
+const [qlon, qlat, depth] = f.geometry.coordinates;
+const p = f.properties;
+return { lat: qlat, lon: qlon, depth: depth, mag: p.mag, place: p.flynn_region || 'Unknown region', time: new Date(p.time).getTime(), source: p.auth || 'EMSC' };
+}
+// A quake reported by both agencies within a few minutes, ~15km and ~0.5
+// magnitude of each other is treated as the same physical event, so it isn't
+// plotted twice.
+function isDuplicateQuake(a, b){
+const timeDiffMin = Math.abs(a.time - b.time) / 60000;
+const latKm = Math.abs(a.lat - b.lat) * 111;
+const lonKm = Math.abs(a.lon - b.lon) * 111 * Math.cos(a.lat * Math.PI/180);
+const distKm = Math.sqrt(latKm*latKm + lonKm*lonKm);
+return timeDiffMin < 10 && distKm < 15 && Math.abs(a.mag - b.mag) < 0.5;
+}
+
+Promise.allSettled([
+fetch(usgsQuakeUrl).then(r => r.json()).then(gj => gj.features.map(normalizeUsgsQuake)),
+fetch(emscQuakeUrl).then(r => r.json()).then(gj => gj.features.map(normalizeEmscQuake))
+]).then(results => {
+const usgsQuakes = results[0].status === 'fulfilled' ? results[0].value : [];
+const emscQuakes = results[1].status === 'fulfilled' ? results[1].value : [];
+if(results[0].status === 'rejected') console.error('USGS earthquake feed failed', results[0].reason);
+if(results[1].status === 'rejected') console.error('EMSC earthquake feed failed', results[1].reason);
+
+const merged = usgsQuakes.slice();
+emscQuakes.forEach(eq => {
+if(!merged.some(existing => isDuplicateQuake(existing, eq))) merged.push(eq);
+});
+
+merged.forEach(q => {
+const mag = q.mag;
 const color = mag>=5 ? '#ff4b5c' : mag>=4 ? '#ff8c30' : mag>=3 ? '#e0d341' : '#2de1a0';
-L.circleMarker([qlat, qlon], {
+L.circleMarker([q.lat, q.lon], {
 radius: 5 + Math.max(mag,0)*2.5, color:color, weight:2, fillColor:color, fillOpacity:0.35
-}).bindPopup(`<b>M${mag.toFixed(1)}</b> \u2014 ${f.properties.place}<br>${new Date(f.properties.time).toLocaleString('en-GB')}<br>Depth: ${depth.toFixed(0)} km`)
+}).bindPopup(`<b>M${mag.toFixed(1)}</b> \u2014 ${q.place}<br>${new Date(q.time).toLocaleString('en-GB')}<br>Depth: ${q.depth.toFixed(0)} km<br><span style="opacity:0.6;font-size:11px;">Source: ${q.source}</span>`)
 .addTo(quakeMap);
 });
-})
-.catch(e => console.error('earthquake feed failed', e));
+});
 }
 async function loadWeather(){
 try{
