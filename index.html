@@ -1154,7 +1154,7 @@ timingEl.style.color = AMBER;
 // ---------- WEATHER FETCH ----------
 const LAT=49.1805, LON=-2.1058;
 const TEST_MODE = false;
-let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014', aqi:null, pressure:null };
+let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, windDir:null, gust:null, uv:null, condIcon:'\u2754', condLabel:'\u2014', aqi:null, pressure:null };
 let heroFaceIndex = 0;
 let fcData = null;
 const WARNINGS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
@@ -1422,6 +1422,7 @@ document.getElementById('windBlockValue').innerHTML = Math.round(cur.wind_speed_
 document.getElementById('windBlockArrow').style.transform = 'rotate(' + (cur.wind_direction_10m+180) + 'deg)';
 document.getElementById('windBlockGust').textContent = 'GUST ' + Math.round(cur.wind_gusts_10m) + ' MPH';
 document.getElementById('windBlockDir').textContent = 'DIRECTION ' + compass(cur.wind_direction_10m) + ' (' + Math.round(cur.wind_direction_10m) + '\u00b0)';
+liveData.windDir = cur.wind_direction_10m;
 const beaufort = beaufortScale(cur.wind_speed_10m);
 const windTrendEl = document.getElementById('windBlockBeaufort');
 windTrendEl.textContent = 'FORCE ' + beaufort.force + ' \u2014 ' + beaufort.label;
@@ -1563,6 +1564,17 @@ const pixelX = Math.floor((xFloat - xTile) * 256);
 const pixelY = Math.floor((yFloat - yTile) * 256);
 return { xTile, yTile, pixelX, pixelY };
 }
+// Standard "destination point given start, bearing and distance" formula —
+// used to look upwind of Jersey for approaching echoes.
+function destinationPoint(lat, lon, bearingDeg, distanceKm){
+const R = 6371;
+const bearing = bearingDeg * Math.PI / 180;
+const lat1 = lat * Math.PI / 180;
+const lon1 = lon * Math.PI / 180;
+const lat2 = Math.asin(Math.sin(lat1)*Math.cos(distanceKm/R) + Math.cos(lat1)*Math.sin(distanceKm/R)*Math.cos(bearing));
+const lon2 = lon1 + Math.atan2(Math.sin(bearing)*Math.sin(distanceKm/R)*Math.cos(lat1), Math.cos(distanceKm/R) - Math.sin(lat1)*Math.sin(lat2));
+return { lat: lat2 * 180/Math.PI, lon: ((lon2 * 180/Math.PI) + 540) % 360 - 180 };
+}
 // Broad categorical read from a radar pixel colour — deliberately not a
 // precise dBZ decode (that risks being confidently wrong), just clear bands
 // matching RainViewer's own public colour description (blue=light through
@@ -1596,8 +1608,45 @@ return classifyRadarPixel(data[0], data[1], data[2], data[3]);
 return 'unknown';
 }
 }
+// Samples several lat/lon points on ONE frame efficiently — points that land
+// in the same tile (common at this zoom, tiles are ~400km wide here) share a
+// single fetch instead of one request per point.
+async function sampleRadarPoints(host, frame, points){
+const tileCoords = points.map(p => latLonToTilePixel(p.lat, p.lon, RADAR_TILE_ZOOM));
+const tileCache = {};
+const results = [];
+for(const tc of tileCoords){
+const key = tc.xTile + '_' + tc.yTile;
+if(!(key in tileCache)){
+const url = `${host}${frame.path}/256/${RADAR_TILE_ZOOM}/${tc.xTile}/${tc.yTile}/2/1_1.png`;
+try{
+const res = await fetch(url, { mode: 'cors' });
+if(!res.ok || res.type === 'opaque'){ tileCache[key] = null; }
+else{
+const blob = await res.blob();
+const bitmap = await createImageBitmap(blob);
+const canvas = document.createElement('canvas');
+canvas.width = bitmap.width;
+canvas.height = bitmap.height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(bitmap, 0, 0);
+tileCache[key] = ctx;
+}
+}catch(e){ tileCache[key] = null; }
+}
+const ctx = tileCache[key];
+if(!ctx){ results.push('unknown'); continue; }
+const data = ctx.getImageData(tc.pixelX, tc.pixelY, 1, 1).data;
+results.push(classifyRadarPixel(data[0], data[1], data[2], data[3]));
+}
+return results;
+}
 const RADAR_INTENSITY_RANK = { none:0, light:1, moderate:2, heavy:3, extreme:4 };
 const RADAR_INTENSITY_LABEL = { none:'no rain', light:'light rain', moderate:'moderate rain', heavy:'heavy rain', extreme:'very heavy rain' };
+// Distances (km) checked upwind of Jersey when it's currently dry, to spot
+// approaching echoes. Straight-line advection estimate only — real showers
+// can strengthen, weaken, or curve, so this is a rough steer, not a promise.
+const RADAR_PROBE_DISTANCES_KM = [15, 30, 50, 75];
 async function loadRadarReadText(){
 const labelEl = document.getElementById('radarReadLabel');
 const dotEl = document.getElementById('radarReadDot');
@@ -1628,12 +1677,8 @@ const earliestRank = RADAR_INTENSITY_RANK[earliest];
 
 dotEl.classList.remove('active','rising','easing');
 let text;
-if(current === 'none' && earliest === 'none'){
-text = 'Radar shows no rain over Jersey right now.';
-} else if(current === 'none' && earliestRank > 0){
-text = 'Radar shows recent rain has now cleared Jersey.';
-dotEl.classList.add('easing');
-} else if(currentRank > earliestRank){
+if(current !== 'none'){
+if(currentRank > earliestRank){
 text = `Radar shows ${RADAR_INTENSITY_LABEL[current]} over Jersey, intensifying over the last 30 minutes.`;
 dotEl.classList.add('rising');
 } else if(currentRank < earliestRank){
@@ -1644,6 +1689,36 @@ text = `Radar shows ${RADAR_INTENSITY_LABEL[current]} over Jersey right now.`;
 dotEl.classList.add('active');
 }
 labelEl.textContent = text;
+return;
+}
+// Jersey itself is currently dry — check upwind for anything approaching.
+if(earliestRank > 0){
+labelEl.textContent = 'Radar shows recent rain has now cleared Jersey.';
+dotEl.classList.add('easing');
+return;
+}
+if(liveData.windDir === null || liveData.windDir === undefined || !liveData.wind || liveData.wind < 3){
+labelEl.textContent = 'Radar shows no rain over Jersey right now.';
+return;
+}
+const latestFrame = pastFrames[pastFrames.length - 1];
+const probePoints = RADAR_PROBE_DISTANCES_KM.map(km => destinationPoint(LAT, LON, liveData.windDir, km));
+const probeResults = await sampleRadarPoints(host, latestFrame, probePoints);
+let nearestIdx = -1;
+for(let k = 0; k < probeResults.length; k++){
+if(probeResults[k] !== 'unknown' && probeResults[k] !== 'none'){ nearestIdx = k; break; }
+}
+if(nearestIdx === -1){
+labelEl.textContent = `Radar shows no rain over Jersey, and none approaching within ${RADAR_PROBE_DISTANCES_KM[RADAR_PROBE_DISTANCES_KM.length-1]}km.`;
+return;
+}
+const distanceKm = RADAR_PROBE_DISTANCES_KM[nearestIdx];
+const speedKmh = liveData.wind * 1.60934;
+const etaMinutes = Math.round((distanceKm / speedKmh) * 60);
+const fromCompass = COMPASS8_NAMES[compass8Index(liveData.windDir)].toLowerCase();
+const intensityWord = RADAR_INTENSITY_LABEL[probeResults[nearestIdx]];
+labelEl.textContent = `Radar shows ${intensityWord} roughly ${distanceKm}km to the ${fromCompass}, which could reach Jersey in around ${etaMinutes} minutes at the current wind speed \u2014 a rough estimate, not a guarantee.`;
+dotEl.classList.add('rising');
 }catch(e){
 console.error('radar read failed', e);
 labelEl.textContent = 'Could not read radar imagery right now.';
@@ -1700,7 +1775,7 @@ console.error('rainfall fetch failed', e);
 async function loadForecast(){
 const scrollEl = document.getElementById('forecastScroll');
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,is_day&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,precipitation_probability,is_day&forecast_days=5&wind_speed_unit=mph&timezone=auto`;
 const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=us_aqi&forecast_days=5&timezone=auto`;
 const [res, aqiRes] = await Promise.all([fetch(url), fetch(aqiUrl)]);
 const data = await res.json();
@@ -1817,38 +1892,159 @@ rows += `<div class="hr-row">
 });
 return rows;
 }
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function circularMeanDeg(degs){
+if(!degs.length) return null;
+let sinSum = 0, cosSum = 0;
+degs.forEach(d => { const r = d * Math.PI/180; sinSum += Math.sin(r); cosSum += Math.cos(r); });
+let mean = Math.atan2(sinSum, cosSum) * 180/Math.PI;
+if(mean < 0) mean += 360;
+return mean;
+}
+function compass8Index(deg){ return Math.round(deg/45) % 8; }
+const COMPASS8_NAMES = ['North','Northeast','East','Southeast','South','Southwest','West','Northwest'];
+function windForceWord(force){
+if(force <= 0) return 'calm';
+if(force <= 3) return 'light';
+if(force <= 5) return 'moderate';
+if(force <= 7) return 'strong';
+if(force <= 9) return 'gale force';
+if(force <= 11) return 'storm force';
+return 'hurricane force';
+}
+function dayCategoryFromCodes(codes){
+const counts = {};
+codes.forEach(c => {
+let cat;
+if([95,96,99].includes(c)) cat = 'storm';
+else if([71,73,75,77,85,86].includes(c)) cat = 'snow';
+else if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c)) cat = 'rain';
+else if([45,48].includes(c)) cat = 'fog';
+else if(c === 3) cat = 'overcast';
+else if(c === 2) cat = 'cloud';
+else if(c === 1) cat = 'mostlyClear';
+else cat = 'clear';
+counts[cat] = (counts[cat] || 0) + 1;
+});
+let best = 'clear', bestN = 0;
+Object.keys(counts).forEach(k => { if(counts[k] > bestN){ best = k; bestN = counts[k]; } });
+return best;
+}
+function feelWord(feelsMax){
+if(feelsMax >= 28) return 'very hot';
+if(feelsMax >= 24) return 'hot';
+if(feelsMax >= 19) return 'warm';
+if(feelsMax >= 14) return 'mild';
+if(feelsMax >= 8) return 'cool';
+if(feelsMax >= 3) return 'chilly';
+return 'cold';
+}
+const DAY_CAT_START = {
+clear: 'bright and sunny', mostlyClear: 'largely clear', cloud: 'rather cloudy',
+overcast: 'grey and overcast', rain: 'wet with rain', storm: 'unsettled with thundery showers',
+fog: 'misty and murky', snow: 'cold with wintry showers'
+};
+const DAY_CAT_BECOME = {
+clear: 'sunnier', mostlyClear: 'brighter', cloud: 'cloudier',
+overcast: 'greyer', rain: 'wetter, with rain moving in', storm: 'increasingly unsettled',
+fog: 'clearer as the mist lifts', snow: 'wintrier'
+};
 function buildDayOverview(i){
 if(!fcData) return '<div style="color:var(--dim); font-size:12px;">Forecast data not loaded yet.</div>';
 const d = fcData.daily;
-const cond = i === 0 && fcData.current && fcData.current.weather_code !== undefined
-? bestLiveIcon(fcData.current.weather_code, fcData.current.cloud_cover, fcData.current.is_day)
-: wmoIcon(d.weather_code[i]);
-const hi = Math.round(d.temperature_2m_max[i]);
-const lo = Math.round(d.temperature_2m_min[i]);
+const dateStr = fcData.daily.time[i];
+const hTimes = fcData.hourly.time;
 const feels = Math.round(d.apparent_temperature_max[i]);
-const beau = beaufortScale(d.wind_speed_10m_max[i]);
-const wind = Math.round(d.wind_speed_10m_max[i]);
-const gust = Math.round(d.wind_gusts_10m_max[i]);
-const rain = d.precipitation_sum[i];
-const rainPct = Math.round(d.precipitation_probability_max[i]);
-const uv = d.uv_index_max[i];
-let text = `Expect ${cond.label.toLowerCase()} conditions, with highs of ${hi}\u00b0C and lows down to ${lo}\u00b0C \u2014 feeling as warm as ${feels}\u00b0C at the peak. `;
-text += `Winds run ${beau.label.toLowerCase()} at Force ${beau.force} on the Beaufort scale, averaging ${wind}mph with gusts up to ${gust}mph. `;
-if(rain > 0.2){
-text += `Rain looks likely, with a ${rainPct}% chance and roughly ${rain.toFixed(1)}mm expected through the day. `;
-} else if(rainPct > 20){
-text += `There's a slim ${rainPct}% chance of a passing shower, though most of the day should stay dry. `;
-} else {
-text += `The day should stay dry throughout. `;
+const feelsWordStr = feelWord(feels);
+
+let minPrefix = null;
+if(fcData.current && fcData.current.time.slice(0,10) === dateStr){
+minPrefix = fcData.current.time.slice(0,13);
 }
-if(uv >= 6){
-text += `UV climbs to ${uv.toFixed(1)} \u2014 worth thinking about sun protection if you're outdoors for long.`;
-} else if(uv >= 3){
-text += `UV reaches a moderate ${uv.toFixed(1)}.`;
-} else {
-text += `UV stays low at ${uv.toFixed(1)}.`;
+const idxs = [];
+hTimes.forEach((t, idx) => {
+if(t.slice(0,10) !== dateStr) return;
+if(minPrefix && t.slice(0,13) < minPrefix) return;
+idxs.push(idx);
+});
+
+if(!idxs.length){
+const condFallback = wmoIcon(d.weather_code[i]);
+return `<div class="fc-overview-text">${condFallback.label} conditions expected, feeling ${feelsWordStr}.</div>`;
 }
-return `<div class="fc-overview-text">${text}</div>`;
+
+const morningIdx = [], afternoonIdx = [], eveningIdx = [];
+idxs.forEach(idx => {
+const hour = parseInt(hTimes[idx].slice(11,13), 10);
+if(hour < 12) morningIdx.push(idx);
+else if(hour < 18) afternoonIdx.push(idx);
+else eveningIdx.push(idx);
+});
+
+function periodInfo(periodIdxs){
+if(!periodIdxs.length) return null;
+const codes = periodIdxs.map(idx => fcData.hourly.weather_code[idx]);
+const precipProbs = periodIdxs.map(idx => fcData.hourly.precipitation_probability[idx]).filter(v => v !== null && v !== undefined);
+return { category: dayCategoryFromCodes(codes), maxPrecipProb: precipProbs.length ? Math.max(...precipProbs) : 0 };
+}
+
+const periods = [periodInfo(morningIdx), periodInfo(afternoonIdx), periodInfo(eveningIdx)].filter(p => p !== null);
+const activeRainCats = ['rain','storm','snow'];
+let narrative;
+
+if(periods.length === 1){
+const p = periods[0];
+let sentence = capitalize(DAY_CAT_START[p.category] || 'changeable');
+if(!activeRainCats.includes(p.category) && p.maxPrecipProb >= 30){
+sentence += ', with the chance of a shower';
+}
+narrative = sentence;
+} else {
+const first = periods[0];
+const last = periods[periods.length - 1];
+let sentence = capitalize(DAY_CAT_START[first.category] || 'changeable') + ' at first';
+const showerRisk = periods.some(p => !activeRainCats.includes(p.category) && p.maxPrecipProb >= 30);
+if(showerRisk && !activeRainCats.includes(first.category)){
+sentence += ', with the chance of a shower';
+}
+if(last.category !== first.category){
+sentence += `, becoming ${DAY_CAT_BECOME[last.category] || 'more changeable'}`;
+} else {
+sentence += ', staying that way through the day';
+}
+narrative = sentence;
+}
+narrative += ` and feeling ${feelsWordStr}.`;
+
+const dirs = idxs.map(idx => fcData.hourly.wind_direction_10m ? fcData.hourly.wind_direction_10m[idx] : null).filter(v => v !== null && v !== undefined);
+const speeds = idxs.map(idx => fcData.hourly.wind_speed_10m[idx]).filter(v => v !== null && v !== undefined);
+const gusts = idxs.map(idx => fcData.hourly.wind_gusts_10m[idx]).filter(v => v !== null && v !== undefined);
+
+let windStatement = '';
+if(dirs.length && speeds.length){
+const half = Math.ceil(dirs.length / 2);
+const dir1 = circularMeanDeg(dirs.slice(0, half));
+const dir2 = circularMeanDeg(dirs.slice(half)) ?? dir1;
+const sector1 = compass8Index(dir1);
+const sector2 = compass8Index(dir2);
+const avgSpeed = speeds.reduce((a,b) => a+b, 0) / speeds.length;
+const maxSpeed = Math.max.apply(null, speeds.concat(gusts.length ? gusts : [0]));
+const force1 = beaufortScale(avgSpeed).force;
+const forceMax = beaufortScale(maxSpeed).force;
+
+windStatement = `${COMPASS8_NAMES[sector1]} ${windForceWord(force1)} F${force1}`;
+if(forceMax > force1){
+windStatement += `, occasionally ${windForceWord(forceMax)} F${forceMax}`;
+}
+if(sector2 !== sector1){
+const diff = (sector2 - sector1 + 8) % 8;
+const verb = (diff >= 1 && diff <= 3) ? 'veering' : (diff >= 5 && diff <= 7) ? 'backing' : 'shifting to';
+windStatement += `, ${verb} ${COMPASS8_NAMES[sector2].toLowerCase()} later`;
+}
+windStatement += '.';
+}
+
+return `<div class="fc-overview-text">${narrative}${windStatement ? '<br><br>' + windStatement : ''}</div>`;
 }
 document.getElementById('forecastScroll').addEventListener('click', (e) => {
 const btn = e.target.closest('.day-btn');
