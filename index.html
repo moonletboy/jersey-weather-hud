@@ -1772,9 +1772,21 @@ if(firstTodayIdx < 0) firstTodayIdx = 0;
 let nowIdx = hTimes.findIndex(t => t.slice(0,13) === nowPrefix);
 if(nowIdx < 0) nowIdx = firstTodayIdx;
 let sinceMidnight = 0;
-for(let i = firstTodayIdx; i <= nowIdx; i++){
+// Sum all fully-elapsed hours normally...
+for(let i = firstTodayIdx; i < nowIdx; i++){
 const v = data.hourly.precipitation[i];
 if(v !== null && v !== undefined) sinceMidnight += v;
+}
+// ...but for the CURRENT, still-in-progress hour, prefer the "current"
+// block's reading over the hourly forecast bucket. The hourly value for
+// an incomplete hour can still reflect what the model predicted before
+// the hour started, which lags behind a downpour that's heavier or
+// faster-arriving than forecast; "current" is meant to track the most
+// recent real conditions instead.
+if(data.current.precipitation !== null && data.current.precipitation !== undefined){
+sinceMidnight += data.current.precipitation;
+} else if(data.hourly.precipitation[nowIdx] !== null && data.hourly.precipitation[nowIdx] !== undefined){
+sinceMidnight += data.hourly.precipitation[nowIdx];
 }
 const dailyLen = data.daily.time.length;
 const yesterday = dailyLen >= 2 ? data.daily.precipitation_sum[dailyLen-2] : null;
