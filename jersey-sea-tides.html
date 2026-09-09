@@ -749,6 +749,14 @@ Tide predictions: National Oceanography Centre, via gov.je. Times and heights on
 <div style="color:var(--dim); font-size:11px; padding:10px;">LOADING FORECAST&hellip;</div>
 </div>
 </section>
+<div class="fc-modal-backdrop" id="fcModalBackdrop">
+<div class="fc-modal">
+<button type="button" class="fc-modal-close" id="fcModalClose">&times;</button>
+<div class="fc-modal-title" id="fcModalTitle">&mdash;</div>
+<div class="fc-modal-sub" id="fcModalSub">&mdash;</div>
+<div id="fcModalBody"></div>
+</div>
+</div>
 
 <footer>
 <div>DATA: OPEN-METEO MARINE (WAVES, SWELL, SEA TEMPERATURE) &middot; NATIONAL OCEANOGRAPHIC CENTRE VIA GOV.JE (TIDE TIMES)</div>
@@ -929,10 +937,131 @@ html += `
 <div class="day-cond">${waveLabel(wh)}</div>
 <div class="day-row"><span>WAVE PERIOD</span><span class="v">${wp.toFixed(0)}s</span></div>
 <div class="day-row"><span>SWELL MAX</span><span class="v">${swh.toFixed(1)}m</span></div>
+<div class="day-actions">
+<button type="button" class="day-btn" data-action="hour" data-day="${dateStr}" data-label="${i===0?'TODAY':dayName+' '+dayDate}">HOUR</button>
+<button type="button" class="day-btn" data-action="text" data-day="${dateStr}" data-idx="${i}" data-label="${i===0?'TODAY':dayName+' '+dayDate}">TEXT</button>
+</div>
 </div>`;
 }
 scrollEl.innerHTML = html;
 }
+
+// ---------- SEA FORECAST MODALS (HOUR / TEXT) ----------
+function openFcModal(title, sub, bodyHtml){
+document.getElementById('fcModalTitle').textContent = title;
+document.getElementById('fcModalSub').textContent = sub;
+document.getElementById('fcModalBody').innerHTML = bodyHtml;
+document.getElementById('fcModalBackdrop').classList.add('open');
+}
+function closeFcModal(){
+document.getElementById('fcModalBackdrop').classList.remove('open');
+}
+document.getElementById('fcModalClose').addEventListener('click', closeFcModal);
+document.getElementById('fcModalBackdrop').addEventListener('click', (e) => {
+if(e.target.id === 'fcModalBackdrop') closeFcModal();
+});
+
+function getSeaDayHourIndices(dateStr){
+const hTimes = marineData.hourly.time;
+let minPrefix = null;
+if(marineData.current && marineData.current.time.slice(0,10) === dateStr){
+minPrefix = marineData.current.time.slice(0,13);
+}
+const idxs = [];
+hTimes.forEach((t, idx) => {
+if(t.slice(0,10) !== dateStr) return;
+if(minPrefix && t.slice(0,13) < minPrefix) return;
+idxs.push(idx);
+});
+return idxs;
+}
+
+function buildSeaHourRows(dateStr){
+if(!marineData) return '<div style="color:var(--dim); font-size:12px;">Marine data not loaded yet.</div>';
+const idxs = getSeaDayHourIndices(dateStr);
+if(!idxs.length) return '<div style="color:var(--dim); font-size:12px;">No hourly data available for this day.</div>';
+let rows = '<div class="hr-head"><span>TIME</span><span></span><span>WAVE</span><span style="text-align:right;">DIR</span><span style="text-align:right;">SWELL</span></div>';
+idxs.forEach(idx => {
+const hour = marineData.hourly.time[idx].slice(11,16);
+const wh = marineData.hourly.wave_height[idx];
+const dir = marineData.hourly.wave_direction[idx];
+const swh = marineData.hourly.swell_wave_height[idx];
+const color = waveColor(wh);
+rows += `<div class="hr-row">
+<div class="hr-time">${hour}</div>
+<div class="hr-icon" style="color:${color};">&#9679;</div>
+<div class="hr-temp" style="color:${color};">${wh!==null&&wh!==undefined?wh.toFixed(1)+'m':'\u2014'}</div>
+<div class="hr-wind">${dir!==null&&dir!==undefined?compass16(dir):'\u2014'}</div>
+<div class="hr-rain">${swh!==null&&swh!==undefined?swh.toFixed(1)+'m':'\u2014'}</div>
+</div>`;
+});
+return rows;
+}
+
+function seaAvgField(idxs, field){
+const vals = idxs.map(idx => marineData.hourly[field][idx]).filter(v => v !== null && v !== undefined);
+return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
+}
+
+function buildSeaDayOverview(i){
+if(!marineData) return '<div style="color:var(--dim); font-size:12px;">Marine data not loaded yet.</div>';
+const d = marineData.daily;
+const dateStr = d.time[i];
+const idxs = getSeaDayHourIndices(dateStr);
+
+if(!idxs.length){
+return `<div class="fc-overview-text">Waves around ${d.wave_height_max[i].toFixed(1)}m expected, with a ${d.swell_wave_height_max[i].toFixed(1)}m swell.</div>`;
+}
+
+const morningIdx = [], afternoonIdx = [], eveningIdx = [];
+idxs.forEach(idx => {
+const hour = parseInt(marineData.hourly.time[idx].slice(11,13), 10);
+if(hour < 12) morningIdx.push(idx);
+else if(hour < 18) afternoonIdx.push(idx);
+else eveningIdx.push(idx);
+});
+const periods = [morningIdx, afternoonIdx, eveningIdx].map(p => p.length ? seaAvgField(p, 'wave_height') : null).filter(v => v !== null);
+
+let trendText;
+if(periods.length < 2){
+trendText = `Waves holding around ${(periods[0] !== undefined ? periods[0] : d.wave_height_max[i]).toFixed(1)}m through the day.`;
+} else {
+const first = periods[0], last = periods[periods.length-1];
+const diff = last - first;
+if(Math.abs(diff) < 0.2){
+trendText = `Waves staying fairly steady around ${first.toFixed(1)}\u2013${last.toFixed(1)}m through the day.`;
+} else if(diff > 0){
+trendText = `Waves building through the day, from around ${first.toFixed(1)}m up to ${last.toFixed(1)}m by evening.`;
+} else {
+trendText = `Waves easing through the day, from around ${first.toFixed(1)}m down to ${last.toFixed(1)}m by evening.`;
+}
+}
+
+const dirVals = idxs.map(idx => marineData.hourly.swell_wave_direction[idx]).filter(v => v !== null && v !== undefined);
+const repDir = dirVals.length ? dirVals[Math.floor(dirVals.length/2)] : null;
+const periodAvg = seaAvgField(idxs, 'swell_wave_period');
+let swellText = '';
+if(repDir !== null){
+swellText = ` Swell running from the ${compass16(repDir).toLowerCase()}${periodAvg ? ', around ' + periodAvg.toFixed(0) + 's period' : ''}.`;
+}
+const tempAvg = seaAvgField(idxs, 'sea_surface_temperature');
+const tempText = tempAvg !== null ? ` Sea temperature around ${tempAvg.toFixed(1)}\u00b0C.` : '';
+
+return `<div class="fc-overview-text">${trendText}${swellText}${tempText}</div>`;
+}
+
+document.getElementById('seaForecastScroll').addEventListener('click', (e) => {
+const btn = e.target.closest('.day-btn');
+if(!btn) return;
+const action = btn.dataset.action;
+const dateStr = btn.dataset.day;
+const label = btn.dataset.label;
+if(action === 'hour'){
+openFcModal('HOUR-BY-HOUR \u2014 ' + label, 'WAVE HEIGHT \u00b7 DIRECTION \u00b7 SWELL', buildSeaHourRows(dateStr));
+} else if(action === 'text'){
+openFcModal('SEA CONDITIONS \u2014 ' + label, 'PLAIN-ENGLISH SUMMARY', buildSeaDayOverview(parseInt(btn.dataset.idx, 10)));
+}
+});
 
 // ---------- TIDES ----------
 let tideRangeToday = null;
