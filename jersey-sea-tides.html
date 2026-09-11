@@ -15,6 +15,8 @@
 <title>JWC SEA &amp; TIDES — Jersey Weather Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
 --bg:#05080d;
@@ -704,6 +706,27 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 </div>
 </section>
 
+<!-- SEA SURFACE TEMPERATURE ANOMALY -->
+<section>
+<div class="sec-head">
+<h3>SEA SURFACE TEMPERATURE ANOMALY</h3>
+<div class="bar"></div>
+<div class="tag">NOAA OISST</div>
+</div>
+<div class="panel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="panel-head"><span>VS 1991&ndash;2020 AVERAGE</span><span class="dot"></span></div>
+<div id="sstAnomalyMap" style="width:100%; height:360px;"></div>
+<div style="display:flex; align-items:center; justify-content:center; gap:14px; padding:14px; border-top:1px solid var(--line); flex-wrap:wrap;">
+<img id="sstLegendImg" alt="anomaly scale" style="height:34px;">
+<span style="font-size:10px; color:var(--dim); letter-spacing:1px;">&deg;C ANOMALY (BLUE = COOLER THAN AVERAGE, RED = WARMER)</span>
+</div>
+</div>
+<div style="font-size:9.5px; color:var(--dim2); letter-spacing:0.5px; margin-top:10px; line-height:1.6;">
+Shows how far the sea surface temperature around Jersey currently differs from the 1991&ndash;2020 average for the time of year, from NOAA's OISST dataset. Land areas are masked out since this is sea-only data.
+</div>
+</section>
+
 <!-- TIDE TIMES -->
 <section>
 <div class="sec-head">
@@ -1211,6 +1234,18 @@ document.querySelectorAll('.tile').forEach((el,i)=>{
 setTimeout(()=> el.classList.add('show'), i*120);
 });
 }
+function initSstAnomalyMap(){
+const map = L.map('sstAnomalyMap', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true}).setView([LAT, LON], 6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
+L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(map);
+
+// Bounds match the WMS request's bbox exactly so the overlay lines up correctly.
+const bounds = [[47,-6],[52,4]];
+const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21Agg_LonPM180:anom&srs=EPSG:4326&bbox=-6,47,4,52&width=1000&height=500&format=image/png&transparent=true';
+L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
+
+document.getElementById('sstLegendImg').src = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetLegendGraphic&layer=ncdcOisst21Agg_LonPM180:anom&format=image/png';
+}
 function stampRefresh(){
 const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false };
 document.getElementById('lastRefresh').textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date()) + ' GMT/BST';
@@ -1221,6 +1256,7 @@ await loadMarine();
 stampRefresh();
 }
 revealTiles();
+initSstAnomalyMap();
 refreshAll();
 setInterval(refreshAll, 10*60*1000);
 setInterval(() => {
