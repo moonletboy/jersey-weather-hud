@@ -1988,8 +1988,11 @@ Object.keys(counts).forEach(k => { if(counts[k] > bestN){ best = k; bestN = coun
 return best;
 }
 function feelWord(feelsMax){
-if(feelsMax >= 28) return 'very hot';
-if(feelsMax >= 24) return 'hot';
+if(feelsMax >= 40) return 'dangerously hot';
+if(feelsMax >= 38) return 'exceptionally hot';
+if(feelsMax >= 35) return 'extremely hot';
+if(feelsMax >= 32) return 'very hot';
+if(feelsMax >= 28) return 'hot';
 if(feelsMax >= 19) return 'warm';
 if(feelsMax >= 14) return 'mild';
 if(feelsMax >= 8) return 'cool';
