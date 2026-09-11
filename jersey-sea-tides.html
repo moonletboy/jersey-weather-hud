@@ -1240,8 +1240,9 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=c
 L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(map);
 
 // Bounds match the WMS request's bbox exactly so the overlay lines up correctly.
-const bounds = [[47,-6],[52,4]];
-const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21Agg_LonPM180:anom&srs=EPSG:4326&bbox=-6,47,4,52&width=1000&height=500&format=image/png&transparent=true';
+// Wider than the initial view on purpose, so panning out doesn't hit a hard edge.
+const bounds = [[42,-12],[54,8]];
+const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21Agg_LonPM180:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true';
 L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
 
 document.getElementById('sstLegendImg').src = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetLegendGraphic&layer=ncdcOisst21Agg_LonPM180:anom&format=image/png';
