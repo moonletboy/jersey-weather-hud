@@ -1970,6 +1970,11 @@ if(force <= 11) return 'storm force';
 return 'hurricane force';
 }
 function dayCategoryFromCodes(codes){
+// Precipitation/storm/snow/fog should never be silently outvoted by a
+// majority of quieter hours in the same period — a 2-hour rain window
+// inside a 6-hour afternoon block still means "rain happened," so any
+// hour with a more significant code takes priority over a plain tally.
+const PRIORITY = ['storm', 'snow', 'rain', 'fog', 'overcast', 'cloud', 'mostlyClear', 'clear'];
 const counts = {};
 codes.forEach(c => {
 let cat;
@@ -1983,9 +1988,10 @@ else if(c === 1) cat = 'mostlyClear';
 else cat = 'clear';
 counts[cat] = (counts[cat] || 0) + 1;
 });
-let best = 'clear', bestN = 0;
-Object.keys(counts).forEach(k => { if(counts[k] > bestN){ best = k; bestN = counts[k]; } });
-return best;
+for(const cat of PRIORITY){
+if(counts[cat]) return cat;
+}
+return 'clear';
 }
 function feelWord(feelsMax){
 if(feelsMax >= 40) return 'dangerously hot';
