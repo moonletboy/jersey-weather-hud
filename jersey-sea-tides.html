@@ -718,8 +718,12 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="panel-head"><span>VS 1991&ndash;2020 AVERAGE</span><span class="dot"></span></div>
 <div id="sstAnomalyMap" style="width:100%; height:360px;"></div>
 <div style="display:flex; align-items:center; justify-content:center; gap:14px; padding:14px; border-top:1px solid var(--line); flex-wrap:wrap;">
-<img id="sstLegendImg" alt="anomaly scale" style="height:34px;">
-<span style="font-size:10px; color:var(--dim); letter-spacing:1px;">&deg;C ANOMALY (BLUE = COOLER THAN AVERAGE, RED = WARMER)</span>
+<div style="display:flex; align-items:center; gap:8px;">
+<span style="font-size:9px; color:#4cd3ff; letter-spacing:1px;">COOLER</span>
+<div style="width:140px; height:14px; border-radius:3px; background:linear-gradient(90deg, #1b4fa0, #4cd3ff, #f2f2f2, #ffb020, #ff4b5c, #a3123a); border:1px solid var(--line);"></div>
+<span style="font-size:9px; color:#ff4b5c; letter-spacing:1px;">WARMER</span>
+</div>
+<span style="font-size:10px; color:var(--dim); letter-spacing:1px;">&deg;C ANOMALY VS 1991&ndash;2020 AVERAGE</span>
 </div>
 </div>
 <div style="font-size:9.5px; color:var(--dim2); letter-spacing:0.5px; margin-top:10px; line-height:1.6;">
@@ -1242,10 +1246,11 @@ L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(map);
 // Bounds match the WMS request's bbox exactly so the overlay lines up correctly.
 // Wider than the initial view on purpose, so panning out doesn't hit a hard edge.
 const bounds = [[42,-12],[54,8]];
-const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21Agg_LonPM180:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true';
+// Requesting near the data's actual native resolution (0.25° grid) rather than
+// a much larger canvas — letting the browser smoothly scale it up when Leaflet
+// stretches it over the map gives a proper gradient instead of hard blocks.
+const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21Agg_LonPM180:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=160&height=96&format=image/png&transparent=true';
 L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
-
-document.getElementById('sstLegendImg').src = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetLegendGraphic&layer=ncdcOisst21Agg_LonPM180:anom&format=image/png';
 }
 function stampRefresh(){
 const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false };
