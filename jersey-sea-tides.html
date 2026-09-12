@@ -717,17 +717,22 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="panel-head"><span>VS 1991&ndash;2020 AVERAGE</span><span class="dot"></span></div>
 <div id="sstAnomalyMap" style="width:100%; height:360px;"></div>
-<div style="display:flex; align-items:center; justify-content:center; gap:14px; padding:14px; border-top:1px solid var(--line); flex-wrap:wrap;">
-<div style="display:flex; align-items:center; gap:8px;">
-<span style="font-size:9px; color:#4cd3ff; letter-spacing:1px;">COOLER</span>
-<div style="width:140px; height:14px; border-radius:3px; background:linear-gradient(90deg, #1b4fa0, #4cd3ff, #f2f2f2, #ffb020, #ff4b5c, #a3123a); border:1px solid var(--line);"></div>
-<span style="font-size:9px; color:#ff4b5c; letter-spacing:1px;">WARMER</span>
+<div style="padding:14px; border-top:1px solid var(--line);">
+<div style="display:flex; flex-direction:column; align-items:center; gap:4px; max-width:340px; margin:0 auto;">
+<div style="width:100%; height:14px; border-radius:3px; background:linear-gradient(90deg, #1b4fa0, #4cd3ff, #f2f2f2, #ffb020, #ff4b5c, #a3123a); border:1px solid var(--line);"></div>
+<div style="display:flex; justify-content:space-between; width:100%; font-family:'Orbitron',sans-serif; font-size:9.5px; color:var(--dim);">
+<span>-3&deg;C</span>
+<span>-1.5&deg;C</span>
+<span>0&deg;C</span>
+<span>+1.5&deg;C</span>
+<span>+3&deg;C</span>
 </div>
-<span style="font-size:10px; color:var(--dim); letter-spacing:1px;">&deg;C ANOMALY VS 1991&ndash;2020 AVERAGE</span>
+</div>
+<div style="text-align:center; font-size:9px; color:var(--dim2); letter-spacing:1px; margin-top:8px;">&deg;C ANOMALY VS 1991&ndash;2020 AVERAGE &middot; <span style="color:#4cd3ff;">COOLER</span> / <span style="color:#ff4b5c;">WARMER</span></div>
 </div>
 </div>
 <div style="font-size:9.5px; color:var(--dim2); letter-spacing:0.5px; margin-top:10px; line-height:1.6;">
-Shows how far the sea surface temperature around Jersey currently differs from the 1991&ndash;2020 average for the time of year, from NOAA's OISST dataset. Land areas are masked out since this is sea-only data.
+Shows how far the sea surface temperature around Jersey currently differs from the 1991&ndash;2020 average for the time of year, using NOAA's near-real-time OISST dataset (typically 1&ndash;2 days behind, since it takes that long for the satellite analysis to process). Land areas are masked out since this is sea-only data.
 </div>
 </section>
 
@@ -1249,7 +1254,12 @@ const bounds = [[42,-12],[54,8]];
 // Requesting near the data's actual native resolution (0.25° grid) rather than
 // a much larger canvas — letting the browser smoothly scale it up when Leaflet
 // stretches it over the map gives a proper gradient instead of hard blocks.
-const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21Agg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21Agg_LonPM180:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=160&height=96&format=image/png&transparent=true';
+// Requesting near-real-time data (ncdcOisst21NrtAgg, ~1-2 day lag) instead of
+// the "Final" product (which runs ~2-3 weeks behind) so this reflects genuinely
+// recent conditions. Rendered at a resolution matched to the map's real screen
+// size for correct, crisp alignment — heavy downsampling+blur was tried and
+// actually introduced visible inaccuracy, so this reverts to a sharp render.
+const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21NrtAgg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21NrtAgg_LonPM180:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true';
 L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
 }
 function stampRefresh(){
