@@ -273,6 +273,8 @@ font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:1px; color:var
 }
 .soho-tab:hover{ color:var(--text); border-color:var(--green); }
 .soho-tab.active{ color:var(--bg); background:var(--green); border-color:var(--green); font-weight:700; }
+.soho-tab .tip{ left:50%; width:210px; transform:translate(-50%, 6px); }
+.soho-tab:hover .tip, .soho-tab:focus .tip, .soho-tab:focus-within .tip{ transform:translate(-50%, 0); }
 .soho-caption{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-top:14px; max-width:720px; }
 .soho-caption b{ color:var(--text); }
 .vantage-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:16px; max-width:720px; }
@@ -853,7 +855,13 @@ const SOHO_IMAGES = [
 let sohoActiveId = 'eit195';
 function renderSohoTabs(){
 document.getElementById('sohoTabs').innerHTML = SOHO_IMAGES.map(img =>
-`<div class="soho-tab${img.id===sohoActiveId?' active':''}" onclick="selectSoho('${img.id}')">${img.label}</div>`
+`<div class="soho-tab tip-wrap${img.id===sohoActiveId?' active':''}" tabindex="0" onclick="selectSoho('${img.id}')">
+${img.label}
+<div class="tip">
+<div class="tip-title">${img.name}</div>
+<div class="tip-text">${img.desc}</div>
+</div>
+</div>`
 ).join('');
 }
 function selectSoho(id){
