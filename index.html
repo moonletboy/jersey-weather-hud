@@ -1426,7 +1426,7 @@ radius: 5 + Math.max(mag,0)*2.5, color:color, weight:2, fillColor:color, fillOpa
 }
 async function loadWeather(){
 try{
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa,relative_humidity_2m,apparent_temperature,uv_index,wind_speed_10m,wind_gusts_10m&past_hours=12&wind_speed_unit=mph&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl,cloud_cover,is_day&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa,relative_humidity_2m,apparent_temperature,uv_index,wind_speed_10m,wind_gusts_10m&past_hours=12&wind_speed_unit=mph&timezone=auto`;
 const res = await fetch(url);
 const data = await res.json();
 const cur = data.current;
@@ -1438,7 +1438,7 @@ if(nowIdxTrend < 0) nowIdxTrend = data.hourly.temperature_2m.length - 1;
 const pastIdxTrend = Math.max(0, nowIdxTrend - 1);
 const tempDiff = cur.temperature_2m - data.hourly.temperature_2m[pastIdxTrend];
 const trend = tempDiff >= 1.5 ? 'TEMP RISING QUICKLY' : tempDiff <= -1.5 ? 'TEMP FALLING QUICKLY' : 'TEMP STEADY';
-const cond = wmoIcon(cur.weather_code);
+const cond = bestLiveIcon(cur.weather_code, cur.cloud_cover, cur.is_day);
 liveData = {
 temp: cur.temperature_2m,
 trend: trend,
