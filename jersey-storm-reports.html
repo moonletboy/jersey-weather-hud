@@ -492,7 +492,7 @@
   function renderMap(){
     if(!reportMap){
       reportMap = L.map('report-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.pngkey=cb1_2j49_1_a24cd99f8829db6f2edd261d', { maxZoom:14 }).addTo(reportMap);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(reportMap);
       reportMapLayer = L.layerGroup().addTo(reportMap);
     }
     reportMapLayer.clearLayers();
@@ -528,6 +528,22 @@
      body: array of paragraph strings (each renders as its own <p>)
      ============================================================ */
   const RECAPS = [
+    {
+      type: 'monthly',
+      title: 'MONTHLY RECAP — SEPTEMBER 2026',
+      period: '1–30 Sep 2026',
+      reportCount: 0,
+      sources: 'Jersey Evening Post, Jersey Met, Met Office, gov.je',
+      body: [
+        'September opened on the back of Jersey’s warmest summer since records began in 1894. June–August averaged 20.5°C, 2.8°C above the 30-year average and well clear of the previous record of 19.6°C set in 2022, with August (21°C) the hottest on record. The summer delivered 986.3 hours of sunshine, second only to 1976, and just 106.9mm of rain against a norm of 158mm.',
+        'The settled pattern was interrupted briefly by wind. On 3 September Jersey Met issued a yellow wind warning (08:32) for south-westerly Force 6 winds developing later, particularly in the north of the Channel Islands shipping area, with disruption to sea travel possible and a risk of damage to boats on exposed moorings. It followed a bank holiday weekend that saw DFDS cancel multiple Jersey–St Malo and Poole sailings in Force 6–7 winds.',
+        'A second yellow wind warning followed on Tuesday 8 September, issued at 08:45 as pupils returned to school and States Members resumed sittings: south to south-westerly Force 6 winds with gusts to 35 knots, veering north-westerly, and heavy rain through the morning before clearing around midday. The day’s maximum was forecast at just 20°C. It was the last warning reported for the month.',
+        'From mid-month the island settled into a warm, dry spell. By 22 September Jersey Met said only around 25mm of rain had fallen against a September norm of 60mm, with warm continental air under high pressure lifting temperatures to a forecast high of 24°C that week. Forecasters described the month as warmer than usual and very dry. Jersey Met’s senior meteorologist noted the island remains classed as a northern temperate climate but is becoming significantly warmer and generally wetter overall, and that hotter, drier summers with wetter, milder winters may in future lead to a change in categorisation.',
+        'The month closed warm and turning unsettled across the wider region. The Met Office recorded a UK peak of 28.1°C on 29 September, with southern England the warmest and driest part of the country (south-east and central southern England: mean temperature 2.4°C above average, rainfall 57% of normal) and the UK as a whole joint-fourth warmest September on record. A warm front and strengthening southerly winds on 29 September gave way to a cold front with heavy rain overnight into 30 September, with large waves forecast for western coasts alongside spring tides. No community storm reports were submitted through the network this month, and full-month Jersey rainfall and temperature totals were not yet available at the time of writing.'
+      ],
+      published: '3 Oct 2026',
+      publishedISO: '2026-10-03'
+    },
     {
       type: 'monthly',
       title: 'MONTHLY RECAP — AUGUST 2026',
@@ -597,7 +613,7 @@
             <div class="rc2-period">ANALYSIS WINDOW: ${escapeHtml(r.period)}</div>
           </div>
           <div class="rc2-meta">
-            <div>${r.reportCount} STORM REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED</div>
+            ${typeof r.reportCount === 'number' ? `<div>${r.reportCount} STORM REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED</div>` : ''}
             <div>SOURCES: ${escapeHtml(r.sources)}</div>
           </div>
         </div>
@@ -620,7 +636,7 @@
         </div>
         <div class="raa-body">
           ${r.body.map(p => `<p class="rc2-p">${escapeHtml(p)}</p>`).join('')}
-          <div class="rc2-foot"><span>${r.reportCount} REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED &middot; SOURCES: ${escapeHtml(r.sources)}</span></div>
+          <div class="rc2-foot"><span>${typeof r.reportCount === 'number' ? `${r.reportCount} REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED &middot; ` : ''}SOURCES: ${escapeHtml(r.sources)}</span></div>
         </div>
       </div>
     `;
