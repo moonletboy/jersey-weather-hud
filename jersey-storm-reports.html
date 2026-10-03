@@ -118,6 +118,9 @@
   .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
   .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--red); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
   .map-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:14px; max-width:640px; }
+  .leaflet-container{ background:var(--bg-panel); }
+  .leaflet-container .leaflet-control-attribution{ background:rgba(5,8,13,0.75); color:var(--dim); font-family:'JetBrains Mono',monospace; font-size:9px; }
+  .leaflet-container .leaflet-control-attribution a{ color:var(--cyan); }
 
   /* STORM RECAP */
   .recap-explainer{ font-size:11.5px; color:var(--dim); line-height:1.6; margin-bottom:18px; max-width:680px; }
@@ -491,8 +494,16 @@
 
   function renderMap(){
     if(!reportMap){
-      reportMap = L.map('report-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:14 }).addTo(reportMap);
+      reportMap = L.map('report-map', { attributionControl:true, scrollWheelZoom:false }).setView([49.19, -2.13], 11);
+      reportMap.attributionControl.setPrefix(false);
+      // Esri dark grey basemap: free, no API key needed (CARTO now requires a key).
+      // Base layer = land/water/roads; Reference layer = place names on top.
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom:14, attribution:'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+      }).addTo(reportMap);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom:14
+      }).addTo(reportMap);
       reportMapLayer = L.layerGroup().addTo(reportMap);
     }
     reportMapLayer.clearLayers();
