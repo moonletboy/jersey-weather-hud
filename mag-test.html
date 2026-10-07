@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAG image test</title>
+<style>
+  body{background:#05080d;color:#e9f6f5;font:13px 'Courier New',monospace;padding:20px;line-height:1.6;}
+  h1{color:#ff4b5c;font-size:18px;}
+  h2{color:#4cd3ff;font-size:14px;margin-top:30px;border-bottom:1px solid #1b2a35;padding-bottom:4px;}
+  .ok{color:#2de1a0;} .bad{color:#ff4b5c;} .dim{color:#5f7c88;}
+  .grid{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;}
+  .cell{padding:3px 7px;border:1px solid #3a4e58;border-radius:4px;font-size:11px;}
+  .cell.ok{border-color:#2de1a0;} .cell.bad{border-color:#ff4b5c;}
+  .row{margin:6px 0;}
+  img{max-width:320px;border:1px solid #3a4e58;margin:4px 6px 4px 0;vertical-align:top;}
+  #summary{margin-top:30px;padding:14px;border:1px solid #4cd3ff;border-radius:8px;font-size:14px;}
+</style>
+</head>
+<body>
+<h1>MAG IMAGE TEST - GEFS spaghetti charts</h1>
+<div class="dim">Page origin: <span id="origin"></span><br>
+Tests whether NOAA MAG images load as plain &lt;img&gt; tags from this page, and which cycles / areas / forecast hours exist.</div>
+
+<h2>1. Cycle folders (forecast hour 024, Atlantic, MSLP 1008/1048)</h2>
+<div id="t1"></div>
+
+<h2>2. Areas (latest cycle, forecast hour 048)</h2>
+<div id="t2"></div>
+
+<h2>3. Forecast hours 000-384 every 6h (latest cycle, Atlantic)</h2>
+<div id="t3"></div>
+
+<h2>4. Contour products (latest cycle, Atlantic, forecast hour 048)</h2>
+<div id="t4"></div>
+
+<div id="summary">Running tests&hellip;</div>
+
+<script>
+document.getElementById('origin').textContent = location.origin === 'null' ? 'file:// (local file - hotlink rules NOT truly tested)' : location.origin;
+
+const BASE = 'https://mag.ncep.noaa.gov/data/';
+const pad3 = n => String(n).padStart(3,'0');
+const url = (cycle, area, fh, prod) =>
+  `${BASE}gefs-spag/${cycle}/gefs-spag_${area}_${pad3(fh)}_${prod}.gif`;
+
+function probe(u){
+  return new Promise(resolve=>{
+    const img = new Image();
+    const t = setTimeout(()=>{ img.onload=img.onerror=null; resolve({ok:false, why:'timeout'}); }, 20000);
+    img.onload = ()=>{ clearTimeout(t); resolve({ok:true, w:img.naturalWidth, h:img.naturalHeight, u}); };
+    img.onerror = ()=>{ clearTimeout(t); resolve({ok:false, why:'error'}); };
+    img.src = u + '?t=' + Date.now(); // cache-bust so we test the live file
+  });
+}
+
+// Latest cycle assuming ~6h publishing lag
+function latestCycle(){
+  const d = new Date(Date.now() - 6*3600*1000);
+  return String(Math.floor(d.getUTCHours()/6)*6).padStart(2,'0');
+}
+const CYC = latestCycle();
+const tally = {pass:0, fail:0};
+function mark(r){ r.ok ? tally.pass++ : tally.fail++; }
+
+async function run(){
+  // 1. cycles
+  const t1 = document.getElementById('t1');
+  const cycles = ['00','06','12','18'];
+  const r1 = await Promise.all(cycles.map(c => probe(url(c,'atlantic',24,'mslp_1008_1048_iso'))));
+  r1.forEach((r,i)=>{
+    mark(r);
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="${r.ok?'ok':'bad'}">${r.ok?'PASS':'FAIL'}</span> cycle ${cycles[i]}Z ` +
+      (r.ok ? `<span class="dim">(${r.w}x${r.h}px)</span>` : `<span class="dim">(${r.why})</span>`);
+    t1.appendChild(row);
+    if(r.ok){ const im=new Image(); im.src=r.u; t1.appendChild(im); }
+  });
+  t1.insertAdjacentHTML('beforeend', `<div class="dim">Script would pick cycle <b>${CYC}Z</b> as "latest" right now (UTC now minus 6h).</div>`);
+
+  // 2. areas
+  const t2 = document.getElementById('t2');
+  const areas = ['atlantic','europe','atl-pac','africa'];
+  const r2 = await Promise.all(areas.map(a => probe(url(CYC,a,48,'mslp_1008_1048_iso'))));
+  r2.forEach((r,i)=>{
+    mark(r);
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="${r.ok?'ok':'bad'}">${r.ok?'PASS':'FAIL'}</span> area "${areas[i]}" ` +
+      (r.ok ? `<span class="dim">(${r.w}x${r.h}px)</span>` : `<span class="dim">(${r.why})</span>`);
+    t2.appendChild(row);
+    if(r.ok){ const im=new Image(); im.src=r.u; t2.appendChild(im); }
+  });
+
+  // 3. forecast hours
+  const t3 = document.getElementById('t3');
+  const grid = document.createElement('div'); grid.className='grid'; t3.appendChild(grid);
+  const hours = []; for(let h=0; h<=384; h+=6) hours.push(h);
+  const r3 = await Promise.all(hours.map(h => probe(url(CYC,'atlantic',h,'mslp_1008_1048_iso'))));
+  let lastOk = -1;
+  r3.forEach((r,i)=>{
+    mark(r);
+    if(r.ok) lastOk = hours[i];
+    const c = document.createElement('div'); c.className='cell '+(r.ok?'ok':'bad'); c.textContent = pad3(hours[i]);
+    grid.appendChild(c);
+  });
+  t3.insertAdjacentHTML('beforeend', `<div class="dim">Highest forecast hour that loaded: <b>${lastOk}</b></div>`);
+
+  // 4. products
+  const t4 = document.getElementById('t4');
+  const prods = ['mslp_984_1024_iso','mslp_996_1036_iso','mslp_1000_1040_iso','mslp_1004_1044_iso','mslp_1008_1048_iso','mslp_1012_1052_iso','500_540_582_ht'];
+  const r4 = await Promise.all(prods.map(p => probe(url(CYC,'atlantic',48,p))));
+  r4.forEach((r,i)=>{
+    mark(r);
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="${r.ok?'ok':'bad'}">${r.ok?'PASS':'FAIL'}</span> ${prods[i]} ` +
+      (r.ok ? `<span class="dim">(${r.w}x${r.h}px)</span>` : `<span class="dim">(${r.why})</span>`);
+    t4.appendChild(row);
+  });
+
+  const s = document.getElementById('summary');
+  s.innerHTML = `DONE &mdash; <span class="ok">${tally.pass} passed</span>, <span class="bad">${tally.fail} failed</span>.<br>` +
+    `<span class="dim">Some failures are expected (e.g. cycles not yet published, areas that don't exist for this model). ` +
+    `Take a screenshot of this whole page, or just tell me what you see.</span>`;
+}
+run();
+</script>
+</body>
+</html>
