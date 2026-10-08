@@ -479,7 +479,7 @@ padding:5px 10px; cursor:pointer; transition:all .15s ease;
 .anim-btn:hover{ border-color:var(--cyan); }
 .anim-btn.playing{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
 .anim-time{ font-size:10px; letter-spacing:1px; color:var(--dim); }
-/* STORM WATCH (NOAA GEFS spaghetti charts) */
+/* STORM WATCH (NOAA forecast loop) */
 .sw-controls{ display:flex; flex-wrap:wrap; gap:14px 26px; padding:14px 16px 6px; }
 .sw-group{ display:flex; flex-direction:column; gap:6px; }
 .sw-lbl{ font-size:9px; letter-spacing:2px; color:var(--dim); }
@@ -491,21 +491,23 @@ padding:6px 10px; cursor:pointer; transition:all .15s ease;
 }
 .sw-chip:hover{ border-color:var(--cyan); }
 .sw-chip.active{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
-.sw-stage{ position:relative; margin:10px 16px 0; min-height:240px; border:1px solid var(--line); border-radius:8px; background:var(--bg-panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.sw-stage{ position:relative; margin:10px 16px 0; min-height:240px; border:1px solid var(--line); border-radius:8px; background:var(--bg-panel-2); overflow:hidden; }
 .sw-stage a{ display:block; width:100%; }
-.sw-stage img{ width:100%; height:auto; display:block; transition:opacity .2s ease; }
-.sw-stage.loading img{ opacity:0.45; }
+.sw-stage canvas{ width:100%; height:auto; display:block; transition:opacity .2s ease; }
+.sw-stage.loading canvas{ opacity:0.45; }
 .sw-msg{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; padding:0 20px; font-size:11px; letter-spacing:1px; color:var(--dim); line-height:1.7; pointer-events:none; }
 .sw-msg a{ color:var(--cyan); pointer-events:auto; }
 .sw-msg.err{ color:var(--amber); }
-.sw-slider{ padding:14px 22px 0; }
+.sw-readout{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:6px 14px; padding:12px 16px 2px; }
+.sw-valid{ font-family:'Orbitron',sans-serif; font-size:19px; letter-spacing:1px; color:var(--text); }
+.sw-valid small{ display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--dim); margin-top:4px; font-weight:400; }
+.sw-run{ font-size:10px; letter-spacing:1px; color:var(--dim); text-align:right; }
+.sw-slider{ padding:12px 22px 0; }
 .sw-slider input[type=range]{ width:100%; accent-color:var(--cyan); cursor:pointer; }
 .sw-ticks{ position:relative; height:16px; margin:0 8px; }
 .sw-ticks span{ position:absolute; top:0; transform:translateX(-50%); font-size:9px; letter-spacing:1px; color:var(--dim2); white-space:nowrap; }
-.sw-readout{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 14px; padding:10px 16px 4px; }
-.sw-readout .sw-valid{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:1px; color:var(--text); }
-.sw-readout .sw-run{ font-size:10px; letter-spacing:1px; color:var(--dim); align-self:center; }
-.sw-note{ padding:4px 16px 14px; font-size:10px; line-height:1.7; letter-spacing:0.4px; color:var(--dim); }
+.sw-note{ padding:8px 16px 14px; font-size:10px; line-height:1.75; letter-spacing:0.4px; color:var(--dim); }
+.sw-note b{ color:var(--text); font-weight:700; }
 .sw-note a{ color:var(--cyan); }
 .sw-fell{ color:var(--amber); }
 .panel iframe{ width:100%; height:340px; border:0; display:block; filter:saturate(1.05); }
@@ -865,11 +867,11 @@ footer b{ color:var(--dim); }
 <div class="sec-head imagery">
 <h3>STORM WATCH</h3>
 <div class="bar"></div>
-<div class="tag">ATLANTIC &middot; ENSEMBLE</div>
+<div class="tag">FORECAST LOOP</div>
 </div>
 <div class="panel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-<div class="panel-head"><span>GEFS &quot;SPAGHETTI&quot; &middot; PRESSURE CONTOURS</span><span class="dot"></span></div>
+<div class="panel-head"><span>STORM TRACKER &middot; WATCH THE LOWS MOVE</span><span class="dot"></span></div>
 <div class="sw-controls">
 <div class="sw-group">
 <span class="sw-lbl">AREA</span>
@@ -879,27 +881,23 @@ footer b{ color:var(--dim); }
 </div>
 </div>
 <div class="sw-group">
-<span class="sw-lbl">LOW-PRESSURE CONTOUR (hPa) &middot; LOWER = DEEPER STORM</span>
+<span class="sw-lbl">SHOW</span>
 <div class="sw-chips" id="swProd">
-<button type="button" class="sw-chip" data-v="mslp_984_1024_iso">984</button>
-<button type="button" class="sw-chip" data-v="mslp_996_1036_iso">996</button>
-<button type="button" class="sw-chip active" data-v="mslp_1000_1040_iso">1000</button>
-<button type="button" class="sw-chip" data-v="mslp_1004_1044_iso">1004</button>
-<button type="button" class="sw-chip" data-v="mslp_1008_1048_iso">1008</button>
-<button type="button" class="sw-chip" data-v="mslp_1012_1052_iso">1012</button>
+<button type="button" class="sw-chip active" data-v="1000_500_thick">PRESSURE &amp; RAIN</button>
+<button type="button" class="sw-chip" data-v="10m_wnd_precip">WIND &amp; RAIN</button>
 </div>
 </div>
 <div class="sw-group">
-<span class="sw-lbl">MODEL RUN</span>
-<div class="sw-chips" id="swRun">
-<button type="button" class="sw-chip active" data-v="0">LATEST</button>
-<button type="button" class="sw-chip" data-v="1">&minus;6H</button>
-<button type="button" class="sw-chip" data-v="2">&minus;12H</button>
+<span class="sw-lbl">LOOP LENGTH</span>
+<div class="sw-chips" id="swRange">
+<button type="button" class="sw-chip" data-v="3">3 DAYS</button>
+<button type="button" class="sw-chip active" data-v="5">5 DAYS</button>
+<button type="button" class="sw-chip" data-v="10">10 DAYS</button>
 </div>
 </div>
 </div>
 <div class="sw-stage loading" id="swStage">
-<a id="swLink" href="#" target="_blank" rel="noopener" title="Open full-size chart"><img id="swImg" alt="GEFS ensemble pressure contour chart" style="display:none;"></a>
+<a id="swLink" href="#" target="_blank" rel="noopener" title="Open full-size chart"><canvas id="swCanvas" width="10" height="10" style="display:none;" role="img" aria-label="Forecast chart of pressure and rain over the Atlantic"></canvas></a>
 <div class="sw-msg" id="swMsg">LOADING CHART&hellip;</div>
 </div>
 <div class="sw-readout">
@@ -907,17 +905,18 @@ footer b{ color:var(--dim); }
 <div class="sw-run" id="swRunLbl">--</div>
 </div>
 <div class="sw-slider">
-<input type="range" id="swSlider" min="0" max="47" step="1" value="8" aria-label="Forecast hour">
+<input type="range" id="swSlider" min="0" max="20" step="1" value="0" aria-label="Forecast time">
 <div class="sw-ticks" id="swTicks"></div>
 </div>
 <div class="anim-bar">
 <button type="button" class="anim-btn" id="swPlayBtn">&#9654; PLAY LOOP</button>
-<span class="anim-time" id="swHourLbl">+48H</span>
+<span class="anim-time" id="swHourLbl">--</span>
 </div>
 <div class="sw-note">
-HOW TO READ: each thin line is one ensemble member's forecast of where that pressure contour sits &mdash; the same forecast run many times from slightly different starting points. Lines bunched together = the models agree; lines scattered everywhere = a low-confidence forecast. An empty chart just means no member has a low that deep at that time. TAP THE CHART TO OPEN IT FULL SIZE. Images are every 6 hours to +180H, then every 12 hours to +384H.
+<b>WHAT AM I LOOKING AT?</b> A computer forecast from NOAA (the US weather service), played forward through time. Press <b>PLAY LOOP</b> and watch the storms drift across the Atlantic. The swirls of tightly packed pressure lines are the storms &mdash; the closer the lines, the windier it gets. Shaded areas show where rain is forecast. Drag the slider to stop on any moment. Tap the chart to open it full size.<br>
+The further ahead you look, the less certain it is. This is a US model showing the big picture; for Jersey detail, use the forecast above and Jersey Met warnings.
 <span id="swFellNote" class="sw-fell"></span><br>
-<a href="https://mag.ncep.noaa.gov/model-guidance-model-parameter.php?group=Model%20Guidance&amp;model=GEFS-SPAG&amp;area=ATLANTIC&amp;ps=area" target="_blank" rel="noopener">Open the full NOAA ensemble charts &rarr;</a>
+<a href="https://mag.ncep.noaa.gov/model-guidance-model-parameter.php?group=Model%20Guidance&amp;model=GFS&amp;area=ATLANTIC&amp;ps=area" target="_blank" rel="noopener">Open the full NOAA charts &rarr;</a>
 </div>
 </div>
 </section>
@@ -970,7 +969,7 @@ HOW TO READ: each thin line is one ensemble member's forecast of where that pres
 </div>
 </section>
 <footer>
-<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; NOAA/NCEP (STORM WATCH ENSEMBLE CHARTS) &middot; GOV.JE (WARNINGS)</div>
+<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; NOAA/NCEP (STORM WATCH FORECAST LOOP) &middot; GOV.JE (WARNINGS)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
 </div>
@@ -2274,26 +2273,28 @@ link.style.animation = 'tickerFade 0.6s ease';
 elninoIndex++;
 }
 /* ============================================================
-   STORM WATCH — NOAA/NCEP "MAG" GEFS spaghetti ensemble charts
-   Plain <img> files from mag.ncep.noaa.gov (no proxy, no credits).
-   NOAA's image folders only carry the cycle hour (00/06/12/18), not
-   the date, so the run is worked out from the clock with a safety
-   lag (SW_LAG_HOURS) so a half-published run is never labelled as
-   the newest one. If the newest run is missing an image, the page
-   falls back to the run before it and says so.
-   Images exist every 6h out to +180h, then every 12h out to +384h.
+   STORM WATCH — animated NOAA/NCEP "MAG" GFS forecast loop
+   Plain image files from mag.ncep.noaa.gov (no proxy, no credits):
+   .../data/gfs/<cycle>/<area>/<product>/gfs_<area>_<hour>_<product>.gif
+   Frames exist hourly to +120h, 3-hourly to +240h (12-hourly after).
+   NOAA's folders only carry the cycle hour (00/06/12/18), not the
+   date, so the run is worked out from the clock with a safety lag
+   (SW_LAG_HOURS) so a half-published run is never labelled as the
+   newest one. If the newest run is missing an image, the page falls
+   back to the run before it and says so.
+   The loop starts at "now" (the frame nearest the current time).
    ============================================================ */
-const SW_BASE = 'https://mag.ncep.noaa.gov/data/gefs-spag/';
+const SW_BASE = 'https://mag.ncep.noaa.gov/data/gfs/';
 const SW_LAG_HOURS = 7;
-const SW_HOURS = (function(){
-const h = [];
-for(let i=0; i<=180; i+=6) h.push(i);
-for(let i=192; i<=384; i+=12) h.push(i);
-return h;
-})();
-const SW = { area:'atlantic', prod:'mslp_1000_1040_iso', hourIdx:8, runOffset:0, fell:false, playing:false, timer:null, token:0, latestKey:'', sliderDebounce:null };
-const SW_FMT = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
-const SW_DAYFMT = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', day:'2-digit', month:'short' });
+const SW_MAX_HOUR = 240;
+const SW_RANGES = { '3':{days:3, step:3}, '5':{days:5, step:6}, '10':{days:10, step:6} };
+const SW = { area:'atlantic', prod:'1000_500_thick', range:'5', frames:[], idx:0, runOffset:0, fell:false, playing:false, timer:null, playToken:0, showToken:0, cache:{}, latestKey:'', sliderDebounce:null };
+const SW_KEYFMT = new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/London' });
+const SW_WDLONG = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'long' });
+const SW_WDSHORT = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short' });
+const SW_DATEFMT = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'2-digit', month:'short' });
+const SW_TIMEFMT = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const SW_RUNFMT = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', day:'2-digit', month:'short' });
 function swPad(n, len){ return String(n).padStart(len, '0'); }
 function swRuns(){
 const d = new Date(Date.now() - SW_LAG_HOURS*3600*1000);
@@ -2306,135 +2307,224 @@ return runs;
 function swRunKey(run){
 return run.getUTCFullYear() + swPad(run.getUTCMonth()+1,2) + swPad(run.getUTCDate(),2) + swPad(run.getUTCHours(),2);
 }
-function swUrl(run, fh){
-return SW_BASE + swPad(run.getUTCHours(),2) + '/gefs-spag_' + SW.area + '_' + swPad(fh,3) + '_' + SW.prod + '.gif?r=' + swRunKey(run);
+function swUrl(run, h){
+return SW_BASE + swPad(run.getUTCHours(),2) + '/' + SW.area + '/' + SW.prod + '/gfs_' + SW.area + '_' + swPad(h,3) + '_' + SW.prod + '.gif?r=' + swRunKey(run);
 }
-function swFmtLocal(d){
-const p = SW_FMT.formatToParts(d);
-const g = t => (p.find(x => x.type === t) || {}).value || '';
-return (g('weekday') + ' ' + g('day') + ' ' + g('month') + ' ' + g('hour') + ':' + g('minute')).toUpperCase();
+function swFrames(run){
+const r = SW_RANGES[SW.range];
+const ageH = Math.max(0, (Date.now() - run.getTime()) / 3600000);
+const first = Math.floor(ageH / r.step) * r.step;
+const last = Math.min(SW_MAX_HOUR, first + r.days*24);
+const frames = [];
+for(let h = first; h <= last; h += r.step) frames.push(h);
+return frames;
 }
-function swUpdateLabels(run, fh){
-const valid = new Date(run.getTime() + fh*3600*1000);
-document.getElementById('swValid').innerHTML = 'VALID ' + swFmtLocal(valid) + ' <span style="font-family:\'JetBrains Mono\',monospace; font-size:10px; color:var(--dim);">JERSEY TIME</span>';
-document.getElementById('swRunLbl').textContent = 'RUN ' + swPad(run.getUTCHours(),2) + 'Z ' + SW_DAYFMT.format(run).toUpperCase() + ' (UTC)';
-document.getElementById('swHourLbl').textContent = '+' + fh + 'H · ' + (fh/24).toFixed(1) + ' DAYS AHEAD';
+function swDayWord(d){
+const k = SW_KEYFMT.format(d), t = SW_KEYFMT.format(new Date());
+const diff = Math.round((Date.parse(k + 'T00:00:00Z') - Date.parse(t + 'T00:00:00Z')) / 86400000);
+if(diff === 0) return 'TODAY';
+if(diff === 1) return 'TOMORROW';
+if(diff === -1) return 'YESTERDAY';
+return SW_WDLONG.format(d).toUpperCase();
+}
+function swUpdateLabels(run, h){
+const valid = new Date(run.getTime() + h*3600*1000);
+document.getElementById('swValid').innerHTML = swDayWord(valid) + ' ' + SW_TIMEFMT.format(valid) + '<small>' + SW_DATEFMT.format(valid).replace(/,/g,'').toUpperCase() + ' &middot; JERSEY TIME</small>';
+document.getElementById('swRunLbl').textContent = 'NOAA GFS MODEL · RUN ' + swPad(run.getUTCHours(),2) + 'Z ' + SW_RUNFMT.format(run).toUpperCase();
+}
+function swSetCount(text){
+document.getElementById('swHourLbl').textContent = text || ('FRAME ' + (SW.idx+1) + ' / ' + SW.frames.length);
 }
 function swSyncChips(){
 document.querySelectorAll('#swArea .sw-chip').forEach(b => b.classList.toggle('active', b.dataset.v === SW.area));
 document.querySelectorAll('#swProd .sw-chip').forEach(b => b.classList.toggle('active', b.dataset.v === SW.prod));
-document.querySelectorAll('#swRun .sw-chip').forEach(b => b.classList.toggle('active', Number(b.dataset.v) === SW.runOffset));
+document.querySelectorAll('#swRange .sw-chip').forEach(b => b.classList.toggle('active', b.dataset.v === SW.range));
 }
-function swSyncSlider(){
-document.getElementById('swSlider').value = SW.hourIdx;
+function swBuildTicks(run){
+const ticks = document.getElementById('swTicks');
+ticks.innerHTML = '';
+const n = SW.frames.length;
+if(n < 2) return;
+const every = SW.range === '10' ? 2 : 1;
+let prev = SW_KEYFMT.format(new Date(run.getTime() + SW.frames[0]*3600*1000));
+let count = 0;
+for(let i=1; i<n; i++){
+const d = new Date(run.getTime() + SW.frames[i]*3600*1000);
+const k = SW_KEYFMT.format(d);
+if(k !== prev){
+prev = k;
+count++;
+if(count % every === 0 && i < n-1){
+const s = document.createElement('span');
+s.style.left = (i/(n-1)*100) + '%';
+s.textContent = SW_WDSHORT.format(d).toUpperCase();
+ticks.appendChild(s);
+}
+}
+}
+}
+function swLoadImage(url){
+if(SW.cache[url]) return Promise.resolve(SW.cache[url]);
+if(Object.keys(SW.cache).length > 90) SW.cache = {};
+return new Promise(function(resolve, reject){
+const im = new Image();
+const t = setTimeout(function(){ im.onload = im.onerror = null; reject(new Error('timeout')); }, 25000);
+im.onload = function(){ clearTimeout(t); SW.cache[url] = im; resolve(im); };
+im.onerror = function(){ clearTimeout(t); reject(new Error('error')); };
+im.src = url;
+});
+}
+function swPaint(im, url){
+const c = document.getElementById('swCanvas');
+if(c.width !== im.naturalWidth || c.height !== im.naturalHeight){ c.width = im.naturalWidth; c.height = im.naturalHeight; }
+c.getContext('2d').drawImage(im, 0, 0);
+c.style.display = '';
+document.getElementById('swLink').href = url;
+const msg = document.getElementById('swMsg');
+msg.style.display = 'none';
+msg.className = 'sw-msg';
+document.getElementById('swStage').classList.remove('loading');
+document.getElementById('swFellNote').textContent = SW.fell ? ' NOTE: the newest forecast run is not fully published yet, so the previous run is being shown.' : '';
+}
+function swFail(){
+if(SW.runOffset === 0){
+SW.runOffset = 1;
+SW.fell = true;
+SW.cache = {};
+swRebuild(false);
+return;
+}
+swStop();
+const msg = document.getElementById('swMsg');
+document.getElementById('swStage').classList.remove('loading');
+document.getElementById('swCanvas').style.display = 'none';
+msg.className = 'sw-msg err';
+msg.style.display = '';
+msg.innerHTML = 'THIS CHART IS NOT AVAILABLE RIGHT NOW.<br>TRY AGAIN SHORTLY, OR <a href="https://mag.ncep.noaa.gov/model-guidance-model-parameter.php?group=Model%20Guidance&model=GFS&area=ATLANTIC&ps=area" target="_blank" rel="noopener">OPEN NOAA DIRECTLY</a>.';
+}
+function swShowIdx(i){
+SW.idx = i;
+document.getElementById('swSlider').value = i;
+const run = swRuns()[SW.runOffset];
+const h = SW.frames[i];
+swUpdateLabels(run, h);
+if(!(SW.playToken && SW.playing)) swSetCount();
+const url = swUrl(run, h);
+const my = ++SW.showToken;
+if(SW.cache[url]){ swPaint(SW.cache[url], url); return; }
+document.getElementById('swStage').classList.add('loading');
+swLoadImage(url).then(function(im){
+if(my !== SW.showToken) return;
+swPaint(im, url);
+}).catch(function(){
+if(my !== SW.showToken) return;
+swFail();
+});
+}
+function swRebuild(keepIdx){
+const run = swRuns()[SW.runOffset];
+SW.frames = swFrames(run);
+const slider = document.getElementById('swSlider');
+slider.max = Math.max(0, SW.frames.length - 1);
+if(!keepIdx || SW.idx > SW.frames.length - 1) SW.idx = 0;
+swBuildTicks(run);
+swSyncChips();
+swShowIdx(SW.idx);
 }
 function swStop(){
 SW.playing = false;
+SW.playToken++;
 clearTimeout(SW.timer);
 const b = document.getElementById('swPlayBtn');
 b.classList.remove('playing');
 b.innerHTML = '&#9654; PLAY LOOP';
+swSetCount();
 }
-function swScheduleNext(){
-clearTimeout(SW.timer);
-const atEnd = SW.hourIdx >= SW_HOURS.length - 1;
-SW.timer = setTimeout(function(){
-if(!SW.playing) return;
-SW.hourIdx = atEnd ? 0 : SW.hourIdx + 1;
-swSyncSlider();
-swShow();
-}, atEnd ? 1400 : 650);
-}
-function swShow(){
+function swPlay(){
+if(SW.playing){ swStop(); return; }
+SW.playing = true;
+const my = ++SW.playToken;
+const b = document.getElementById('swPlayBtn');
+b.classList.add('playing');
+b.innerHTML = '&#9724; STOP';
 const run = swRuns()[SW.runOffset];
-const fh = SW_HOURS[SW.hourIdx];
-const url = swUrl(run, fh);
-const my = ++SW.token;
-const stage = document.getElementById('swStage');
-const msg = document.getElementById('swMsg');
-swUpdateLabels(run, fh);
-stage.classList.add('loading');
-const probe = new Image();
-probe.onload = function(){
-if(my !== SW.token) return;
-const img = document.getElementById('swImg');
-img.src = url;
-img.style.display = '';
-document.getElementById('swLink').href = url;
-msg.style.display = 'none';
-msg.className = 'sw-msg';
-stage.classList.remove('loading');
-document.getElementById('swFellNote').textContent = SW.fell ? ' NOTE: the newest run is not fully published yet, so the previous run is being shown.' : '';
-if(SW.playing) swScheduleNext();
-};
-probe.onerror = function(){
-if(my !== SW.token) return;
-if(SW.runOffset === 0){
-SW.runOffset = 1;
-SW.fell = true;
-swSyncChips();
-swShow();
-return;
+const frames = SW.frames.slice();
+const n = frames.length;
+const ok = new Array(n).fill(false);
+let done = 0, next = 0;
+swSetCount('LOADING LOOP 0 / ' + n);
+function worker(){
+if(next >= n) return Promise.resolve();
+const i = next++;
+return swLoadImage(swUrl(run, frames[i])).then(function(){ ok[i] = true; }, function(){ ok[i] = false; }).then(function(){
+done++;
+if(my === SW.playToken) swSetCount('LOADING LOOP ' + done + ' / ' + n);
+return worker();
+});
 }
-swStop();
-stage.classList.remove('loading');
-document.getElementById('swImg').style.display = 'none';
-msg.className = 'sw-msg err';
-msg.style.display = '';
-msg.innerHTML = 'CHART NOT AVAILABLE FOR THIS SELECTION RIGHT NOW.<br>TRY ANOTHER HOUR OR RUN, OR <a href="https://mag.ncep.noaa.gov/model-guidance-model-parameter.php?group=Model%20Guidance&model=GEFS-SPAG&area=ATLANTIC&ps=area" target="_blank" rel="noopener">OPEN NOAA DIRECTLY</a>.';
-};
-probe.src = url;
+Promise.all([worker(), worker(), worker(), worker()]).then(function(){
+if(my !== SW.playToken || !SW.playing) return;
+const playable = [];
+for(let i=0; i<n; i++) if(ok[i]) playable.push(i);
+if(!playable.length){ swFail(); return; }
+let pos = 0;
+function step(){
+if(my !== SW.playToken || !SW.playing) return;
+const i = playable[pos];
+const url = swUrl(run, frames[i]);
+SW.idx = i;
+document.getElementById('swSlider').value = i;
+swUpdateLabels(run, frames[i]);
+swSetCount();
+if(SW.cache[url]) swPaint(SW.cache[url], url);
+const atEnd = pos >= playable.length - 1;
+pos = atEnd ? 0 : pos + 1;
+SW.timer = setTimeout(step, atEnd ? 1600 : 520);
+}
+step();
+});
 }
 function swCheckRun(){
 const key = swRunKey(swRuns()[0]);
 const changed = SW.latestKey && key !== SW.latestKey;
 SW.latestKey = key;
+if(SW.playing) return;
 if(changed && (SW.runOffset === 0 || SW.fell)){
 SW.runOffset = 0;
 SW.fell = false;
-swSyncChips();
-if(!SW.playing) swShow();
+SW.cache = {};
+swRebuild(false);
+return;
 }
+const fresh = swFrames(swRuns()[SW.runOffset]);
+if(fresh.join(',') !== SW.frames.join(',')) swRebuild(false);
 }
 function initStormWatch(){
 const slider = document.getElementById('swSlider');
 if(!slider) return;
-const ticks = document.getElementById('swTicks');
-const last = SW_HOURS.length - 1;
-[[0,'+0D'],[8,'+2D'],[20,'+5D'],[30,'+7.5D'],[last,'+16D']].forEach(function(t){
-const s = document.createElement('span');
-s.style.left = (t[0]/last*100) + '%';
-s.textContent = t[1];
-ticks.appendChild(s);
-});
-slider.max = last;
-slider.value = SW.hourIdx;
-function wireChips(id, apply){
+function wire(id, apply){
 document.querySelectorAll('#' + id + ' .sw-chip').forEach(function(b){
-b.addEventListener('click', function(){ apply(b.dataset.v); swSyncChips(); swShow(); });
+b.addEventListener('click', function(){
+if(SW.playing) swStop();
+apply(b.dataset.v);
+swRebuild(id !== 'swRange');
+});
 });
 }
-wireChips('swArea', function(v){ SW.area = v; });
-wireChips('swProd', function(v){ SW.prod = v; });
-wireChips('swRun', function(v){ SW.runOffset = Number(v); SW.fell = false; });
+wire('swArea', function(v){ SW.area = v; });
+wire('swProd', function(v){ SW.prod = v; });
+wire('swRange', function(v){ SW.range = v; });
 slider.addEventListener('input', function(){
 if(SW.playing) swStop();
-SW.hourIdx = Number(slider.value);
-swUpdateLabels(swRuns()[SW.runOffset], SW_HOURS[SW.hourIdx]);
+SW.idx = Number(slider.value);
+swUpdateLabels(swRuns()[SW.runOffset], SW.frames[SW.idx]);
+swSetCount();
 clearTimeout(SW.sliderDebounce);
-SW.sliderDebounce = setTimeout(swShow, 120);
+SW.sliderDebounce = setTimeout(function(){ swShowIdx(SW.idx); }, 90);
 });
-document.getElementById('swPlayBtn').addEventListener('click', function(){
-if(SW.playing){ swStop(); return; }
-SW.playing = true;
-const b = document.getElementById('swPlayBtn');
-b.classList.add('playing');
-b.innerHTML = '&#9724; STOP';
-swScheduleNext();
-});
+document.getElementById('swPlayBtn').addEventListener('click', swPlay);
 SW.latestKey = swRunKey(swRuns()[0]);
-swSyncChips();
-swShow();
+swRebuild(false);
 setInterval(swCheckRun, 30*60*1000);
 }
 function revealTiles(){
