@@ -510,6 +510,42 @@ padding:6px 10px; cursor:pointer; transition:all .15s ease;
 .sw-note b{ color:var(--text); font-weight:700; }
 .sw-note a{ color:var(--cyan); }
 .sw-fell{ color:var(--amber); }
+.sw-sign{ display:none; }
+/* HUD NIGHT LOOK — dark-teal chart with tick border, scanlines and amber labels.
+   Pure CSS on top of NOAA's flat picture (colours are inverted so the white
+   chart background goes dark); the ORIGINAL chip switches it all off. */
+#stormWatch.hud .sw-stage{
+isolation:isolate; border-color:rgba(76,211,255,0.38);
+background:radial-gradient(ellipse at 50% 38%, #0e3d48 0%, #08272f 58%, #051a22 100%);
+box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08);
+}
+#stormWatch.hud .sw-stage canvas{
+filter:invert(1) hue-rotate(180deg) saturate(1.3) contrast(1.08) brightness(1.08);
+mix-blend-mode:screen;
+}
+#stormWatch.hud .sw-stage::after{
+content:""; position:absolute; inset:0; pointer-events:none;
+background:
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) top/100% 7px no-repeat,
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) bottom/100% 7px no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) left/7px 100% no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) right/7px 100% no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.05) 0 1px, transparent 1px 3px),
+radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,0.5) 100%);
+}
+#stormWatch.hud .sw-msg{ z-index:2; }
+#stormWatch.hud .sw-valid{ color:var(--amber); text-shadow:0 0 14px rgba(255,176,32,0.35); }
+#stormWatch.hud .sw-readout{ align-items:center; }
+#stormWatch.hud .sw-sign{
+display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+width:50px; height:50px; margin:14px 20px 14px 14px; transform:rotate(45deg);
+background:var(--amber); border:2px solid #05080d; outline:2px solid var(--amber);
+}
+#stormWatch.hud .sw-sign span{
+transform:rotate(-45deg); text-align:center; font-family:'Orbitron',sans-serif;
+font-size:8px; font-weight:800; line-height:1.2; letter-spacing:0.5px; color:#05080d;
+}
+#stormWatch.hud .sw-readout-main{ display:flex; align-items:center; flex:1 1 auto; min-width:0; }
 .panel iframe{ width:100%; height:340px; border:0; display:block; filter:saturate(1.05); }
 .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--cyan); opacity:0.6; }
 .corner.tl{ top:6px; left:6px; border-right:0; border-bottom:0; }
@@ -863,7 +899,7 @@ footer b{ color:var(--dim); }
 </div>
 </section>
 <!-- STORM WATCH -->
-<section id="stormWatch">
+<section id="stormWatch" class="hud">
 <div class="sec-head imagery">
 <h3>STORM WATCH</h3>
 <div class="bar"></div>
@@ -895,13 +931,23 @@ footer b{ color:var(--dim); }
 <button type="button" class="sw-chip" data-v="10">10 DAYS</button>
 </div>
 </div>
+<div class="sw-group">
+<span class="sw-lbl">LOOK</span>
+<div class="sw-chips" id="swLook">
+<button type="button" class="sw-chip active" data-v="hud">HUD NIGHT</button>
+<button type="button" class="sw-chip" data-v="orig">ORIGINAL</button>
+</div>
+</div>
 </div>
 <div class="sw-stage loading" id="swStage">
 <a id="swLink" href="#" target="_blank" rel="noopener" title="Open full-size chart"><canvas id="swCanvas" width="10" height="10" style="display:none;" role="img" aria-label="Forecast chart of pressure and rain over the Atlantic"></canvas></a>
 <div class="sw-msg" id="swMsg">LOADING CHART&hellip;</div>
 </div>
 <div class="sw-readout">
+<div class="sw-readout-main">
+<div class="sw-sign" aria-hidden="true"><span>STORM<br>WATCH</span></div>
 <div class="sw-valid" id="swValid">--</div>
+</div>
 <div class="sw-run" id="swRunLbl">--</div>
 </div>
 <div class="sw-slider">
@@ -2514,6 +2560,12 @@ swRebuild(id !== 'swRange');
 wire('swArea', function(v){ SW.area = v; });
 wire('swProd', function(v){ SW.prod = v; });
 wire('swRange', function(v){ SW.range = v; });
+document.querySelectorAll('#swLook .sw-chip').forEach(function(b){
+b.addEventListener('click', function(){
+document.getElementById('stormWatch').classList.toggle('hud', b.dataset.v === 'hud');
+document.querySelectorAll('#swLook .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
+});
+});
 slider.addEventListener('input', function(){
 if(SW.playing) swStop();
 SW.idx = Number(slider.value);
