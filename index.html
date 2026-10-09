@@ -546,6 +546,64 @@ transform:rotate(-45deg); text-align:center; font-family:'Orbitron',sans-serif;
 font-size:8px; font-weight:800; line-height:1.2; letter-spacing:0.5px; color:#05080d;
 }
 #stormWatch.hud .sw-readout-main{ display:flex; align-items:center; flex:1 1 auto; min-width:0; }
+/* STORM TRACKS — forecast storm centres drawn from data/storm-tracks.json */
+#stPanel{ margin-top:18px; }
+.st-mapwrap{
+position:relative; margin:10px 16px 0; border:1px solid rgba(76,211,255,0.38); border-radius:8px; overflow:hidden;
+background:#06222b; box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08); isolation:isolate;
+}
+#st-map{ width:100%; height:540px; background:#06222b; }
+@media (max-width:640px){ #st-map{ height:400px; } }
+#st-map .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
+#st-map .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
+#st-map .leaflet-control-attribution a{ color:var(--dim); }
+#st-map .leaflet-bar a{ background:var(--bg-panel); color:var(--cyan); border-color:var(--line); }
+.st-mapwrap::after{
+content:""; position:absolute; inset:0; pointer-events:none; z-index:700;
+background:
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) top/100% 7px no-repeat,
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) bottom/100% 7px no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) left/7px 100% no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) right/7px 100% no-repeat,
+radial-gradient(ellipse at center, transparent 62%, rgba(0,0,0,0.45) 100%);
+}
+.st-msg{
+position:absolute; inset:0; z-index:650; display:flex; align-items:center; justify-content:center; text-align:center;
+padding:24px; background:rgba(5,26,34,0.78); color:var(--dim); font-size:11px; letter-spacing:1px; line-height:1.9;
+}
+.st-msg.hide{ display:none; }
+.st-lbl{
+font-family:'JetBrains Mono',monospace; font-weight:700; font-size:10px; line-height:1.15; white-space:nowrap; pointer-events:none;
+text-shadow:0 0 3px #02141a, 0 0 3px #02141a, 0 0 6px #02141a;
+}
+.st-lbl i{ display:block; font-style:normal; font-weight:400; font-size:8.5px; letter-spacing:0.5px; color:#b9dde6; }
+.st-badge{
+display:flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:4px;
+font-family:'Orbitron',sans-serif; font-weight:800; font-size:9px; color:#05080d; border:1px solid rgba(5,8,13,0.7);
+box-shadow:0 0 8px currentColor;
+}
+.st-jersey{ font-family:'JetBrains Mono',monospace; font-weight:800; font-size:9px; letter-spacing:1.5px; color:var(--amber); text-shadow:0 0 3px #02141a,0 0 3px #02141a; white-space:nowrap; pointer-events:none; }
+.leaflet-tooltip.st-tip{
+background:rgba(5,14,20,0.94); border:1px solid rgba(76,211,255,0.5); color:var(--text);
+font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; box-shadow:0 0 12px rgba(76,211,255,0.2);
+}
+.leaflet-tooltip.st-tip::before{ border-top-color:rgba(76,211,255,0.5); }
+.st-legend{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; padding:12px 16px 0; font-size:10px; letter-spacing:1px; color:var(--dim); }
+.st-legend .st-key{ display:inline-flex; align-items:center; gap:6px; }
+.st-legend .st-key b{ display:inline-block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 8px currentColor; }
+.st-status{ padding:10px 16px 0; font-size:11px; line-height:1.7; letter-spacing:0.5px; color:var(--text); }
+.st-status small{ display:block; font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:2px; }
+.st-status.warn small{ color:var(--amber); }
+.st-list{ margin:12px 16px 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:8px; }
+.st-item{
+display:flex; gap:11px; align-items:flex-start; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+background:var(--bg-panel-2); cursor:pointer; transition:border-color .15s ease;
+}
+.st-item:hover{ border-color:var(--cyan); }
+.st-item .st-dot{ width:11px; height:11px; border-radius:50%; margin-top:3px; flex:0 0 auto; box-shadow:0 0 8px currentColor; }
+.st-item b{ display:block; font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px; color:var(--text); }
+.st-item b em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--amber); margin-left:6px; }
+.st-item small{ display:block; font-size:10px; line-height:1.65; letter-spacing:0.3px; color:var(--dim); margin-top:2px; }
 .panel iframe{ width:100%; height:340px; border:0; display:block; filter:saturate(1.05); }
 .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--cyan); opacity:0.6; }
 .corner.tl{ top:6px; left:6px; border-right:0; border-bottom:0; }
@@ -965,6 +1023,37 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <a href="https://mag.ncep.noaa.gov/model-guidance-model-parameter.php?group=Model%20Guidance&amp;model=GFS&amp;area=ATLANTIC&amp;ps=area" target="_blank" rel="noopener">Open the full NOAA charts &rarr;</a>
 </div>
 </div>
+<div class="panel" id="stPanel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="panel-head"><span>STORM TRACKER &middot; WHERE THE STORM CENTRES GO</span><span class="dot"></span></div>
+<div class="sw-controls">
+<div class="sw-group">
+<span class="sw-lbl">SHOW</span>
+<div class="sw-chips" id="stShow">
+<button type="button" class="sw-chip active" data-v="1004">ALL LOWS</button>
+<button type="button" class="sw-chip" data-v="990">DEEP STORMS (&le; 990 hPa)</button>
+</div>
+</div>
+<div class="sw-group">
+<span class="sw-lbl">MARKERS</span>
+<div class="sw-chips" id="stEvery">
+<button type="button" class="sw-chip active" data-v="12">EVERY 12 HOURS</button>
+<button type="button" class="sw-chip" data-v="24">EVERY 24 HOURS</button>
+</div>
+</div>
+</div>
+<div class="st-mapwrap">
+<div id="st-map"></div>
+<div class="st-msg" id="stMsg">LOADING STORM TRACKS&hellip;</div>
+</div>
+<div class="st-legend" id="stLegend"></div>
+<div class="st-status" id="stStatus"></div>
+<div class="st-list" id="stList"></div>
+<div class="sw-note">
+<b>HOW TO READ THIS MAP:</b> each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
+Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
+</div>
+</div>
 </section>
 <!-- LIVE IMAGERY -->
 <section>
@@ -1015,7 +1104,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 </div>
 </section>
 <footer>
-<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; NOAA/NCEP (STORM WATCH FORECAST LOOP) &middot; GOV.JE (WARNINGS)</div>
+<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; NOAA/NCEP (STORM WATCH FORECAST LOOP &amp; STORM TRACKER) &middot; GOV.JE (WARNINGS)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
 </div>
@@ -2579,6 +2668,200 @@ SW.latestKey = swRunKey(swRuns()[0]);
 swRebuild(false);
 setInterval(swCheckRun, 30*60*1000);
 }
+/* ============================================================
+   STORM TRACKER — forecast storm centres on a dark HUD map
+   Reads data/storm-tracks.json, which the "Storm tracks" GitHub
+   Action rebuilds every 6 hours from NOAA's GFS forecast
+   (scripts/storm_tracks.py). Each track is one low-pressure
+   centre; a marker sits on it every 12 hours, colour-coded by
+   its forecast lowest pressure and labelled with that pressure.
+   If the file is missing the map still shows, with a message.
+   ============================================================ */
+const ST_URL = 'data/storm-tracks.json';
+const ST_JERSEY = [49.1805, -2.1058];
+const ST = { map:null, layer:null, data:null, maxP:1004, every:12, firstFit:true, boxes:{} };
+const ST_WD = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const ST_DAY = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', day:'2-digit', month:'short' });
+function stColor(p){
+if(p >= 1000) return '#4cd3ff';
+if(p >= 990) return '#2de1a0';
+if(p >= 980) return '#ffb020';
+if(p >= 970) return '#ff4b5c';
+return '#ff5fd2';
+}
+function stTime(d){
+const parts = ST_WD.formatToParts(d);
+const g = t => (parts.find(x => x.type === t) || {}).value || '';
+return (g('weekday') + ' ' + g('hour') + ':' + g('minute')).toUpperCase();
+}
+function stNum(id){ return String(id).replace(/\D/g, '') || id; }
+function stBearing(a, b){
+const pa = L.Projection.SphericalMercator.project(L.latLng(a[0], a[1]));
+const pb = L.Projection.SphericalMercator.project(L.latLng(b[0], b[1]));
+return Math.atan2(pb.x - pa.x, pb.y - pa.y) * 180 / Math.PI;
+}
+function stPressureAt(points, h){
+if(!points.length) return 1010;
+if(h <= points[0].h) return points[0].p;
+for(let i=1; i<points.length; i++){
+if(h <= points[i].h){
+const a = points[i-1], b = points[i];
+const f = (h - a.h) / (b.h - a.h || 1);
+return a.p + f * (b.p - a.p);
+}
+}
+return points[points.length-1].p;
+}
+function stMsg(html){
+const m = document.getElementById('stMsg');
+if(html){ m.innerHTML = html; m.classList.remove('hide'); }
+else m.classList.add('hide');
+}
+function stInitMap(){
+if(typeof L === 'undefined' || !document.getElementById('st-map')) return false;
+ST.map = L.map('st-map', { zoomControl:true, minZoom:3, maxZoom:8, scrollWheelZoom:false, worldCopyJump:false });
+ST.map.setView([52, -14], 4);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri' }).addTo(ST.map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, opacity:0.75 }).addTo(ST.map);
+L.circle(ST_JERSEY, { radius:500000, color:'#ffb020', weight:1, opacity:0.45, dashArray:'4 6', fill:false, interactive:false }).addTo(ST.map);
+L.circleMarker(ST_JERSEY, { radius:9, color:'#ffb020', weight:1.5, opacity:0.9, fillOpacity:0.12, fillColor:'#ffb020', interactive:false }).addTo(ST.map);
+L.circleMarker(ST_JERSEY, { radius:3.5, color:'#05080d', weight:1, fillColor:'#ffb020', fillOpacity:1, interactive:false }).addTo(ST.map);
+L.marker(ST_JERSEY, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-jersey">JERSEY</div>', iconSize:[0,0], iconAnchor:[-13,6] }), interactive:false, keyboard:false }).addTo(ST.map);
+const lg = document.getElementById('stLegend');
+lg.innerHTML = '<span>LOWEST PRESSURE (hPa):</span>' +
+[['#4cd3ff','1000+ weak'], ['#2de1a0','990&ndash;999'], ['#ffb020','980&ndash;989'], ['#ff4b5c','970&ndash;979'], ['#ff5fd2','below 970 very deep']]
+.map(k => '<span class="st-key"><b style="background:' + k[0] + ';color:' + k[0] + ';"></b>' + k[1] + '</span>').join('') +
+'<span class="st-key" style="color:var(--amber);"><b style="background:transparent;border:1px dashed #ffb020;box-shadow:none;"></b>500 km from Jersey</span>';
+return true;
+}
+function stRender(){
+const d = ST.data;
+if(!ST.map || !d) return;
+if(ST.layer) ST.layer.remove();
+ST.layer = L.layerGroup().addTo(ST.map);
+ST.boxes = {};
+const cycle = new Date(d.cycle);
+const tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
+const allPts = [ST_JERSEY];
+tracks.forEach(function(t){
+const col = stColor(t.min_hpa);
+const n = stNum(t.id);
+const path = t.path || [];
+if(path.length < 2) return;
+const pts = t.points || [];
+path.forEach(p => allPts.push(p));
+for(let i=0; i<path.length-1; i++){
+const hMid = t.path_start_hour + 6 * (i + 0.5);
+const c = stColor(stPressureAt(pts, hMid));
+const seg = [path[i], path[i+1]];
+L.polyline(seg, { color:c, weight:9, opacity:0.16, lineCap:'round', interactive:false }).addTo(ST.layer);
+L.polyline(seg, { color:c, weight:2.4, opacity:0.95, lineCap:'round', interactive:false }).addTo(ST.layer);
+}
+pts.forEach(function(p){
+if(p.h % ST.every !== 0) return;
+const c = stColor(p.p);
+const when = new Date(p.t);
+const halo = Math.max(7, Math.min(26, 7 + (1010 - p.p) * 0.45));
+L.circleMarker([p.lat, p.lon], { radius:halo, color:c, weight:1, opacity:0.35, fillColor:c, fillOpacity:0.14, interactive:false }).addTo(ST.layer);
+const dot = L.circleMarker([p.lat, p.lon], { radius:4.5, color:'#05080d', weight:1.5, fillColor:c, fillOpacity:1 });
+dot.bindTooltip('<b>STORM ' + n + '</b><br>' + stTime(when) + ' (JERSEY TIME)<br>Lowest pressure <b>' + Math.round(p.p) + ' hPa</b><br>+' + p.h + ' hours from model start', { className:'st-tip', direction:'top', offset:[0,-6] });
+dot.addTo(ST.layer);
+const showTime = p.h % 24 === 0;
+L.marker([p.lat, p.lon], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:' + c + ';">' + Math.round(p.p) + (showTime ? '<i>' + stTime(when) + '</i>' : '') + '</div>', iconSize:[0,0], iconAnchor:[-9,10] }), interactive:false, keyboard:false }).addTo(ST.layer);
+});
+const first = pts.length ? pts[0].p : t.min_hpa;
+L.marker(path[0], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-badge" style="background:' + stColor(first) + ';box-shadow:0 0 8px ' + stColor(first) + ';">' + n + '</div>', iconSize:[16,16], iconAnchor:[8,8] }), interactive:false, keyboard:false, zIndexOffset:500 }).addTo(ST.layer);
+const last = path[path.length-1];
+const ang = stBearing(path[path.length-2], last);
+const endCol = stColor(stPressureAt(pts, t.path_start_hour + 6 * (path.length - 1)));
+L.marker(last, { icon:L.divIcon({ className:'st-icon', html:'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:13px solid ' + endCol + ';transform:rotate(' + ang.toFixed(0) + 'deg);filter:drop-shadow(0 0 4px ' + endCol + ');"></div>', iconSize:[12,13], iconAnchor:[6,7] }), interactive:false, keyboard:false, zIndexOffset:400 }).addTo(ST.layer);
+ST.boxes[t.id] = L.latLngBounds(path);
+});
+if(ST.firstFit){
+ST.firstFit = false;
+if(tracks.length) ST.map.fitBounds(L.latLngBounds(allPts).pad(0.1), { maxZoom:5 });
+}
+stStatus(tracks);
+stList(tracks);
+}
+function stStatus(tracks){
+const d = ST.data;
+const el = document.getElementById('stStatus');
+const cycle = new Date(d.cycle);
+const ageH = (Date.now() - cycle.getTime()) / 3600000;
+const stale = ageH > 30;
+const run = 'NOAA GFS RUN ' + swPad(cycle.getUTCHours(), 2) + 'Z ' + ST_DAY.format(cycle).toUpperCase();
+let head;
+if(!tracks.length){
+head = 'No storms at this strength are forecast over the North Atlantic in the next 10 days.';
+} else {
+let near = tracks[0];
+tracks.forEach(t => { if(t.closest_km < near.closest_km) near = t; });
+const when = new Date(cycle.getTime() + near.closest_hour * 3600000);
+head = '<b>' + tracks.length + ' storm' + (tracks.length === 1 ? '' : 's') + '</b> tracked over the next 10 days. Closest to Jersey: <b>storm ' + stNum(near.id) + '</b>, about <b>' + near.closest_km + ' km</b> away around ' + stTime(when) + ' (lowest pressure ' + Math.round(near.min_hpa) + ' hPa).';
+}
+el.className = 'st-status' + (stale ? ' warn' : '');
+el.innerHTML = head + '<small>' + run + (stale ? ' &middot; THIS DATA IS ' + Math.round(ageH) + ' HOURS OLD &mdash; THE AUTOMATIC UPDATE MAY HAVE STOPPED' : ' &middot; UPDATES EVERY 6 HOURS') + '</small>';
+}
+function stList(tracks){
+const d = ST.data;
+const cycle = new Date(d.cycle);
+const box = document.getElementById('stList');
+box.innerHTML = '';
+tracks.forEach(function(t){
+const col = stColor(t.min_hpa);
+const tag = t.min_hpa < 970 ? 'VERY DEEP' : (t.min_hpa < 980 ? 'DEEP' : '');
+const deepAt = new Date(cycle.getTime() + t.min_hour * 3600000);
+const nearAt = new Date(cycle.getTime() + t.closest_hour * 3600000);
+const from = new Date(cycle.getTime() + t.path_start_hour * 3600000);
+const to = new Date(cycle.getTime() + (t.path_start_hour + 6 * ((t.path || []).length - 1)) * 3600000);
+const item = document.createElement('div');
+item.className = 'st-item';
+item.innerHTML = '<span class="st-dot" style="background:' + col + ';color:' + col + ';"></span><div><b>STORM ' + stNum(t.id) + (tag ? '<em>' + tag + '</em>' : '') + '</b><small>Lowest pressure ' + Math.round(t.min_hpa) + ' hPa around ' + stTime(deepAt) + '<br>Closest to Jersey ' + t.closest_km + ' km around ' + stTime(nearAt) + '<br>Tracked ' + stTime(from) + ' to ' + stTime(to) + '</small></div>';
+item.addEventListener('click', function(){
+if(ST.boxes[t.id]) ST.map.fitBounds(ST.boxes[t.id].pad(0.2), { maxZoom:6 });
+document.getElementById('st-map').scrollIntoView({ behavior:'smooth', block:'center' });
+});
+box.appendChild(item);
+});
+}
+function stLoad(){
+return fetch(ST_URL + '?v=' + Math.floor(Date.now() / 600000), { cache:'no-store' })
+.then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+.then(function(d){
+if(!d || !Array.isArray(d.tracks) || !d.cycle) throw new Error('unexpected file contents');
+ST.data = d;
+stMsg('');
+stRender();
+})
+.catch(function(e){
+console.warn('storm tracks not loaded', e);
+if(!ST.data){
+stMsg('STORM TRACKS ARE NOT AVAILABLE RIGHT NOW.<br>THEY UPDATE AUTOMATICALLY &mdash; PLEASE CHECK BACK SOON.');
+document.getElementById('stStatus').innerHTML = '';
+}
+});
+}
+function initStormTracker(){
+if(!document.getElementById('stPanel')) return;
+if(!stInitMap()){
+stMsg('THE MAP COULD NOT START. PLEASE RELOAD THE PAGE.');
+return;
+}
+function wire(id, apply){
+document.querySelectorAll('#' + id + ' .sw-chip').forEach(function(b){
+b.addEventListener('click', function(){
+apply(Number(b.dataset.v));
+document.querySelectorAll('#' + id + ' .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
+stRender();
+});
+});
+}
+wire('stShow', function(v){ ST.maxP = v; });
+wire('stEvery', function(v){ ST.every = v; });
+stLoad();
+setInterval(stLoad, 30*60*1000);
+}
 function revealTiles(){
 document.querySelectorAll('.tile').forEach((el,i)=>{
 setTimeout(()=> el.classList.add('show'), i*120);
@@ -2601,6 +2884,7 @@ stampRefresh();
 revealTiles();
 refreshAll();
 initStormWatch();
+initStormTracker();
 initImagery();
 setInterval(refreshAll, 10*60*1000);
 setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000);
