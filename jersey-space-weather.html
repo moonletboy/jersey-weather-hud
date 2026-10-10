@@ -609,33 +609,43 @@ return KP_BOUNDARY[lo] + (KP_BOUNDARY[hi]-KP_BOUNDARY[lo])*frac;
 }
 
 // ---------- AURORA ALERT — auto-computed from the live Kp reading ----------
-function renderAlert(kp){
+function renderAlert(kp, peak){
 const banner = document.getElementById('alertBanner');
 const icon = document.getElementById('alertIcon');
 const title = document.getElementById('alertTitle');
 const text = document.getElementById('alertText');
+// The alert level follows the HIGHEST Kp seen in the last 3 hours, not just
+// the latest 1-minute reading. Storm-level Kp bounces around minute to minute,
+// and the alert used to vanish the moment one reading dipped below the threshold.
+if(typeof peak !== 'number' || !isFinite(peak) || peak < kp) peak = kp;
+const level = Math.max(kp, peak);
+const easing = peak > kp;
 let color, iconChar, titleText, bodyText, urgent = false;
-if(kp < 5){
-color = GREEN; iconChar = '\u2713';
-titleText = 'NO ALERT \u2014 QUIET CONDITIONS';
+if(level < 5){
+color = GREEN; iconChar = '✓';
+titleText = 'NO ALERT — QUIET CONDITIONS';
 bodyText = 'Geomagnetic activity is currently quiet. No realistic aurora chance from Jersey at this level.';
-} else if(kp < 7){
-color = AMBER; iconChar = '\u26a0';
-titleText = 'MINOR-MODERATE STORM (G1\u2013G2)';
+} else if(level < 7){
+color = AMBER; iconChar = '⚠';
+titleText = 'MINOR-MODERATE STORM (G1–G2)';
 bodyText = 'Geomagnetic activity is elevated. Still well short of what Jersey typically needs, but worth keeping an eye on if it keeps climbing.';
-} else if(kp < 9){
-color = RED; iconChar = '\u26a0';
-titleText = 'STRONG-SEVERE STORM (G3\u2013G4)';
+} else if(level < 9){
+color = RED; iconChar = '⚠';
+titleText = 'STRONG-SEVERE STORM (G3–G4)';
 bodyText = 'Activity has reached a level where aurora MAY become visible from Jersey on a clear, dark night. Check the sky conditions panel below and look north.';
 urgent = true;
 } else {
-color = RED; iconChar = '\u2757';
-titleText = 'EXTREME STORM (G5) \u2014 CHECK SKIES NOW';
+color = RED; iconChar = '❗';
+titleText = 'EXTREME STORM (G5) — CHECK SKIES NOW';
 bodyText = 'Extreme geomagnetic storm in progress. This is the level where aurora has historically been seen from Jersey. Get to a dark, north-facing spot if skies are clear.';
 urgent = true;
 }
+if(level >= 5 && easing){
+titleText += ' — RECENT PEAK';
+bodyText += ' Latest reading: Kp ' + kp.toFixed(0) + ' · peak Kp ' + peak.toFixed(0) + ' within the last 3 hours. Storm activity comes in surges, so it can climb again.';
+}
 banner.style.borderColor = color;
-banner.classList.toggle('pulse', urgent);
+banner.classList.toggle('pulse', urgent && kp >= 7);
 icon.textContent = iconChar; icon.style.color = color;
 title.textContent = titleText; title.style.color = color;
 text.textContent = bodyText;
@@ -711,9 +721,28 @@ async function loadKp(){
 try{
 const res = await fetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
 const data = await res.json();
-const last = data[data.length-1];
-const kp = parseFloat(last.kp_index ?? last.estimated_kp ?? last.kp);
+const kpOf = e => parseFloat(e.kp_index ?? e.estimated_kp ?? e.kp);
+const tsOf = e => { const t = String(e.time_tag || ''); return Date.parse(/(Z|[+-]\d\d:?\d\d)$/i.test(t) ? t : t + 'Z'); };
+
+// latest entry that actually has a usable Kp value
+let lastIdx = -1;
+for(let i = data.length - 1; i >= 0; i--){ if(isFinite(kpOf(data[i]))){ lastIdx = i; break; } }
+if(lastIdx < 0) throw new Error('no valid Kp reading in feed');
+const last = data[lastIdx];
+const kp = kpOf(last);
 const storm = kpStormLabel(kp);
+
+// peak Kp over the 3 hours leading up to the latest reading
+let peak = kp;
+const lastT = tsOf(last);
+if(!isNaN(lastT)){
+for(let i = lastIdx; i >= 0; i--){
+const t = tsOf(data[i]);
+if(isNaN(t) || lastT - t > 3*3600*1000) break;
+const v = kpOf(data[i]);
+if(isFinite(v) && v > peak) peak = v;
+}
+}
 
 spaceData.kp = kp; spaceData.kpLabel = storm.label; spaceData.kpColor = storm.color;
 renderHeroFace();
@@ -727,10 +756,10 @@ setGauge('g-kp', kp/9*100, storm.color);
 document.getElementById('mk-kp').style.left = Math.min(100, Math.max(0, kp/9*100)) + '%';
 
 renderVerdict(kp);
-renderAlert(kp);
+renderAlert(kp, peak);
 }catch(e){
 console.error('Kp index fetch failed', e);
-document.getElementById('heroCond').textContent = 'SIGNAL LOST \u2014 RETRYING';
+document.getElementById('heroCond').textContent = 'SIGNAL LOST — RETRYING';
 }
 }
 
