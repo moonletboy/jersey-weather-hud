@@ -336,8 +336,8 @@ padding:16px 18px 14px; border-top:1px solid var(--line);
 .scope-key{ flex:1 1 210px; max-width:290px; }
 .scope-key-label{ font-size:9px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
 .scope-key-bar{
-height:8px; border-radius:4px; box-shadow:0 0 12px rgba(45,225,160,0.25);
-background:linear-gradient(90deg, rgba(18,140,104,0.35), #2de1a0 35%, #4cd3ff 72%, #e1fffa);
+height:8px; border-radius:4px; box-shadow:0 0 12px rgba(45,225,110,0.3);
+background:linear-gradient(90deg, rgba(6,95,55,0.4), #16af5a 40%, #28eb64 80%, #46ff73);
 }
 .scope-key-scale{ display:flex; justify-content:space-between; font-size:8px; color:var(--dim); margin-top:5px; letter-spacing:0.5px; }
 .scope-stamp{ font-size:9px; color:var(--dim2); letter-spacing:0.5px; margin-top:10px; line-height:1.5; }
@@ -870,7 +870,7 @@ const JERSEY_LON = -2.14;                 // (JERSEY_LAT is declared higher up)
 const GEOMAG_POLE = { lat:80.7, lon:-72.8 };
 const SCOPE_EDGE_PROB = 10;               // % at which we call "the oval is here"
 const DEG = Math.PI / 180;
-const AURORA_STOPS = [[0,[18,140,104]],[0.4,[45,225,160]],[0.8,[76,211,255]],[1,[170,240,255]]];
+const AURORA_STOPS = [[0,[6,95,55]],[0.4,[22,175,90]],[0.8,[40,235,100]],[1,[70,255,115]]];
 let ovationGrid = null;                   // Float32Array [lon(0-359) * SCOPE_ROWS + (lat - SCOPE_LAT_MIN)]
 let ovationMeta = { forecast:'', observed:'' };
 let scopeMode = 'loading';                // 'loading' | 'live' | 'estimate'
@@ -954,7 +954,7 @@ for(let k = 0; k <= STEPS; k++){
 const f = k / STEPS;
 const phi = edge + f * BAND;
 const alpha = (0.05 + 0.55 * Math.sin(Math.PI * (0.08 + 0.84 * f))) * strength;
-const r = Math.round(45 + (76-45)*f), gg = Math.round(225 + (211-225)*f), bb = Math.round(160 + (255-160)*f);
+const r = Math.round(30 + (70-30)*f), gg = Math.round(200 + (255-200)*f), bb = Math.round(110 + (140-110)*f);
 g.strokeStyle = 'rgba(' + r + ',' + gg + ',' + bb + ',' + alpha.toFixed(3) + ')';
 g.lineWidth = (BAND / STEPS) * scale * 1.8;
 g.beginPath();
@@ -1036,8 +1036,8 @@ drawEstimateOval(lctx, project, scale, spaceData.kp);
 ctx.save(); circle(R); ctx.clip();
 ctx.globalCompositeOperation = 'lighter';
 ctx.drawImage(layer, 0, 0);
-scopeBloom(ctx, layer, W, 5, 0.5);
-scopeBloom(ctx, layer, W, 14, 0.65);
+scopeBloom(ctx, layer, W, 5, 0.3);
+scopeBloom(ctx, layer, W, 14, 0.5);
 ctx.restore();
 
 // --- Jersey latitude ring, look-north line, labels ---
