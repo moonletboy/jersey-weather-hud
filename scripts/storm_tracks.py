@@ -857,6 +857,8 @@ def run_names(session, cycle, now, tracks, reg):
     items = fetch_news_items(session, now)
     found = detect_names(items, reg)
     log("Possible new names: " + (", ".join("%s (%s, %d stories)" % (f["name"], f["by"], f["hits"]) for f in found) or "none"))
+    reg["news_check"] = {"at": iso(now), "stories_last_72h": len(items),
+                         "possible_names": [f["name"] for f in found]}
     pending = auto_name(tracks, reg, found, now)
     apply_manual(reg, now)
     live = {norm_name(n["name"]) for r in reg["storms"] for n in r["names"]}
