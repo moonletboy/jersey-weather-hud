@@ -604,6 +604,26 @@ background:var(--bg-panel-2); cursor:pointer; transition:border-color .15s ease;
 .st-item b{ display:block; font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px; color:var(--text); }
 .st-item b em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--amber); margin-left:6px; }
 .st-item small{ display:block; font-size:10px; line-height:1.65; letter-spacing:0.3px; color:var(--dim); margin-top:2px; }
+.st-badge.named{ width:auto; min-width:16px; padding:0 7px; letter-spacing:1px; white-space:nowrap; }
+.st-subhead{ margin:16px 16px 0; font-size:10px; letter-spacing:2px; color:var(--amber); font-weight:700; }
+.st-near{ margin:8px 16px 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,430px),1fr)); gap:10px; }
+.st-card{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:12px 14px; border:1px solid rgba(255,176,32,0.4); border-radius:10px; background:var(--bg-panel-2); box-shadow:inset 0 0 30px rgba(255,176,32,0.04); }
+.st-card.out{ border-color:var(--line); box-shadow:none; }
+.st-card-rose{ flex:0 0 auto; width:190px; max-width:100%; margin:0 auto; }
+.st-norose{ width:190px; height:190px; display:flex; align-items:center; justify-content:center; text-align:center; border:1px dashed var(--line); border-radius:50%; font-size:10px; letter-spacing:1.5px; color:var(--dim2); line-height:1.8; }
+.st-card-txt{ flex:1 1 170px; min-width:0; }
+.st-card h4{ margin:0; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:1px; color:var(--text); }
+.st-card h4 em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--amber); }
+.st-card small{ display:block; font-size:9px; letter-spacing:0.8px; line-height:1.7; color:var(--dim); margin-top:3px; }
+.st-card p{ margin:8px 0 0; font-size:11px; line-height:1.7; letter-spacing:0.2px; color:var(--text); }
+.st-rename{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; font-weight:700; color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:4px; padding:3px 7px; cursor:pointer; }
+.st-rename:hover{ border-color:var(--cyan); }
+.st-strip{ display:flex; gap:2px; margin-top:10px; height:16px; }
+.st-strip span{ flex:1 1 0; min-width:3px; border-radius:2px; opacity:0.55; cursor:pointer; }
+.st-strip span.ring{ border-top:3px solid var(--amber); opacity:0.8; }
+.st-strip span.cur{ opacity:1; outline:2px solid #e9f6f5; outline-offset:1px; }
+.st-strip-cap{ margin-top:5px; font-size:8.5px; letter-spacing:0.8px; line-height:1.6; color:var(--dim2); }
+
 .panel iframe{ width:100%; height:340px; border:0; display:block; filter:saturate(1.05); }
 .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--cyan); opacity:0.6; }
 .corner.tl{ top:6px; left:6px; border-right:0; border-bottom:0; }
@@ -1046,11 +1066,27 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div id="st-map"></div>
 <div class="st-msg" id="stMsg">LOADING STORM TRACKS&hellip;</div>
 </div>
+<div class="sw-readout">
+<div class="sw-valid" id="stValid">--<small></small></div>
+<div class="sw-run">MOVE THE SLIDER TO MOVE THE STORMS ALONG THEIR TRACKS</div>
+</div>
+<div class="sw-slider">
+<input type="range" id="stSlider" min="0" max="240" step="6" value="0" aria-label="Forecast time for the storm tracker">
+</div>
+<div class="anim-bar">
+<span><button type="button" class="anim-btn" id="stPlayBtn">&#9654; PLAY</button> <button type="button" class="anim-btn" id="stNowBtn">NOW</button> <button type="button" class="anim-btn" id="stNearBtn">CLOSEST TO JERSEY</button></span>
+<span class="anim-time">0 TO 10 DAYS AHEAD</span>
+</div>
 <div class="st-legend" id="stLegend"></div>
+<div class="st-legend" id="stWindLegend"></div>
 <div class="st-status" id="stStatus"></div>
+<div class="st-subhead" id="stNearHead" style="display:none;">NEAR JERSEY &middot; WHERE THE STRONGEST WINDS ARE</div>
+<div class="st-near" id="stNear"></div>
 <div class="st-list" id="stList"></div>
 <div class="sw-note">
 <b>HOW TO READ THIS MAP:</b> each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
+<b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; is drawn around it. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
+<b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
 </div>
@@ -2675,13 +2711,25 @@ setInterval(swCheckRun, 30*60*1000);
    (scripts/storm_tracks.py). Each track is one low-pressure
    centre; a marker sits on it every 12 hours, colour-coded by
    its forecast lowest pressure and labelled with that pressure.
-   If the file is missing the map still shows, with a message.
+   Storms that come near Jersey also carry a WIND ROSE: the
+   strongest wind and gust in each of 8 compass sectors around
+   the centre, every 6 hours. A time slider moves every storm
+   along its track and the rose redraws as it goes.
+   Each storm has a stable number; when it gets an official
+   name (found automatically, or set by hand) the name replaces
+   the number everywhere. If the file is missing the map still
+   shows, with a message.
    ============================================================ */
 const ST_URL = 'data/storm-tracks.json';
 const ST_JERSEY = [49.1805, -2.1058];
-const ST = { map:null, layer:null, data:null, maxP:1004, every:12, firstFit:true, boxes:{} };
+const ST_RING_KM = 804.672;            // 500 miles
+const ST_ROSE_KM = 400;                // how far from the centre the wind rose looks
+const ST = { map:null, layer:null, live:null, data:null, tracks:[], maxP:1004, every:12, firstFit:true, firstHour:true, boxes:{}, hour:0, timer:null };
+const ST_SECT = ['N','NE','E','SE','S','SW','W','NW'];
+const ST_SECT_LONG = ['NORTH','NORTH-EAST','EAST','SOUTH-EAST','SOUTH','SOUTH-WEST','WEST','NORTH-WEST'];
 const ST_WD = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
 const ST_DAY = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', day:'2-digit', month:'short' });
+const ST_WDD = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
 function stColor(p){
 if(p >= 1000) return '#4cd3ff';
 if(p >= 990) return '#2de1a0';
@@ -2689,17 +2737,33 @@ if(p >= 980) return '#ffb020';
 if(p >= 970) return '#ff4b5c';
 return '#ff5fd2';
 }
+function stWindColor(m){
+if(m >= 73) return '#ff5fd2';
+if(m >= 55) return '#ff4b5c';
+if(m >= 39) return '#ffb020';
+if(m >= 25) return '#2de1a0';
+return '#4cd3ff';
+}
 function stTime(d){
 const parts = ST_WD.formatToParts(d);
 const g = t => (parts.find(x => x.type === t) || {}).value || '';
 return (g('weekday') + ' ' + g('hour') + ':' + g('minute')).toUpperCase();
 }
-function stNum(id){ return String(id).replace(/\D/g, '') || id; }
+function stTimeD(d){ return ST_WDD.format(d).replace(',', '').toUpperCase(); }
+function stHourDate(h){ return new Date(new Date(ST.data.cycle).getTime() + h * 3600000); }
+function stKm(a, b){
+const R = 6371, rad = Math.PI / 180;
+const dp = (b[0] - a[0]) * rad, dl = (b[1] - a[1]) * rad;
+const x = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(a[0]*rad) * Math.cos(b[0]*rad) * Math.sin(dl/2) * Math.sin(dl/2);
+return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
+}
+function stMi(km){ return Math.round(km / 1.609344); }
 function stBearing(a, b){
 const pa = L.Projection.SphericalMercator.project(L.latLng(a[0], a[1]));
 const pb = L.Projection.SphericalMercator.project(L.latLng(b[0], b[1]));
 return Math.atan2(pb.x - pa.x, pb.y - pa.y) * 180 / Math.PI;
 }
+function stCompass(deg){ return ((Math.round(deg / 45) % 8) + 8) % 8; }
 function stPressureAt(points, h){
 if(!points.length) return 1010;
 if(h <= points[0].h) return points[0].p;
@@ -2712,10 +2776,107 @@ return a.p + f * (b.p - a.p);
 }
 return points[points.length-1].p;
 }
+function stPosAt(t, h){
+const i = (h - t.path_start_hour) / 6;
+if(i < 0 || i > t.path.length - 1) return null;
+const i0 = Math.floor(i), i1 = Math.min(i0 + 1, t.path.length - 1), f = i - i0;
+return [t.path[i0][0] + f * (t.path[i1][0] - t.path[i0][0]), t.path[i0][1] + f * (t.path[i1][1] - t.path[i0][1])];
+}
+function stHeadingAt(t, h){
+const a = stPosAt(t, Math.max(t.path_start_hour, h - 6)), b = stPosAt(t, Math.min(t.path_start_hour + 6 * (t.path.length - 1), h + 6));
+if(!a || !b || (a[0] === b[0] && a[1] === b[1])) return null;
+return (stBearing(a, b) + 360) % 360;
+}
+function stWindAt(t, h){
+const w = t.winds || [];
+for(let i=0; i<w.length; i++) if(w[i].h === h) return w[i];
+return null;
+}
+/* ---- numbers and names ---- */
+function stNumOf(t){ return t.num != null ? String(t.num) : (String(t.id).replace(/\D/g, '') || String(t.id)); }
+function stLocalNames(){
+try{
+const o = JSON.parse(localStorage.getItem('jwcStormNames') || '{}') || {};
+const now = Date.now();
+Object.keys(o).forEach(k => { if(!o[k] || now - o[k].t > 7 * 86400000) delete o[k]; });
+return o;
+}catch(e){ return {}; }
+}
+function stSaveLocal(num, name){
+try{
+const o = stLocalNames();
+if(name) o[num] = { name:name, t:Date.now() }; else delete o[num];
+localStorage.setItem('jwcStormNames', JSON.stringify(o));
+}catch(e){}
+}
+function stNameOf(t){
+const loc = stLocalNames()[stNumOf(t)];
+if(loc && loc.name) return { text:loc.name, kind:'local' };
+if(t.name) return { text:t.name, kind:t.name_src === 'manual' ? 'manual' : 'auto' };
+return null;
+}
+function stLabel(t){ const n = stNameOf(t); return (n ? n.text : stNumOf(t)).toUpperCase(); }
+function stEsc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function stRename(t){
+const cur = stLocalNames()[stNumOf(t)];
+const v = window.prompt('Name for storm #' + stNumOf(t) + ' (changes only what YOU see on this device for a week).\nLeave blank to go back to the automatic name or number.', cur ? cur.name : (t.name || ''));
+if(v === null) return;
+stSaveLocal(stNumOf(t), v.trim().slice(0, 18));
+stRender();
+}
 function stMsg(html){
 const m = document.getElementById('stMsg');
 if(html){ m.innerHTML = html; m.classList.remove('hide'); }
 else m.classList.add('hide');
+}
+/* ---- the wind rose (SVG) ---- */
+function stPolar(c, r, deg){ const a = deg * Math.PI / 180; return [c + r * Math.sin(a), c - r * Math.cos(a)]; }
+function stWedge(c, r, k){
+if(r <= 0.5) return '';
+const p0 = stPolar(c, r, k * 45 - 21), p1 = stPolar(c, r, k * 45 + 21);
+return 'M' + c + ' ' + c + ' L' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' A' + r.toFixed(1) + ' ' + r.toFixed(1) + ' 0 0 1 ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) + ' Z';
+}
+/* w = {s:[8], g:[8], d, b}; o = {labels, jersey, heading, ringPx} — outer ring = 400 km from the centre,
+   petal length = wind speed (90 mph reaches the ring); solid = sustained, pale = gusts */
+function stRose(w, size, o){
+const c = size / 2, R = size / 2 - (o.labels ? 17 : 5);
+let best = 0;
+for(let k=1; k<8; k++) if(w.g[k] > w.g[best]) best = k;
+let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" style="overflow:visible;display:block;">';
+svg += '<circle cx="' + c + '" cy="' + c + '" r="' + R + '" fill="rgba(5,14,20,' + (o.labels ? '0.55' : '0.35') + ')" stroke="rgba(76,211,255,0.55)" stroke-width="1" stroke-dasharray="3 4"/>';
+svg += '<circle cx="' + c + '" cy="' + c + '" r="' + (R * 0.5).toFixed(1) + '" fill="none" stroke="rgba(76,211,255,0.22)" stroke-width="1"/>';
+for(let k=0; k<8; k++){
+const rg = R * Math.min(1, w.g[k] / 90), rs = R * Math.min(1, w.s[k] / 90);
+svg += '<path d="' + stWedge(c, rg, k) + '" fill="' + stWindColor(w.g[k]) + '" fill-opacity="0.28" stroke="' + stWindColor(w.g[k]) + '" stroke-opacity="0.7" stroke-width="0.8"/>';
+svg += '<path d="' + stWedge(c, rs, k) + '" fill="' + stWindColor(w.s[k]) + '" fill-opacity="0.92"/>';
+}
+const pb = stWedge(c, R * Math.min(1, w.g[best] / 90), best);
+svg += '<path d="' + pb + '" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>';
+if(o.labels){
+[['N',0],['E',90],['S',180],['W',270]].forEach(function(a){
+const p = stPolar(c, R + 10, a[1]);
+svg += '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] + 3).toFixed(1) + '" text-anchor="middle" font-size="9" font-family="JetBrains Mono,monospace" fill="#5f7c88" font-weight="700">' + a[0] + '</text>';
+});
+}
+svg += '<circle cx="' + c + '" cy="' + c + '" r="2.6" fill="#05080d" stroke="#e9f6f5" stroke-width="1.2"/>';
+if(o.heading != null){
+const p = stPolar(c, R + (o.labels ? 2 : 3), o.heading), q0 = stPolar(c, R - 7, o.heading - 7), q1 = stPolar(c, R - 7, o.heading + 7);
+svg += '<path d="M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' L' + q0[0].toFixed(1) + ' ' + q0[1].toFixed(1) + ' L' + q1[0].toFixed(1) + ' ' + q1[1].toFixed(1) + ' Z" fill="#e9f6f5" fill-opacity="0.9"/>';
+}
+if(o.jersey){
+const inside = w.d <= ST_ROSE_KM;
+const jr = R * Math.min(1, w.d / ST_ROSE_KM);
+const jp = stPolar(c, inside ? jr : R, w.b);
+svg += '<g transform="translate(' + jp[0].toFixed(1) + ' ' + jp[1].toFixed(1) + ') rotate(45)"><rect x="-4" y="-4" width="8" height="8" fill="' + (inside ? '#ffb020' : 'none') + '" stroke="#ffb020" stroke-width="1.6"/></g>';
+const lp = stPolar(c, Math.min(R + 12, (inside ? jr : R) + 13), w.b);
+svg += '<text x="' + lp[0].toFixed(1) + '" y="' + (lp[1] + 3).toFixed(1) + '" text-anchor="middle" font-size="8" font-family="JetBrains Mono,monospace" fill="#ffb020" font-weight="800">J</text>';
+}
+return svg + '</svg>';
+}
+function stRoseSizeForMap(lat){
+const mpp = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, ST.map.getZoom());
+const px = ST_ROSE_KM * 1000 / mpp;
+return Math.max(66, Math.min(300, Math.round(px * 2 + 10)));
 }
 function stInitMap(){
 if(typeof L === 'undefined' || !document.getElementById('st-map')) return false;
@@ -2723,15 +2884,22 @@ ST.map = L.map('st-map', { zoomControl:true, minZoom:3, maxZoom:8, scrollWheelZo
 ST.map.setView([52, -14], 4);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri' }).addTo(ST.map);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, opacity:0.75 }).addTo(ST.map);
-L.circle(ST_JERSEY, { radius:500000, color:'#ffb020', weight:1, opacity:0.45, dashArray:'4 6', fill:false, interactive:false }).addTo(ST.map);
+L.circle(ST_JERSEY, { radius:ST_RING_KM * 1000, color:'#ffb020', weight:1.2, opacity:0.55, dashArray:'4 6', fill:false, interactive:false }).addTo(ST.map);
+L.marker([ST_JERSEY[0] + ST_RING_KM / 111.19, ST_JERSEY[1]], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-jersey">500 MILES</div>', iconSize:[0,0], iconAnchor:[-6,6] }), interactive:false, keyboard:false }).addTo(ST.map);
 L.circleMarker(ST_JERSEY, { radius:9, color:'#ffb020', weight:1.5, opacity:0.9, fillOpacity:0.12, fillColor:'#ffb020', interactive:false }).addTo(ST.map);
 L.circleMarker(ST_JERSEY, { radius:3.5, color:'#05080d', weight:1, fillColor:'#ffb020', fillOpacity:1, interactive:false }).addTo(ST.map);
 L.marker(ST_JERSEY, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-jersey">JERSEY</div>', iconSize:[0,0], iconAnchor:[-13,6] }), interactive:false, keyboard:false }).addTo(ST.map);
+ST.live = L.layerGroup().addTo(ST.map);
+ST.map.on('zoomend', stRenderLive);
 const lg = document.getElementById('stLegend');
 lg.innerHTML = '<span>LOWEST PRESSURE (hPa):</span>' +
 [['#4cd3ff','1000+ weak'], ['#2de1a0','990&ndash;999'], ['#ffb020','980&ndash;989'], ['#ff4b5c','970&ndash;979'], ['#ff5fd2','below 970 very deep']]
 .map(k => '<span class="st-key"><b style="background:' + k[0] + ';color:' + k[0] + ';"></b>' + k[1] + '</span>').join('') +
-'<span class="st-key" style="color:var(--amber);"><b style="background:transparent;border:1px dashed #ffb020;box-shadow:none;"></b>500 km from Jersey</span>';
+'<span class="st-key" style="color:var(--amber);"><b style="background:transparent;border:1px dashed #ffb020;box-shadow:none;"></b>500 miles from Jersey</span>';
+document.getElementById('stWindLegend').innerHTML = '<span>WIND ROSE (MPH):</span>' +
+[['#4cd3ff','under 25'], ['#2de1a0','25&ndash;38'], ['#ffb020','39&ndash;54 gale'], ['#ff4b5c','55&ndash;72 storm'], ['#ff5fd2','73+ hurricane force']]
+.map(k => '<span class="st-key"><b style="background:' + k[0] + ';color:' + k[0] + ';"></b>' + k[1] + '</span>').join('') +
+'<span class="st-key">SOLID = WIND &middot; PALE = GUSTS &middot; WHITE OUTLINE = STRONGEST SIDE</span>';
 return true;
 }
 function stRender(){
@@ -2740,12 +2908,12 @@ if(!ST.map || !d) return;
 if(ST.layer) ST.layer.remove();
 ST.layer = L.layerGroup().addTo(ST.map);
 ST.boxes = {};
-const cycle = new Date(d.cycle);
 const tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
+ST.tracks = tracks;
 const allPts = [ST_JERSEY];
 tracks.forEach(function(t){
 const col = stColor(t.min_hpa);
-const n = stNum(t.id);
+const lab = stLabel(t);
 const path = t.path || [];
 if(path.length < 2) return;
 const pts = t.points || [];
@@ -2764,13 +2932,14 @@ const when = new Date(p.t);
 const halo = Math.max(7, Math.min(26, 7 + (1010 - p.p) * 0.45));
 L.circleMarker([p.lat, p.lon], { radius:halo, color:c, weight:1, opacity:0.35, fillColor:c, fillOpacity:0.14, interactive:false }).addTo(ST.layer);
 const dot = L.circleMarker([p.lat, p.lon], { radius:4.5, color:'#05080d', weight:1.5, fillColor:c, fillOpacity:1 });
-dot.bindTooltip('<b>STORM ' + n + '</b><br>' + stTime(when) + ' (JERSEY TIME)<br>Lowest pressure <b>' + Math.round(p.p) + ' hPa</b><br>+' + p.h + ' hours from model start', { className:'st-tip', direction:'top', offset:[0,-6] });
+dot.bindTooltip('<b>STORM ' + stEsc(lab) + '</b><br>' + stTime(when) + ' (JERSEY TIME)<br>Lowest pressure <b>' + Math.round(p.p) + ' hPa</b><br>+' + p.h + ' hours from model start', { className:'st-tip', direction:'top', offset:[0,-6] });
 dot.addTo(ST.layer);
 const showTime = p.h % 24 === 0;
 L.marker([p.lat, p.lon], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:' + c + ';">' + Math.round(p.p) + (showTime ? '<i>' + stTime(when) + '</i>' : '') + '</div>', iconSize:[0,0], iconAnchor:[-9,10] }), interactive:false, keyboard:false }).addTo(ST.layer);
 });
 const first = pts.length ? pts[0].p : t.min_hpa;
-L.marker(path[0], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-badge" style="background:' + stColor(first) + ';box-shadow:0 0 8px ' + stColor(first) + ';">' + n + '</div>', iconSize:[16,16], iconAnchor:[8,8] }), interactive:false, keyboard:false, zIndexOffset:500 }).addTo(ST.layer);
+const named = !!stNameOf(t);
+L.marker(path[0], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-badge' + (named ? ' named' : '') + '" style="background:' + stColor(first) + ';box-shadow:0 0 8px ' + stColor(first) + ';">' + stEsc(lab) + '</div>', iconSize:named ? [0,0] : [16,16], iconAnchor:named ? [-4,8] : [8,8] }), interactive:false, keyboard:false, zIndexOffset:500 }).addTo(ST.layer);
 const last = path[path.length-1];
 const ang = stBearing(path[path.length-2], last);
 const endCol = stColor(stPressureAt(pts, t.path_start_hour + 6 * (path.length - 1)));
@@ -2783,6 +2952,119 @@ if(tracks.length) ST.map.fitBounds(L.latLngBounds(allPts).pad(0.1), { maxZoom:5 
 }
 stStatus(tracks);
 stList(tracks);
+stRenderLive();
+stRenderCards();
+}
+/* storms at the time chosen on the slider, with their wind roses */
+function stRenderLive(){
+if(!ST.live || !ST.data) return;
+ST.live.clearLayers();
+const h = ST.hour;
+(ST.tracks || []).forEach(function(t){
+const pos = stPosAt(t, h);
+if(!pos) return;
+const p = stPressureAt(t.points || [], h);
+const c = stColor(p);
+const w = stWindAt(t, h);
+if(w){
+const size = stRoseSizeForMap(pos[0]);
+L.marker(pos, { icon:L.divIcon({ className:'st-icon', html:stRose(w, size, { labels:false, heading:stHeadingAt(t, h) }), iconSize:[size,size], iconAnchor:[size/2,size/2] }), interactive:false, keyboard:false, zIndexOffset:600 }).addTo(ST.live);
+}
+L.circleMarker(pos, { radius:7, color:'#e9f6f5', weight:2, opacity:0.95, fillColor:c, fillOpacity:1, interactive:false }).addTo(ST.live);
+let txt = stEsc(stLabel(t)) + ' &middot; ' + Math.round(p);
+if(w){
+let b = 0;
+for(let k=1; k<8; k++) if(w.g[k] > w.g[b]) b = k;
+txt += '<i>PEAK GUST ' + w.g[b] + ' MPH ' + ST_SECT[b] + '</i>';
+}
+L.marker(pos, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:#e9f6f5;">' + txt + '</div>', iconSize:[0,0], iconAnchor:[-12,-4] }), interactive:false, keyboard:false, zIndexOffset:700 }).addTo(ST.live);
+});
+const when = stHourDate(h);
+document.getElementById('stValid').innerHTML = stTime(when) + '<small>' + (h === 0 ? 'NOW &mdash; START OF THE FORECAST' : '+' + h + ' HOURS &middot; JERSEY TIME') + '</small>';
+document.getElementById('stSlider').value = h;
+}
+function stCardHTML(t, h){
+const w = stWindAt(t, h);
+const pos = stPosAt(t, h);
+const n = stNameOf(t);
+const num = stNumOf(t);
+let head = '<b>STORM ' + stEsc(stLabel(t)) + '</b>';
+const bits = [];
+if(n) bits.push('#' + num);
+if(t.within_500mi) bits.push('ENTERS 500 MI RING');
+let by = '';
+if(n && n.kind === 'local') by = 'NAME SET ON THIS DEVICE ONLY';
+else if(n && t.name_by) by = 'NAMED BY: ' + stEsc(t.name_by) + (n.kind === 'auto' ? ' &middot; AUTO-MATCHED, CHECK IT' : '');
+let aka = '';
+if(t.aka && t.aka.length) aka = '<br>ALSO KNOWN AS: ' + t.aka.map(a => stEsc(a.name.toUpperCase()) + ' (' + stEsc(a.by) + ')').join(', ');
+let body = '';
+if(pos){
+const d = stKm(ST_JERSEY, pos);
+const inRing = d <= ST_RING_KM;
+body += '<span style="color:' + (inRing ? 'var(--amber)' : 'var(--dim)') + ';">' + stMi(d) + ' MILES FROM JERSEY &middot; ' + (inRing ? 'INSIDE THE 500-MILE RING' : 'OUTSIDE THE 500-MILE RING') + '</span><br>';
+}
+if(w){
+let b = 0;
+for(let k=1; k<8; k++) if(w.g[k] > w.g[b]) b = k;
+body += 'STRONGEST WINDS: <b style="color:' + stWindColor(w.g[b]) + ';">' + ST_SECT_LONG[b] + ' SIDE</b> &mdash; ' + w.s[b] + ' mph wind, gusts ' + w.g[b] + ' mph.<br>';
+const jk = stCompass(w.b);
+const sameSide = jk === b;
+body += 'JERSEY IS ' + ST_SECT_LONG[jk] + ' OF THE CENTRE (' + stMi(w.d) + ' mi). ' + (w.d <= ST_ROSE_KM ? 'On that side: gusts to ' : 'On that side, within 250 miles of the centre, gusts reach ') + w.g[jk] + ' mph' + (sameSide ? ' &mdash; the stormiest side.' : ' (' + (w.g[jk] >= 0.85 * w.g[b] ? 'close to the peak' : 'well under the peak') + ').');
+} else {
+const ws = t.winds || [];
+body += 'NO WIND DATA AT THIS TIME. ' + (ws.length ? 'WIND ROSE AVAILABLE ' + stTimeD(stHourDate(ws[0].h)) + ' TO ' + stTimeD(stHourDate(ws[ws.length-1].h)) + '.' : '');
+}
+let strip = '';
+if(t.winds && t.winds.length){
+strip = '<div class="st-strip" data-num="' + num + '">' + t.winds.map(function(x){
+let m = 0;
+for(let k=0; k<8; k++) if(x.g[k] > m) m = x.g[k];
+const inR = x.d <= ST_RING_KM;
+return '<span data-h="' + x.h + '" class="' + (x.h === h ? 'cur' : '') + (inR ? ' ring' : '') + '" style="background:' + stWindColor(m) + ';" title="' + stTime(stHourDate(x.h)) + ' &middot; peak gust ' + m + ' mph &middot; ' + stMi(x.d) + ' mi away"></span>';
+}).join('') + '</div><div class="st-strip-cap">PEAK GUST NEAR THE STORM, EVERY 6 HOURS &middot; AMBER TOP = INSIDE THE 500-MILE RING &middot; TAP TO JUMP</div>';
+}
+const rose = w ? stRose(w, 190, { labels:true, jersey:true, heading:stHeadingAt(t, h) }) : '<div class="st-norose">NO WIND<br>ROSE YET</div>';
+return '<div class="st-card' + (pos && stKm(ST_JERSEY, pos) <= ST_RING_KM ? '' : ' out') + '"><div class="st-card-rose">' + rose + '</div><div class="st-card-txt"><h4>' + head + '<em>' + bits.join(' &middot; ') + '</em><button type="button" class="st-rename" data-id="' + stEsc(t.id) + '" title="Rename (this device only)">&#9998; RENAME</button></h4><small>' + by + aka + '</small><p>' + body + '</p>' + strip + '</div></div>';
+}
+function stRenderCards(){
+const box = document.getElementById('stNear');
+const head = document.getElementById('stNearHead');
+if(!box || !ST.data) return;
+const near = (ST.tracks || []).filter(t => t.winds && t.winds.length).sort((a, b) => a.closest_km - b.closest_km).slice(0, 4);
+if(!near.length){
+head.style.display = 'none';
+box.innerHTML = '';
+return;
+}
+head.style.display = '';
+box.innerHTML = near.map(t => stCardHTML(t, ST.hour)).join('');
+box.querySelectorAll('.st-strip span').forEach(function(sp){
+sp.addEventListener('click', function(){ stSetHour(Number(sp.dataset.h), true); });
+});
+box.querySelectorAll('.st-rename').forEach(function(b){
+b.addEventListener('click', function(){
+const t = ST.tracks.filter(x => x.id === b.dataset.id)[0];
+if(t) stRename(t);
+});
+});
+}
+function stSetHour(h, stopPlay){
+h = Math.max(0, Math.min(240, Math.round(h / 6) * 6));
+ST.hour = h;
+if(stopPlay) stPause();
+stRenderLive();
+stRenderCards();
+}
+function stPause(){
+if(ST.timer){ clearInterval(ST.timer); ST.timer = null; }
+const b = document.getElementById('stPlayBtn');
+if(b){ b.classList.remove('playing'); b.innerHTML = '&#9654; PLAY'; }
+}
+function stPlay(){
+if(ST.timer){ stPause(); return; }
+const b = document.getElementById('stPlayBtn');
+b.classList.add('playing'); b.innerHTML = '&#10073;&#10073; PAUSE';
+ST.timer = setInterval(function(){ stSetHour(ST.hour >= 240 ? 0 : ST.hour + 6, false); }, 700);
 }
 function stStatus(tracks){
 const d = ST.data;
@@ -2798,10 +3080,40 @@ head = 'No storms at this strength are forecast over the North Atlantic in the n
 let near = tracks[0];
 tracks.forEach(t => { if(t.closest_km < near.closest_km) near = t; });
 const when = new Date(cycle.getTime() + near.closest_hour * 3600000);
-head = '<b>' + tracks.length + ' storm' + (tracks.length === 1 ? '' : 's') + '</b> tracked over the next 10 days. Closest to Jersey: <b>storm ' + stNum(near.id) + '</b>, about <b>' + near.closest_km + ' km</b> away around ' + stTime(when) + ' (lowest pressure ' + Math.round(near.min_hpa) + ' hPa).';
+head = '<b>' + tracks.length + ' storm' + (tracks.length === 1 ? '' : 's') + '</b> tracked over the next 10 days. Closest to Jersey: <b>storm ' + stEsc(stLabel(near)) + '</b>, about <b>' + stMi(near.closest_km) + ' miles</b> away around ' + stTime(when) + ' (lowest pressure ' + Math.round(near.min_hpa) + ' hPa).';
+const inside = tracks.filter(t => t.within_500mi);
+if(inside.length){
+head += '<br><span style="color:var(--amber);"><b>INSIDE THE 500-MILE RING:</b> ' + inside.map(function(t){
+const w = t.within_500mi;
+let txt = '<b>' + stEsc(stLabel(t)) + '</b> ' + stTime(stHourDate(w.from_h)) + ' to ' + stTime(stHourDate(w.to_h));
+const cw = stWindAt(t, Math.round(t.closest_hour / 6) * 6);
+if(cw){
+let b = 0;
+for(let k=1; k<8; k++) if(cw.g[k] > cw.g[b]) b = k;
+txt += ' (strongest winds on its ' + ST_SECT[b] + ' side, gusts ' + cw.g[b] + ' mph)';
+}
+return txt;
+}).join('; ') + '. <a href="#" id="stJumpNear" style="color:var(--cyan);">SHOW ME &rarr;</a></span>';
+}
+}
+if(d.pending_names && d.pending_names.length){
+const live = new Set(tracks.map(t => (t.name || '').toLowerCase()));
+const pend = d.pending_names.filter(p => !live.has(p.name.toLowerCase()));
+if(pend.length) head += '<br><span style="color:var(--amber);">NAME NOT MATCHED TO A STORM YET: ' + pend.map(p => '<b>' + stEsc(p.name.toUpperCase()) + '</b> (' + stEsc(p.by) + ')').join(', ') + ' &mdash; use RENAME on the storm, or the &ldquo;Run workflow&rdquo; form on GitHub to set it for everyone.</span>';
 }
 el.className = 'st-status' + (stale ? ' warn' : '');
 el.innerHTML = head + '<small>' + run + (stale ? ' &middot; THIS DATA IS ' + Math.round(ageH) + ' HOURS OLD &mdash; THE AUTOMATIC UPDATE MAY HAVE STOPPED' : ' &middot; UPDATES EVERY 6 HOURS') + '</small>';
+const jn = document.getElementById('stJumpNear');
+if(jn) jn.addEventListener('click', function(e){ e.preventDefault(); stJumpClosest(); document.getElementById('stNear').scrollIntoView({ behavior:'smooth', block:'center' }); });
+}
+function stClosestInside(){
+let best = null;
+(ST.tracks || []).forEach(t => { if(t.within_500mi && (!best || t.closest_km < best.closest_km)) best = t; });
+return best;
+}
+function stJumpClosest(){
+const t = stClosestInside();
+if(t) stSetHour(Math.round(t.closest_hour / 6) * 6, true);
 }
 function stList(tracks){
 const d = ST.data;
@@ -2815,9 +3127,13 @@ const deepAt = new Date(cycle.getTime() + t.min_hour * 3600000);
 const nearAt = new Date(cycle.getTime() + t.closest_hour * 3600000);
 const from = new Date(cycle.getTime() + t.path_start_hour * 3600000);
 const to = new Date(cycle.getTime() + (t.path_start_hour + 6 * ((t.path || []).length - 1)) * 3600000);
+const bits = [];
+if(stNameOf(t)) bits.push('#' + stNumOf(t));
+if(tag) bits.push(tag);
+if(t.within_500mi) bits.push('IN 500 MI RING');
 const item = document.createElement('div');
 item.className = 'st-item';
-item.innerHTML = '<span class="st-dot" style="background:' + col + ';color:' + col + ';"></span><div><b>STORM ' + stNum(t.id) + (tag ? '<em>' + tag + '</em>' : '') + '</b><small>Lowest pressure ' + Math.round(t.min_hpa) + ' hPa around ' + stTime(deepAt) + '<br>Closest to Jersey ' + t.closest_km + ' km around ' + stTime(nearAt) + '<br>Tracked ' + stTime(from) + ' to ' + stTime(to) + '</small></div>';
+item.innerHTML = '<span class="st-dot" style="background:' + col + ';color:' + col + ';"></span><div><b>STORM ' + stEsc(stLabel(t)) + (bits.length ? '<em>' + bits.join(' &middot; ') + '</em>' : '') + '</b><small>Lowest pressure ' + Math.round(t.min_hpa) + ' hPa around ' + stTime(deepAt) + '<br>Closest to Jersey ' + stMi(t.closest_km) + ' miles around ' + stTime(nearAt) + '<br>Tracked ' + stTime(from) + ' to ' + stTime(to) + '</small></div>';
 item.addEventListener('click', function(){
 if(ST.boxes[t.id]) ST.map.fitBounds(ST.boxes[t.id].pad(0.2), { maxZoom:6 });
 document.getElementById('st-map').scrollIntoView({ behavior:'smooth', block:'center' });
@@ -2832,6 +3148,12 @@ return fetch(ST_URL + '?v=' + Math.floor(Date.now() / 600000), { cache:'no-store
 if(!d || !Array.isArray(d.tracks) || !d.cycle) throw new Error('unexpected file contents');
 ST.data = d;
 stMsg('');
+if(ST.firstHour){
+ST.firstHour = false;
+ST.tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
+const t = stClosestInside();
+ST.hour = t ? Math.round(t.closest_hour / 6) * 6 : 0;
+}
 stRender();
 })
 .catch(function(e){
@@ -2859,6 +3181,10 @@ stRender();
 }
 wire('stShow', function(v){ ST.maxP = v; });
 wire('stEvery', function(v){ ST.every = v; });
+document.getElementById('stSlider').addEventListener('input', function(e){ stSetHour(Number(e.target.value), true); });
+document.getElementById('stPlayBtn').addEventListener('click', stPlay);
+document.getElementById('stNowBtn').addEventListener('click', function(){ stSetHour(0, true); });
+document.getElementById('stNearBtn').addEventListener('click', function(){ stJumpClosest(); });
 stLoad();
 setInterval(stLoad, 30*60*1000);
 }
