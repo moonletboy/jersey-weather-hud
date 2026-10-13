@@ -6,6 +6,14 @@
 #
 # You can also run it by hand any time: GitHub > Actions > "Storm tracks" >
 # "Run workflow".
+#
+# To NAME a storm by hand (or fix a wrong automatic name) use the same
+# "Run workflow" form: type the storm NUMBER shown on the map (e.g. 7) and the
+# name, and choose what to do:
+#   set name         - this is the storm's name (replaces any name it had)
+#   also known as    - add a second name (e.g. the German name for a storm the
+#                      UK Met Office already named)
+#   clear name       - go back to showing just the number
 
 name: Storm tracks
 
@@ -14,6 +22,34 @@ on:
     # NOAA's four daily runs (00/06/12/18 UTC) are complete about 4-5 hours later.
     - cron: "27 5,11,17,23 * * *"
   workflow_dispatch:
+    inputs:
+      storm_number:
+        description: "Storm NUMBER shown on the map (leave empty for a normal update)"
+        required: false
+        default: ""
+      storm_name:
+        description: "Name to give it, e.g. Austen"
+        required: false
+        default: ""
+      storm_action:
+        description: "What to do with the name"
+        required: false
+        default: "set"
+        type: choice
+        options:
+          - set
+          - aka
+          - clear
+      storm_group:
+        description: "Who named it (shown on the page)"
+        required: false
+        default: "MANUAL"
+        type: choice
+        options:
+          - MANUAL
+          - UK / IRELAND / NETHERLANDS
+          - FRANCE / SPAIN / PORTUGAL
+          - GERMANY (DWD / FU BERLIN)
 
 permissions:
   contents: write
@@ -39,6 +75,11 @@ jobs:
         run: pip install numpy scipy requests eccodes
 
       - name: Find the storm centres
+        env:
+          STORM_SET_NUM: ${{ inputs.storm_number }}
+          STORM_SET_NAME: ${{ inputs.storm_name }}
+          STORM_SET_MODE: ${{ inputs.storm_action }}
+          STORM_SET_GROUP: ${{ inputs.storm_group }}
         run: python scripts/storm_tracks.py
 
       - name: Save the result
@@ -46,6 +87,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/storm-tracks.json
+          git add data/storm-registry.json || true
           if git diff --cached --quiet; then
             echo "Nothing new to save."
           else
