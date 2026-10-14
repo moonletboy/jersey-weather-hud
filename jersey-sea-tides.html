@@ -658,13 +658,11 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="waveHeightFill"></div></div></div>
 <div class="val-lg" id="waveHeightVal"><b>--</b></div>
 <div class="sub" id="waveHeightSub">&mdash;</div>
-<svg class="mini-spark" id="spWaveHeight" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WAVE PERIOD</div>
 <div class="val-lg" style="margin-top:22px;" id="wavePeriodVal"><b>--</b></div>
 <div class="sub" id="wavePeriodSub">SECONDS</div>
-<svg class="mini-spark" id="spWavePeriod" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WAVE DIRECTION</div>
@@ -676,43 +674,56 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 </svg>
 </div>
 <div class="val-lg" id="waveDirVal"><b>--</b></div>
-<svg class="mini-spark" id="spWaveDir" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">SWELL HEIGHT</div>
 <div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="swellHeightFill" style="background:var(--amber);"></div></div></div>
 <div class="val-lg" id="swellHeightVal"><b>--</b></div>
 <div class="sub" id="swellHeightSub">&mdash;</div>
-<svg class="mini-spark" id="spSwellHeight" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">SWELL PERIOD</div>
 <div class="val-lg" style="margin-top:22px;" id="swellPeriodVal"><b>--</b></div>
 <div class="sub" id="swellPeriodSub">SECONDS</div>
-<svg class="mini-spark" id="spSwellPeriod" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WIND WAVE</div>
 <div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="windWaveFill" style="background:var(--green);"></div></div></div>
 <div class="val-lg" id="windWaveVal"><b>--</b></div>
 <div class="sub" id="windWaveSub">WIND-DRIVEN CHOP</div>
-<svg class="mini-spark" id="spWindWave" viewBox="0 0 100 28"></svg>
 </div>
 </div>
 <div class="history-panel">
-<div class="history-head">LAST 12 HOURS HISTORY <span style="color:var(--dim2); letter-spacing:1px;">(TILES ABOVE SHOW THE SAME 12H TREND)</span></div>
+<div class="history-head">LAST 12 HOURS HISTORY</div>
 <div class="history-grid">
 <div class="history-item">
 <div class="history-lbl">WAVE HEIGHT</div>
 <svg class="mini-spark mini-spark-lg" id="waveSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="history-item">
+<div class="history-lbl">WAVE PERIOD</div>
+<svg class="mini-spark mini-spark-lg" id="spWavePeriod" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">WAVE DIRECTION</div>
+<svg class="mini-spark mini-spark-lg" id="spWaveDir" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
 <div class="history-lbl">SWELL HEIGHT</div>
 <svg class="mini-spark mini-spark-lg" id="swellSpark" viewBox="0 0 100 28"></svg>
 </div>
 <div class="history-item">
+<div class="history-lbl">SWELL PERIOD</div>
+<svg class="mini-spark mini-spark-lg" id="spSwellPeriod" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
+<div class="history-lbl">WIND WAVE</div>
+<svg class="mini-spark mini-spark-lg" id="spWindWave" viewBox="0 0 100 28"></svg>
+</div>
+<div class="history-item">
 <div class="history-lbl">SEA TEMPERATURE</div>
 <svg class="mini-spark mini-spark-lg" id="seaTempSpark" viewBox="0 0 100 28"></svg>
+</div>
 </div>
 </div>
 </div>
@@ -1038,10 +1049,8 @@ const sl = f => (h[f] || []).slice(start, end+1);
 renderSpark('waveSpark', sl('wave_height'), '#4cd3ff');
 renderSpark('swellSpark', sl('swell_wave_height'), '#ffb020');
 renderSpark('seaTempSpark', sl('sea_surface_temperature'), seaTempColor(data.current.sea_surface_temperature));
-renderSpark('spWaveHeight', sl('wave_height'), '#4cd3ff');
 renderSpark('spWavePeriod', sl('wave_period'), '#b48cff');
 renderSpark('spWaveDir', unwrapDeg(sl('wave_direction')), '#4cd3ff');
-renderSpark('spSwellHeight', sl('swell_wave_height'), '#ffb020');
 renderSpark('spSwellPeriod', sl('swell_wave_period'), '#ffb020');
 renderSpark('spWindWave', sl('wind_wave_height'), '#2de1a0');
 }
