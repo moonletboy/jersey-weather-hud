@@ -604,6 +604,7 @@ background:var(--bg-panel-2); cursor:pointer; transition:border-color .15s ease;
 .st-item b{ display:block; font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px; color:var(--text); }
 .st-item b em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--amber); margin-left:6px; }
 .st-item small{ display:block; font-size:10px; line-height:1.65; letter-spacing:0.3px; color:var(--dim); margin-top:2px; }
+.st-hit{ cursor:pointer; }
 .st-badge.named{ width:auto; min-width:16px; padding:0 7px; letter-spacing:1px; white-space:nowrap; }
 .st-subhead{ margin:16px 16px 0; font-size:10px; letter-spacing:2px; color:var(--amber); font-weight:700; }
 .st-near{ margin:8px 16px 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,430px),1fr)); gap:10px; }
@@ -1085,7 +1086,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="st-list" id="stList"></div>
 <div class="sw-note">
 <b>HOW TO READ THIS MAP:</b> each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
-<b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; is drawn around it. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
+<b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; is drawn around it. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes, or tap any part of a storm's track (or one of its dots) to jump to that time and place and see the rose there. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -2840,18 +2841,20 @@ return 'M' + c + ' ' + c + ' L' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' 
    petal length = wind speed (90 mph reaches the ring); solid = sustained, pale = gusts */
 function stRose(w, size, o){
 const c = size / 2, R = size / 2 - (o.labels ? 17 : 5);
+const mp = !o.labels;                       // map glyph: see-through so the land shows underneath
+const oS = mp ? 0.45 : 0.85, oG = mp ? 0.14 : 0.26, oD = mp ? 0.06 : 0.55;
 let best = 0;
 for(let k=1; k<8; k++) if(w.g[k] > w.g[best]) best = k;
 let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" style="overflow:visible;display:block;">';
-svg += '<circle cx="' + c + '" cy="' + c + '" r="' + R + '" fill="rgba(5,14,20,' + (o.labels ? '0.55' : '0.35') + ')" stroke="rgba(76,211,255,0.55)" stroke-width="1" stroke-dasharray="3 4"/>';
+svg += '<circle cx="' + c + '" cy="' + c + '" r="' + R + '" fill="rgba(5,14,20,' + oD + ')" stroke="rgba(76,211,255,0.55)" stroke-width="1" stroke-dasharray="3 4"/>';
 svg += '<circle cx="' + c + '" cy="' + c + '" r="' + (R * 0.5).toFixed(1) + '" fill="none" stroke="rgba(76,211,255,0.22)" stroke-width="1"/>';
 for(let k=0; k<8; k++){
 const rg = R * Math.min(1, w.g[k] / 90), rs = R * Math.min(1, w.s[k] / 90);
-svg += '<path d="' + stWedge(c, rg, k) + '" fill="' + stWindColor(w.g[k]) + '" fill-opacity="0.28" stroke="' + stWindColor(w.g[k]) + '" stroke-opacity="0.7" stroke-width="0.8"/>';
-svg += '<path d="' + stWedge(c, rs, k) + '" fill="' + stWindColor(w.s[k]) + '" fill-opacity="0.92"/>';
+svg += '<path d="' + stWedge(c, rg, k) + '" fill="' + stWindColor(w.g[k]) + '" fill-opacity="' + oG + '" stroke="' + stWindColor(w.g[k]) + '" stroke-opacity="' + (mp ? 0.85 : 0.7) + '" stroke-width="' + (mp ? 1 : 0.8) + '"/>';
+svg += '<path d="' + stWedge(c, rs, k) + '" fill="' + stWindColor(w.s[k]) + '" fill-opacity="' + oS + '"/>';
 }
 const pb = stWedge(c, R * Math.min(1, w.g[best] / 90), best);
-svg += '<path d="' + pb + '" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>';
+svg += '<path d="' + pb + '" fill="none" stroke="#ffffff" stroke-width="' + (mp ? 1.5 : 1.8) + '" stroke-opacity="' + (mp ? 0.85 : 1) + '" stroke-linejoin="round"/>';
 if(o.labels){
 [['N',0],['E',90],['S',180],['W',270]].forEach(function(a){
 const p = stPolar(c, R + 10, a[1]);
@@ -2899,7 +2902,7 @@ lg.innerHTML = '<span>LOWEST PRESSURE (hPa):</span>' +
 document.getElementById('stWindLegend').innerHTML = '<span>WIND ROSE (MPH):</span>' +
 [['#4cd3ff','under 25'], ['#2de1a0','25&ndash;38'], ['#ffb020','39&ndash;54 gale'], ['#ff4b5c','55&ndash;72 storm'], ['#ff5fd2','73+ hurricane force']]
 .map(k => '<span class="st-key"><b style="background:' + k[0] + ';color:' + k[0] + ';"></b>' + k[1] + '</span>').join('') +
-'<span class="st-key">SOLID = WIND &middot; PALE = GUSTS &middot; WHITE OUTLINE = STRONGEST SIDE</span>';
+'<span class="st-key">SOLID = WIND &middot; PALE = GUSTS &middot; WHITE OUTLINE = STRONGEST SIDE</span><span class="st-key" style="color:var(--cyan);">TAP ANY PART OF A TRACK TO SEE THE ROSE FOR THAT TIME AND PLACE</span>';
 return true;
 }
 function stRender(){
@@ -2924,6 +2927,9 @@ const c = stColor(stPressureAt(pts, hMid));
 const seg = [path[i], path[i+1]];
 L.polyline(seg, { color:c, weight:9, opacity:0.16, lineCap:'round', interactive:false }).addTo(ST.layer);
 L.polyline(seg, { color:c, weight:2.4, opacity:0.95, lineCap:'round', interactive:false }).addTo(ST.layer);
+const hit = L.polyline(seg, { color:'#000', weight:22, opacity:0, lineCap:'round', className:'st-hit' });
+hit.on('click', function(ev){ stPickTrack(t, ev.latlng); });
+hit.addTo(ST.layer);
 }
 pts.forEach(function(p){
 if(p.h % ST.every !== 0) return;
@@ -2933,6 +2939,7 @@ const halo = Math.max(7, Math.min(26, 7 + (1010 - p.p) * 0.45));
 L.circleMarker([p.lat, p.lon], { radius:halo, color:c, weight:1, opacity:0.35, fillColor:c, fillOpacity:0.14, interactive:false }).addTo(ST.layer);
 const dot = L.circleMarker([p.lat, p.lon], { radius:4.5, color:'#05080d', weight:1.5, fillColor:c, fillOpacity:1 });
 dot.bindTooltip('<b>STORM ' + stEsc(lab) + '</b><br>' + stTime(when) + ' (JERSEY TIME)<br>Lowest pressure <b>' + Math.round(p.p) + ' hPa</b><br>+' + p.h + ' hours from model start', { className:'st-tip', direction:'top', offset:[0,-6] });
+dot.on('click', function(){ stSetHour(p.h, true); });
 dot.addTo(ST.layer);
 const showTime = p.h % 24 === 0;
 L.marker([p.lat, p.lon], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:' + c + ';">' + Math.round(p.p) + (showTime ? '<i>' + stTime(when) + '</i>' : '') + '</div>', iconSize:[0,0], iconAnchor:[-9,10] }), interactive:false, keyboard:false }).addTo(ST.layer);
@@ -2956,6 +2963,15 @@ stRenderLive();
 stRenderCards();
 }
 /* storms at the time chosen on the slider, with their wind roses */
+/* click anywhere on a track: jump the slider to the time the storm is nearest that spot */
+function stPickTrack(t, ll){
+let bi = 0, bd = 1e9;
+t.path.forEach(function(q, i){
+const d = stKm([ll.lat, ll.lng], q);
+if(d < bd){ bd = d; bi = i; }
+});
+stSetHour(t.path_start_hour + 6 * bi, true);
+}
 function stRenderLive(){
 if(!ST.live || !ST.data) return;
 ST.live.clearLayers();
