@@ -705,10 +705,6 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <svg class="mini-spark mini-spark-lg" id="spWavePeriod" viewBox="0 0 100 28"></svg>
 </div>
 <div class="history-item">
-<div class="history-lbl">WAVE DIRECTION</div>
-<svg class="mini-spark mini-spark-lg" id="spWaveDir" viewBox="0 0 100 28"></svg>
-</div>
-<div class="history-item">
 <div class="history-lbl">SWELL HEIGHT</div>
 <svg class="mini-spark mini-spark-lg" id="swellSpark" viewBox="0 0 100 28"></svg>
 </div>
@@ -1050,7 +1046,6 @@ renderSpark('waveSpark', sl('wave_height'), '#4cd3ff');
 renderSpark('swellSpark', sl('swell_wave_height'), '#ffb020');
 renderSpark('seaTempSpark', sl('sea_surface_temperature'), seaTempColor(data.current.sea_surface_temperature));
 renderSpark('spWavePeriod', sl('wave_period'), '#b48cff');
-renderSpark('spWaveDir', unwrapDeg(sl('wave_direction')), '#4cd3ff');
 renderSpark('spSwellPeriod', sl('swell_wave_period'), '#ffb020');
 renderSpark('spWindWave', sl('wind_wave_height'), '#2de1a0');
 }
