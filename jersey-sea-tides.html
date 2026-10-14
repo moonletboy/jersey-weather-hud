@@ -658,11 +658,13 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="waveHeightFill"></div></div></div>
 <div class="val-lg" id="waveHeightVal"><b>--</b></div>
 <div class="sub" id="waveHeightSub">&mdash;</div>
+<svg class="mini-spark" id="spWaveHeight" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WAVE PERIOD</div>
 <div class="val-lg" style="margin-top:22px;" id="wavePeriodVal"><b>--</b></div>
 <div class="sub" id="wavePeriodSub">SECONDS</div>
+<svg class="mini-spark" id="spWavePeriod" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WAVE DIRECTION</div>
@@ -674,27 +676,31 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 </svg>
 </div>
 <div class="val-lg" id="waveDirVal"><b>--</b></div>
+<svg class="mini-spark" id="spWaveDir" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">SWELL HEIGHT</div>
 <div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="swellHeightFill" style="background:var(--amber);"></div></div></div>
 <div class="val-lg" id="swellHeightVal"><b>--</b></div>
 <div class="sub" id="swellHeightSub">&mdash;</div>
+<svg class="mini-spark" id="spSwellHeight" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">SWELL PERIOD</div>
 <div class="val-lg" style="margin-top:22px;" id="swellPeriodVal"><b>--</b></div>
 <div class="sub" id="swellPeriodSub">SECONDS</div>
+<svg class="mini-spark" id="spSwellPeriod" viewBox="0 0 100 28"></svg>
 </div>
 <div class="tile">
 <div class="lbl">WIND WAVE</div>
 <div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="windWaveFill" style="background:var(--green);"></div></div></div>
 <div class="val-lg" id="windWaveVal"><b>--</b></div>
 <div class="sub" id="windWaveSub">WIND-DRIVEN CHOP</div>
+<svg class="mini-spark" id="spWindWave" viewBox="0 0 100 28"></svg>
 </div>
 </div>
 <div class="history-panel">
-<div class="history-head">LAST 12 HOURS HISTORY</div>
+<div class="history-head">LAST 12 HOURS HISTORY <span style="color:var(--dim2); letter-spacing:1px;">(TILES ABOVE SHOW THE SAME 12H TREND)</span></div>
 <div class="history-grid">
 <div class="history-item">
 <div class="history-lbl">WAVE HEIGHT</div>
@@ -730,7 +736,7 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div id="sstMapStatus" style="text-align:center; font-size:9px; letter-spacing:1px; color:var(--dim2); padding:6px 0 0;"></div>
 <div style="padding:14px; border-top:1px solid var(--line);">
 <div style="display:flex; flex-direction:column; align-items:center; gap:4px; max-width:340px; margin:0 auto;">
-<div style="width:100%; height:14px; border-radius:3px; background:linear-gradient(90deg, #1b4fa0, #4cd3ff, #f2f2f2, #ffb020, #ff4b5c, #a3123a); border:1px solid var(--line);"></div>
+<div style="width:100%; height:14px; border-radius:3px; background:linear-gradient(90deg, #1b4fa0, #4cd3ff, #f2f2f2, #ffb020, #ff4b5c); border:1px solid var(--line);"></div>
 <div style="display:flex; justify-content:space-between; width:100%; font-family:'Orbitron',sans-serif; font-size:9.5px; color:var(--dim);">
 <span>-3&deg;C</span>
 <span>-1.5&deg;C</span>
@@ -880,13 +886,21 @@ const SST_DATASETS = [
 {tag:'NCEI FINAL', base:'https://www.ncei.noaa.gov/erddap', id:'ncdc_oisst_v2_avhrr_by_time_zlev_lat_lon', lon:357.875}
 ];
 let sstChosen = SST_DATASETS[0];
+function errDetail(txt){
+const m = /message="([^"]{0,90})/.exec(txt || '');
+return m ? ' (' + m[1].replace(/[<>&]/g,'') + ')' : '';
+}
 async function fetchAnom(ds){
-const url = `${ds.base}/griddap/${ds.id}.json?anom[(last)][(0.0)][(49.125)][(${ds.lon})]`;
+const q = `anom%5B(last)%5D%5B(0.0)%5D%5B(49.125)%5D%5B(${ds.lon})%5D`;
+const url = `${ds.base}/griddap/${ds.id}.json?${q}`;
 const ctrl = new AbortController();
 const to = setTimeout(()=>ctrl.abort(), 20000);
 try{
 const res = await fetch(url, {signal:ctrl.signal});
-if(!res.ok) return {fail: ds.tag + ': HTTP ' + res.status};
+if(!res.ok){
+let txt = ''; try{ txt = await res.text(); }catch(e){}
+return {fail: ds.tag + ': HTTP ' + res.status + errDetail(txt)};
+}
 const j = await res.json();
 const row = j.table.rows[0];
 if(!row || row[4] === null || isNaN(row[4])) return {fail: ds.tag + ': NO DATA AT POINT'};
@@ -982,13 +996,8 @@ document.getElementById('windWaveVal').querySelector('b').textContent = windWave
 document.getElementById('windWaveFill').style.height = Math.min(100, (windWaveH/4)*100) + '%';
 }
 
-// ---- 12hr history sparklines ----
-if(hIdx >= 0){
-const histStart = Math.max(0, hIdx - 12);
-renderSpark('waveSpark', data.hourly.wave_height.slice(histStart, hIdx+1), '#4cd3ff');
-renderSpark('swellSpark', data.hourly.swell_wave_height.slice(histStart, hIdx+1), '#ffb020');
-renderSpark('seaTempSpark', data.hourly.sea_surface_temperature.slice(histStart, hIdx+1), seaTempColor(cur.sea_surface_temperature));
-}
+// ---- 12hr history sparklines (separate request so the forecast cards keep their day alignment) ----
+loadSeaHistory(data, hIdx);
 
 checkMarineAdvisory(data);
 buildSeaForecastCards(data);
@@ -997,6 +1006,44 @@ buildSeaForecastCards(data);
 console.error('marine fetch failed', e);
 document.getElementById('seaHeroSub').textContent = 'Could not load marine data.';
 }
+}
+
+function unwrapDeg(arr){
+const out = []; let prev = null;
+arr.forEach(v => {
+if(v === null || v === undefined || isNaN(v)){ return; }
+if(prev === null){ out.push(v); prev = v; return; }
+let x = v;
+while(x - prev > 180) x -= 360;
+while(x - prev < -180) x += 360;
+out.push(x); prev = x;
+});
+return out;
+}
+async function loadSeaHistory(data, hIdx){
+let h = null, end = -1;
+try{
+const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,wind_wave_height,sea_surface_temperature&past_days=1&forecast_days=1&timezone=auto`;
+const r = await fetch(url);
+const j = await r.json();
+if(j.hourly && j.hourly.time){
+h = j.hourly;
+end = findNowHourIndex(h.time, data.current.time);
+}
+}catch(e){ console.error('history fetch failed', e); }
+if(!h){ h = data.hourly; end = hIdx; }
+if(end < 0) return;
+const start = Math.max(0, end - 12);
+const sl = f => (h[f] || []).slice(start, end+1);
+renderSpark('waveSpark', sl('wave_height'), '#4cd3ff');
+renderSpark('swellSpark', sl('swell_wave_height'), '#ffb020');
+renderSpark('seaTempSpark', sl('sea_surface_temperature'), seaTempColor(data.current.sea_surface_temperature));
+renderSpark('spWaveHeight', sl('wave_height'), '#4cd3ff');
+renderSpark('spWavePeriod', sl('wave_period'), '#b48cff');
+renderSpark('spWaveDir', unwrapDeg(sl('wave_direction')), '#4cd3ff');
+renderSpark('spSwellHeight', sl('swell_wave_height'), '#ffb020');
+renderSpark('spSwellPeriod', sl('swell_wave_period'), '#ffb020');
+renderSpark('spWindWave', sl('wind_wave_height'), '#2de1a0');
 }
 
 function findNowHourIndex(hTimes, nowIso){
@@ -1319,28 +1366,109 @@ document.querySelectorAll('.tile').forEach((el,i)=>{
 setTimeout(()=> el.classList.add('show'), i*120);
 });
 }
-function initSstAnomalyMap(){
+// ---------- SST ANOMALY MAP (drawn from the gridded data, no image server needed) ----------
+const SST_STOPS = [[-3,[27,79,160]],[-1.5,[76,211,255]],[0,[242,242,242]],[1.5,[255,176,32]],[3,[255,75,92]]];
+function sstColor(v){
+if(v <= SST_STOPS[0][0]) return SST_STOPS[0][1];
+for(let i=1;i<SST_STOPS.length;i++){
+if(v <= SST_STOPS[i][0]){
+const [v0,c0] = SST_STOPS[i-1], [v1,c1] = SST_STOPS[i];
+const t = (v - v0) / (v1 - v0);
+return [0,1,2].map(k => Math.round(c0[k] + (c1[k]-c0[k])*t));
+}
+}
+return SST_STOPS[SST_STOPS.length-1][1];
+}
+async function fetchGridPart(ds, lonA, lonB){
+const q = `anom%5B(last)%5D%5B(0.0)%5D%5B(42.125):(53.875)%5D%5B(${lonA}):(${lonB})%5D`;
+const ctrl = new AbortController();
+const to = setTimeout(()=>ctrl.abort(), 30000);
+try{
+const res = await fetch(`${ds.base}/griddap/${ds.id}.json?${q}`, {signal:ctrl.signal});
+if(!res.ok) throw new Error('HTTP ' + res.status);
+const j = await res.json();
+return j.table.rows;
+} finally { clearTimeout(to); }
+}
+async function fetchAnomGrid(ds){
+const NX = 80, NY = 48;
+const grid = new Float32Array(NX*NY).fill(NaN);
+const parts = ds.lon > 180 ? [[348.125, 359.875], [0.125, 7.875]] : [[-11.875, 7.875]];
+const results = await Promise.all(parts.map(pr => fetchGridPart(ds, pr[0], pr[1])));
+results.forEach(rows => rows.forEach(r => {
+let lon = r[3]; if(lon > 180) lon -= 360;
+const i = Math.round((lon + 11.875) / 0.25), jj = Math.round((r[2] - 42.125) / 0.25);
+if(i >= 0 && i < NX && jj >= 0 && jj < NY && r[4] !== null && !isNaN(r[4])) grid[jj*NX + i] = r[4];
+}));
+return {grid, NX, NY};
+}
+function gridAt(g, lat, lon){
+const i = Math.round((lon + 11.875) / 0.25), j = Math.round((lat - 42.125) / 0.25);
+if(i < 0 || i >= g.NX || j < 0 || j >= g.NY) return NaN;
+return g.grid[j*g.NX + i];
+}
+function renderAnomCanvas(g){
+const W = 800;
+const merc = lat => Math.log(Math.tan(Math.PI/4 + lat*Math.PI/360));
+const yTop = merc(54), yBot = merc(42);
+const H = Math.round(W * (yTop - yBot) / (20*Math.PI/180));
+const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d');
+const img = ctx.createImageData(W, H);
+for(let py=0; py<H; py++){
+const my = yTop - (py + 0.5)/H * (yTop - yBot);
+const lat = (2*Math.atan(Math.exp(my)) - Math.PI/2) * 180/Math.PI;
+const fy = (lat - 42.125) / 0.25;
+for(let px=0; px<W; px++){
+const lon = -12 + (px + 0.5)/W * 20;
+const fx = (lon + 11.875) / 0.25;
+const nearest = gridAt(g, lat, lon);
+if(isNaN(nearest)) continue;
+const i0 = Math.floor(fx), j0 = Math.floor(fy);
+let sum = 0, wsum = 0;
+for(let dj=0; dj<=1; dj++) for(let di=0; di<=1; di++){
+const ii = i0+di, jj = j0+dj;
+if(ii<0 || ii>=g.NX || jj<0 || jj>=g.NY) continue;
+const v = g.grid[jj*g.NX+ii];
+if(isNaN(v)) continue;
+const w = (1 - Math.abs(fx - ii)) * (1 - Math.abs(fy - jj));
+if(w <= 0) continue;
+sum += v*w; wsum += w;
+}
+const val = wsum > 0 ? sum/wsum : nearest;
+const c = sstColor(val);
+const k = (py*W + px) * 4;
+img.data[k] = c[0]; img.data[k+1] = c[1]; img.data[k+2] = c[2]; img.data[k+3] = 255;
+}
+}
+ctx.putImageData(img, 0, 0);
+return cv.toDataURL('image/png');
+}
+async function initSstAnomalyMap(best){
 const map = L.map('sstAnomalyMap', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true}).setView([LAT, LON], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
 L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(map);
-
-// Bounds match the WMS request's bbox exactly so the overlay lines up correctly.
-// Wider than the initial view on purpose, so panning out doesn't hit a hard edge.
-const bounds = [[42,-12],[54,8]];
-// Requesting near the data's actual native resolution (0.25° grid) rather than
-// a much larger canvas — letting the browser smoothly scale it up when Leaflet
-// stretches it over the map gives a proper gradient instead of hard blocks.
-// Requesting near-real-time data (ncdcOisst21NrtAgg, ~1-2 day lag) instead of
-// the "Final" product (which runs ~2-3 weeks behind) so this reflects genuinely
-// recent conditions. Rendered at a resolution matched to the map's real screen
-// size for correct, crisp alignment — heavy downsampling+blur was tried and
-// actually introduced visible inaccuracy, so this reverts to a sharp render.
-const wmsUrl = `${sstChosen.base}/wms/${sstChosen.id}/request?service=WMS&version=1.1.1&request=GetMap&layers=${sstChosen.id}:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true`;
 const statusEl = document.getElementById('sstMapStatus');
-const overlay = L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
-if(statusEl) statusEl.textContent = 'LOADING NOAA ANOMALY LAYER\u2026';
-overlay.on('load', () => { if(statusEl) statusEl.textContent = 'NOAA LAYER LOADED \u00b7 ' + sstChosen.tag + ' DATASET'; });
-overlay.on('error', () => { if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NOAA MAP LAYER FAILED TO LOAD (SERVER ERROR OR TIMEOUT)</span>'; });
+if(!best){
+if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NO NOAA ANOMALY DATA AVAILABLE RIGHT NOW</span>';
+return;
+}
+if(statusEl) statusEl.textContent = 'LOADING ' + best.ds.tag + ' ANOMALY GRID\u2026';
+try{
+const g = await fetchAnomGrid(best.ds);
+const url = renderAnomCanvas(g);
+const bounds = [[42,-12],[54,8]];
+L.imageOverlay(url, bounds, {opacity:0.8}).addTo(map);
+map.on('click', e => {
+const v = gridAt(g, e.latlng.lat, e.latlng.lng);
+if(isNaN(v)) return;
+L.popup().setLatLng(e.latlng).setContent('<b>' + (v > 0 ? '+' : '') + v.toFixed(1) + '\u00b0C</b> vs average').openOn(map);
+});
+const d = best.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
+if(statusEl) statusEl.textContent = best.ds.tag + ' \u00b7 DATA FOR ' + d + ' \u00b7 TAP MAP FOR A VALUE';
+}catch(e){
+if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">ANOMALY GRID FAILED TO LOAD (' + String(e.message || e).replace(/[<>&]/g,'') + ')</span>';
+}
 }
 function stampRefresh(){
 const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false };
@@ -1352,7 +1480,7 @@ await loadMarine();
 stampRefresh();
 }
 revealTiles();
-loadAnomaly().finally(initSstAnomalyMap);
+loadAnomaly().then(initSstAnomalyMap, () => initSstAnomalyMap(null));
 refreshAll();
 setInterval(refreshAll, 10*60*1000);
 setInterval(() => {
