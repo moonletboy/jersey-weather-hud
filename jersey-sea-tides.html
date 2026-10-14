@@ -630,6 +630,16 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="stat-block-value" id="swellValue">--<span class="unit">M</span></div>
 <div class="stat-block-sub" id="swellSub">&mdash;</div>
 </div>
+<div class="stat-block" style="min-width:150px;">
+<div class="stat-block-label">SEA TEMP ANOMALY</div>
+<div class="stat-block-value" id="anomValue">--<span class="unit">&deg;C</span></div>
+<div class="stat-block-sub" id="anomSub">VS 1991&ndash;2020 AVERAGE</div>
+</div>
+<div class="stat-block" style="min-width:150px;">
+<div class="stat-block-label">SWIM COMFORT</div>
+<div class="stat-block-value" id="swimValue" style="font-size:24px;">--</div>
+<div class="stat-block-sub" id="swimSub">&mdash;</div>
+</div>
 </div>
 </div>
 </div>
@@ -850,6 +860,59 @@ if(t < 19) return '#e0d341';
 return '#ff8c30';
 }
 
+function swimGuide(t){
+if(t === null || t === undefined) return {label:'—', sub:'—', color:'#4cd3ff'};
+if(t < 10) return {label:'VERY COLD', sub:'COLD SHOCK RISK · 5MM+ WETSUIT', color:'#2a5788'};
+if(t < 13) return {label:'COLD', sub:'COLD SHOCK RISK · 4/3MM WETSUIT', color:'#4cd3ff'};
+if(t < 15) return {label:'COOL', sub:'3/2MM WETSUIT ADVISED', color:'#4cd3ff'};
+if(t < 18) return {label:'FRESH', sub:'SHORTY OR BRAVE SWIMMERS', color:'#2de1a0'};
+if(t < 20) return {label:'MILD', sub:'COMFORTABLE FOR MOST', color:'#e0d341'};
+return {label:'WARM', sub:'PLEASANT FOR SWIMMING', color:'#ff8c30'};
+}
+
+// ---------- SEA TEMP ANOMALY (NOAA OISST via ERDDAP) ----------
+// NRT (preliminary, ~1-2 days behind when healthy) and Final (~2 weeks behind) are both queried.
+// Whichever has the most recent valid reading is used for the number AND the map overlay.
+const SST_DATASETS = ['ncdcOisst21NrtAgg_LonPM180', 'ncdcOisst21Agg_LonPM180'];
+let sstDatasetId = SST_DATASETS[0];
+async function fetchAnom(id){
+const url = `https://coastwatch.pfeg.noaa.gov/erddap/griddap/${id}.json?anom[(last)][(0.0)][(49.125)][(-2.125)]`;
+const ctrl = new AbortController();
+const to = setTimeout(()=>ctrl.abort(), 15000);
+try{
+const res = await fetch(url, {signal:ctrl.signal});
+if(!res.ok) return null;
+const j = await res.json();
+const row = j.table.rows[0];
+if(!row || row[4] === null || isNaN(row[4])) return null;
+return {id, time:new Date(row[0]), anom:row[4]};
+}catch(e){ return null; }
+finally{ clearTimeout(to); }
+}
+async function loadAnomaly(){
+const results = (await Promise.all(SST_DATASETS.map(fetchAnom))).filter(Boolean);
+const valEl = document.getElementById('anomValue');
+const subEl = document.getElementById('anomSub');
+if(!results.length){
+valEl.innerHTML = '--<span class="unit">&deg;C</span>';
+subEl.textContent = 'NOAA DATA UNAVAILABLE RIGHT NOW';
+return null;
+}
+results.sort((a,b) => b.time - a.time);
+const best = results[0];
+sstDatasetId = best.id;
+const a = best.anom;
+const sign = a > 0 ? '+' : '';
+const col = a <= -1.5 ? '#1b7fe0' : a < -0.3 ? '#4cd3ff' : a <= 0.3 ? '#f2f2f2' : a < 1.5 ? '#ffb020' : '#ff4b5c';
+valEl.innerHTML = sign + a.toFixed(1) + '<span class="unit">&deg;C</span>';
+valEl.style.color = col;
+const word = Math.abs(a) <= 0.3 ? 'CLOSE TO AVERAGE' : (a > 0 ? 'WARMER THAN AVERAGE' : 'COOLER THAN AVERAGE');
+const ageDays = Math.floor((Date.now() - best.time.getTime())/86400000);
+const dateStr = best.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
+subEl.innerHTML = word + '<br>NOAA &middot; ' + dateStr + (ageDays > 4 ? ' <span style="color:#ffb020;">(' + ageDays + 'D OLD)</span>' : '');
+return best;
+}
+
 // ---------- MARINE (WAVES, SWELL, SEA TEMP) ----------
 let marineData = null;
 async function loadMarine(){
@@ -874,6 +937,11 @@ document.getElementById('seaHeroIcon').textContent = wh < 0.6 ? '\ud83c\udf0a' :
 document.getElementById('seaTempValue').innerHTML = cur.sea_surface_temperature.toFixed(1) + '<span class="unit">\u00b0C</span>';
 document.getElementById('seaTempValue').style.color = seaTempColor(cur.sea_surface_temperature);
 document.getElementById('seaTempSub').textContent = 'AT THE SURFACE';
+
+const swim = swimGuide(cur.sea_surface_temperature);
+document.getElementById('swimValue').textContent = swim.label;
+document.getElementById('swimValue').style.color = swim.color;
+document.getElementById('swimSub').textContent = swim.sub;
 
 document.getElementById('swellValue').innerHTML = cur.swell_wave_height.toFixed(1) + '<span class="unit">M</span>';
 document.getElementById('swellSub').textContent = 'PRIMARY SWELL';
@@ -1259,7 +1327,7 @@ const bounds = [[42,-12],[54,8]];
 // recent conditions. Rendered at a resolution matched to the map's real screen
 // size for correct, crisp alignment — heavy downsampling+blur was tried and
 // actually introduced visible inaccuracy, so this reverts to a sharp render.
-const wmsUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/ncdcOisst21NrtAgg_LonPM180/request?service=WMS&version=1.1.1&request=GetMap&layers=ncdcOisst21NrtAgg_LonPM180:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true';
+const wmsUrl = `https://coastwatch.pfeg.noaa.gov/erddap/wms/${sstDatasetId}/request?service=WMS&version=1.1.1&request=GetMap&layers=${sstDatasetId}:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true`;
 L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
 }
 function stampRefresh(){
@@ -1272,7 +1340,7 @@ await loadMarine();
 stampRefresh();
 }
 revealTiles();
-initSstAnomalyMap();
+loadAnomaly().finally(initSstAnomalyMap);
 refreshAll();
 setInterval(refreshAll, 10*60*1000);
 setInterval(() => {
