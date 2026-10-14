@@ -874,22 +874,25 @@ return {label:'WARM', sub:'PLEASANT FOR SWIMMING', color:'#ff8c30'};
 // ---------- SEA TEMP ANOMALY (NOAA OISST via ERDDAP) ----------
 // NRT (preliminary, ~1-2 days behind when healthy) and Final (~2 weeks behind) are both queried.
 // Whichever has the most recent valid reading is used for the number AND the map overlay.
-const SST_DATASETS = ['ncdcOisst21NrtAgg_LonPM180', 'ncdcOisst21Agg_LonPM180'];
-let sstDatasetId = SST_DATASETS[0];
-async function fetchAnom(id){
-const tag = id.indexOf('Nrt') >= 0 ? 'NRT' : 'FINAL';
-const url = `https://coastwatch.pfeg.noaa.gov/erddap/griddap/${id}.json?anom[(last)][(0.0)][(49.125)][(-2.125)]`;
+const SST_DATASETS = [
+{tag:'COASTWATCH FINAL', base:'https://coastwatch.pfeg.noaa.gov/erddap', id:'ncdcOisst21Agg_LonPM180', lon:-2.125},
+{tag:'NCEI PRELIM', base:'https://www.ncei.noaa.gov/erddap', id:'ncdc_oisst_v2_avhrr_prelim_by_time_zlev_lat_lon', lon:357.875},
+{tag:'NCEI FINAL', base:'https://www.ncei.noaa.gov/erddap', id:'ncdc_oisst_v2_avhrr_by_time_zlev_lat_lon', lon:357.875}
+];
+let sstChosen = SST_DATASETS[0];
+async function fetchAnom(ds){
+const url = `${ds.base}/griddap/${ds.id}.json?anom[(last)][(0.0)][(49.125)][(${ds.lon})]`;
 const ctrl = new AbortController();
 const to = setTimeout(()=>ctrl.abort(), 20000);
 try{
 const res = await fetch(url, {signal:ctrl.signal});
-if(!res.ok) return {fail: tag + ': HTTP ' + res.status};
+if(!res.ok) return {fail: ds.tag + ': HTTP ' + res.status};
 const j = await res.json();
 const row = j.table.rows[0];
-if(!row || row[4] === null || isNaN(row[4])) return {fail: tag + ': NO DATA AT POINT'};
-return {id, time:new Date(row[0]), anom:row[4]};
+if(!row || row[4] === null || isNaN(row[4])) return {fail: ds.tag + ': NO DATA AT POINT'};
+return {ds, time:new Date(row[0]), anom:row[4]};
 }catch(e){
-return {fail: tag + ': ' + (e.name === 'AbortError' ? 'TIMEOUT' : 'BLOCKED/UNREACHABLE')};
+return {fail: ds.tag + ': ' + (e.name === 'AbortError' ? 'TIMEOUT' : 'BLOCKED/UNREACHABLE')};
 }
 finally{ clearTimeout(to); }
 }
@@ -905,7 +908,7 @@ return null;
 }
 results.sort((a,b) => b.time - a.time);
 const best = results[0];
-sstDatasetId = best.id;
+sstChosen = best.ds;
 const a = best.anom;
 const sign = a > 0 ? '+' : '';
 const col = a <= -1.5 ? '#1b7fe0' : a < -0.3 ? '#4cd3ff' : a <= 0.3 ? '#f2f2f2' : a < 1.5 ? '#ffb020' : '#ff4b5c';
@@ -1332,11 +1335,11 @@ const bounds = [[42,-12],[54,8]];
 // recent conditions. Rendered at a resolution matched to the map's real screen
 // size for correct, crisp alignment — heavy downsampling+blur was tried and
 // actually introduced visible inaccuracy, so this reverts to a sharp render.
-const wmsUrl = `https://coastwatch.pfeg.noaa.gov/erddap/wms/${sstDatasetId}/request?service=WMS&version=1.1.1&request=GetMap&layers=${sstDatasetId}:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true`;
+const wmsUrl = `${sstChosen.base}/wms/${sstChosen.id}/request?service=WMS&version=1.1.1&request=GetMap&layers=${sstChosen.id}:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true`;
 const statusEl = document.getElementById('sstMapStatus');
 const overlay = L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
 if(statusEl) statusEl.textContent = 'LOADING NOAA ANOMALY LAYER\u2026';
-overlay.on('load', () => { if(statusEl) statusEl.textContent = 'NOAA LAYER LOADED \u00b7 ' + (sstDatasetId.indexOf('Nrt') >= 0 ? 'NEAR-REAL-TIME' : 'FINAL') + ' DATASET'; });
+overlay.on('load', () => { if(statusEl) statusEl.textContent = 'NOAA LAYER LOADED \u00b7 ' + sstChosen.tag + ' DATASET'; });
 overlay.on('error', () => { if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NOAA MAP LAYER FAILED TO LOAD (SERVER ERROR OR TIMEOUT)</span>'; });
 }
 function stampRefresh(){
