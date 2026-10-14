@@ -727,6 +727,7 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="panel-head"><span>VS 1991&ndash;2020 AVERAGE</span><span class="dot"></span></div>
 <div id="sstAnomalyMap" style="width:100%; height:360px;"></div>
+<div id="sstMapStatus" style="text-align:center; font-size:9px; letter-spacing:1px; color:var(--dim2); padding:6px 0 0;"></div>
 <div style="padding:14px; border-top:1px solid var(--line);">
 <div style="display:flex; flex-direction:column; align-items:center; gap:4px; max-width:340px; margin:0 auto;">
 <div style="width:100%; height:14px; border-radius:3px; background:linear-gradient(90deg, #1b4fa0, #4cd3ff, #f2f2f2, #ffb020, #ff4b5c, #a3123a); border:1px solid var(--line);"></div>
@@ -876,26 +877,30 @@ return {label:'WARM', sub:'PLEASANT FOR SWIMMING', color:'#ff8c30'};
 const SST_DATASETS = ['ncdcOisst21NrtAgg_LonPM180', 'ncdcOisst21Agg_LonPM180'];
 let sstDatasetId = SST_DATASETS[0];
 async function fetchAnom(id){
+const tag = id.indexOf('Nrt') >= 0 ? 'NRT' : 'FINAL';
 const url = `https://coastwatch.pfeg.noaa.gov/erddap/griddap/${id}.json?anom[(last)][(0.0)][(49.125)][(-2.125)]`;
 const ctrl = new AbortController();
-const to = setTimeout(()=>ctrl.abort(), 15000);
+const to = setTimeout(()=>ctrl.abort(), 20000);
 try{
 const res = await fetch(url, {signal:ctrl.signal});
-if(!res.ok) return null;
+if(!res.ok) return {fail: tag + ': HTTP ' + res.status};
 const j = await res.json();
 const row = j.table.rows[0];
-if(!row || row[4] === null || isNaN(row[4])) return null;
+if(!row || row[4] === null || isNaN(row[4])) return {fail: tag + ': NO DATA AT POINT'};
 return {id, time:new Date(row[0]), anom:row[4]};
-}catch(e){ return null; }
+}catch(e){
+return {fail: tag + ': ' + (e.name === 'AbortError' ? 'TIMEOUT' : 'BLOCKED/UNREACHABLE')};
+}
 finally{ clearTimeout(to); }
 }
 async function loadAnomaly(){
-const results = (await Promise.all(SST_DATASETS.map(fetchAnom))).filter(Boolean);
+const all = await Promise.all(SST_DATASETS.map(fetchAnom));
+const results = all.filter(r => !r.fail);
 const valEl = document.getElementById('anomValue');
 const subEl = document.getElementById('anomSub');
 if(!results.length){
 valEl.innerHTML = '--<span class="unit">&deg;C</span>';
-subEl.textContent = 'NOAA DATA UNAVAILABLE RIGHT NOW';
+subEl.innerHTML = 'NOAA UNAVAILABLE<br><span style="font-size:10px;">' + all.map(r => r.fail).join(' &middot; ') + '</span>';
 return null;
 }
 results.sort((a,b) => b.time - a.time);
@@ -1328,7 +1333,11 @@ const bounds = [[42,-12],[54,8]];
 // size for correct, crisp alignment — heavy downsampling+blur was tried and
 // actually introduced visible inaccuracy, so this reverts to a sharp render.
 const wmsUrl = `https://coastwatch.pfeg.noaa.gov/erddap/wms/${sstDatasetId}/request?service=WMS&version=1.1.1&request=GetMap&layers=${sstDatasetId}:anom&srs=EPSG:4326&bbox=-12,42,8,54&width=1400&height=875&format=image/png&transparent=true`;
-L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
+const statusEl = document.getElementById('sstMapStatus');
+const overlay = L.imageOverlay(wmsUrl, bounds, {opacity:0.8}).addTo(map);
+if(statusEl) statusEl.textContent = 'LOADING NOAA ANOMALY LAYER\u2026';
+overlay.on('load', () => { if(statusEl) statusEl.textContent = 'NOAA LAYER LOADED \u00b7 ' + (sstDatasetId.indexOf('Nrt') >= 0 ? 'NEAR-REAL-TIME' : 'FINAL') + ' DATASET'; });
+overlay.on('error', () => { if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NOAA MAP LAYER FAILED TO LOAD (SERVER ERROR OR TIMEOUT)</span>'; });
 }
 function stampRefresh(){
 const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false };
