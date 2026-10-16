@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JWC LIVE OPS — Jersey Microclimate Grid</title>
+    
+    <!-- LEAFLET MAP ENGINE ASSETS -->
+    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <style>
         :root {
             --bg-color: #0a0e14;
@@ -32,6 +37,7 @@
             line-height: 1.5;
         }
 
+        /* Tactical Header Block */
         header {
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 15px;
@@ -58,6 +64,7 @@
             text-transform: uppercase;
         }
 
+        /* Master Controls */
         .controls-bar {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -108,6 +115,18 @@
             color: var(--text-muted);
         }
 
+        /* Tactical Map Workspace */
+        #hud-contour-map {
+            height: 450px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+
+        /* Sector Layout */
         .sector-section {
             margin-bottom: 35px;
         }
@@ -137,6 +156,7 @@
             gap: 15px;
         }
 
+        /* PWS Station Cards */
         .pws-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -211,6 +231,7 @@
             box-shadow: 0 0 6px var(--neon-amber);
         }
 
+        /* Responsive Fixes */
         @media (max-width: 600px) {
             header {
                 flex-direction: column;
@@ -223,6 +244,9 @@
             }
             .toggle-group {
                 flex-direction: column;
+            }
+            #hud-contour-map {
+                height: 320px;
             }
         }
     </style>
@@ -245,7 +269,12 @@
         </div>
     </div>
 
+    <!-- LIVE CONTOUR WEATHER MAP CANVAS -->
+    <div id="hud-contour-map"></div>
+
+    <!-- Main Grid Workspace Container -->
     <main id="matrix-container"></main>
+
 
     <script>
         const stationNetwork = {
