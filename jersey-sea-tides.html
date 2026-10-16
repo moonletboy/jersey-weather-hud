@@ -894,6 +894,21 @@ const SST_DATASETS = [
 {tag:'COASTWATCH FINAL', base:'https://coastwatch.pfeg.noaa.gov/erddap', id:'ncdcOisst21Agg_LonPM180', lon:-2.125}
 ];
 let sstResults = [];
+// The "SST anomaly" GitHub workflow fetches NOAA a few times a day and saves data/sst-anomaly.json.
+// Reading that file is fast and doesn't depend on NOAA being up when someone visits. NOAA is only
+// asked directly if the file is missing or more than 7 days old (the saved copy is then the backup).
+const SST_FILE = 'data/sst-anomaly.json';
+async function loadAnomFile(){
+try{
+const res = await fetch(SST_FILE + '?v=' + Math.floor(Date.now()/600000), {cache:'no-store'});
+if(!res.ok) return null;
+const j = await res.json();
+if(!j || typeof j.anom !== 'number' || !Array.isArray(j.grid) || j.grid.length !== j.nx*j.ny) return null;
+const t = new Date(j.time);
+if(isNaN(t.getTime())) return null;
+return {ds:{tag:String(j.tag || 'NOAA')}, time:t, anom:j.anom, fileGrid:{grid:Float32Array.from(j.grid, v => v === null ? NaN : v), NX:j.nx, NY:j.ny}};
+}catch(e){ return null; }
+}
 let sstChosen = SST_DATASETS[0];
 function errDetail(txt){
 const m = /message="([^"]{0,90})/.exec(txt || '');
@@ -920,8 +935,15 @@ return {fail: ds.tag + ': ' + (e.name === 'AbortError' ? 'TIMEOUT' : 'BLOCKED/UN
 finally{ clearTimeout(to); }
 }
 async function loadAnomaly(){
-const all = await Promise.all(SST_DATASETS.map(fetchAnom));
-const results = all.filter(r => !r.fail);
+const fileRes = await loadAnomFile();
+let all = [], results = [];
+if(fileRes && (Date.now() - fileRes.time.getTime())/86400000 <= 7){
+results = [fileRes];
+}else{
+all = await Promise.all(SST_DATASETS.map(fetchAnom));
+results = all.filter(r => !r.fail);
+if(fileRes) results.push(fileRes);
+}
 const valEl = document.getElementById('anomValue');
 const subEl = document.getElementById('anomSub');
 if(!results.length){
@@ -1465,7 +1487,7 @@ try{
 let g = null, used = best, lastErr = null;
 const cands = [best].concat(sstResults.filter(r => r !== best));
 for(const c of cands){
-try{ g = await fetchAnomGrid(c.ds); used = c; break; }catch(err){ lastErr = err; }
+try{ g = c.fileGrid || await fetchAnomGrid(c.ds); used = c; break; }catch(err){ lastErr = err; }
 }
 if(!g) throw lastErr || new Error('no grid');
 const url = renderAnomCanvas(g);
