@@ -1,0 +1,55 @@
+# Sea temperature anomaly for the Jersey Weather Chat HUD
+#
+# A couple of times a day this job asks NOAA's CoastWatch server for the sea
+# surface temperature anomaly (how far today's sea temperature is from the
+# 1991-2020 average) and saves it as data/sst-anomaly.json. The sea page reads
+# that file, so visitors never depend on NOAA being up at the moment they visit.
+#
+# You can also run it by hand: GitHub > Actions > "SST anomaly" > "Run workflow".
+
+name: SST anomaly
+
+on:
+  schedule:
+    # NOAA publishes a new day around midday UTC; check morning and evening.
+    - cron: "17 7,13,19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sst-anomaly
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Get the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python packages
+        run: pip install requests
+
+      - name: Fetch the sea temperature anomaly
+        run: python scripts/sst_anomaly.py
+
+      - name: Save the result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sst-anomaly.json
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -m "Update sea temperature anomaly"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
