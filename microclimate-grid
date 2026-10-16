@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWC LIVE OPS — Jersey Microclimate Grid</title>
+    <style>
+        :root {
+            --bg-color: #0a0e14;
+            --card-bg: #121820;
+            --border-color: #1e2633;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --neon-cyan: #00f2fe;
+            --neon-amber: #ff9f43;
+            --neon-green: #00ff87;
+            --neon-red: #ff4757;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .brand-title {
+            font-family: var(--font-mono);
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .brand-title span {
+            color: var(--neon-cyan);
+        }
+
+        .hud-status {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--neon-green);
+            text-transform: uppercase;
+        }
+
+        .controls-bar {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .toggle-btn {
+            background: #1c2330;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .toggle-btn.active {
+            background: var(--neon-cyan);
+            color: var(--bg-color);
+            border-color: var(--neon-cyan);
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        .toggle-btn:hover:not(.active) {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        .network-stats {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .sector-section {
+            margin-bottom: 35px;
+        }
+
+        .sector-header {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #94a3b8;
+        }
+
+        .sector-header::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .grid-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .pws-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            position: relative;
+            transition: border-color 0.2s ease;
+        }
+
+        .pws-card:hover {
+            border-color: #2e3c51;
+        }
+
+        .pws-id {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .pws-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .metric-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .metric-unit {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .pws-meta {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px dashed var(--border-color);
+            padding-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px var(--neon-green);
+        }
+
+        .stale .status-dot {
+            background-color: var(--neon-amber);
+            box-shadow: 0 0 6px var(--neon-amber);
+        }
+
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .toggle-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-title">JWC LIVE OPS // <span>MICROCLIMATE MATRIX</span></div>
+        <div class="hud-status"><span class="status-dot"></span> FEED: ACTIVE (40 STATIONS)</div>
+    </header>
+
+    <div class="controls-bar">
+        <div class="toggle-group">
+            <button class="toggle-btn active" onclick="switchMetric('temp')">Temperature</button>
+            <button class="toggle-btn" onclick="switchMetric('wind')">Wind / Gust</button>
+            <button class="toggle-btn" onclick="switchMetric('rain')">Rain Today</button>
+        </div>
+        <div class="network-stats">
+            UPDATED: <span id="last-update-time">--:--:--</span> | SOURCE: WUNDERGROUND PWS
+        </div>
+    </div>
+
+    <main id="matrix-container"></main>
+
+    <script>
+        const stationNetwork = {
+            "Urban South & Harbours (St. Helier / St. Saviour / St. Clement)": [
+                { id: "ISAINT6768", name: "ACCUR8 - Le Squez", temp: 13.8, wind: 3, gust: 4, rain: 0.0, stale: false },
+                { id: "ISAINT1019", name: "St Helier Central", temp: 14.2, wind: 5, gust: 7, rain: 0.0, stale: false },
+                { id: "ISAINT4222", name: "La Collette Harbour", temp: 14.5, wind: 9, gust: 12, rain: 0.0, stale: false },
+                { id: "IMAISO24", name: "Maison St Louis Observatory", temp: 13.2, wind: 6, gust: 9, rain: 0.0, stale: false },
+                { id: "ISAINT9981", name: "St Saviour Schools", temp: 13.4, wind: 4, gust: 6, rain: 0.0, stale: false },
+                { id: "ISAINT3341", name: "St Clement Church", temp: 13.9, wind: 5, gust: 8, rain: 0.0, stale: false },
+                { id: "ISAINT1102", name: "Havre des Pas", temp: 14.3, wind: 8, gust: 11, rain: 0.0, stale: false },
+                { id: "ISAINT5540", name: "St Helier Marina", temp: 14.4, wind: 6, gust: 8, rain: 0.0, stale: false },
+                { id: "ISAINT8812", name: "Grand Val", temp: 12.9, wind: 2, gust: 4, rain: 0.0, stale: false },
+                { id: "ISAINT2219", name: "St Saviour Church", temp: 13.1, wind: 5, gust: 7, rain: 0.0, stale: false }
+            ],
+            "Atlantic West & Valleys (St. Ouen / St. Brelade / St. Peter)": [
+                { id: "ISAINT1122", name: "St Ouen Bay Surf", temp: 13.0, wind: 16, gust: 22, rain: 0.2, stale: false },
+                { id: "ISAINT3390", name: "St Brelade Bay", temp: 13.9, wind: 11, gust: 15, rain: 0.0, stale: false },
+                { id: "ISAINT8877", name: "Jersey Airport Perimeter", temp: 12.8, wind: 14, gust: 19, rain: 0.2, stale: false },
+                { id: "ISAINT4455", name: "St Ouen Les Landes", temp: 12.6, wind: 15, gust: 21, rain: 0.4, stale: false },
+                { id: "ISAINT7766", name: "St Brelade Red Houses", temp: 13.1, wind: 12, gust: 16, rain: 0.0, stale: false },
+                { id: "ISAINT1055", name: "St Peter Village", temp: 12.9, wind: 10, gust: 14, rain: 0.0, stale: false },
+                { id: "ISAINT9933", name: "Quennevais", temp: 13.0, wind: 13, gust: 18, rain: 0.0, stale: false },
+                { id: "ISAINT4411", name: "L'Etacq Cliffs", temp: 12.4, wind: 18, gust: 25, rain: 0.6, stale: true },
+                { id: "ISAINT5522", name: "St Peter Valley Bottom", temp: 11.9, wind: 3, gust: 5, rain: 0.0, stale: false },
+                { id: "ISAINT6688", name: "Corbiere Light", temp: 13.5, wind: 19, gust: 26, rain: 0.2, stale: false }
+            ],
+            "North Coast Plateaux (St. Mary / St. John / Trinity)": [
+                { id: "ISAINT5001", name: "St Mary Church", temp: 12.4, wind: 11, gust: 16, rain: 0.2, stale: false },
+                { id: "ISAINT5002", name: "St John Sorel Point", temp: 12.1, wind: 17, gust: 24, rain: 0.3, stale: false },
+                { id: "ISAINT5003", name: "Trinity Bouley Bay", temp: 12.9, wind: 13, gust: 18, rain: 0.0, stale: false },
+                { id: "ISAINT5004", name: "St Mary Crabbé", temp: 12.2, wind: 15, gust: 21, rain: 0.4, stale: false },
+                { id: "ISAINT5005", name: "St John Village", temp: 12.5, wind: 12, gust: 17, rain: 0.2, stale: false },
+                { id: "ISAINT5006", name: "Trinity Durrell Wildlife", temp: 12.8, wind: 8, gust: 12, rain: 0.0, stale: false },
+                { id: "ISAINT5007", name: "Ronez Quarry", temp: 12.0, wind: 18, gust: 25, rain: 0.3, stale: false },
+                { id: "ISAINT5008", name: "St Mary Devils Hole", temp: 12.3, wind: 16, gust: 22, rain: 0.5, stale: false },
+                { id: "ISAINT5009", name: "Les Platons High Point", temp: 11.8, wind: 16, gust: 23, rain: 0.3, stale: false },
+                { id: "ISAINT5010", name: "Trinity Pallot Steam", temp: 12.7, wind: 9, gust: 13, rain: 0.0, stale: false }
+            ],
+            "Sheltered East & Plains (St. Martin / Grouville / St. Lawrence)": [
+                { id: "ISAINT6001", name: "St Martin Gorey Castle", temp: 13.8, wind: 10, gust: 14, rain: 0.0, stale: false },
+                { id: "ISAINT6002", name: "Grouville Royal Bay", temp: 14.0, wind: 9, gust: 13, rain: 0.0, stale: false },
+                { id: "ISAINT6003", name: "St Lawrence Millbrook", temp: 13.6, wind: 7, gust: 10, rain: 0.0, stale: false },
+                { id: "ISAINT6004", name: "St Martin Village", temp: 13.1, wind: 8, gust: 11, rain: 0.0, stale: false },
+                { id: "ISAINT6005", name: "Grouville Marsh", temp: 12.9, wind: 5, gust: 8, rain: 0.0, stale: false },
+                { id: "ISAINT6006", name: "St Lawrence Church", temp: 13.2, wind: 7, gust: 11, rain: 0.0, stale: false },
+                { id: "ISAINT6007", name: "St Catherine Breakwater", temp: 13.9, wind: 12, gust: 16, rain: 0.0, stale: false },
+                { id: "ISAINT6008", name: "Queen's Valley", temp: 12.5, wind: 4, gust: 6, rain: 0.0, stale: false },
+                { id: "ISAINT6009", name: "St Lawrence Carrefour", temp: 13.0, wind: 8, gust: 12, rain: 0.0, stale: false },
+                { id: "ISAINT6010", name: "Faldouet", temp: 13.4, wind: 9, gust: 13, rain: 0.0, stale: false }
+            ]
+        };
+
+        let activeMetric = 'temp';
+
+        function initMatrix() {
+            const timeSpan = document.getElementById('last-update-time');
+            const now = new Date();
+            timeSpan.innerText = now.toTimeString().split(' ');
+            renderMatrix();
+        }
+
+        function renderMatrix() {
+            const container = document.getElementById('matrix-container');
+            container.innerHTML = '';
+
+            for (const [sectorName, stations] of Object.entries(stationNetwork)) {
+                const section = document.createElement('section');
+                section.className = 'sector-section';
+
+                const header = document.createElement('h2');
+                header.className = 'sector-header';
+                header.innerText = sectorName;
+                section.appendChild(header);
+
+                const grid = document.createElement('div');
+                grid.className = 'grid-matrix';
+
+                stations.forEach(station => {
+                    const card = document.createElement('div');
+                    card.className = `pws-card ${station.stale ? 'stale' : ''}`;
+
+                    let valStr = '';
+                    let unitStr = '';
+
+                    if (activeMetric === 'temp') {
+                        valStr = station.temp.toFixed(1);
+                        unitStr = '°C';
+                    } else if (activeMetric === 'wind') {
+                        valStr = `${station.wind}`;
+                        unitStr = `G${station.gust} MPH`;
+                    } else if (activeMetric === 'rain') {
+                        valStr = station.rain.toFixed(1);
+                        unitStr = 'MM';
+                    }
+
+                    card.innerHTML = `
+                        <div class="pws-id">${station.id}</div>
+                        <div class="pws-name" title="${station.name}">${station.name}</div>
+                        <div class="metric-display">
+                            <div class="metric-value">${valStr}</div>
+                            <div class="metric-unit">${unitStr}</div>
+                        </div>
+                        <div class="pws-meta">
+                            <span>ONLINE</span>
+                            <span class="status-dot"></span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
+        }
+
+        function switchMetric(metric) {
+            activeMetric = metric;
+            
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderMatrix();
+        }
+
+        window.onload = initMatrix;
+    </script>
+</body>
+</html>
