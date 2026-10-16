@@ -312,7 +312,7 @@ font-size:15px; font-weight:800; color:var(--text); line-height:1.15;
 .bar-marker{ position:absolute; top:-3px; width:2px; height:14px; background:#fff; box-shadow:0 0 5px #fff; left:0%; transition:left .6s ease; }
 /* HEAT INDEX — risk ladder */
 .ladder{ display:flex; flex-direction:column; gap:2px; margin-bottom:8px; }
-.ladder-step{ height:6px; border-radius:2px; opacity:0.25; transition:opacity .4s ease; }
+.ladder-step{ height:4px; border-radius:2px; opacity:0.25; transition:opacity .4s ease; }
 .ladder-step.active{ opacity:1; }
 /* UV INDEX — semi-circle dial */
 .arc-wrap{ display:flex; justify-content:center; margin:0 auto 2px; }
@@ -793,13 +793,7 @@ footer b{ color:var(--dim); }
 </div>
 <div class="tile">
 <div class="lbl">HEAT INDEX</div>
-<div class="ladder">
-<div class="ladder-step" id="heatStepHot" style="background:var(--red)"></div>
-<div class="ladder-step" id="heatStepWarm" style="background:var(--amber)"></div>
-<div class="ladder-step" id="heatStepComfortable" style="background:var(--green)"></div>
-<div class="ladder-step" id="heatStepCool" style="background:#e0d341"></div>
-<div class="ladder-step" id="heatStepCold" style="background:var(--cyan)"></div>
-</div>
+<div class="ladder" id="heatLadder"></div>
 <div class="val-lg" id="g-heat"><b>--&deg;</b></div>
 <div class="sub" id="s-heat">&mdash;</div>
 </div>
@@ -1271,12 +1265,33 @@ function setTipMarker(id, value, min, max){
   const pct = Math.min(100, Math.max(0, (value - min) / (max - min) * 100));
   el.style.left = pct + '%';
 }
+// ONE scale drives the "FEELS LIKE" text in the Current Air Temperature card AND the Heat Index card
+// (label, colour, ladder step), so they can never disagree. Listed coldest -> hottest; each entry
+// applies from its "min" (feels-like, in degrees C) up to the next entry's "min". The lowest grade is
+// reserved for feels-like (wind chill) below 0 C.
+const COLD_LINK = 'https://www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/';
+const HOT_LINK = 'https://www.nhs.uk/live-well/seasonal-health/heatwave-how-to-cope-in-hot-weather/';
+const FEELS_SCALE = [
+{min:-Infinity, label:'FREEZING \u2014 PRECAUTIONS NEEDED', color:'#8a7bff', advice:'Wind chill is below freezing \u2014 dress in warm layers, cover exposed skin and limit time outdoors.', link:COLD_LINK, linkText:'Cold weather advice'},
+{min:0,  label:'COLD \u2014 PRECAUTIONS NEEDED', color:'#3d78ff', advice:'Dress in warm layers and limit time outdoors.', link:COLD_LINK, linkText:'Cold weather advice'},
+{min:4,  label:'CHILLY \u2014 UNCOMFORTABLE', color:'#4aa8ff', advice:'', link:null},
+{min:8,  label:'COOL', color:CYAN, advice:'', link:null},
+{min:12, label:'MILD', color:'#5fe3c8', advice:'', link:null},
+{min:18, label:'COMFORTABLE', color:GREEN, advice:'', link:null},
+{min:23, label:'WARM', color:YELLOW, advice:'', link:null},
+{min:27, label:'VERY WARM \u2014 UNCOMFORTABLE', color:AMBER, advice:'', link:null},
+{min:30, label:'HOT \u2014 PRECAUTIONS NEEDED', color:RED, advice:'Stay hydrated, seek shade, and avoid exertion during peak heat.', link:HOT_LINK, linkText:'Hot weather advice'}
+];
 function feelsLikeCategory(f){
-if(f < 5) return {label:'COLD \u2014 PRECAUTIONS NEEDED', color:CYAN, advice:'Dress in warm layers and limit time outdoors.', link:'https://www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/', linkText:'Cold weather advice'};
-if(f < 12) return {label:'COOL \u2014 UNCOMFORTABLE', color:YELLOW, advice:'', link:null};
-if(f <= 24) return {label:'COMFORTABLE', color:GREEN, advice:'', link:null};
-if(f <= 30) return {label:'WARM \u2014 UNCOMFORTABLE', color:AMBER, advice:'', link:null};
-return {label:'HOT \u2014 PRECAUTIONS NEEDED', color:RED, advice:'Stay hydrated, seek shade, and avoid exertion during peak heat.', link:'https://www.nhs.uk/live-well/seasonal-health/heatwave-how-to-cope-in-hot-weather/', linkText:'Hot weather advice'};
+let idx = 0;
+for(let i = 0; i < FEELS_SCALE.length; i++){ if(f >= FEELS_SCALE[i].min) idx = i; }
+return Object.assign({idx:idx}, FEELS_SCALE[idx]);
+}
+// Builds the Heat Index card's ladder (hottest at the top) from FEELS_SCALE, once.
+function buildHeatLadder(){
+const el = document.getElementById('heatLadder');
+if(!el || el.children.length) return;
+el.innerHTML = FEELS_SCALE.slice().reverse().map((s, k) => '<div class="ladder-step" id="heatStep' + (FEELS_SCALE.length - 1 - k) + '" style="background:' + s.color + '"></div>').join('');
 }
 function aqiAdviceCategory(aqi){
 if(aqi<=50) return {label:'GOOD', color:GREEN, advice:''};
@@ -1774,11 +1789,10 @@ document.getElementById('s-hum').textContent = 'RELATIVE HUMIDITY';
 renderSpark('humSpark', data.hourly.relative_humidity_2m.slice(histStart, nowIdxTrend+1), CYAN);
 animateNum(document.getElementById('g-heat').querySelector('b'), Math.round(cur.apparent_temperature), 0, '\u00b0');
 document.getElementById('g-heat').style.color = feelsCat.color;
-document.getElementById('s-heat').textContent = feelsCat.label.split(' \u2014 ')[0];
+document.getElementById('s-heat').textContent = feelsCat.label;
 renderSpark('heatSpark', data.hourly.apparent_temperature.slice(histStart, nowIdxTrend+1), feelsCat.color);
-const heatStepIds = ['heatStepCold','heatStepCool','heatStepComfortable','heatStepWarm','heatStepHot'];
-const heatStepIdx = cur.apparent_temperature < 5 ? 0 : cur.apparent_temperature < 12 ? 1 : cur.apparent_temperature <= 24 ? 2 : cur.apparent_temperature <= 30 ? 3 : 4;
-heatStepIds.forEach((id,i) => document.getElementById(id).classList.toggle('active', i === heatStepIdx));
+buildHeatLadder();
+FEELS_SCALE.forEach((s,i) => document.getElementById('heatStep' + i).classList.toggle('active', i === feelsCat.idx));
 const uvc = uvCategory(cur.uv_index);
 animateNum(document.getElementById('g-uv').querySelector('b'), cur.uv_index, 1, '');
 document.getElementById('g-uv').style.color = uvc.color;
