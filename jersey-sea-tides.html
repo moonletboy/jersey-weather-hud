@@ -570,6 +570,31 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 .marine-advisory-title{ font-size:11px; letter-spacing:1px; font-weight:800; color:var(--amber); }
 .marine-advisory-text{ font-size:11.5px; color:var(--text); line-height:1.55; margin-top:7px; }
 
+/* COASTAL FLOOD RISK */
+.cfr-summary{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:16px 20px; border-bottom:1px solid var(--line); }
+.cfr-summary-text{ font-size:11.5px; color:var(--text); line-height:1.6; flex:1; min-width:220px; }
+.cfr-summary-text b{ font-family:'Orbitron',sans-serif; letter-spacing:1px; }
+.cfr-badge{ display:inline-block; font-family:'Orbitron',sans-serif; font-size:11px; font-weight:900; letter-spacing:2px; padding:5px 12px; border-radius:4px; color:#05080d; background:var(--dim2); white-space:nowrap; }
+.cfr-badge.LOW{ background:var(--green); }
+.cfr-badge.ELEVATED{ background:var(--amber); }
+.cfr-badge.HIGH{ background:var(--red); box-shadow:0 0 12px rgba(255,75,92,0.45); }
+.cfr-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px; padding:18px; }
+.cfr-card{ background:var(--bg); border:1px solid var(--line); border-left:3px solid var(--dim2); border-radius:10px; padding:14px 16px; }
+.cfr-card.LOW{ border-left-color:var(--green); }
+.cfr-card.ELEVATED{ border-left-color:var(--amber); }
+.cfr-card.HIGH{ border-left-color:var(--red); }
+.cfr-card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:10px; }
+.cfr-when{ font-family:'Orbitron',sans-serif; font-size:15px; font-weight:800; color:var(--text); }
+.cfr-date{ font-size:10px; letter-spacing:1px; color:var(--dim); margin-top:3px; }
+.cfr-row{ display:flex; justify-content:space-between; gap:10px; font-size:11px; padding:6px 0; border-top:1px dashed var(--line); }
+.cfr-row .k{ color:var(--dim); letter-spacing:1px; font-size:10px; padding-top:1px; }
+.cfr-row .v{ color:var(--text); text-align:right; }
+.cfr-row .v.warn{ color:var(--amber); }
+.cfr-row .v.bad{ color:var(--red); }
+.cfr-drivers{ font-size:10.5px; color:var(--dim); line-height:1.5; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); }
+.cfr-note{ font-size:9.5px; color:var(--dim2); letter-spacing:0.5px; line-height:1.6; padding:0 20px 18px; }
+.cfr-empty{ grid-column:1/-1; text-align:center; padding:26px 10px; color:var(--dim); font-size:11px; letter-spacing:1px; }
+
 .sea-day-card .day-icon{ font-size:30px; }
 </style>
 
@@ -794,6 +819,25 @@ Tide predictions: National Oceanography Centre, via gov.je. Times and heights on
 </div>
 </section>
 
+<!-- COASTAL FLOOD RISK -->
+<section>
+<div class="sec-head storm">
+<h3>COASTAL FLOOD RISK</h3>
+<div class="bar"></div>
+<div class="tag">HIGH TIDE OUTLOOK</div>
+</div>
+<div class="panel">
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+<div class="cfr-summary" id="cfrSummary"></div>
+<div class="cfr-grid" id="cfrGrid">
+<div class="cfr-empty">LOADING HIGH TIDE OUTLOOK&hellip;</div>
+</div>
+<div class="cfr-note">
+An indicative guide only &mdash; not an official warning. For each of the next four high tides it combines the predicted high-water height with the small lift from low air pressure (roughly 1cm per hPa below normal), plus onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time. A big tide on its own is usually fine; the risk climbs when several of these line up. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call 999 in an emergency.
+</div>
+</div>
+</section>
+
 <!-- 5-DAY SEA FORECAST -->
 <section>
 <div class="sec-head">
@@ -815,7 +859,7 @@ Tide predictions: National Oceanography Centre, via gov.je. Times and heights on
 </div>
 
 <footer>
-<div>DATA: OPEN-METEO MARINE (WAVES, SWELL, SEA TEMPERATURE) &middot; NATIONAL OCEANOGRAPHIC CENTRE VIA GOV.JE (TIDE TIMES)</div>
+<div>DATA: OPEN-METEO MARINE (WAVES, SWELL, SEA TEMPERATURE) &middot; OPEN-METEO (PRESSURE, WIND) &middot; NATIONAL OCEANOGRAPHIC CENTRE VIA GOV.JE (TIDE TIMES)</div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
 </div>
@@ -1033,6 +1077,7 @@ loadSeaHistory(data, hIdx);
 
 checkMarineAdvisory(data);
 buildSeaForecastCards(data);
+buildFloodRisk();
 
 }catch(e){
 console.error('marine fetch failed', e);
@@ -1280,6 +1325,7 @@ return;
 }
 
 const events = data.events.map(e => ({ ...e, dt: parseTideDateTime(e.dateText, e.time) })).sort((a,b) => a.dt - b.dt);
+tideEvents = events;
 const now = new Date();
 const nextIdx = events.findIndex(e => e.dt > now);
 const next = events[nextIdx >= 0 ? nextIdx : events.length-1];
@@ -1330,6 +1376,7 @@ listHtml += `
 document.getElementById('tideList').innerHTML = listHtml;
 
 buildTideCurve(events, now);
+buildFloodRisk();
 
 if(marineData) checkMarineAdvisory(marineData);
 
@@ -1388,6 +1435,156 @@ document.getElementById('tideCurveWrap').innerHTML = `
 <circle cx="${nowX.toFixed(1)}" cy="${nowY.toFixed(1)}" r="5" fill="#ffb020"/>
 ${todaysMarkers}
 </svg>`;
+}
+
+// ---------- COASTAL FLOOD RISK (indicative) ----------
+// For each upcoming high tide: predicted high water (gov.je / NOC) + pressure lift (inverse barometer,
+// ~1cm per hPa below 1013) + onshore wind + wave height at that hour. All thresholds live in FLOOD_CFG
+// so they are easy to tune. Heights are in the same metres as the gov.je tide feed.
+const FLOOD_CFG = {
+hwModerate: 10.0,   // expected water level (m) that starts to count
+hwHigh: 11.0,       // big spring territory
+hwExtreme: 11.8,    // very top of the range
+onshoreFrom: 140,   // wind direction (deg) from SE ...
+onshoreTo: 250,     // ... to WSW counts as onshore for St Aubin's Bay / St Clement
+windMod: 17,        // knots
+windStrong: 25,     // knots
+waveMod: 1.5,       // metres
+waveHigh: 2.5,      // metres
+refPressure: 1013.25
+};
+let tideEvents = [];
+let floodWx = null;
+
+async function loadFloodWeather(){
+try{
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&timezone=Europe%2FLondon&forecast_days=7`;
+const res = await fetch(url);
+const j = await res.json();
+if(j && j.hourly && j.hourly.time) floodWx = j.hourly;
+}catch(e){ console.error('flood weather fetch failed', e); }
+buildFloodRisk();
+}
+
+function floodHourKey(d){
+const r = new Date(Math.round(d.getTime()/3600000)*3600000);
+const p = n => String(n).padStart(2,'0');
+return r.getFullYear() + '-' + p(r.getMonth()+1) + '-' + p(r.getDate()) + 'T' + p(r.getHours());
+}
+function floodIndex(h, key){
+if(!h || !h.time) return null;
+const i = h.time.findIndex(t => t.slice(0,13) === key);
+return i < 0 ? null : i;
+}
+// min/max of a field over the hour before, the hour of, and the hour after high water
+function floodAgg(h, field, i, mode){
+if(!h || !h[field] || i === null) return null;
+const vals = [i-1, i, i+1].filter(k => k >= 0 && k < h[field].length).map(k => h[field][k]).filter(v => v !== null && v !== undefined && !isNaN(v));
+if(!vals.length) return null;
+return mode === 'min' ? Math.min(...vals) : Math.max(...vals);
+}
+
+function floodAssess(ev){
+const c = FLOOD_CFG;
+const key = floodHourKey(ev.dt);
+const wi = floodIndex(floodWx, key);
+const marineH = marineData && marineData.hourly ? marineData.hourly : null;
+const mi = floodIndex(marineH, key);
+
+const pressure = floodAgg(floodWx, 'pressure_msl', wi, 'min');
+const windKn = floodAgg(floodWx, 'wind_speed_10m', wi, 'max');
+const gustKn = floodAgg(floodWx, 'wind_gusts_10m', wi, 'max');
+const windDir = (wi !== null && floodWx.wind_direction_10m) ? floodWx.wind_direction_10m[wi] : null;
+const waveH = floodAgg(marineH, 'wave_height', mi, 'max');
+
+const surge = pressure !== null ? Math.max(0, (c.refPressure - pressure) / 100) : 0;
+const level = ev.heightM + surge;
+const tidePts = level >= c.hwExtreme ? 3 : level >= c.hwHigh ? 2 : level >= c.hwModerate ? 1 : 0;
+
+const onshore = windDir !== null && windDir !== undefined && windDir >= c.onshoreFrom && windDir <= c.onshoreTo;
+const effWind = windKn !== null ? Math.max(windKn, (gustKn || 0) * 0.75) : null;
+let windPts = 0;
+if(onshore && effWind !== null) windPts = effWind >= c.windStrong ? 2 : effWind >= c.windMod ? 1 : 0;
+
+let wavePts = 0;
+if(waveH !== null) wavePts = waveH >= c.waveHigh ? 2 : waveH >= c.waveMod ? 1 : 0;
+
+const total = tidePts + windPts + wavePts;
+let rating = 'LOW';
+if(tidePts > 0){
+rating = total >= 5 ? 'HIGH' : total >= 3 ? 'ELEVATED' : 'LOW';
+if(rating === 'HIGH' && tidePts < 2) rating = 'ELEVATED';
+}
+
+const drivers = [];
+if(tidePts >= 2) drivers.push('high spring tide');
+if(surge >= 0.15) drivers.push('low pressure');
+if(windPts > 0) drivers.push('onshore wind');
+if(wavePts > 0) drivers.push('heavy seas');
+
+return {
+rating, tidePts, windPts, wavePts, surge, level, pressure, windKn, gustKn, windDir, onshore, waveH, drivers,
+partial: (pressure === null || windKn === null || waveH === null)
+};
+}
+
+function buildFloodRisk(){
+const grid = document.getElementById('cfrGrid');
+const sum = document.getElementById('cfrSummary');
+if(!grid || !sum) return;
+const now = new Date();
+const highs = tideEvents.filter(e => e.type === 'high' && e.dt > now).slice(0, 4);
+if(!highs.length){
+grid.innerHTML = '<div class="cfr-empty">WAITING FOR TIDE DATA&hellip;</div>';
+sum.innerHTML = '';
+return;
+}
+
+const RANK = { LOW:1, ELEVATED:2, HIGH:3 };
+const rows = highs.map(ev => ({ ev, a: floodAssess(ev) }));
+let worst = rows[0];
+rows.forEach(r => { if(RANK[r.a.rating] > RANK[worst.a.rating]) worst = r; });
+const anyPartial = rows.some(r => r.a.partial);
+
+const whenOf = ev => ev.dt.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}).toUpperCase() + ' &middot; ' + ev.time;
+let line;
+if(worst.a.rating === 'LOW'){
+line = 'No notable flood risk signals across the next ' + rows.length + ' high tides.';
+}else{
+line = '<b>' + whenOf(worst.ev) + '</b> is the one to watch' + (worst.a.drivers.length ? ' &mdash; ' + worst.a.drivers.join(' + ') + '.' : '.');
+}
+if(anyPartial) line += ' <span style="color:var(--amber);">Some wind, pressure or wave data is missing, so the rating may be understated.</span>';
+sum.innerHTML = '<span class="cfr-badge ' + worst.a.rating + '">' + worst.a.rating + '</span><div class="cfr-summary-text">' + line + '</div>';
+
+grid.innerHTML = rows.map(({ev, a}) => {
+const pressTxt = a.pressure !== null ? Math.round(a.pressure) + ' hPa' + (a.surge >= 0.05 ? ' (+' + a.surge.toFixed(2) + 'm)' : '') : '&mdash;';
+const pressCls = a.pressure !== null && a.pressure < 990 ? 'warn' : '';
+let windTxt = '&mdash;';
+let windCls = '';
+if(a.windKn !== null){
+windTxt = (a.windDir !== null && a.windDir !== undefined ? compass16(a.windDir) + ' ' : '') + Math.round(a.windKn) + 'kn' + (a.gustKn ? ' &middot; gusts ' + Math.round(a.gustKn) : '') + (a.onshore ? ' &middot; ONSHORE' : '');
+windCls = a.windPts >= 2 ? 'bad' : a.windPts === 1 ? 'warn' : '';
+}
+const waveTxt = a.waveH !== null ? a.waveH.toFixed(1) + 'm' : '&mdash;';
+const waveCls = a.wavePts >= 2 ? 'bad' : a.wavePts === 1 ? 'warn' : '';
+const levelCls = a.tidePts >= 3 ? 'bad' : a.tidePts >= 1 ? 'warn' : '';
+const date = ev.dt.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}).toUpperCase();
+return `
+<div class="cfr-card ${a.rating}">
+<div class="cfr-card-top">
+<div>
+<div class="cfr-when">${ev.time}</div>
+<div class="cfr-date">${date}</div>
+</div>
+<span class="cfr-badge ${a.rating}">${a.rating}</span>
+</div>
+<div class="cfr-row"><span class="k">HIGH WATER</span><span class="v ${levelCls}">${ev.heightM.toFixed(1)}m</span></div>
+<div class="cfr-row"><span class="k">PRESSURE</span><span class="v ${pressCls}">${pressTxt}</span></div>
+<div class="cfr-row"><span class="k">WIND</span><span class="v ${windCls}">${windTxt}</span></div>
+<div class="cfr-row"><span class="k">WAVES</span><span class="v ${waveCls}">${waveTxt}</span></div>
+<div class="cfr-drivers">${a.drivers.length ? 'Driven by: ' + a.drivers.join(', ') + '.' : 'No significant drivers.'}</div>
+</div>`;
+}).join('');
 }
 
 function revealTiles(){
@@ -1510,7 +1707,7 @@ document.getElementById('lastRefresh').textContent = new Intl.DateTimeFormat('en
 }
 async function refreshAll(){
 await loadTides();
-await loadMarine();
+await Promise.all([loadMarine(), loadFloodWeather()]);
 stampRefresh();
 }
 revealTiles();
