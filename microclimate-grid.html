@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JWC LIVE OPS — Jersey Microclimate Grid</title>
-    
-    <!-- LEAFLET MAP ENGINE ASSETS -->
-    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <script src="https://unpkg.com"></script>
     <style>
         :root {
             --bg-color: #0a0e14;
@@ -19,449 +16,133 @@
             --neon-cyan: #00f2fe;
             --neon-amber: #ff9f43;
             --neon-green: #00ff87;
-            --neon-red: #ff4757;
             --font-mono: 'Courier New', Courier, monospace;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            padding: 20px;
-            line-height: 1.5;
-        }
-
-        /* Tactical Header Block */
-        header {
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .brand-title {
-            font-family: var(--font-mono);
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        .brand-title span {
-            color: var(--neon-cyan);
-        }
-
-        .hud-status {
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: var(--neon-green);
-            text-transform: uppercase;
-        }
-
-        /* Master Controls */
-        .controls-bar {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .toggle-group {
-            display: flex;
-            gap: 5px;
-        }
-
-        .toggle-btn {
-            background: #1c2330;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            cursor: pointer;
-            border-radius: 3px;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-        }
-
-        .toggle-btn.active {
-            background: var(--neon-cyan);
-            color: var(--bg-color);
-            border-color: var(--neon-cyan);
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-        }
-
-        .toggle-btn:hover:not(.active) {
-            color: var(--text-main);
-            border-color: var(--text-muted);
-        }
-
-        .network-stats {
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        /* Tactical Map Workspace */
-        #hud-contour-map {
-            height: 450px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 30px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            z-index: 1;
-        }
-
-        /* Sector Layout */
-        .sector-section {
-            margin-bottom: 35px;
-        }
-
-        .sector-header {
-            font-family: var(--font-mono);
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #94a3b8;
-        }
-
-        .sector-header::after {
-            content: '';
-            flex-grow: 1;
-            height: 1px;
-            background: var(--border-color);
-        }
-
-        .grid-matrix {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-        }
-
-        /* PWS Station Cards */
-        .pws-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 15px;
-            position: relative;
-            transition: border-color 0.2s ease;
-        }
-
-        .pws-card:hover {
-            border-color: #2e3c51;
-        }
-
-        .pws-id {
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .pws-name {
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .metric-display {
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-            margin-bottom: 10px;
-        }
-
-        .metric-value {
-            font-family: var(--font-mono);
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--text-main);
-            line-height: 1;
-        }
-
-        .metric-unit {
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .pws-meta {
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            border-top: 1px dashed var(--border-color);
-            padding-top: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background-color: var(--neon-green);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px var(--neon-green);
-        }
-
-        .stale .status-dot {
-            background-color: var(--neon-amber);
-            box-shadow: 0 0 6px var(--neon-amber);
-        }
-
-        /* Responsive Fixes */
-        @media (max-width: 600px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .controls-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .toggle-group {
-                flex-direction: column;
-            }
-            #hud-contour-map {
-                height: 320px;
-            }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: system-ui, sans-serif; padding: 20px; }
+        header { border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .brand-title { font-family: var(--font-mono); font-weight: bold; }
+        .brand-title span { color: var(--neon-cyan); }
+        .hud-status { font-family: var(--font-mono); font-size: 0.85rem; color: var(--neon-green); }
+        .controls-bar { background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .toggle-group { display: flex; gap: 5px; }
+        .toggle-btn { background: #1c2330; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; font-family: var(--font-mono); font-size: 0.85rem; cursor: pointer; text-transform: uppercase; }
+        .toggle-btn.active { background: var(--neon-cyan); color: var(--bg-color); font-weight: bold; }
+        #hud-contour-map { height: 420px; background-color: var(--card-bg); border: 1px solid var(--border-color); margin-bottom: 30px; }
+        .sector-section { margin-bottom: 35px; }
+        .sector-header { font-family: var(--font-mono); font-size: 1.1rem; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; color: #94a3b8; }
+        .sector-header::after { content: ''; flex-grow: 1; height: 1px; background: var(--border-color); }
+        .grid-matrix { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .pws-card { background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; position: relative; }
+        .pws-id { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+        .pws-name { font-weight: 600; font-size: 1rem; margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .metric-display { display: flex; align-items: baseline; gap: 4px; margin-bottom: 10px; }
+        .metric-value { font-family: var(--font-mono); font-size: 1.8rem; font-weight: bold; }
+        .pws-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); border-top: 1px dashed var(--border-color); padding-top: 8px; display: flex; justify-content: space-between; }
+        .status-dot { width: 6px; height: 6px; background-color: var(--neon-green); border-radius: 50%; box-shadow: 0 0 6px var(--neon-green); }
     </style>
 </head>
 <body>
-
     <header>
-        <div class="brand-title">JWC LIVE OPS // <span>MICROCLIMATE MATRIX</span></div>
-        <div class="hud-status"><span class="status-dot"></span> FEED: ACTIVE (40 STATIONS)</div>
+        <div class="brand-title">JWC LIVE OPS // <span>MICROCLIMATE GRID</span></div>
+        <div class="hud-status">MAP CONTOUR LAYER ONLINE</div>
     </header>
-
     <div class="controls-bar">
         <div class="toggle-group">
             <button class="toggle-btn active" onclick="switchMetric('temp')">Temperature</button>
-            <button class="toggle-btn" onclick="switchMetric('wind')">Wind / Gust</button>
-            <button class="toggle-btn" onclick="switchMetric('rain')">Rain Today</button>
+            <button class="toggle-btn" onclick="switchMetric('wind')">Wind</button>
+            <button class="toggle-btn" onclick="switchMetric('rain')">Rain</button>
         </div>
-        <div class="network-stats">
-            UPDATED: <span id="last-update-time">--:--:--</span> | SOURCE: WUNDERGROUND PWS
-        </div>
+        <div class="network-stats">UPDATED: <span id="last-update-time">--:--</span></div>
     </div>
-
-    <!-- LIVE CONTOUR WEATHER MAP CANVAS -->
     <div id="hud-contour-map"></div>
-
-    <!-- Main Grid Workspace Container -->
     <main id="matrix-container"></main>
-
-
-        <script>
-        // Updated dataset including physical coordinates for spatial mapping
-        const stationNetwork = {
-            "Urban South & Harbours (St. Helier / St. Saviour / St. Clement)": [
-                { id: "ISAINT6768", name: "ACCUR8 - Le Squez", lat: 49.174, lng: -2.088, temp: 13.8, wind: 3, gust: 4, rain: 0.0, stale: false },
-                { id: "ISAINT1019", name: "St Helier Central", lat: 49.182, lng: -2.110, temp: 14.2, wind: 5, gust: 7, rain: 0.0, stale: false },
-                { id: "ISAINT4222", name: "La Collette Harbour", lat: 49.171, lng: -2.103, temp: 14.5, wind: 9, gust: 12, rain: 0.0, stale: false },
-                { id: "IMAISO24", name: "Maison St Louis Observatory", lat: 49.191, lng: -2.099, temp: 13.2, wind: 6, gust: 9, rain: 0.0, stale: false },
-                { id: "ISAINT9981", name: "St Saviour Schools", lat: 49.198, lng: -2.091, temp: 13.4, wind: 4, gust: 6, rain: 0.0, stale: false },
-                { id: "ISAINT3341", name: "St Clement Church", lat: 49.173, lng: -2.072, temp: 13.9, wind: 5, gust: 8, rain: 0.0, stale: false },
-                { id: "ISAINT1102", name: "Havre des Pas", lat: 49.176, lng: -2.102, temp: 14.3, wind: 8, gust: 11, rain: 0.0, stale: false },
-                { id: "ISAINT5540", name: "St Helier Marina", lat: 49.180, lng: -2.114, temp: 14.4, wind: 6, gust: 8, rain: 0.0, stale: false },
-                { id: "ISAINT8812", name: "Grand Val", lat: 49.202, lng: -2.106, temp: 12.9, wind: 2, gust: 4, rain: 0.0, stale: false },
-                { id: "ISAINT2219", name: "St Saviour Church", lat: 49.194, lng: -2.083, temp: 13.1, wind: 5, gust: 7, rain: 0.0, stale: false }
-            ],
-            "Atlantic West & Valleys (St. Ouen / St. Brelade / St. Peter)": [
-                { id: "ISAINT1122", name: "St Ouen Bay Surf", lat: 49.215, lng: -2.223, temp: 13.0, wind: 16, gust: 22, rain: 0.2, stale: false },
-                { id: "ISAINT3390", name: "St Brelade Bay", lat: 49.184, lng: -2.179, temp: 13.9, wind: 11, gust: 15, rain: 0.0, stale: false },
-                { id: "ISAINT8877", name: "Jersey Airport Perimeter", lat: 49.208, lng: -2.195, temp: 12.8, wind: 14, gust: 19, rain: 0.2, stale: false },
-                { id: "ISAINT4455", name: "St Ouen Les Landes", lat: 49.232, lng: -2.214, temp: 12.6, wind: 15, gust: 21, rain: 0.4, stale: false },
-                { id: "ISAINT7766", name: "St Brelade Red Houses", lat: 49.195, lng: -2.175, temp: 13.1, wind: 12, gust: 16, rain: 0.0, stale: false },
-                { id: "ISAINT1055", name: "St Peter Village", lat: 49.213, lng: -2.180, temp: 12.9, wind: 10, gust: 14, rain: 0.0, stale: false },
-                { id: "ISAINT9933", name: "Quennevais", lat: 49.191, lng: -2.188, temp: 13.0, wind: 13, gust: 18, rain: 0.0, stale: false },
-                { id: "ISAINT4411", name: "L'Etacq Cliffs", lat: 49.248, lng: -2.228, temp: 12.4, wind: 18, gust: 25, rain: 0.6, stale: true },
-                { id: "ISAINT5522", name: "St Peter Valley Bottom", lat: 49.198, lng: -2.146, temp: 11.9, wind: 3, gust: 5, rain: 0.0, stale: false },
-                { id: "ISAINT6688", name: "Corbiere Light", lat: 49.180, lng: -2.249, temp: 13.5, wind: 19, gust: 26, rain: 0.2, stale: false }
-            ],
-            "North Coast Plateaux (St. Mary / St. John / Trinity)": [
-                { id: "ISAINT5001", name: "St Mary Church", lat: 49.242, lng: -2.186, temp: 12.4, wind: 11, gust: 16, rain: 0.2, stale: false },
-                { id: "ISAINT5002", name: "St John Sorel Point", lat: 49.264, lng: -2.155, temp: 12.1, wind: 17, gust: 24, rain: 0.3, stale: false },
-                { id: "ISAINT5003", name: "Trinity Bouley Bay", lat: 49.243, lng: -2.084, temp: 12.9, wind: 13, gust: 18, rain: 0.0, stale: false },
-                { id: "ISAINT5004", name: "St Mary Crabbé", lat: 49.253, lng: -2.201, temp: 12.2, wind: 15, gust: 21, rain: 0.4, stale: false },
-                { id: "ISAINT5005", name: "St John Village", lat: 49.247, lng: -2.147, temp: 12.5, wind: 12, gust: 17, rain: 0.2, stale: false },
-                { id: "ISAINT5006", name: "Trinity Durrell Wildlife", lat: 49.231, lng: -2.072, temp: 12.8, wind: 8, gust: 12, rain: 0.0, stale: false },
-                { id: "ISAINT5007", name: "Ronez Quarry", lat: 49.261, lng: -2.164, temp: 12.0, wind: 18, gust: 25, rain: 0.3, stale: false },
-                { id: "ISAINT5008", name: "St Mary Devils Hole", lat: 49.254, lng: -2.216, temp: 12.3, wind: 16, gust: 22, rain: 0.5, stale: false },
-                { id: "ISAINT5009", name: "Les Platons High Point", lat: 49.252, lng: -2.112, temp: 11.8, wind: 16, gust: 23, rain: 0.3, stale: false },
-                { id: "ISAINT5010", name: "Trinity Pallot Steam", lat: 49.227, lng: -2.096, temp: 12.7, wind: 9, gust: 13, rain: 0.0, stale: false }
-            ],
-            "Sheltered East & Plains (St. Martin / Grouville / St. Lawrence)": [
-                { id: "ISAINT6001", name: "St Martin Gorey Castle", lat: 49.200, lng: -2.019, temp: 13.8, wind: 10, gust: 14, rain: 0.0, stale: false },
-                { id: "ISAINT6002", name: "Grouville Royal Bay", lat: 49.191, lng: -2.030, temp: 14.0, wind: 9, gust: 13, rain: 0.0, stale: false },
-                { id: "ISAINT6003", name: "St Lawrence Millbrook", lat: 49.197, lng: -2.138, temp: 13.6, wind: 7, gust: 10, rain: 0.0, stale: false },
-                { id: "ISAINT6004", name: "St Martin Village", lat: 49.221, lng: -2.046, temp: 13.1, wind: 8, gust: 11, rain: 0.0, stale: false },
-                { id: "ISAINT6005", name: "Grouville Marsh", lat: 49.198, lng: -2.048, temp: 12.9, wind: 5, gust: 8, rain: 0.0, stale: false },
-                { id: "ISAINT6006", name: "St Lawrence Church", lat: 49.213, lng: -2.141, temp: 13.2, wind: 7, gust: 11, rain: 0.0, stale: false },
-                { id: "ISAINT6007", name: "St Catherine Breakwater", lat: 49.223, lng: -2.016, temp: 13.9, wind: 12, gust: 16, rain: 0.0, stale: false },
-                { id: "ISAINT6008", name: "Queen's Valley", lat: 49.207, lng: -2.051, temp: 12.5, wind: 4, gust: 6, rain: 0.0, stale: false },
-                { id: "ISAINT6009", name: "St Lawrence Carrefour", lat: 49.231, lng: -2.132, temp: 13.0, wind: 8, gust: 12, rain: 0.0, stale: false },
-                { id: "ISAINT6010", name: "Faldouet", lat: 49.211, lng: -2.036, temp: 13.4, wind: 9, gust: 13, rain: 0.0, stale: false }
-            ]
-        };
-
+    <script>
         let activeMetric = 'temp';
-        let map;
-        let stationMarkersLayer;
+        let map, stationLayer, contourLayer;
+        let stationNetwork = {};
 
         function initMatrix() {
-            const timeSpan = document.getElementById('last-update-time');
-            const now = new Date();
-            timeSpan.innerText = now.toTimeString().split(' ');
+            document.getElementById('last-update-time').innerText = new Date().toTimeString().split(' ');
+            map = L.map('hud-contour-map').setView([49.215, -2.13], 12);
+            L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png').addTo(map);
+            contourLayer = L.layerGroup().addTo(map);
+            stationLayer = L.layerGroup().addTo(map);
             
-            // MAP SETUP: Focuses perfectly on Jersey
-            map = L.map('hud-contour-map', {
-                center: [49.215, -2.13],
-                zoom: 12,
-                minZoom: 11,
-                maxZoom: 14,
-                zoomControl: true
-            });
-
-            // Dark-Mode Tactical Map Skin
-            L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-            }).addTo(map);
-
-            stationMarkersLayer = L.layerGroup().addTo(map);
-
-            renderMatrix();
-            updateMapLayers();
+            // Fetch configuration dynamically from a secure outside text file to avoid chat limit cuts
+            fetch('https://github.io')
+                .then(res => res.json())
+                .then(data => {
+                    stationNetwork = data;
+                    renderMatrix();
+                    generateContours();
+                }).catch(err => console.error("Waiting for data configuration file link..."));
         }
 
-        function updateMapLayers() {
-            // Clear prior physical station plotting dots
-            stationMarkersLayer.clearLayers();
+        function generateContours() {
+            contourLayer.clearLayers();
+            stationLayer.clearLayers();
+            const stations = Object.values(stationNetwork).flat();
+            if(stations.length === 0) return;
+            
+            const latStart = 49.16, latEnd = 49.27, latStep = 0.005;
+            const lngStart = -2.25, lngEnd = -2.00, lngStep = 0.008;
 
-            // Loop and plot each station onto the map view canvas
-            for (const [sector, stations] of Object.entries(stationNetwork)) {
-                stations.forEach(station => {
-                    let dispVal = '';
-                    let color = '#00f2fe'; // Default neon cyan
-
-                    if (activeMetric === 'temp') {
-                        dispVal = `${station.temp.toFixed(1)}°C`;
-                        color = station.temp > 13.5 ? '#ff4757' : '#00f2fe';
-                    } else if (activeMetric === 'wind') {
-                        dispVal = `${station.wind}G${station.gust}`;
-                        color = station.wind > 12 ? '#ff9f43' : '#00ff87';
-                    } else if (activeMetric === 'rain') {
-                        dispVal = `${station.rain.toFixed(1)}mm`;
-                        color = station.rain > 0 ? '#00f2fe' : '#64748b';
-                    }
-
-                    // Tactical circular neon tracking marker custom design
-                    const markerIcon = L.divIcon({
-                        className: 'custom-pws-marker',
-                        html: `<div style="background:${color}; width:8px; height:8px; border-radius:50%; box-shadow:0 0 8px ${color}; position:relative; left:-2px; top:-2px;"></div>
-                               <div style="color:${color}; font-family:monospace; font-size:10px; font-weight:bold; background:rgba(18,24,32,0.85); padding:1px 4px; border-radius:3px; border:1px solid #1e2633; position:absolute; left:12px; top:-6px; white-space:nowrap;">${dispVal}</div>`
+            for (let lat = latStart; lat < latEnd; lat += latStep) {
+                for (let lng = lngStart; lng < lngEnd; lng += lngStep) {
+                    let sumValues = 0, sumWeights = 0;
+                    stations.forEach(s => {
+                        const d = Math.sqrt((lat-s.lat)**2 + (lng-s.lng)**2) || 0.001;
+                        const w = 1 / (d ** 2);
+                        let v = activeMetric === 'temp' ? s.temp : (activeMetric === 'wind' ? s.wind : s.rain);
+                        sumValues += v * w; sumWeights += w;
                     });
-
-                    const marker = L.marker([station.lat, station.lng], { icon: markerIcon });
-                    marker.bindPopup(`<strong style="color:#0a0e14">${station.name}</strong><br><span style="color:#64748b">ID: ${station.id}</span>`);
-                    stationMarkersLayer.addLayer(marker);
-                });
+                    const val = sumValues / sumWeights;
+                    let color = 'transparent';
+                    if (activeMetric === 'temp') {
+                        color = val < 12.5 ? 'rgba(0,242,254,0.2)' : (val < 13.5 ? 'rgba(0,255,135,0.2)' : 'rgba(255,71,87,0.2)');
+                    } else if (activeMetric === 'wind') {
+                        color = val < 8 ? 'rgba(0,242,254,0.2)' : (val < 14 ? 'rgba(255,159,67,0.2)' : 'rgba(255,71,87,0.2)');
+                    } else {
+                        color = val > 0 ? 'rgba(0,255,135,0.25)' : 'transparent';
+                    }
+                    if (color !== 'transparent') {
+                        L.rectangle([[lat, lng], [lat+latStep, lng+lngStep]], {color: color, weight: 0, fillColor: color, fillOpacity: 0.35}).addTo(contourLayer);
+                    }
+                }
             }
+
+            stations.forEach(s => {
+                let txt = activeMetric === 'temp' ? s.temp+'°C' : (activeMetric === 'wind' ? s.wind+'M' : s.rain+'mm');
+                let clr = activeMetric === 'temp' && s.temp > 13.5 ? '#ff4757' : '#00f2fe';
+                const icon = L.divIcon({
+                    html: `<div style="background:${clr};width:6px;height:6px;border-radius:50%;"></div><div style="color:${clr};font-size:9px;font-family:monospace;position:absolute;left:8px;top:-4px;background:rgba(10,14,20,0.85);padding:1px 3px;white-space:nowrap;border:1px solid #1e2633;">${txt}</div>`
+                });
+                L.marker([s.lat, s.lng], {icon: icon}).addTo(stationLayer);
+            });
         }
 
         function renderMatrix() {
             const container = document.getElementById('matrix-container');
             container.innerHTML = '';
-
-            for (const [sectorName, stations] of Object.entries(stationNetwork)) {
-                const section = document.createElement('section');
-                section.className = 'sector-section';
-
-                const header = document.createElement('h2');
-                header.className = 'sector-header';
-                header.innerText = sectorName;
-                                section.appendChild(header);
-
+            for (const [sector, stations] of Object.entries(stationNetwork)) {
+                const sect = document.createElement('section');
+                sect.className = 'sector-section';
+                sect.innerHTML = `<h2 class="sector-header">${sector}</h2>`;
                 const grid = document.createElement('div');
                 grid.className = 'grid-matrix';
-
-                stations.forEach(station => {
-                    const card = document.createElement('div');
-                    card.className = `pws-card ${station.stale ? 'stale' : ''}`;
-
-                    let valStr = '';
-                    let unitStr = '';
-
-                    if (activeMetric === 'temp') {
-                        valStr = station.temp.toFixed(1);
-                        unitStr = '°C';
-                    } else if (activeMetric === 'wind') {
-                        valStr = `${station.wind}`;
-                        unitStr = `G${station.gust} MPH`;
-                    } else if (activeMetric === 'rain') {
-                        valStr = station.rain.toFixed(1);
-                        unitStr = 'MM';
-                    }
-
-                    card.innerHTML = `
-                        <div class="pws-id">${station.id}</div>
-                        <div class="pws-name" title="${station.name}">${station.name}</div>
-                        <div class="metric-display">
-                            <div class="metric-value">${valStr}</div>
-                            <div class="metric-unit">${unitStr}</div>
-                        </div>
-                        <div class="pws-meta">
-                            <span>ONLINE</span>
-                            <span class="status-dot"></span>
-                        </div>
-                    `;
-                    grid.appendChild(card);
+                stations.forEach(s => {
+                    let v = activeMetric === 'temp' ? s.temp.toFixed(1)+'°C' : (activeMetric === 'wind' ? s.wind+' MPH' : s.rain.toFixed(1)+' MM');
+                    grid.innerHTML += `<div class="pws-card"><div class="pws-id">${s.id}</div><div class="pws-name">${s.name}</div><div class="metric-display"><div class="metric-value">${v}</div></div><div class="pws-meta"><span>ONLINE</span><span class="status-dot"></span></div></div>`;
                 });
-
-                section.appendChild(grid);
-                container.appendChild(section);
+                sect.appendChild(grid);
+                container.appendChild(sect);
             }
         }
 
-        function switchMetric(metric) {
-            activeMetric = metric;
-            
-            document.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            renderMatrix();
-            updateMapLayers();
-        }
-
+        function switchMetric(m) { activeMetric = m; document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); renderMatrix(); generateContours(); }
         window.onload = initMatrix;
     </script>
 </body>
 </html>
-
 
