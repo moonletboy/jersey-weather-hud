@@ -885,13 +885,15 @@ return {label:'WARM', sub:'PLEASANT FOR SWIMMING', color:'#ff8c30'};
 }
 
 // ---------- SEA TEMP ANOMALY (NOAA OISST via ERDDAP) ----------
-// NRT (preliminary, ~1-2 days behind when healthy) and Final (~2 weeks behind) are both queried.
-// Whichever has the most recent valid reading is used for the number AND the map overlay.
+// NRT (near-real-time, a few days behind) and Final (a few weeks behind) are both queried.
+// Whichever has the most recent valid reading is used for the number AND the map overlay;
+// the other is the backup if that one's map download fails. (Both confirmed working in a real
+// browser, Oct 2026. The two NCEI datasets that used to be listed here no longer exist - 404.)
 const SST_DATASETS = [
-{tag:'COASTWATCH FINAL', base:'https://coastwatch.pfeg.noaa.gov/erddap', id:'ncdcOisst21Agg_LonPM180', lon:-2.125},
-{tag:'NCEI PRELIM', base:'https://www.ncei.noaa.gov/erddap', id:'ncdc_oisst_v2_avhrr_prelim_by_time_zlev_lat_lon', lon:357.875},
-{tag:'NCEI FINAL', base:'https://www.ncei.noaa.gov/erddap', id:'ncdc_oisst_v2_avhrr_by_time_zlev_lat_lon', lon:357.875}
+{tag:'COASTWATCH NRT', base:'https://coastwatch.pfeg.noaa.gov/erddap', id:'ncdcOisst21NrtAgg_LonPM180', lon:-2.125},
+{tag:'COASTWATCH FINAL', base:'https://coastwatch.pfeg.noaa.gov/erddap', id:'ncdcOisst21Agg_LonPM180', lon:-2.125}
 ];
+let sstResults = [];
 let sstChosen = SST_DATASETS[0];
 function errDetail(txt){
 const m = /message="([^"]{0,90})/.exec(txt || '');
@@ -928,6 +930,7 @@ subEl.innerHTML = 'NOAA UNAVAILABLE<br><span style="font-size:10px;">' + all.map
 return null;
 }
 results.sort((a,b) => b.time - a.time);
+sstResults = results;
 const best = results[0];
 sstChosen = best.ds;
 const a = best.anom;
@@ -1459,7 +1462,12 @@ return;
 }
 if(statusEl) statusEl.textContent = 'LOADING ' + best.ds.tag + ' ANOMALY GRID\u2026';
 try{
-const g = await fetchAnomGrid(best.ds);
+let g = null, used = best, lastErr = null;
+const cands = [best].concat(sstResults.filter(r => r !== best));
+for(const c of cands){
+try{ g = await fetchAnomGrid(c.ds); used = c; break; }catch(err){ lastErr = err; }
+}
+if(!g) throw lastErr || new Error('no grid');
 const url = renderAnomCanvas(g);
 const bounds = [[42,-12],[54,8]];
 L.imageOverlay(url, bounds, {opacity:0.8}).addTo(map);
@@ -1468,8 +1476,8 @@ const v = gridAt(g, e.latlng.lat, e.latlng.lng);
 if(isNaN(v)) return;
 L.popup().setLatLng(e.latlng).setContent('<b>' + (v > 0 ? '+' : '') + v.toFixed(1) + '\u00b0C</b> vs average').openOn(map);
 });
-const d = best.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
-if(statusEl) statusEl.textContent = best.ds.tag + ' \u00b7 DATA FOR ' + d + ' \u00b7 TAP MAP FOR A VALUE';
+const d = used.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
+if(statusEl) statusEl.textContent = used.ds.tag + ' \u00b7 DATA FOR ' + d + ' \u00b7 TAP MAP FOR A VALUE';
 }catch(e){
 if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">ANOMALY GRID FAILED TO LOAD (' + String(e.message || e).replace(/[<>&]/g,'') + ')</span>';
 }
