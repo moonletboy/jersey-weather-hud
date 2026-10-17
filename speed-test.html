@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWC speed test</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#05080d; --bg-panel:#0b131c; --line:rgba(76,211,255,0.14); --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#5f7c88; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.6; padding:24px 18px 60px; max-width:960px; margin:0 auto; }
+  h1{ font-family:'Orbitron',sans-serif; font-size:18px; letter-spacing:2px; margin-bottom:6px; }
+  h2{ font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:2px; color:var(--cyan); margin:24px 0 10px; }
+  p.note{ color:var(--dim); font-size:12px; margin-bottom:14px; }
+  .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:16px; overflow-x:auto; }
+  button{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:1px; font-weight:700; background:var(--green); color:#05080d; border:none; padding:11px 20px; border-radius:7px; cursor:pointer; margin-right:8px; }
+  button:disabled{ opacity:0.4; cursor:default; }
+  table{ width:100%; border-collapse:collapse; font-size:11.5px; min-width:640px; }
+  th,td{ text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th{ color:var(--dim); font-weight:500; letter-spacing:1px; font-size:10px; }
+  .g{ color:var(--green); } .a{ color:var(--amber); } .r{ color:var(--red); } .d{ color:var(--dim); }
+  textarea{ width:100%; height:230px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:7px; font-family:inherit; font-size:11.5px; padding:10px; }
+</style>
+</head>
+<body>
+<h1>JWC SPEED TEST</h1>
+<p class="note">Open this file in a normal browser tab (not Claude's preview), on the same device and network where the index page is slow. It times every source the index page uses, first one at a time, then all at once like the real page does. It takes up to a couple of minutes if something is very slow. Nothing is stored or sent anywhere except to those sources.</p>
+
+<div class="panel"><button id="go">RUN SPEED TEST</button><button id="copy" disabled>COPY RESULTS</button></div>
+
+<h2>RESULTS</h2>
+<div class="panel"><table id="tbl"><thead><tr><th>SOURCE</th><th>ONE AT A TIME</th><th>ALL AT ONCE</th><th>SIZE</th></tr></thead><tbody></tbody></table></div>
+
+<h2>COPY THIS BACK INTO THE CHAT</h2>
+<div class="panel"><textarea id="out" readonly placeholder="Results appear here when the test finishes."></textarea></div>
+
+<script>
+  const LAT = 49.1805, LON = -2.1058;
+  const APPS = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+  const OM = 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON;
+  const AQ = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + LAT + '&longitude=' + LON;
+
+  // NOAA chart: same URL pattern as the Storm Watch panel (latest run, 24 hour frame)
+  function noaaUrl(){
+    const d = new Date(Date.now() - 8 * 3600 * 1000);
+    d.setUTCMinutes(0, 0, 0); d.setUTCHours(Math.floor(d.getUTCHours() / 6) * 6);
+    const p = function(n, l){ return String(n).padStart(l, '0'); };
+    const key = d.getUTCFullYear() + p(d.getUTCMonth() + 1, 2) + p(d.getUTCDate(), 2) + p(d.getUTCHours(), 2);
+    return 'https://mag.ncep.noaa.gov/data/gfs/' + p(d.getUTCHours(), 2) + '/atlantic/1000_500_thick/gfs_atlantic_024_1000_500_thick.gif?r=' + key;
+  }
+  const since = new Date(Date.now() - 7 * 86400000).toISOString();
+
+  const TESTS = [
+    { name:'Open-Meteo: current conditions (these are THE numbers)', url: OM + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl,cloud_cover,is_day&hourly=cape,lifted_index,dew_point_2m,temperature_2m,pressure_msl,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa,relative_humidity_2m,apparent_temperature,uv_index,wind_speed_10m,wind_gusts_10m&past_hours=12&wind_speed_unit=mph&timezone=auto' },
+    { name:'Open-Meteo: 5-day forecast', url: OM + '&current=temperature_2m,weather_code,cloud_cover,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=relative_humidity_2m,cape,lifted_index,dew_point_2m,convective_inhibition,temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,precipitation_probability,is_day&forecast_days=5&wind_speed_unit=mph&timezone=auto' },
+    { name:'Open-Meteo: rainfall history (16 days)', url: OM + '&current=precipitation&daily=precipitation_sum&hourly=precipitation&past_days=16&forecast_days=1&timezone=auto&precipitation_unit=mm' },
+    { name:'Open-Meteo: air quality', url: AQ + '&current=us_aqi&hourly=us_aqi&past_hours=12&timezone=auto' },
+    { name:'Apps Script: METAR', url: APPS + '?action=metar' },
+    { name:'Apps Script: warnings', url: APPS + '?action=warnings' },
+    { name:'Apps Script: news', url: APPS + '?action=news' },
+    { name:'RainViewer: radar index', url: 'https://api.rainviewer.com/public/weather-maps.json' },
+    { name:'USGS: earthquakes', url: 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=' + LAT + '&longitude=' + LON + '&maxradiuskm=500&minmagnitude=1&starttime=' + since.slice(0, 10) },
+    { name:'EMSC: earthquakes', url: 'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&lat=' + LAT + '&lon=' + LON + '&maxradius=4.5&minmag=1&start=' + since.slice(0, 19) },
+    { name:'Storm tracks file (read from GitHub)', url: 'https://raw.githubusercontent.com/moonletboy/jersey-weather-hud/main/data/storm-tracks.json' },
+    { name:'NOAA chart image (Storm Watch uses dozens of these)', url: noaaUrl(), image:true }
+  ];
+
+  const TIMEOUT = 90000;
+  function runOne(t){
+    const t0 = performance.now();
+    if(t.image){
+      return new Promise(function(resolve){
+        const im = new Image();
+        const to = setTimeout(function(){ im.onload = im.onerror = null; resolve({ ms: performance.now() - t0, ok:false, why:'timed out' }); }, TIMEOUT);
+        im.onload = function(){ clearTimeout(to); resolve({ ms: performance.now() - t0, ok:true, size:'image' }); };
+        im.onerror = function(){ clearTimeout(to); resolve({ ms: performance.now() - t0, ok:false, why:'failed or not found' }); };
+        im.src = t.url + (t.url.indexOf('?') >= 0 ? '&' : '?') + 'nocache=' + Date.now();
+      });
+    }
+    const ctl = new AbortController();
+    const to = setTimeout(function(){ ctl.abort(); }, TIMEOUT);
+    const u = t.url + (t.url.indexOf('?') >= 0 ? '&' : '?') + 'nocache=' + Date.now();
+    return fetch(u, { signal: ctl.signal, cache:'no-store' }).then(function(res){
+      return res.text().then(function(body){
+        clearTimeout(to);
+        return { ms: performance.now() - t0, ok: res.ok, why: res.ok ? '' : 'HTTP ' + res.status, size: (body.length / 1024).toFixed(0) + ' KB' };
+      });
+    }).catch(function(e){
+      clearTimeout(to);
+      return { ms: performance.now() - t0, ok:false, why: (e && e.name === 'AbortError') ? 'timed out' : 'blocked or no connection' };
+    });
+  }
+
+  function fmt(r){
+    if(!r) return '<span class="d">&hellip;</span>';
+    const s = (r.ms / 1000).toFixed(1) + 's';
+    if(!r.ok) return '<span class="r">' + s + ' FAILED (' + r.why + ')</span>';
+    const c = r.ms < 1500 ? 'g' : (r.ms < 5000 ? 'a' : 'r');
+    return '<span class="' + c + '">' + s + '</span>';
+  }
+  function plain(r){ if(!r) return '-'; return (r.ms / 1000).toFixed(1) + 's' + (r.ok ? '' : ' FAILED(' + r.why + ')'); }
+
+  document.getElementById('go').addEventListener('click', async function(){
+    const btn = this; btn.disabled = true;
+    document.getElementById('copy').disabled = true;
+    document.getElementById('out').value = '';
+    const body = document.querySelector('#tbl tbody');
+    const rows = TESTS.map(function(t){
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + t.name + '</td><td class="a1"><span class="d">waiting</span></td><td class="a2"><span class="d">waiting</span></td><td class="sz"></td>';
+      return tr;
+    });
+    body.innerHTML = ''; rows.forEach(function(tr){ body.appendChild(tr); });
+
+    const alone = new Array(TESTS.length), together = new Array(TESTS.length);
+    for(let i = 0; i < TESTS.length; i++){
+      rows[i].querySelector('.a1').innerHTML = '<span class="d">testing&hellip;</span>';
+      alone[i] = await runOne(TESTS[i]);
+      rows[i].querySelector('.a1').innerHTML = fmt(alone[i]);
+      rows[i].querySelector('.sz').textContent = alone[i].size || '';
+    }
+    rows.forEach(function(tr){ tr.querySelector('.a2').innerHTML = '<span class="d">testing&hellip;</span>'; });
+    const t0 = performance.now();
+    await Promise.all(TESTS.map(function(t, i){
+      return runOne(t).then(function(r){ together[i] = r; rows[i].querySelector('.a2').innerHTML = fmt(r); });
+    }));
+    const total = ((performance.now() - t0) / 1000).toFixed(1);
+
+    let txt = 'JWC SPEED TEST  ' + new Date().toISOString() + '\n';
+    txt += 'Connection: ' + ((navigator.connection && (navigator.connection.effectiveType + ', ~' + navigator.connection.downlink + ' Mbps')) || 'unknown') + '\n\n';
+    txt += 'SOURCE | ONE AT A TIME | ALL AT ONCE\n';
+    TESTS.forEach(function(t, i){ txt += t.name + ' | ' + plain(alone[i]) + ' | ' + plain(together[i]) + '\n'; });
+    txt += '\nEverything finished after ' + total + 's when run together.\n';
+    document.getElementById('out').value = txt;
+    document.getElementById('copy').disabled = false;
+    btn.disabled = false;
+  });
+
+  document.getElementById('copy').addEventListener('click', function(){
+    const ta = document.getElementById('out'); ta.select();
+    try{ document.execCommand('copy'); this.textContent = 'COPIED'; }catch(e){ alert('Select the text and copy it manually.'); }
+  });
+</script>
+</body>
+</html>
