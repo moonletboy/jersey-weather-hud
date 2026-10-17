@@ -91,7 +91,7 @@ animation:spin 6s linear infinite reverse;
 .live-dot{ width:7px;height:7px;border-radius:50%; background:var(--green); animation:pulse 1.4s ease-in-out infinite; }
 @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 #clock{ color:var(--green); font-size:14px; font-weight:700; letter-spacing:1px; }
-nav.tabs{ display:flex; gap:10px; margin-bottom:32px; }
+nav.tabs{ display:flex; gap:10px; margin-bottom:32px; flex-wrap:wrap; }
 nav.tabs a{
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
 color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
@@ -418,6 +418,7 @@ footer b{ color:var(--dim); }
 <a href="jersey-storm-reports.html">STORM REPORTS</a>
 <a href="jersey-space-weather.html" class="active">SPACE WEATHER</a>
 <a href="jersey-sea-tides.html">SEA &amp; TIDES</a>
+<a href="microclimate-grid.html">MICROCLIMATE</a>
 </nav>
 
 <div class="storm-banner" id="stormBanner" role="alert" aria-live="polite">
