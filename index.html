@@ -1136,7 +1136,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="sw-note">
 <b>HOW TO READ THIS MAP:</b> the map is fixed on the area that matters to Jersey &mdash; Ireland and the Western Approaches across to the Low Countries, Biscay up to Scotland &mdash; so the wind shading always fills it and shows more detail than a whole-Atlantic view could. Storms are still followed right across the Atlantic: one that is outside the map is listed under ALL TRACKED STORMS with the time it enters the map. Each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
 <b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; appears in its card under the map. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes, or tap any part of a storm's track (or one of its dots) to jump to that time and place and see the rose there. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
-<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 4 hPa &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map uses a separate hourly forecast for Jersey itself from several weather models (GFS, ECMWF, ICON, the UK Met Office and M&eacute;t&eacute;o-France, where each reaches that far ahead), shown as a range: when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. Its &ldquo;strongest in the next 10 days&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
+<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10, numbered every 4 &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map uses a separate hourly forecast for Jersey itself from several weather models (GFS, ECMWF, ICON, the UK Met Office and M&eacute;t&eacute;o-France, where each reaches that far ahead), shown as a range: when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. Its &ldquo;strongest in the next 10 days&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -3340,6 +3340,7 @@ const t = stClosestInside();
 ST.hour = t ? Math.round(t.closest_hour / 6) * 6 : 0;
 }
 stRender();
+setTimeout(wfPrepareAll, 2500);
 })
 .catch(function(e){
 console.warn('storm tracks not loaded', e);
@@ -3359,6 +3360,8 @@ document.getElementById('stStatus').innerHTML = '';
    their value written along them. Jersey's own hourly gust forecast comes
    from a single small Open-Meteo request.
    ============================================================ */
+/* rendered frames are kept so playing the loop or dragging the slider does not rebuild them */
+const WF_CACHE = { img:{}, iso:{}, cycle:'', prep:0 };
 const WF = { url:'https://raw.githubusercontent.com/moonletboy/jersey-weather-hud/data/wind-field.json', urlFallback:'data/wind-field.json', d:null, state:'idle', jer:null, jstate:'idle', overlay:null, iso:null, isoLbl:null, isoR:null, key:'', isoKey:'', raf:0, peakHour:-1, legendType:'', pop:null, popLL:null };
 const WF_RAMPS = {
 gust:[[20,76,211,255,0],[28,76,211,255,60],[35,45,225,160,112],[45,255,176,32,152],[55,255,110,40,178],[65,255,75,92,198],[75,255,95,210,218],[90,255,238,255,238]],
@@ -3408,6 +3411,8 @@ return out;
 }
 d.cycleT = new Date(d.cycle).getTime();
 WF.d = d; WF.state = 'ok'; WF.key = ''; WF.isoKey = '';
+if(WF_CACHE.cycle !== d.cycle){ wfCacheClear(); WF_CACHE.cycle = d.cycle; }
+setTimeout(wfPrepareAll, 1500);
 }catch(e){
 console.warn('wind field not loaded', e);
 WF.state = WF.d ? 'ok' : 'fail';
@@ -3594,7 +3599,7 @@ let lo = 1e9, hi = -1e9;
 for(let n=0; n<m.length; n++){ if(m[n] < lo) lo = m[n]; if(m[n] > hi) hi = m[n]; }
 const dLat = (d.lat1 - d.lat0) / (nlat - 1), dLon = (d.lon1 - d.lon0) / (nlon - 1);
 const out = [];
-for(let L0 = Math.ceil(lo / 4) * 4; L0 <= hi; L0 += 4){
+for(let L0 = Math.ceil(lo / 2) * 2; L0 <= hi; L0 += 2){
 const segs = [], pt = {};
 function edge(key, i1, j1, i2, j2){
 if(!pt[key]){
@@ -3655,27 +3660,79 @@ r.push([0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]], [0.25 * p[0] + 0.
 r.push(c[c.length - 1]);
 return r;
 }
-function wfDrawIso(i){
+function wfCacheClear(){
+WF_CACHE.img = {}; WF_CACHE.iso = {}; WF_CACHE.prep = 0;
+if(WF.iso){ ST.map.removeLayer(WF.iso); WF.iso = null; }
+if(WF.isoLbl){ ST.map.removeLayer(WF.isoLbl); WF.isoLbl = null; }
+}
+/* the colour picture for one map step, built once and kept */
+function wfFrameUrl(fkey, i, mode, type){
+const ck = fkey + '|' + i + '|' + mode;
+if(WF_CACHE.img[ck]) return WF_CACHE.img[ck];
+const d = WF.d, W = (d.nlon - 1) * (d.nlon > 80 ? 6 : 10);
+const H = Math.round(W * (wfMerc(d.lat1) - wfMerc(d.lat0)) / ((d.lon1 - d.lon0) * Math.PI / 180));
+const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d');
+const img = ctx.createImageData(W, H);
+img.data.set(wfImage(wfNodes(fkey, i, mode === '24'), W, H, type));
+ctx.putImageData(img, 0, 0);
+const url = cv.toDataURL('image/png');
+WF_CACHE.img[ck] = url;
+return url;
+}
+/* the isobar lines and labels for one map step, built once and kept as layer groups */
+function wfIsoLayers(i){
+if(WF_CACHE.iso[i]) return WF_CACHE.iso[i];
 if(!WF.isoR) WF.isoR = L.canvas({ pane:'isoPane', padding:0.5 });
-if(!WF.iso){ WF.iso = L.layerGroup().addTo(ST.map); WF.isoLbl = L.layerGroup().addTo(ST.map); }
-WF.iso.clearLayers(); WF.isoLbl.clearLayers();
+const lines = L.layerGroup(), labels = L.layerGroup();
 const m = wfPressure(i);
-if(!m) return;
-wfContours(m).forEach(function(lv){
-const strong = lv.lvl % 20 === 0;
-const lines = lv.chains.map(wfChaikin);
-L.polyline(lines, { renderer:WF.isoR, color:'#e9f6f5', weight:strong ? 1.7 : 1, opacity:strong ? 0.8 : 0.5, interactive:false, noClip:false }).addTo(WF.iso);
+if(m){
 const res = (WF.d.lon1 - WF.d.lon0) / (WF.d.nlon - 1);          // degrees between grid points
 const k = 0.5 / res;                                                 // 1 on the old 0.5-degree grid, 2 on 0.25
-lines.forEach(function(ch){
+wfContours(m).forEach(function(lv){
+const strong = lv.lvl % 10 === 0;
+const chains = lv.chains.map(wfChaikin);
+L.polyline(chains, { renderer:WF.isoR, color:'#e9f6f5', weight:strong ? 1.7 : 0.9, opacity:strong ? 0.8 : 0.45, interactive:false, noClip:false }).addTo(lines);
+if(lv.lvl % 4 !== 0) return;                                       // a number on every other line keeps it readable
+chains.forEach(function(ch){
 if(ch.length < 14 * k) return;
 const spots = ch.length > 70 * k ? [0.25, 0.75] : [0.5];
 spots.forEach(function(f){
 const p = ch[Math.floor(ch.length * f)];
-L.marker(p, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-iso">' + lv.lvl + '</div>', iconSize:[0,0] }), interactive:false, keyboard:false }).addTo(WF.isoLbl);
+L.marker(p, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-iso">' + lv.lvl + '</div>', iconSize:[0,0] }), interactive:false, keyboard:false }).addTo(labels);
 });
 });
 });
+}
+WF_CACHE.iso[i] = { lines:lines, labels:labels };
+return WF_CACHE.iso[i];
+}
+function wfDrawIso(i){
+const g = wfIsoLayers(i);
+if(WF.iso && WF.iso !== g.lines) ST.map.removeLayer(WF.iso);
+if(WF.isoLbl && WF.isoLbl !== g.labels) ST.map.removeLayer(WF.isoLbl);
+WF.iso = g.lines; WF.isoLbl = g.labels;
+if(!ST.map.hasLayer(WF.iso)) WF.iso.addTo(ST.map);
+if(!ST.map.hasLayer(WF.isoLbl)) WF.isoLbl.addTo(ST.map);
+}
+/* quietly build every frame in the background, one at a time, so the loop plays smoothly */
+function wfPrepareAll(){
+const d = WF.d;
+if(!d || !ST.data) return;
+const type = (ST.windType === 'wind' && d.wspd) ? 'wind' : 'gust';
+const fkey = type === 'wind' ? 'wspd' : 'gust';
+const mode = ST.reachMode || 'now';
+const n = d.hours.length;
+let k = 0;
+const step = function(){
+if(WF.d !== d || k >= n) return;
+const i = (ST.hour / d.step_hours + k) % n;                        // start from the slider and work forwards
+if(d[fkey][i] && mode !== 'off') wfFrameUrl(fkey, i, mode, type);
+if(d.mslp[i]) wfIsoLayers(i);
+k++;
+(window.requestIdleCallback || function(f){ setTimeout(f, 40); })(step);
+};
+step();
 }
 function wfUpdate(){
 if(WF.raf) return;
@@ -3694,14 +3751,8 @@ if(key !== WF.key){
 WF.key = key;
 if(WF.legendType !== type) wfLegend(type);
 if(i >= 0 && mode !== 'off'){
-const d = WF.d, W = (d.nlon - 1) * (d.nlon > 80 ? 6 : 10);
-const H = Math.round(W * (wfMerc(d.lat1) - wfMerc(d.lat0)) / ((d.lon1 - d.lon0) * Math.PI / 180));
-const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-const ctx = cv.getContext('2d');
-const img = ctx.createImageData(W, H);
-img.data.set(wfImage(wfNodes(fkey, i, mode === '24'), W, H, type));
-ctx.putImageData(img, 0, 0);
-const url = cv.toDataURL('image/png');
+const d = WF.d;
+const url = wfFrameUrl(fkey, i, mode, type);
 const bounds = [[d.lat0, d.lon0], [d.lat1, d.lon1]];
 if(!WF.overlay) WF.overlay = L.imageOverlay(url, bounds, { pane:'windPane', interactive:false, opacity:1 }).addTo(ST.map);
 else WF.overlay.setUrl(url);
@@ -3714,7 +3765,7 @@ const ikey = (ST.isoOn ? 1 : 0) + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '')
 if(ikey !== WF.isoKey){
 WF.isoKey = ikey;
 if(im >= 0 && ST.isoOn) wfDrawIso(im);
-else if(WF.iso){ WF.iso.clearLayers(); WF.isoLbl.clearLayers(); }
+else { if(WF.iso) ST.map.removeLayer(WF.iso); if(WF.isoLbl) ST.map.removeLayer(WF.isoLbl); WF.iso = null; WF.isoLbl = null; }
 }
 /* the box under the map: Jersey's own hourly forecast, as a range across the models */
 let html = '';
@@ -3726,13 +3777,12 @@ const gs = [], ws = [];
 if(ti !== undefined) js.models.forEach(function(m){ if(m.gust[ti] != null) gs.push(m.gust[ti]); if(m.wind[ti] != null) ws.push(m.wind[ti]); });
 if(gs.length){
 const glo = Math.round(Math.min.apply(null, gs)), ghi = Math.round(Math.max.apply(null, gs));
-html += '<b>JERSEY</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(ghi) + ';">' + wfRange(glo, ghi) + '</b>';
+html += '<b>JERSEY AT THE SLIDER TIME</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(ghi) + ';">' + wfRange(glo, ghi) + '</b>';
 if(ws.length){
 const wlo = Math.round(Math.min.apply(null, ws)), whi = Math.round(Math.max.apply(null, ws));
 html += ' &middot; average wind <b style="color:' + stWindColor(whi) + ';">' + wfRange(wlo, whi) + '</b>';
 }
-html += ' <span style="color:var(--dim);">&middot; ' + gs.length + ' MODEL' + (gs.length === 1 ? '' : 'S') + '</span>';
-if(ghi - glo > WF_DISAGREE_MPH) html += '<br><span style="color:var(--amber);">MODELS DISAGREE HERE &mdash; THE LOWER FIGURE IS MORE LIKELY, THE HIGHER IS POSSIBLE.</span>';
+html += ' <span style="color:var(--dim);">&middot; ' + gs.length + ' MODELS' + (ghi - glo > WF_DISAGREE_MPH ? ', ' + (ghi - glo) + ' MPH APART (THEY TIME THE PEAK DIFFERENTLY)' : ' WITHIN ' + (ghi - glo) + ' MPH') + '</span>';
 } else {
 html += 'NO JERSEY WIND FORECAST FOR THIS TIME (IT COVERS ABOUT 10 DAYS FROM TODAY).';
 }
@@ -3744,10 +3794,11 @@ const pd0 = new Date(js.times[ts[0]] + ':00Z'), pd1 = new Date(js.times[ts[ts.le
 const mid = new Date(js.times[ts[Math.floor(ts.length / 2)]] + ':00Z');
 const ph = Math.round((mid.getTime() - new Date(ST.data.cycle).getTime()) / 3600000 / 6) * 6;
 WF.peakHour = ph;
-html += '<br>STRONGEST IN THE NEXT 10 DAYS: <b style="color:' + stWindColor(hi) + ';">' + wfRange(lo, hi) + '</b> ' + wfSpan(pd0, pd1);
+html += '<br><b>STRONGEST SPELL IN THE NEXT 10 DAYS</b> (EACH MODEL\'S OWN PEAK): <b style="color:' + stWindColor(hi) + ';">' + wfRange(lo, hi) + '</b> ' + wfSpan(pd0, pd1);
 const spread = hi - lo;
 html += ' <span style="color:' + (spread > WF_DISAGREE_MPH ? 'var(--amber)' : 'var(--dim)') + ';">&middot; ' + pk.length + ' OF ' + (pk.length + (js.short || []).length) + ' MODELS, ' + (spread > WF_DISAGREE_MPH ? spread + ' MPH APART' : 'WITHIN ' + spread + ' MPH') + '</span>';
 if(ph >= 0 && ph <= 240) html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
+if(spread > WF_DISAGREE_MPH) html += '<br><span style="color:var(--amber);">THE MODELS DISAGREE ON HOW STRONG &mdash; THE LOWER FIGURE IS MORE LIKELY, THE HIGHER IS POSSIBLE.</span>';
 if(js.trend && (js.trend.lo !== lo || js.trend.hi !== hi)){
 const up = hi > js.trend.hi || (hi === js.trend.hi && lo > js.trend.lo);
 html += '<br><span style="color:' + (up ? 'var(--amber)' : 'var(--green)') + ';">' + (up ? 'UP' : 'DOWN') + ' FROM ' + wfRange(js.trend.lo, js.trend.hi).toUpperCase() + ' SEEN ' + js.trend.ageH + ' H AGO ON THIS DEVICE</span>';
@@ -3757,7 +3808,7 @@ html += '<br><span style="color:var(--dim);">PEAK BY MODEL: ' + pk.map(p => p.lb
 /* the coarse NOAA grid the map is shaded from, at Jersey's own cell, for comparison */
 if(WF.d && i >= 0 && gs.length){
 const gridG = wfSample(WF.d.gust[wfIdx(when, 'gust')], ST_JERSEY[0], ST_JERSEY[1]);
-if(gridG != null && !isNaN(gridG)) html += '<br><span style="color:var(--dim);">WIND MAP AT JERSEY (NOAA ' + (WF.d.nlon > 80 ? '15' : '30') + '-MILE GRID): ' + Math.round(gridG) + ' MPH &mdash; THE COARSE GRID USUALLY RUNS LOWER THAN THE POINT FORECAST.</span>';
+if(gridG != null && !isNaN(gridG)) html += '<br><span style="color:var(--dim);">MAP SHADING AT JERSEY AT THE SLIDER TIME: ' + Math.round(gridG) + ' MPH (NOAA ' + (WF.d.nlon > 80 ? '15' : '30') + '-MILE GRID, ONE MODEL)</span>';
 }
 html += '<br><span style="color:var(--dim2);">JERSEY FORECAST FETCHED ' + ST_WD.format(js.fetched).toUpperCase() + ' &middot; STRONGEST SPELL = BEST 3-HOUR AVERAGE OF GUSTS, NOT A SINGLE HOUR</span>';
 } else if(WF.jstate === 'fail'){
@@ -3844,6 +3895,7 @@ ST.reachMode = b.dataset.v;
 document.querySelectorAll('#stReach .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
 WF.key = '';
 wfUpdate();
+setTimeout(wfPrepareAll, 300);
 });
 });
 document.querySelectorAll('#stType .sw-chip').forEach(function(b){
@@ -3852,6 +3904,7 @@ ST.windType = b.dataset.v;
 document.querySelectorAll('#stType .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
 WF.key = '';
 wfUpdate();
+setTimeout(wfPrepareAll, 300);
 });
 });
 document.querySelectorAll('#stIso .sw-chip').forEach(function(b){
