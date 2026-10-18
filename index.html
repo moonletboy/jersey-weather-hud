@@ -1158,7 +1158,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="sw-note">
 <b>HOW TO READ THIS MAP:</b> each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
 <b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; appears in its card under the map. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes, or tap any part of a storm's track (or one of its dots) to jump to that time and place and see the rose there. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
-<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 4 hPa &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 30-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map uses a separate hourly forecast for Jersey itself.<br>
+<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 4 hPa &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 30-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map uses a separate hourly forecast for Jersey itself from several weather models (GFS, ECMWF, ICON, the UK Met Office and M&eacute;t&eacute;o-France, where each reaches that far ahead), shown as a range: when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. Its &ldquo;strongest in the next 10 days&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -2925,7 +2925,7 @@ const parts = ST_WD.formatToParts(d);
 const g = t => (parts.find(x => x.type === t) || {}).value || '';
 return (g('weekday') + ' ' + g('hour') + ':' + g('minute')).toUpperCase();
 }
-function stTimeD(d){ return ST_WDD.format(d).replace(',', '').toUpperCase(); }
+function stTimeD(d){ return ST_WDD.format(d).replace(/,/g, '').toUpperCase(); }
 function stHourDate(h){ return new Date(new Date(ST.data.cycle).getTime() + h * 3600000); }
 function stKm(a, b){
 const R = 6371, rad = Math.PI / 180;
@@ -3402,18 +3402,88 @@ WF.state = WF.d ? 'ok' : 'fail';
 }
 wfUpdate();
 }
+/* Jersey's own hourly forecast, from several named weather models in one request.
+   The old single "best match" blend is no longer used for the headline: on 18 Oct 2026 it
+   showed 95 mph for a storm that every individual model put at 65-69 mph. A range across
+   models, with a note on how far apart they are, is more honest than one number. */
+const WF_MODELS = [
+{ id:'gfs_seamless',         lbl:'GFS' },
+{ id:'ecmwf_ifs025',         lbl:'ECMWF' },
+{ id:'icon_seamless',        lbl:'ICON' },
+{ id:'ukmo_seamless',        lbl:'UK MET' },
+{ id:'meteofrance_seamless', lbl:'M\u00c9T\u00c9O-FR' }
+];
+const WF_DISAGREE_MPH = 15;            // spread between models that earns a "models disagree" flag
+const WF_TREND_KEY = 'jwcJerseyPeak';  // remembers the last peak range on this device, for the trend note
 async function wfJerseyLoad(){
 try{
-const r = await fetchJsonRetry('https://api.open-meteo.com/v1/forecast?latitude=' + ST_JERSEY[0] + '&longitude=' + ST_JERSEY[1] + '&hourly=wind_gusts_10m,wind_speed_10m&wind_speed_unit=mph&timezone=GMT&forecast_days=10', 20000, 2);
+const r = await fetchJsonRetry('https://api.open-meteo.com/v1/forecast?latitude=' + ST_JERSEY[0] + '&longitude=' + ST_JERSEY[1] + '&hourly=wind_gusts_10m,wind_speed_10m&wind_speed_unit=mph&timezone=GMT&forecast_days=10&models=' + WF_MODELS.map(m => m.id).join(','), 20000, 2);
 const idx = {};
 r.hourly.time.forEach(function(t, i){ idx[t] = i; });
-WF.jer = { times:r.hourly.time, gust:r.hourly.wind_gusts_10m, wind:r.hourly.wind_speed_10m, idx:idx };
+const models = [];
+WF_MODELS.forEach(function(m){
+const g = r.hourly['wind_gusts_10m_' + m.id], w = r.hourly['wind_speed_10m_' + m.id];
+if(!g || !g.some(v => v != null)) return;
+models.push({ id:m.id, lbl:m.lbl, gust:g, wind:w || [] });
+});
+if(!models.length) throw new Error('no model data');
+WF.jer = { times:r.hourly.time, idx:idx, models:models, fetched:new Date() };
 WF.jstate = 'ok';
+wfJerseyPeak();
 }catch(e){ console.warn('jersey gust series not loaded', e); WF.jstate = 'fail'; }
 WF.key = '';
 wfUpdate();
 }
-/* which stored map matches the time on the slider (nearest 6-hourly map that has this field) */
+/* the strongest 3-hour spell of gusts in each model, from now on. Using a 3-hour average
+   rather than the single highest hour filters one-hour spikes without hiding a real storm. */
+function wfJerseyPeak(){
+const js = WF.jer;
+if(!js) return;
+const hk = new Date().toISOString().slice(0, 13) + ':00';
+const t0 = js.idx[hk] || 0;
+const all = [];
+js.models.forEach(function(m){
+let best = -1, bt = -1, last = -1;
+for(let t = Math.max(1, t0); t < m.gust.length - 1; t++){
+if(m.gust[t] != null) last = t;
+if(m.gust[t-1] == null || m.gust[t] == null || m.gust[t+1] == null) continue;
+const a = (m.gust[t-1] + m.gust[t] + m.gust[t+1]) / 3;
+if(a > best){ best = a; bt = t; }
+}
+if(bt >= 0) all.push({ lbl:m.lbl, v:best, t:bt, last:last });
+});
+/* a model whose data stops before the storm arrives cannot see it, so it must not vote:
+   the models that run furthest ahead set the time of the strongest spell, and any model
+   that ends more than 6 hours before that time is listed separately as "runs to <day>" */
+let refT = -1, farthest = -1;
+all.forEach(function(p){ if(p.last > farthest) farthest = p.last; });
+all.forEach(function(p){ if(p.last >= farthest - 12 && p.t > refT) refT = p.t; });
+js.peaks = all.filter(p => p.last >= refT - 6);
+js.short = all.filter(p => p.last < refT - 6);
+if(!js.peaks.length) return;
+const lo = Math.round(Math.min.apply(null, js.peaks.map(p => p.v))), hi = Math.round(Math.max.apply(null, js.peaks.map(p => p.v)));
+/* trend: compare with the range this device saw at least 3 hours ago */
+js.trend = null;
+try{
+const prev = JSON.parse(localStorage.getItem(WF_TREND_KEY) || 'null');
+const now = Date.now();
+if(prev && now - prev.at >= 3 * 3600000){
+js.trend = { lo:prev.lo, hi:prev.hi, ageH:Math.round((now - prev.at) / 3600000) };
+localStorage.setItem(WF_TREND_KEY, JSON.stringify({ lo:lo, hi:hi, at:now }));
+} else if(!prev){
+localStorage.setItem(WF_TREND_KEY, JSON.stringify({ lo:lo, hi:hi, at:now }));
+} else if(prev.at < now - 30 * 60000){
+js.trend = { lo:prev.lo, hi:prev.hi, ageH:Math.round((now - prev.at) / 3600000) };
+}
+}catch(e){}
+}
+/* "FRI 23 OCT 03:00-11:00" when both ends fall on the same day, otherwise both in full */
+function wfSpan(a, b){
+const sa = stTimeD(a), sb = stTimeD(b);
+if(sa === sb) return sa;
+return sa.slice(0, -5) === sb.slice(0, -5) ? sa + '&ndash;' + sb.slice(-5) : sa + ' TO ' + sb;
+}
+function wfRange(lo, hi){ return lo === hi ? lo + ' mph' : lo + '&ndash;' + hi + ' mph'; }
 function wfIdx(date, key){
 const d = WF.d, arr = d && d[key || 'gust'];
 if(!arr) return -1;
@@ -3631,27 +3701,50 @@ WF.isoKey = ikey;
 if(im >= 0 && ST.isoOn) wfDrawIso(im);
 else if(WF.iso){ WF.iso.clearLayers(); WF.isoLbl.clearLayers(); }
 }
-/* the box under the map: Jersey's own hourly forecast */
+/* the box under the map: Jersey's own hourly forecast, as a range across the models */
 let html = '';
 const js = WF.jer;
 if(js && when){
 const hk = function(dt){ return dt.toISOString().slice(0, 13) + ':00'; };
 const ti = js.idx[hk(when)];
-if(ti !== undefined && js.gust[ti] != null){
-html += '<b>JERSEY</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(js.gust[ti]) + ';">' + Math.round(js.gust[ti]) + ' mph</b> &middot; average wind <b style="color:' + stWindColor(js.wind[ti]) + ';">' + Math.round(js.wind[ti]) + ' mph</b>';
-const t0 = js.idx[hk(new Date())] || 0;
-let pk = -1, pt = -1;
-for(let t=t0; t<js.gust.length; t++) if(js.gust[t] != null && js.gust[t] > pk){ pk = js.gust[t]; pt = t; }
-if(pt >= 0){
-const pd = new Date(js.times[pt] + ':00Z');
-const ph = Math.round((pd.getTime() - new Date(ST.data.cycle).getTime()) / 3600000 / 6) * 6;
-WF.peakHour = ph;
-html += '<br>WORST GUSTS IN THE NEXT 10 DAYS: <b style="color:' + stWindColor(pk) + ';">' + Math.round(pk) + ' mph</b> around ' + stTimeD(pd);
-if(ph >= 0 && ph <= 240) html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
+const gs = [], ws = [];
+if(ti !== undefined) js.models.forEach(function(m){ if(m.gust[ti] != null) gs.push(m.gust[ti]); if(m.wind[ti] != null) ws.push(m.wind[ti]); });
+if(gs.length){
+const glo = Math.round(Math.min.apply(null, gs)), ghi = Math.round(Math.max.apply(null, gs));
+html += '<b>JERSEY</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(ghi) + ';">' + wfRange(glo, ghi) + '</b>';
+if(ws.length){
+const wlo = Math.round(Math.min.apply(null, ws)), whi = Math.round(Math.max.apply(null, ws));
+html += ' &middot; average wind <b style="color:' + stWindColor(whi) + ';">' + wfRange(wlo, whi) + '</b>';
 }
+html += ' <span style="color:var(--dim);">&middot; ' + gs.length + ' MODEL' + (gs.length === 1 ? '' : 'S') + '</span>';
+if(ghi - glo > WF_DISAGREE_MPH) html += '<br><span style="color:var(--amber);">MODELS DISAGREE HERE &mdash; THE LOWER FIGURE IS MORE LIKELY, THE HIGHER IS POSSIBLE.</span>';
 } else {
 html += 'NO JERSEY WIND FORECAST FOR THIS TIME (IT COVERS ABOUT 10 DAYS FROM TODAY).';
 }
+const pk = js.peaks || [];
+if(pk.length){
+const lo = Math.round(Math.min.apply(null, pk.map(p => p.v))), hi = Math.round(Math.max.apply(null, pk.map(p => p.v)));
+const ts = pk.map(p => p.t).sort((x, y) => x - y);
+const pd0 = new Date(js.times[ts[0]] + ':00Z'), pd1 = new Date(js.times[ts[ts.length - 1]] + ':00Z');
+const mid = new Date(js.times[ts[Math.floor(ts.length / 2)]] + ':00Z');
+const ph = Math.round((mid.getTime() - new Date(ST.data.cycle).getTime()) / 3600000 / 6) * 6;
+WF.peakHour = ph;
+html += '<br>STRONGEST IN THE NEXT 10 DAYS: <b style="color:' + stWindColor(hi) + ';">' + wfRange(lo, hi) + '</b> ' + wfSpan(pd0, pd1);
+const spread = hi - lo;
+html += ' <span style="color:' + (spread > WF_DISAGREE_MPH ? 'var(--amber)' : 'var(--dim)') + ';">&middot; ' + pk.length + ' OF ' + (pk.length + (js.short || []).length) + ' MODELS, ' + (spread > WF_DISAGREE_MPH ? spread + ' MPH APART' : 'WITHIN ' + spread + ' MPH') + '</span>';
+if(ph >= 0 && ph <= 240) html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
+if(js.trend && (js.trend.lo !== lo || js.trend.hi !== hi)){
+const up = hi > js.trend.hi || (hi === js.trend.hi && lo > js.trend.lo);
+html += '<br><span style="color:' + (up ? 'var(--amber)' : 'var(--green)') + ';">' + (up ? 'UP' : 'DOWN') + ' FROM ' + wfRange(js.trend.lo, js.trend.hi).toUpperCase() + ' SEEN ' + js.trend.ageH + ' H AGO ON THIS DEVICE</span>';
+}
+html += '<br><span style="color:var(--dim);">PEAK BY MODEL: ' + pk.map(p => p.lbl + ' ' + Math.round(p.v)).join(' &middot; ') + (js.short || []).map(p => ' &middot; ' + p.lbl + ' RUNS ONLY TO ' + ST_DAY.format(new Date(js.times[p.last] + ':00Z')).toUpperCase()).join('') + '</span>';
+}
+/* the coarse NOAA grid the map is shaded from, at Jersey's own cell, for comparison */
+if(WF.d && i >= 0 && gs.length){
+const gridG = wfSample(WF.d.gust[wfIdx(when, 'gust')], ST_JERSEY[0], ST_JERSEY[1]);
+if(gridG != null && !isNaN(gridG)) html += '<br><span style="color:var(--dim);">WIND MAP AT JERSEY (NOAA 30-MILE GRID): ' + Math.round(gridG) + ' MPH &mdash; THE COARSE GRID USUALLY RUNS LOWER THAN THE POINT FORECAST.</span>';
+}
+html += '<br><span style="color:var(--dim2);">JERSEY FORECAST FETCHED ' + ST_WD.format(js.fetched).toUpperCase() + ' &middot; STRONGEST SPELL = BEST 3-HOUR AVERAGE OF GUSTS, NOT A SINGLE HOUR</span>';
 } else if(WF.jstate === 'fail'){
 html += 'THE JERSEY WIND FORECAST IS NOT AVAILABLE RIGHT NOW.';
 } else {
