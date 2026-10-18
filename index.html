@@ -368,6 +368,17 @@ border:1px solid var(--line); border-radius:12px; padding:18px;
 .day-card .day-temps .hi{ font-family:'Orbitron',sans-serif; font-size:24px; font-weight:800; color:var(--text); }
 .day-card .day-temps .lo{ font-size:14px; color:var(--dim); }
 .day-card .day-cond{ text-align:center; font-size:10px; letter-spacing:1.5px; color:var(--green); margin-bottom:10px; }
+/* wind impact strip: only on days that earn it */
+.day-impact{ display:none; margin:0 0 12px; padding:8px 10px; border-radius:7px; font-size:9.5px; line-height:1.5; letter-spacing:0.8px; font-weight:700; }
+.day-impact b{ display:block; font-size:10px; letter-spacing:1.5px; margin-bottom:2px; }
+.day-impact small{ display:block; font-weight:400; color:inherit; opacity:0.85; letter-spacing:0.5px; }
+.day-impact.show{ display:block; }
+.day-impact.t1{ color:var(--amber); border:1px solid rgba(255,176,32,0.55); background:rgba(255,176,32,0.06); }
+.day-impact.t2{ color:#05080d; background:var(--amber); border:1px solid var(--amber); }
+.day-impact.t3{ color:var(--red); border:1px solid rgba(255,75,92,0.65); background:rgba(255,75,92,0.08); }
+.day-impact.t4{ color:#fff; background:var(--red); border:1px solid var(--red); }
+.day-card.wind-t1, .day-card.wind-t2{ border-color:rgba(255,176,32,0.6); box-shadow:0 0 18px rgba(255,176,32,0.18); }
+.day-card.wind-t3, .day-card.wind-t4{ border-color:rgba(255,75,92,0.7); box-shadow:0 0 22px rgba(255,75,92,0.28); }
 .day-actions{ display:flex; gap:8px; margin-top:12px; }
 .day-btn{
 flex:1; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1px; font-weight:700;
@@ -1431,6 +1442,77 @@ return {label:'EXTREMELY UNSTABLE', color:RED};
 // wind higher up (~500hPa, roughly 5-6km up). This is the single biggest
 // factor in whether storms stay small and short-lived, or organise into
 // clusters, lines, or rotating supercells.
+/* ---- wind impact on the 5-day cards -----------------------------------------
+   Gust tiers in plain words, set by the LOWER end of the model range (what most
+   models agree on), with the upper end shown. Wording follows the Met Office's
+   impact language so it does not contradict a gov.je warning. */
+const FC_TIERS = [
+{ min:70, cls:'t4', head:'DAMAGING GUSTS LIKELY',   body:'Structural damage and power cuts possible. Stay away from the coast and avoid travel if you can.' },
+{ min:58, cls:'t3', head:'DAMAGING GUSTS POSSIBLE', body:'Roof tiles, fences and trees at risk. Secure loose items; take care near the coast.' },
+{ min:47, cls:'t2', head:'STRONG GUSTS',            body:'Branches down and debris likely; difficult driving, especially for high-sided vehicles.' },
+{ min:39, cls:'t1', head:'GALE-FORCE GUSTS',        body:'Loose items blow about; hard going on bikes and for high-sided vehicles.' }
+];
+function fcTier(mph){ for(const t of FC_TIERS) if(mph >= t.min) return t; return null; }
+/* the day's gusts in each model, from the five-model hourly series the Jersey box uses */
+function fcWindDay(dateStr){
+const js = WF.jer;
+if(!js || !js.models) return null;
+const fmtDay = new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/London', year:'numeric', month:'2-digit', day:'2-digit' });
+const hrs = [];
+js.times.forEach(function(t, i){ if(fmtDay.format(new Date(t + ':00Z')) === dateStr) hrs.push(i); });
+if(!hrs.length) return null;
+const out = [];
+js.models.forEach(function(m){
+let g = -1, w = -1, gi = -1, n = 0;
+hrs.forEach(function(i){
+if(m.gust[i] == null) return;
+n++;
+if(m.gust[i] > g){ g = m.gust[i]; gi = i; }
+if(m.wind[i] != null && m.wind[i] > w) w = m.wind[i];
+});
+if(n >= hrs.length / 2) out.push({ lbl:m.lbl, g:g, w:w, t:new Date(js.times[gi] + ':00Z') });
+});
+if(!out.length) return null;
+const gs = out.map(o => o.g), ws = out.map(o => o.w).filter(v => v >= 0);
+const ts = out.map(o => o.t.getTime()).sort((a, b) => a - b);
+return {
+n:out.length,
+glo:Math.round(Math.min.apply(null, gs)), ghi:Math.round(Math.max.apply(null, gs)),
+wlo:ws.length ? Math.round(Math.min.apply(null, ws)) : null, whi:ws.length ? Math.round(Math.max.apply(null, ws)) : null,
+t0:new Date(ts[0]), t1:new Date(ts[ts.length - 1])
+};
+}
+const FC_HH = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', hourCycle:'h23' });
+function fcApplyWindImpact(){
+document.querySelectorAll('.day-impact[data-day]').forEach(function(strip){
+const day = strip.dataset.day;
+const row = document.querySelector('.day-row .v[data-windrow="' + day + '"]');
+const card = strip.closest('.day-card');
+const d = fcWindDay(day);
+let lo, hi, note = '', rowTxt;
+if(d){
+lo = d.glo; hi = d.ghi;
+const peak = FC_HH.format(d.t0) === FC_HH.format(d.t1) ? FC_HH.format(d.t0) + ':00' : FC_HH.format(d.t0) + '&ndash;' + FC_HH.format(d.t1) + 'h';
+rowTxt = (d.wlo === null ? '&mdash;' : (d.wlo === d.whi ? d.wlo : d.wlo + '&ndash;' + d.whi)) + ' / ' + (lo === hi ? lo : lo + '&ndash;' + hi) + ' MPH';
+note = d.n + ' MODELS' + (hi - lo > 15 ? ' &middot; THEY DISAGREE ON HOW STRONG' : ' WITHIN ' + (hi - lo) + ' MPH') + ' &middot; PEAK ' + peak;
+} else {
+lo = hi = Number(row.dataset.gust);                       // the models have not loaded: fall back to the daily figure
+rowTxt = row.dataset.wind + ' / ' + row.dataset.gust + ' MPH';
+note = 'ONE MODEL';
+}
+if(row) row.innerHTML = rowTxt;
+const tier = fcTier(lo);
+card.className = card.className.replace(/\bwind-t\d\b/g, '').trim();
+if(tier){
+strip.className = 'day-impact show ' + tier.cls;
+strip.innerHTML = '<b>' + tier.head + ' &middot; ' + (lo === hi ? lo : lo + '&ndash;' + hi) + ' MPH</b>' + tier.body + '<small>' + note + '</small>';
+card.classList.add('wind-' + tier.cls);
+} else {
+strip.className = 'day-impact';
+strip.innerHTML = '';
+}
+});
+}
 function windShearMph(dir1, speed1, dir2, speed2){
 const u1 = -speed1 * Math.sin(dir1 * Math.PI/180), v1 = -speed1 * Math.cos(dir1 * Math.PI/180);
 const u2 = -speed2 * Math.sin(dir2 * Math.PI/180), v2 = -speed2 * Math.cos(dir2 * Math.PI/180);
@@ -2295,12 +2377,13 @@ cardsHtml += `
 <div class="day-card">
 <div class="day-label">${i===0?'TODAY':dayName}</div>
 <div class="day-date">${dayDate}</div>
+<div class="day-impact" data-day="${dateStr}"></div>
 <div class="day-icon">${cond.icon}</div>
 <div class="day-temps"><span class="hi" style="color:${tempScaleColor(data.daily.temperature_2m_max[i])}">${Math.round(data.daily.temperature_2m_max[i])}\u00b0</span><span class="lo">${Math.round(data.daily.temperature_2m_min[i])}\u00b0</span></div>
 <div class="day-cond">${cond.label}</div>
 <div class="day-row"><span>FEELS LIKE</span><span class="v">${Math.round(data.daily.apparent_temperature_max[i])}\u00b0</span></div>
 <div class="day-row"><span>HUMIDITY</span><span class="v">${humAvg!==null?Math.round(humAvg)+'%':'\u2014'}</span></div>
-<div class="day-row"><span>WIND / GUST</span><span class="v">${Math.round(data.daily.wind_speed_10m_max[i])} / ${Math.round(data.daily.wind_gusts_10m_max[i])} MPH</span></div>
+<div class="day-row"><span>WIND / GUST</span><span class="v" data-windrow="${dateStr}" data-wind="${Math.round(data.daily.wind_speed_10m_max[i])}" data-gust="${Math.round(data.daily.wind_gusts_10m_max[i])}">${Math.round(data.daily.wind_speed_10m_max[i])} / ${Math.round(data.daily.wind_gusts_10m_max[i])} MPH</span></div>
 <div class="day-row"><span>BEAUFORT</span><span class="v">F${beau.force} ${beau.label}</span></div>
 <div class="day-row"><span>UV MAX</span><span class="v">${data.daily.uv_index_max[i].toFixed(1)}</span></div>
 <div class="day-row"><span>AIR QUALITY</span><span class="v">${aqiMax!==null?aqiMax:'\u2014'}</span></div>
@@ -2317,6 +2400,7 @@ cardsHtml += `
 }
 scrollEl.innerHTML = cardsHtml;
 fcData = data;
+fcApplyWindImpact();
 }catch(e){
 console.error('forecast fetch failed', e);
 scrollEl.innerHTML = '<div style="color:var(--red); font-size:11px; padding:10px;">FORECAST UNAVAILABLE \u2014 RETRYING NEXT REFRESH</div>';
@@ -3505,6 +3589,7 @@ if(!models.length) throw new Error('no model data');
 WF.jer = { times:r.hourly.time, idx:idx, models:models, fetched:new Date() };
 WF.jstate = 'ok';
 wfJerseyPeak();
+if(typeof fcApplyWindImpact === 'function') fcApplyWindImpact();
 }catch(e){ console.warn('jersey gust series not loaded', e); WF.jstate = 'fail'; }
 WF.key = '';
 wfUpdate();
