@@ -3361,7 +3361,7 @@ document.getElementById('stStatus').innerHTML = '';
    from a single small Open-Meteo request.
    ============================================================ */
 /* rendered frames are kept so playing the loop or dragging the slider does not rebuild them */
-const WF_CACHE = { img:{}, iso:{}, cycle:'', prep:0 };
+const WF_CACHE = { img:{}, iso:{}, pending:{}, cycle:'', prep:0, worker:undefined };
 const WF = { url:'https://raw.githubusercontent.com/moonletboy/jersey-weather-hud/data/wind-field.json', urlFallback:'data/wind-field.json', d:null, state:'idle', jer:null, jstate:'idle', overlay:null, iso:null, isoLbl:null, isoR:null, key:'', isoKey:'', raf:0, peakHour:-1, legendType:'', pop:null, popLL:null };
 const WF_RAMPS = {
 gust:[[20,76,211,255,0],[28,76,211,255,60],[35,45,225,160,112],[45,255,176,32,152],[55,255,110,40,178],[65,255,75,92,198],[75,255,95,210,218],[90,255,238,255,238]],
@@ -3411,7 +3411,7 @@ return out;
 }
 d.cycleT = new Date(d.cycle).getTime();
 WF.d = d; WF.state = 'ok'; WF.key = ''; WF.isoKey = '';
-if(WF_CACHE.cycle !== d.cycle){ wfCacheClear(); WF_CACHE.cycle = d.cycle; }
+if(WF_CACHE.cycle !== d.cycle){ wfCacheClear(); WF_CACHE.cycle = d.cycle; wfWorkerData(d); }
 setTimeout(wfPrepareAll, 1500);
 }catch(e){
 console.warn('wind field not loaded', e);
@@ -3661,40 +3661,91 @@ r.push(c[c.length - 1]);
 return r;
 }
 function wfCacheClear(){
-WF_CACHE.img = {}; WF_CACHE.iso = {}; WF_CACHE.prep = 0;
+WF_CACHE.img = {}; WF_CACHE.iso = {}; WF_CACHE.pending = {}; WF_CACHE.prep = 0;
 if(WF.iso){ ST.map.removeLayer(WF.iso); WF.iso = null; }
 if(WF.isoLbl){ ST.map.removeLayer(WF.isoLbl); WF.isoLbl = null; }
 }
-/* the colour picture for one map step, built once and kept */
-function wfFrameUrl(fkey, i, mode, type){
-const ck = fkey + '|' + i + '|' + mode;
-if(WF_CACHE.img[ck]) return WF_CACHE.img[ck];
-const d = WF.d, W = (d.nlon - 1) * (d.nlon > 80 ? 6 : 10);
-const H = Math.round(W * (wfMerc(d.lat1) - wfMerc(d.lat0)) / ((d.lon1 - d.lon0) * Math.PI / 180));
-const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-const ctx = cv.getContext('2d');
-const img = ctx.createImageData(W, H);
-img.data.set(wfImage(wfNodes(fkey, i, mode === '24'), W, H, type));
-ctx.putImageData(img, 0, 0);
-const url = cv.toDataURL('image/png');
-WF_CACHE.img[ck] = url;
-return url;
+/* ---- the frame builder -------------------------------------------------
+   Building a frame (the colour picture and the isobars) takes a few hundred
+   milliseconds on the fine grid. Doing that on the page's own thread made the
+   loop judder, so it is done in a Web Worker: a separate thread that gets a
+   copy of the data and the SAME functions as the page (their source text is
+   handed over, so there is one copy of the maths). The page only receives
+   finished pixels and finished line coordinates. If a worker cannot be
+   started (very old browser), the same functions run on the page instead. */
+function wfWorkerStart(){
+if(WF_CACHE.worker !== undefined) return WF_CACHE.worker;
+WF_CACHE.worker = null;
+try{
+const src = 'const WF = { d:null }; const WF_EDGES = ' + JSON.stringify(WF_EDGES) + '; const WF_LUTS = {};\n' +
+'const LUTSRC = ' + JSON.stringify({ gust:Array.from(WF_LUTS.gust), wind:Array.from(WF_LUTS.wind) }) + ';\n' +
+'Object.keys(LUTSRC).forEach(function(k){ WF_LUTS[k] = new Uint8ClampedArray(LUTSRC[k]); });\n' +
+[wfNodes, wfMerc, wfInvMerc, wfImage, wfPressure, wfContours, wfChaikin].map(String).join('\n') + '\n' +
+'self.onmessage = function(e){ const m = e.data;\n' +
+' if(m.type === "data"){ WF.d = m.d; return; }\n' +
+' if(!WF.d) return;\n' +
+' if(m.type === "frame"){ const px = wfImage(wfNodes(m.fkey, m.i, m.mode === "24"), m.W, m.H, m.wtype); self.postMessage({ type:"frame", key:m.key, W:m.W, H:m.H, px:px.buffer }, [px.buffer]); return; }\n' +
+' if(m.type === "iso"){ const p = wfPressure(m.i); const lv = p ? wfContours(p).map(function(l){ return { lvl:l.lvl, chains:l.chains.map(wfChaikin) }; }) : []; self.postMessage({ type:"iso", i:m.i, levels:lv }); }\n' +
+'};';
+const w = new Worker(URL.createObjectURL(new Blob([src], { type:'text/javascript' })));
+w.onmessage = function(e){ wfWorkerResult(e.data); };
+w.onerror = function(e){ console.warn('wind worker failed, building frames on the page instead', e.message); WF_CACHE.worker = null; WF_CACHE.pending = {}; WF.key = ''; WF.isoKey = ''; wfUpdate(); setTimeout(wfPrepareAll, 500); };
+WF_CACHE.worker = w;
+}catch(e){ console.warn('no web worker available, building frames on the page instead', e); WF_CACHE.worker = null; }
+return WF_CACHE.worker;
 }
-/* the isobar lines and labels for one map step, built once and kept as layer groups */
-function wfIsoLayers(i){
-if(WF_CACHE.iso[i]) return WF_CACHE.iso[i];
+function wfWorkerData(d){
+const w = wfWorkerStart();
+if(!w) return;
+w.postMessage({ type:'data', d:{ nlat:d.nlat, nlon:d.nlon, lat0:d.lat0, lat1:d.lat1, lon0:d.lon0, lon1:d.lon1, mslp_base:d.mslp_base, mslp_scale:d.mslp_scale, hours:d.hours, step_hours:d.step_hours, gust:d.gust, mslp:d.mslp, wspd:d.wspd || null } });
+}
+function wfFrameSize(){
+const d = WF.d, W = (d.nlon - 1) * (d.nlon > 80 ? 6 : 10);
+return [W, Math.round(W * (wfMerc(d.lat1) - wfMerc(d.lat0)) / ((d.lon1 - d.lon0) * Math.PI / 180))];
+}
+/* ask for a frame; the answer arrives later through wfWorkerResult */
+function wfRequestFrame(fkey, i, mode, type){
+const key = fkey + '|' + i + '|' + mode;
+if(WF_CACHE.img[key] || WF_CACHE.pending[key]) return;
+WF_CACHE.pending[key] = 1;
+const WH = wfFrameSize();
+const w = wfWorkerStart();
+if(w) w.postMessage({ type:'frame', key:key, fkey:fkey, i:i, mode:mode, wtype:type, W:WH[0], H:WH[1] });
+else setTimeout(function(){ const px = wfImage(wfNodes(fkey, i, mode === '24'), WH[0], WH[1], type); wfWorkerResult({ type:'frame', key:key, W:WH[0], H:WH[1], px:px.buffer }); }, 0);
+}
+function wfRequestIso(i){
+const key = 'iso' + i;
+if(WF_CACHE.iso[i] || WF_CACHE.pending[key]) return;
+WF_CACHE.pending[key] = 1;
+const w = wfWorkerStart();
+if(w) w.postMessage({ type:'iso', i:i });
+else setTimeout(function(){ const p = wfPressure(i); wfWorkerResult({ type:'iso', i:i, levels:p ? wfContours(p).map(function(l){ return { lvl:l.lvl, chains:l.chains.map(wfChaikin) }; }) : [] }); }, 0);
+}
+/* finished work comes back here: pixels become a picture, coordinates become lines */
+function wfWorkerResult(m){
+if(m.type === 'frame'){
+const cv = document.createElement('canvas'); cv.width = m.W; cv.height = m.H;
+const ctx = cv.getContext('2d');
+const img = ctx.createImageData(m.W, m.H);
+img.data.set(new Uint8ClampedArray(m.px));
+ctx.putImageData(img, 0, 0);
+const done = function(url){
+WF_CACHE.img[m.key] = url;
+delete WF_CACHE.pending[m.key];
+if(WF.wantImg === m.key) wfShowFrame(url);
+wfPrepareNext();
+};
+if(cv.toBlob) cv.toBlob(function(bl){ done(bl ? URL.createObjectURL(bl) : cv.toDataURL('image/png')); }, 'image/png');
+else done(cv.toDataURL('image/png'));
+} else if(m.type === 'iso'){
 if(!WF.isoR) WF.isoR = L.canvas({ pane:'isoPane', padding:0.5 });
 const lines = L.layerGroup(), labels = L.layerGroup();
-const m = wfPressure(i);
-if(m){
-const res = (WF.d.lon1 - WF.d.lon0) / (WF.d.nlon - 1);          // degrees between grid points
-const k = 0.5 / res;                                                 // 1 on the old 0.5-degree grid, 2 on 0.25
-wfContours(m).forEach(function(lv){
+const d = WF.d, res = (d.lon1 - d.lon0) / (d.nlon - 1), k = 0.5 / res;   // k = 1 on the old 0.5-degree grid, 2 on 0.25
+m.levels.forEach(function(lv){
 const strong = lv.lvl % 10 === 0;
-const chains = lv.chains.map(wfChaikin);
-L.polyline(chains, { renderer:WF.isoR, color:'#e9f6f5', weight:strong ? 1.7 : 0.9, opacity:strong ? 0.8 : 0.45, interactive:false, noClip:false }).addTo(lines);
+L.polyline(lv.chains, { renderer:WF.isoR, color:'#e9f6f5', weight:strong ? 1.7 : 0.9, opacity:strong ? 0.8 : 0.45, interactive:false, noClip:false }).addTo(lines);
 if(lv.lvl % 4 !== 0) return;                                       // a number on every other line keeps it readable
-chains.forEach(function(ch){
+lv.chains.forEach(function(ch){
 if(ch.length < 14 * k) return;
 const spots = ch.length > 70 * k ? [0.25, 0.75] : [0.5];
 spots.forEach(function(f){
@@ -3703,36 +3754,46 @@ L.marker(p, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-iso">' 
 });
 });
 });
+WF_CACHE.iso[m.i] = { lines:lines, labels:labels };
+delete WF_CACHE.pending['iso' + m.i];
+if(WF.wantIso === m.i) wfShowIso(m.i);
+wfPrepareNext();
 }
-WF_CACHE.iso[i] = { lines:lines, labels:labels };
-return WF_CACHE.iso[i];
 }
-function wfDrawIso(i){
-const g = wfIsoLayers(i);
+function wfShowFrame(url){
+const d = WF.d, bounds = [[d.lat0, d.lon0], [d.lat1, d.lon1]];
+if(!WF.overlay) WF.overlay = L.imageOverlay(url, bounds, { pane:'windPane', interactive:false, opacity:1 }).addTo(ST.map);
+else WF.overlay.setUrl(url);
+}
+function wfShowIso(i){
+const g = WF_CACHE.iso[i];
+if(!g) return;
 if(WF.iso && WF.iso !== g.lines) ST.map.removeLayer(WF.iso);
 if(WF.isoLbl && WF.isoLbl !== g.labels) ST.map.removeLayer(WF.isoLbl);
 WF.iso = g.lines; WF.isoLbl = g.labels;
 if(!ST.map.hasLayer(WF.iso)) WF.iso.addTo(ST.map);
 if(!ST.map.hasLayer(WF.isoLbl)) WF.isoLbl.addTo(ST.map);
 }
-/* quietly build every frame in the background, one at a time, so the loop plays smoothly */
-function wfPrepareAll(){
+function wfDrawIso(i){
+WF.wantIso = i;
+if(WF_CACHE.iso[i]) wfShowIso(i);
+else wfRequestIso(i);                       // the current lines stay up until the new ones arrive
+}
+/* build every frame in the background, one at a time, starting from the slider and working forwards */
+function wfPrepareAll(){ WF_CACHE.prep = 0; wfPrepareNext(); }
+function wfPrepareNext(){
 const d = WF.d;
-if(!d || !ST.data) return;
+if(!d || !ST.data || Object.keys(WF_CACHE.pending).length) return;      // one job at a time keeps slider requests quick
 const type = (ST.windType === 'wind' && d.wspd) ? 'wind' : 'gust';
 const fkey = type === 'wind' ? 'wspd' : 'gust';
 const mode = ST.reachMode || 'now';
 const n = d.hours.length;
-let k = 0;
-const step = function(){
-if(WF.d !== d || k >= n) return;
-const i = (ST.hour / d.step_hours + k) % n;                        // start from the slider and work forwards
-if(d[fkey][i] && mode !== 'off') wfFrameUrl(fkey, i, mode, type);
-if(d.mslp[i]) wfIsoLayers(i);
-k++;
-(window.requestIdleCallback || function(f){ setTimeout(f, 40); })(step);
-};
-step();
+while(WF_CACHE.prep < n){
+const i = (Math.round(ST.hour / d.step_hours) + WF_CACHE.prep) % n;
+if(mode !== 'off' && d[fkey][i] && !WF_CACHE.img[fkey + '|' + i + '|' + mode]){ wfRequestFrame(fkey, i, mode, type); return; }
+if(d.mslp[i] && !WF_CACHE.iso[i]){ wfRequestIso(i); return; }
+WF_CACHE.prep++;                                                          // this step is complete, move on
+}
 }
 function wfUpdate(){
 if(WF.raf) return;
@@ -3751,12 +3812,12 @@ if(key !== WF.key){
 WF.key = key;
 if(WF.legendType !== type) wfLegend(type);
 if(i >= 0 && mode !== 'off'){
-const d = WF.d;
-const url = wfFrameUrl(fkey, i, mode, type);
-const bounds = [[d.lat0, d.lon0], [d.lat1, d.lon1]];
-if(!WF.overlay) WF.overlay = L.imageOverlay(url, bounds, { pane:'windPane', interactive:false, opacity:1 }).addTo(ST.map);
-else WF.overlay.setUrl(url);
+const ck = fkey + '|' + i + '|' + mode;
+WF.wantImg = ck;
+if(WF_CACHE.img[ck]) wfShowFrame(WF_CACHE.img[ck]);
+else wfRequestFrame(fkey, i, mode, type);   // the current picture stays up until the new one arrives
 } else if(WF.overlay){
+WF.wantImg = '';
 ST.map.removeLayer(WF.overlay); WF.overlay = null;
 }
 }
