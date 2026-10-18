@@ -3046,13 +3046,31 @@ const ST_WINDOW = L.latLngBounds([[43, -16], [60, 12]]);
 /* the map is fixed: no panning or zooming - it always shows the whole window, re-fitted if the frame changes size */
 function stLockWindow(){
 if(!ST.map) return;
+ST.map.invalidateSize({ animate:false });            // re-measure the frame first: the page can still be laying out when the map starts
 ST.map.fitBounds(ST_WINDOW, { padding:[0, 0], animate:false });
+}
+/* keep the map fitted whenever its own frame changes size (page layout settling, fonts loading,
+   phone rotation) - Leaflet only notices window resizes by itself */
+function stWatchFrame(){
+const el = document.getElementById('st-map');
+if(!el) return;
+if(window.ResizeObserver){
+let last = '';
+new ResizeObserver(function(){
+const k = el.clientWidth + 'x' + el.clientHeight;
+if(k !== last){ last = k; stLockWindow(); }
+}).observe(el);
+}
+[300, 1000, 2500, 5000].forEach(function(ms){ setTimeout(stLockWindow, ms); });
+window.addEventListener('load', stLockWindow);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(stLockWindow);
 }
 function stInWindow(ll){ return ST_WINDOW.contains(L.latLng(ll[0], ll[1])); }
 function stOwnMap(){
 ST.windy = null;
 ST.map = L.map('st-map', { zoomControl:false, zoomSnap:0.1, dragging:false, touchZoom:false, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, worldCopyJump:false });
 stLockWindow();
+stWatchFrame();
 ST.map.on('resize', stLockWindow);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri' }).addTo(ST.map);
 ST.map.createPane('windPane'); ST.map.getPane('windPane').style.zIndex = 250; ST.map.getPane('windPane').style.pointerEvents = 'none';
