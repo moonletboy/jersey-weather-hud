@@ -3287,25 +3287,31 @@ const stale = ageH > 30;
 const run = 'NOAA GFS RUN ' + swPad(cycle.getUTCHours(), 2) + 'Z ' + ST_DAY.format(cycle).toUpperCase();
 let head;
 if(!tracks.length){
-head = 'No storms at this strength are forecast over the North Atlantic in the next 10 days.';
+head = 'No storm centres are forecast over the North Atlantic in the next 10 days.';
 } else {
 let near = tracks[0];
 tracks.forEach(t => { if(t.closest_km < near.closest_km) near = t; });
 const when = new Date(cycle.getTime() + near.closest_hour * 3600000);
-head = '<b>' + tracks.length + ' storm' + (tracks.length === 1 ? '' : 's') + '</b> tracked &middot; closest to Jersey <b>' + stEsc(stLabel(near)) + '</b>, ' + stMi(near.closest_km) + ' mi away, ' + stTime(when) + ' (' + Math.round(near.min_hpa) + ' hPa)';
-const inside = tracks.filter(t => t.within_500mi);
-if(inside.length){
-head += '<br><span style="color:var(--amber);"><b>INSIDE THE 500-MILE RING:</b> ' + inside.map(function(t){
-const w = t.within_500mi;
-let txt = '<b>' + stEsc(stLabel(t)) + '</b> ' + stTime(stHourDate(w.from_h)) + ' to ' + stTime(stHourDate(w.to_h));
-return txt;
-}).join('; ') + '. <a href="#" id="stJumpNear" style="color:var(--cyan);">SHOW ME &rarr;</a></span>';
+const w = near.within_500mi;
+head = '<b>NEAREST STORM: ' + stEsc(stLabel(near)) + '</b> &mdash; passes about <b>' + stMi(near.closest_km) + ' miles</b> from Jersey around <b>' + stTimeD(when) + '</b> (' + Math.round(near.min_hpa) + ' hPa at its deepest)';
+if(w) head += ', inside the 500-mile ring ' + stTime(stHourDate(w.from_h)) + ' to ' + stTime(stHourDate(w.to_h));
+head += '. <a href="#" id="stJumpNear" style="color:var(--cyan);">SHOW ME &rarr;</a>';
+const others = tracks.length - 1;
+if(others > 0) head += '<br><span style="color:var(--dim);">' + others + ' other low' + (others === 1 ? '' : 's') + ' tracked across the North Atlantic &mdash; those that cross the map area appear on it.</span>';
 }
-}
+/* maintainer note, shown only when the page is opened with #admin on the end of the address:
+   which official storm name has not been matched to a track, and which track is nearest */
 if(d.pending_names && d.pending_names.length){
 const live = new Set(tracks.map(t => (t.name || '').toLowerCase()));
 const pend = d.pending_names.filter(p => !live.has(p.name.toLowerCase()));
-if(pend.length) head += '<br><span style="color:var(--amber);">NAME NOT MATCHED TO A STORM YET: ' + pend.map(p => '<b>' + stEsc(p.name.toUpperCase()) + '</b> (' + stEsc(p.by) + ')').join(', ') + ' &mdash; use RENAME on the storm, or the &ldquo;Run workflow&rdquo; form on GitHub to set it for everyone.</span>';
+if(pend.length){
+console.info('storm names not yet matched to a track:', pend.map(p => p.name).join(', '));
+if(location.hash === '#admin'){
+let near = tracks[0];
+tracks.forEach(t => { if(t.closest_km < near.closest_km) near = t; });
+head += '<br><span style="color:var(--amber);">ADMIN &middot; NAME NOT YET MATCHED TO A STORM: ' + pend.map(p => '<b>' + stEsc(p.name.toUpperCase()) + '</b> (' + stEsc(p.by) + ')').join(', ') + (near ? ' &mdash; nearest track is <b>STORM ' + stEsc(stLabel(near)) + '</b>' : '') + '. Set it with the &ldquo;Run workflow&rdquo; form on the Storm tracks action on GitHub.</span>';
+}
+}
 }
 el.className = 'st-status' + (stale ? ' warn' : '');
 el.innerHTML = head + '<small>' + run + (stale ? ' &middot; THIS DATA IS ' + Math.round(ageH) + ' HOURS OLD &mdash; THE AUTOMATIC UPDATE MAY HAVE STOPPED' : ' &middot; UPDATES EVERY 6 HOURS') + '</small>';
@@ -3467,7 +3473,6 @@ const WF_MODELS = [
 { id:'meteofrance_seamless', lbl:'M\u00c9T\u00c9O-FR' }
 ];
 const WF_DISAGREE_MPH = 15;            // spread between models that earns a "models disagree" flag
-const WF_TREND_KEY = 'jwcJerseyPeak';  // remembers the last peak range on this device, for the trend note
 async function wfJerseyLoad(){
 try{
 const r = await fetchJsonRetry('https://api.open-meteo.com/v1/forecast?latitude=' + ST_JERSEY[0] + '&longitude=' + ST_JERSEY[1] + '&hourly=wind_gusts_10m,wind_speed_10m&wind_speed_unit=mph&timezone=GMT&forecast_days=10&models=' + WF_MODELS.map(m => m.id).join(','), 20000, 2);
@@ -3514,21 +3519,6 @@ all.forEach(function(p){ if(p.last >= farthest - 12 && p.t > refT) refT = p.t; }
 js.peaks = all.filter(p => p.last >= refT - 6);
 js.short = all.filter(p => p.last < refT - 6);
 if(!js.peaks.length) return;
-const lo = Math.round(Math.min.apply(null, js.peaks.map(p => p.v))), hi = Math.round(Math.max.apply(null, js.peaks.map(p => p.v)));
-/* trend: compare with the range this device saw at least 3 hours ago */
-js.trend = null;
-try{
-const prev = JSON.parse(localStorage.getItem(WF_TREND_KEY) || 'null');
-const now = Date.now();
-if(prev && now - prev.at >= 3 * 3600000){
-js.trend = { lo:prev.lo, hi:prev.hi, ageH:Math.round((now - prev.at) / 3600000) };
-localStorage.setItem(WF_TREND_KEY, JSON.stringify({ lo:lo, hi:hi, at:now }));
-} else if(!prev){
-localStorage.setItem(WF_TREND_KEY, JSON.stringify({ lo:lo, hi:hi, at:now }));
-} else if(prev.at < now - 30 * 60000){
-js.trend = { lo:prev.lo, hi:prev.hi, ageH:Math.round((now - prev.at) / 3600000) };
-}
-}catch(e){}
 }
 /* "FRI 23 OCT 03:00-11:00" when both ends fall on the same day, otherwise both in full */
 function wfSpan(a, b){
@@ -3905,10 +3895,6 @@ const spread = hi - lo;
 html += ' <span style="color:' + (spread > WF_DISAGREE_MPH ? 'var(--amber)' : 'var(--dim)') + ';">&middot; ' + pk.length + ' OF ' + (pk.length + (js.short || []).length) + ' MODELS, ' + (spread > WF_DISAGREE_MPH ? spread + ' MPH APART' : 'WITHIN ' + spread + ' MPH') + '</span>';
 html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
 if(spread > WF_DISAGREE_MPH) html += '<br><span style="color:var(--amber);">THE MODELS DISAGREE ON HOW STRONG &mdash; THE LOWER FIGURE IS MORE LIKELY, THE HIGHER IS POSSIBLE.</span>';
-if(js.trend && (js.trend.lo !== lo || js.trend.hi !== hi)){
-const up = hi > js.trend.hi || (hi === js.trend.hi && lo > js.trend.lo);
-html += '<br><span style="color:' + (up ? 'var(--amber)' : 'var(--green)') + ';">' + (up ? 'UP' : 'DOWN') + ' FROM ' + wfRange(js.trend.lo, js.trend.hi).toUpperCase() + ' SEEN ' + js.trend.ageH + ' H AGO ON THIS DEVICE</span>';
-}
 html += '<br><span style="color:var(--dim);">PEAK BY MODEL: ' + pk.map(p => p.lbl + ' ' + Math.round(p.v)).join(' &middot; ') + (js.short || []).map(p => ' &middot; ' + p.lbl + ' RUNS ONLY TO ' + ST_DAY.format(new Date(js.times[p.last] + ':00Z')).toUpperCase()).join('') + '</span>';
 }
 /* the coarse NOAA grid the map is shaded from, at Jersey's own cell, for comparison */
