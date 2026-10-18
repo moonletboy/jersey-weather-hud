@@ -1,0 +1,55 @@
+# Wind-field map data for the Jersey Weather Chat HUD
+#
+# Every 6 hours (about 20 minutes after the "Storm tracks" job) this downloads
+# NOAA's forecast wind-gust and pressure maps, trims them to the area around the
+# British Isles and saves data/wind-field.json. The Storm Tracker map on the
+# website reads that file to paint the wind shading and the pressure lines.
+#
+# You can also run it by hand any time: GitHub > Actions > "Wind field" >
+# "Run workflow".
+
+name: Wind field
+
+on:
+  schedule:
+    - cron: "47 5,11,17,23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wind-field
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Get the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python packages
+        run: pip install numpy scipy requests eccodes
+
+      - name: Build the wind field
+        run: python scripts/wind_field.py
+
+      - name: Save the result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/wind-field.json
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -m "Update wind field"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
