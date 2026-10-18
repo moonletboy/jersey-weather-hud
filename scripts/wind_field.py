@@ -14,19 +14,28 @@ This script builds the data for that picture.
    archive: mean-sea-level pressure and surface wind gust.
    It also downloads the 10 m wind (east-west and north-south parts) so it can
    work out the average (sustained) wind speed and the direction it blows from.
-3. It cuts them down to the area around the British Isles / Biscay / North
-   Atlantic and writes data/wind-field.json as small whole numbers:
+3. It cuts them down to the Storm Tracker's map window (Ireland and the Western
+   Approaches across to the Low Countries, Biscay up to southern Norway) and
+   writes data/wind-field.json. Since October 2026 it uses NOAA's finer
+   0.25 degree files (about 15 miles between points) instead of 0.5 degree,
+   because the map concentrates on this smaller area.
+   To keep the file small every number is written as TWO characters
+   (0-9 then a-z, like a base-36 number: "00" = 0, "0a" = 10, "1k" = 56):
      gust  = wind gust in mph
      wspd  = average wind speed in mph
-     wdir  = direction the wind blows FROM, one character per grid point
-             (0-9 then a-z, in steps of 10 degrees: "0" = north, "9" = east,
-             "i" = south, "r" = west)
      mslp  = (pressure in hPa - 900) x 2     (so 1000 hPa is stored as 200)
+     wdir  = direction the wind blows FROM, ONE character per grid point in
+             steps of 10 degrees ("0" = north, "9" = east, "i" = south,
+             "r" = west)
+   The file says enc = "b36x2" so index.html knows to decode it; the page can
+   still read the older plain-number files too.
 4. index.html reads that file and paints it on the map.
 
 It is run automatically by .github/workflows/wind-field.yml every 6 hours,
-about 20 minutes after the storm tracks job. If NOAA is not available it leaves
-the old file untouched.
+about 20 minutes after the storm tracks job. The workflow publishes the file on
+the separate "data" branch (one commit, replaced each run) so the main branch
+does not grow four times a day. If NOAA is not available it leaves the old
+file untouched.
 """
 
 import argparse
@@ -41,9 +50,12 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import storm_tracks as st   # noqa: E402  (re-uses its download and decoding helpers)
 
-# The area saved (degrees). Covers the whole 500-mile circle around Jersey.
-LAT_MIN, LAT_MAX = 43.0, 59.0
-LON_MIN, LON_MAX = -20.0, 6.0
+# The area saved (degrees) - the Storm Tracker's map window. index.html locks
+# its map to the same box, so these four numbers and ST_WINDOW in index.html
+# must agree.
+LAT_MIN, LAT_MAX = 43.0, 60.0
+LON_MIN, LON_MAX = -16.0, 12.0
+RESOLUTION = "0p25"             # NOAA file set: "0p25" (15 mi) or "0p50" (30 mi)
 MS_TO_MPH = 2.236936
 MSLP_BASE = 900.0
 MSLP_SCALE = 2.0
@@ -54,6 +66,17 @@ def log(msg):
     print(msg, flush=True)
 
 
+def object_key(cycle, fh, suffix=""):
+    """Same as storm_tracks.object_key but for the file set chosen above. The storm
+    tracks keep using 0.5 degree (fine for finding centres over the whole Atlantic);
+    this script swaps the helper in for its own downloads only."""
+    return "gfs.%s/%s/atmos/gfs.t%sz.pgrb2.%s.f%03d%s" % (
+        cycle.strftime("%Y%m%d"), cycle.strftime("%H"), cycle.strftime("%H"), RESOLUTION, fh, suffix)
+
+
+st.object_key = object_key   # download_message / cycle_is_ready now use the finer files
+
+
 def crop(lats, lons, arr):
     """Cut a decoded map (latitude and longitude both ascending) to the saved area."""
     li = np.where((lats >= LAT_MIN - 1e-6) & (lats <= LAT_MAX + 1e-6))[0]
@@ -62,6 +85,14 @@ def crop(lats, lons, arr):
 
 
 DIR_CHARS = "0123456789abcdefghijklmnopqrstuvwxyz"
+B36 = np.array(list(DIR_CHARS))
+
+
+def encode_b36x2(ints):
+    """Whole numbers 0-1295 as two base-36 characters each, joined into one string."""
+    v = np.clip(np.asarray(ints, dtype=int), 0, 1295).ravel()
+    hi, lo = v // 36, v % 36
+    return "".join(np.char.add(B36[hi], B36[lo]).tolist())
 
 
 def encode_dir(u, v):
@@ -72,15 +103,11 @@ def encode_dir(u, v):
 
 
 def encode(arr, kind):
-    if kind == "wspd":
-        return np.clip(np.rint(arr * MS_TO_MPH), 0, 250).astype(int).ravel().tolist()
-    if kind == "gust":
-        v = np.rint(arr * MS_TO_MPH)
-        v = np.clip(v, 0, 250)
+    if kind in ("wspd", "gust"):
+        v = np.clip(np.rint(arr * MS_TO_MPH), 0, 250)
     else:
-        v = np.rint((arr - MSLP_BASE) * MSLP_SCALE)
-        v = np.clip(v, 0, 500)
-    return v.astype(int).ravel().tolist()
+        v = np.clip(np.rint((arr - MSLP_BASE) * MSLP_SCALE), 0, 500)
+    return encode_b36x2(v)
 
 
 def build(cycle, hours):
@@ -126,19 +153,46 @@ def build(cycle, hours):
     return grid, out
 
 
+def simulate(cycle, hours):
+    """A made-up deep low crossing the window, for testing without NOAA."""
+    step = 0.25 if RESOLUTION == "0p25" else 0.5
+    lats = np.arange(LAT_MIN, LAT_MAX + 1e-6, step)
+    lons = np.arange(LON_MIN, LON_MAX + 1e-6, step)
+    LA, LO = np.meshgrid(lats, lons, indexing="ij")
+    out = {"mslp": {}, "gust": {}, "u": {}, "v": {}}
+    for h in hours:
+        f = h / float(hours[-1])
+        clat, clon = 47.0 + 12.0 * f, -16.0 + 30.0 * f
+        depth = 36.0 * np.exp(-((f - 0.45) / 0.2) ** 2)
+        r2 = ((LA - clat) / 3.0) ** 2 + ((LO - clon) / 5.0) ** 2
+        p = 1016.0 - depth * np.exp(-r2) + 2.0 * np.sin(LA / 4.0)
+        gy, gx = np.gradient(p, step, step)
+        u, v = -gy * 2.2, gx * 2.2 * np.cos(np.radians(LA))
+        spd = np.hypot(u, v)
+        out["mslp"][h], out["u"][h], out["v"][h] = p, u, v
+        out["gust"][h] = spd * 1.4 + 2.0
+    return (lats, lons), out
+
+
 def main():
     ap = argparse.ArgumentParser(description="Build data/wind-field.json from NOAA GFS")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "data" / "wind-field.json"))
     ap.add_argument("--cycle", help="force a run, e.g. 2026100812 (default: newest complete run)")
+    ap.add_argument("--simulate", action="store_true", help="no NOAA: write a made-up storm for testing the page")
     args = ap.parse_args()
 
     session = st.make_session()
     now = st.now_utc()
-    cycle = dt.datetime.strptime(args.cycle, "%Y%m%d%H") if args.cycle else st.choose_cycle(session, now)
+    if args.cycle:
+        cycle = dt.datetime.strptime(args.cycle, "%Y%m%d%H")
+    elif args.simulate:
+        cycle = st.candidate_cycles(now)[1]
+    else:
+        cycle = st.choose_cycle(session, now)
     log("Using GFS run %s" % cycle.strftime("%Y-%m-%d %HZ"))
 
     hours = list(st.FORECAST_HOURS)
-    grid, data = build(cycle, hours)
+    grid, data = simulate(cycle, hours) if args.simulate else build(cycle, hours)
     got = len(data["mslp"])
     log("Got %d pressure maps and %d gust maps" % (got, len(data["gust"])))
     if grid is None or got < MIN_HOURS_NEEDED:
@@ -162,7 +216,8 @@ def main():
     result = {
         "generated": st.iso(now),
         "cycle": st.iso(cycle),
-        "model": "NOAA GFS 0.5 degree",
+        "model": "NOAA GFS %s degree" % ("0.25" if RESOLUTION == "0p25" else "0.5"),
+        "enc": "b36x2",
         "step_hours": st.STEP_HOURS,
         "hours": hours,
         "lat0": round(float(lats[0]), 3), "lat1": round(float(lats[-1]), 3),
