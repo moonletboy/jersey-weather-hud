@@ -3045,7 +3045,7 @@ return Math.max(66, Math.min(300, Math.round(px * 2 + 10)));
 const ST_WINDOW = L.latLngBounds([[43, -16], [60, 12]]);
 function stLockWindow(){
 if(!ST.map) return;
-const z = ST.map.getBoundsZoom(ST_WINDOW, true);   // the zoom at which the window just fills the frame
+const z = ST.map.getBoundsZoom(ST_WINDOW, false);  // the zoom at which the whole window just fits in the frame
 ST.map.setMinZoom(z);
 if(ST.map.getZoom() < z) ST.map.setZoom(z);
 }
