@@ -12,9 +12,15 @@ This script builds the data for that picture.
    tracks use - it borrows the helper functions from storm_tracks.py).
 2. For every 6 hours out to +240 hours it downloads two maps from NOAA's free
    archive: mean-sea-level pressure and surface wind gust.
+   It also downloads the 10 m wind (east-west and north-south parts) so it can
+   work out the average (sustained) wind speed and the direction it blows from.
 3. It cuts them down to the area around the British Isles / Biscay / North
    Atlantic and writes data/wind-field.json as small whole numbers:
      gust  = wind gust in mph
+     wspd  = average wind speed in mph
+     wdir  = direction the wind blows FROM, one character per grid point
+             (0-9 then a-z, in steps of 10 degrees: "0" = north, "9" = east,
+             "i" = south, "r" = west)
      mslp  = (pressure in hPa - 900) x 2     (so 1000 hPa is stored as 200)
 4. index.html reads that file and paints it on the map.
 
@@ -55,7 +61,19 @@ def crop(lats, lons, arr):
     return lats[li], lons[lj], arr[np.ix_(li, lj)]
 
 
+DIR_CHARS = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+
+def encode_dir(u, v):
+    """Wind direction (the way it blows FROM, degrees) in 10-degree steps, as a text string."""
+    deg = (270.0 - np.degrees(np.arctan2(v, u))) % 360.0
+    steps = np.rint(deg / 10.0).astype(int) % 36
+    return "".join(DIR_CHARS[k] for k in steps.ravel())
+
+
 def encode(arr, kind):
+    if kind == "wspd":
+        return np.clip(np.rint(arr * MS_TO_MPH), 0, 250).astype(int).ravel().tolist()
     if kind == "gust":
         v = np.rint(arr * MS_TO_MPH)
         v = np.clip(v, 0, 250)
@@ -71,17 +89,21 @@ def build(cycle, hours):
         try:
             if kind == "mslp":
                 return job, st.download_message(st.make_session(), cycle, fh, "PRMSL", "mean sea level")
+            if kind == "u":
+                return job, st.download_message(st.make_session(), cycle, fh, "UGRD", "10 m above ground")
+            if kind == "v":
+                return job, st.download_message(st.make_session(), cycle, fh, "VGRD", "10 m above ground")
             return job, st.download_message(st.make_session(), cycle, fh, "GUST", "surface")
         except Exception as e:                       # noqa: BLE001 - report and carry on
             log("  f%03d %s: download failed (%s)" % (fh, kind, e))
             return job, None
 
-    jobs = [(fh, k) for fh in hours for k in ("mslp", "gust")]
+    jobs = [(fh, k) for fh in hours for k in ("mslp", "gust", "u", "v")]
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         blobs = dict(pool.map(fetch, jobs))
 
     grid = None
-    out = {"mslp": {}, "gust": {}}
+    out = {"mslp": {}, "gust": {}, "u": {}, "v": {}}
     for (fh, kind), blob in sorted(blobs.items()):
         if blob is None:
             continue
@@ -123,6 +145,14 @@ def main():
         log("Too few maps - leaving the existing file untouched.")
         return 1
 
+    # Average wind speed and direction from the two wind components
+    wspd, wdir = {}, {}
+    for h in hours:
+        if h in data["u"] and h in data["v"]:
+            wspd[h] = np.hypot(data["u"][h], data["v"][h])
+            wdir[h] = encode_dir(data["u"][h], data["v"][h])
+    log("Got %d wind-speed maps" % len(wspd))
+
     # Gust is not always published for the very first hour: borrow the next one
     if hours[0] not in data["gust"] and hours[1] in data["gust"]:
         data["gust"][hours[0]] = data["gust"][hours[1]]
@@ -141,6 +171,8 @@ def main():
         "mslp_base": MSLP_BASE, "mslp_scale": MSLP_SCALE,
         "gust": [encode(data["gust"][h], "gust") if h in data["gust"] else None for h in hours],
         "mslp": [encode(data["mslp"][h], "mslp") if h in data["mslp"] else None for h in hours],
+        "wspd": [encode(wspd[h], "wspd") if h in wspd else None for h in hours],
+        "wdir": [wdir[h] if h in wdir else None for h in hours],
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
