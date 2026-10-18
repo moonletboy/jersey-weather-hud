@@ -566,6 +566,9 @@ position:relative; margin:10px 16px 0; border:1px solid rgba(76,211,255,0.38); b
 background:#06222b; box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08); isolation:isolate;
 }
 #st-map{ width:100%; height:540px; background:#06222b; }
+.st-windy{ height:480px; }
+.st-windy iframe{ width:100%; height:100%; border:0; display:block; }
+@media (max-width:640px){ .st-windy{ height:380px; } }
 @media (max-width:640px){ #st-map{ height:400px; } }
 #st-map .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
 #st-map .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
@@ -604,7 +607,7 @@ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; bo
 .st-legend{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; padding:12px 16px 0; font-size:10px; letter-spacing:1px; color:var(--dim); }
 .st-legend .st-key{ display:inline-flex; align-items:center; gap:6px; }
 .st-legend .st-key b{ display:inline-block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 8px currentColor; }
-.st-reach{ margin:14px 16px 0; padding:12px 14px; border:1px solid var(--line); border-left:3px solid var(--amber); background:rgba(255,176,32,0.05); font-size:11px; line-height:1.7; letter-spacing:0.5px; color:var(--text); }
+.st-reach{ min-height:112px; margin:14px 16px 0; padding:12px 14px; border:1px solid var(--line); border-left:3px solid var(--amber); background:rgba(255,176,32,0.05); font-size:11px; line-height:1.7; letter-spacing:0.5px; color:var(--text); }
 .st-reach b{ color:var(--amber); }
 .st-jbeacon{ position:relative; width:0; height:0; pointer-events:none; }
 .st-jbeacon i{ position:absolute; border-radius:50%; box-sizing:border-box; }
@@ -1111,6 +1114,9 @@ The further ahead you look, the less certain it is. This is a US model showing t
 </div>
 </div>
 </div>
+<div class="st-subhead">WIND &amp; PRESSURE &middot; ANIMATED (WINDY, ECMWF MODEL) &middot; PRESS &#9654; IN THE CORNER TO PLAY</div>
+<div class="st-mapwrap st-windy" id="stWindy"></div>
+<div class="st-subhead">STORM CENTRES, WORST WINDS AND JERSEY DETAIL (NOAA GFS)</div>
 <div class="st-mapwrap">
 <div id="st-map"></div>
 <div class="st-msg" id="stMsg">LOADING STORM TRACKS&hellip;</div>
@@ -1136,7 +1142,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="sw-note">
 <b>HOW TO READ THIS MAP:</b> the map is fixed on the area that matters to Jersey &mdash; Ireland and the Western Approaches across to the Low Countries, Biscay up to Scotland &mdash; so the wind shading always fills it and shows more detail than a whole-Atlantic view could. Storms are still followed right across the Atlantic: one that is outside the map is listed under ALL TRACKED STORMS with the time it enters the map. Each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
 <b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; appears in its card under the map. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes, or tap any part of a storm's track (or one of its dots) to jump to that time and place and see the rose there. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
-<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10, numbered every 4 &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map uses a separate hourly forecast for Jersey itself from several weather models (GFS, ECMWF, ICON, the UK Met Office and M&eacute;t&eacute;o-France, where each reaches that far ahead), shown as a range: when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. Its &ldquo;strongest in the next 10 days&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
+<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10, numbered every 4 &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The Windy map above it is a separate, independent picture from the European (ECMWF) model with its own play button &mdash; if the two disagree, that is two models disagreeing, which is worth knowing. The box under the map uses a separate hourly forecast for Jersey itself from several weather models (GFS, ECMWF, ICON, the UK Met Office and M&eacute;t&eacute;o-France, where each reaches that far ahead), shown as a range: when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. Its &ldquo;strongest in the next 10 days&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -3047,10 +3053,13 @@ if(ST.map.getZoom() < z) ST.map.setZoom(z);
 function stInWindow(ll){ return ST_WINDOW.contains(L.latLng(ll[0], ll[1])); }
 function stInitMap(){
 if(typeof L === 'undefined' || !document.getElementById('st-map')) return false;
-ST.map = L.map('st-map', { zoomControl:true, minZoom:3, maxZoom:9, zoomSnap:0.25, scrollWheelZoom:false, worldCopyJump:false, maxBounds:ST_WINDOW, maxBoundsViscosity:1.0 });
+ST.map = L.map('st-map', { zoomControl:true, minZoom:3, maxZoom:9, zoomSnap:0.25, scrollWheelZoom:false, worldCopyJump:false, maxBounds:ST_WINDOW, maxBoundsViscosity:1.0, bounceAtZoomLimits:false });
 ST.map.fitBounds(ST_WINDOW, { padding:[0, 0] });
 stLockWindow();
 ST.map.on('resize', stLockWindow);
+/* Windy's own animated wind and isobars, centred on Jersey (ECMWF; the visitor can switch model in the embed) */
+const wy = document.getElementById('stWindy');
+if(wy) wy.innerHTML = '<iframe loading="lazy" title="Windy wind and pressure map centred on Jersey" src="https://embed.windy.com/embed2.html?lat=' + ST_JERSEY[0] + '&lon=' + ST_JERSEY[1] + '&detailLat=' + ST_JERSEY[0] + '&detailLon=' + ST_JERSEY[1] + '&width=650&height=480&zoom=6&level=surface&overlay=wind&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0C&radarRange=-1"></iframe>';
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri' }).addTo(ST.map);
 ST.map.createPane('windPane'); ST.map.getPane('windPane').style.zIndex = 250; ST.map.getPane('windPane').style.pointerEvents = 'none';
 ST.map.createPane('refPane'); ST.map.getPane('refPane').style.zIndex = 260; ST.map.getPane('refPane').style.pointerEvents = 'none';
@@ -3079,6 +3088,7 @@ const d = ST.data;
 if(!ST.map || !d) return;
 if(ST.layer) ST.layer.remove();
 ST.layer = L.layerGroup().addTo(ST.map);
+if(ST.live){ ST.live.clearLayers(); ST.liveM = {}; }
 ST.boxes = {};
 const tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
 ST.tracks = tracks;
@@ -3144,23 +3154,37 @@ stSetHour(t.path_start_hour + 6 * bi, true);
 }
 function stRenderLive(){
 if(!ST.live || !ST.data) return;
-ST.live.clearLayers();
 const h = ST.hour;
+ST.liveM = ST.liveM || {};                      // one dot + one label per storm, kept and moved rather than rebuilt
+const seen = {};
 (ST.tracks || []).forEach(function(t){
 const pos = stPosAt(t, h);
 if(!pos) return;
+seen[t.id] = 1;
 const p = stPressureAt(t.points || [], h);
 const c = stColor(p);
 const w = stWindAt(t, h);
-L.circleMarker(pos, { radius:7, color:'#e9f6f5', weight:2, opacity:0.95, fillColor:c, fillOpacity:1, interactive:false }).addTo(ST.live);
 let txt = stEsc(stLabel(t)) + ' &middot; ' + Math.round(p);
 if(w){
 let b = 0;
 for(let k=1; k<8; k++) if(w.g[k] > w.g[b]) b = k;
 txt += '<i>PEAK GUST ' + w.g[b] + ' MPH ' + ST_SECT[b] + '</i>';
 }
-L.marker(pos, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:#e9f6f5;">' + txt + '</div>', iconSize:[0,0], iconAnchor:[-12,-4] }), interactive:false, keyboard:false, zIndexOffset:700 }).addTo(ST.live);
+let m = ST.liveM[t.id];
+if(!m){
+m = ST.liveM[t.id] = {
+dot:L.circleMarker(pos, { radius:7, color:'#e9f6f5', weight:2, opacity:0.95, fillColor:c, fillOpacity:1, interactive:false }).addTo(ST.live),
+lbl:L.marker(pos, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:#e9f6f5;">' + txt + '</div>', iconSize:[0,0], iconAnchor:[-12,-4] }), interactive:false, keyboard:false, zIndexOffset:700 }).addTo(ST.live),
+txt:txt, c:c
+};
+} else {
+m.dot.setLatLng(pos); m.lbl.setLatLng(pos);
+if(m.c !== c){ m.dot.setStyle({ fillColor:c }); m.c = c; }
+if(m.txt !== txt){ const el = m.lbl.getElement(); if(el){ el.firstChild.innerHTML = txt; m.txt = txt; } }
+if(!ST.live.hasLayer(m.dot)){ ST.live.addLayer(m.dot); ST.live.addLayer(m.lbl); }
+}
 });
+Object.keys(ST.liveM).forEach(function(id){ if(!seen[id]){ ST.live.removeLayer(ST.liveM[id].dot); ST.live.removeLayer(ST.liveM[id].lbl); } });
 const when = stHourDate(h);
 document.getElementById('stValid').innerHTML = stTime(when) + '<small>' + (h === 0 ? 'NOW &mdash; START OF THE FORECAST' : '+' + h + ' HOURS &middot; JERSEY TIME') + '</small>';
 document.getElementById('stSlider').value = h;
@@ -3661,9 +3685,7 @@ r.push(c[c.length - 1]);
 return r;
 }
 function wfCacheClear(){
-WF_CACHE.img = {}; WF_CACHE.iso = {}; WF_CACHE.pending = {}; WF_CACHE.prep = 0;
-if(WF.iso){ ST.map.removeLayer(WF.iso); WF.iso = null; }
-if(WF.isoLbl){ ST.map.removeLayer(WF.isoLbl); WF.isoLbl = null; }
+WF_CACHE.img = {}; WF_CACHE.pending = {}; WF_CACHE.prep = 0;
 }
 /* ---- the frame builder -------------------------------------------------
    Building a frame (the colour picture and the isobars) takes a few hundred
@@ -3684,8 +3706,7 @@ const src = 'const WF = { d:null }; const WF_EDGES = ' + JSON.stringify(WF_EDGES
 'self.onmessage = function(e){ const m = e.data;\n' +
 ' if(m.type === "data"){ WF.d = m.d; return; }\n' +
 ' if(!WF.d) return;\n' +
-' if(m.type === "frame"){ const px = wfImage(wfNodes(m.fkey, m.i, m.mode === "24"), m.W, m.H, m.wtype); self.postMessage({ type:"frame", key:m.key, W:m.W, H:m.H, px:px.buffer }, [px.buffer]); return; }\n' +
-' if(m.type === "iso"){ const p = wfPressure(m.i); const lv = p ? wfContours(p).map(function(l){ return { lvl:l.lvl, chains:l.chains.map(wfChaikin) }; }) : []; self.postMessage({ type:"iso", i:m.i, levels:lv }); }\n' +
+' if(m.type === "frame"){ const px = m.mode === "off" ? new Uint8ClampedArray(m.W * m.H * 4) : wfImage(wfNodes(m.fkey, m.i, m.mode === "24"), m.W, m.H, m.wtype); const p = wfPressure(m.ip); const lv = p ? wfContours(p).map(function(l){ return { lvl:l.lvl, chains:l.chains.map(wfChaikin) }; }) : []; self.postMessage({ type:"frame", key:m.key, W:m.W, H:m.H, px:px.buffer, levels:lv }, [px.buffer]); return; }\n' +
 '};';
 const w = new Worker(URL.createObjectURL(new Blob([src], { type:'text/javascript' })));
 w.onmessage = function(e){ wfWorkerResult(e.data); };
@@ -3700,26 +3721,58 @@ if(!w) return;
 w.postMessage({ type:'data', d:{ nlat:d.nlat, nlon:d.nlon, lat0:d.lat0, lat1:d.lat1, lon0:d.lon0, lon1:d.lon1, mslp_base:d.mslp_base, mslp_scale:d.mslp_scale, hours:d.hours, step_hours:d.step_hours, gust:d.gust, mslp:d.mslp, wspd:d.wspd || null } });
 }
 function wfFrameSize(){
-const d = WF.d, W = (d.nlon - 1) * (d.nlon > 80 ? 6 : 10);
+const d = WF.d, W = (d.nlon - 1) * (d.nlon > 80 ? 8 : 10);
 return [W, Math.round(W * (wfMerc(d.lat1) - wfMerc(d.lat0)) / ((d.lon1 - d.lon0) * Math.PI / 180))];
 }
 /* ask for a frame; the answer arrives later through wfWorkerResult */
-function wfRequestFrame(fkey, i, mode, type){
-const key = fkey + '|' + i + '|' + mode;
+/* one frame = the colour picture for map step i with the isobars of pressure step ip painted on it */
+function wfRequestFrame(fkey, i, mode, type, ip){
+const key = fkey + '|' + i + '|' + mode + '|' + ip;
 if(WF_CACHE.img[key] || WF_CACHE.pending[key]) return;
 WF_CACHE.pending[key] = 1;
 const WH = wfFrameSize();
 const w = wfWorkerStart();
-if(w) w.postMessage({ type:'frame', key:key, fkey:fkey, i:i, mode:mode, wtype:type, W:WH[0], H:WH[1] });
-else setTimeout(function(){ const px = wfImage(wfNodes(fkey, i, mode === '24'), WH[0], WH[1], type); wfWorkerResult({ type:'frame', key:key, W:WH[0], H:WH[1], px:px.buffer }); }, 0);
+const job = { type:'frame', key:key, fkey:fkey, i:i, ip:ip, mode:mode, wtype:type, W:WH[0], H:WH[1] };
+if(w) w.postMessage(job);
+else setTimeout(function(){
+const px = mode === 'off' ? new Uint8ClampedArray(WH[0] * WH[1] * 4) : wfImage(wfNodes(fkey, i, mode === '24'), WH[0], WH[1], type);
+const p = wfPressure(ip);
+wfWorkerResult({ type:'frame', key:key, W:WH[0], H:WH[1], px:px.buffer, levels:p ? wfContours(p).map(function(l){ return { lvl:l.lvl, chains:l.chains.map(wfChaikin) }; }) : [] });
+}, 0);
 }
-function wfRequestIso(i){
-const key = 'iso' + i;
-if(WF_CACHE.iso[i] || WF_CACHE.pending[key]) return;
-WF_CACHE.pending[key] = 1;
-const w = wfWorkerStart();
-if(w) w.postMessage({ type:'iso', i:i });
-else setTimeout(function(){ const p = wfPressure(i); wfWorkerResult({ type:'iso', i:i, levels:p ? wfContours(p).map(function(l){ return { lvl:l.lvl, chains:l.chains.map(wfChaikin) }; }) : [] }); }, 0);
+/* paint the isobars and their numbers onto the frame (image pixels are a Mercator rectangle, like the map) */
+function wfPaintIso(ctx, W, H, levels){
+const d = WF.d, my0 = wfMerc(d.lat1), my1 = wfMerc(d.lat0);
+const X = function(lon){ return (lon - d.lon0) / (d.lon1 - d.lon0) * W; };
+const Y = function(lat){ return (my0 - wfMerc(lat)) / (my0 - my1) * H; };
+const k = 0.5 / ((d.lon1 - d.lon0) / (d.nlon - 1));
+ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+levels.forEach(function(lv){
+const strong = lv.lvl % 10 === 0;
+ctx.strokeStyle = strong ? 'rgba(233,246,245,0.85)' : 'rgba(233,246,245,0.5)';
+ctx.lineWidth = strong ? 2.2 : 1.2;
+ctx.beginPath();
+lv.chains.forEach(function(ch){
+ctx.moveTo(X(ch[0][1]), Y(ch[0][0]));
+for(let n=1; n<ch.length; n++) ctx.lineTo(X(ch[n][1]), Y(ch[n][0]));
+});
+ctx.stroke();
+});
+ctx.font = 'bold 13px "JetBrains Mono", Consolas, monospace';
+ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+levels.forEach(function(lv){
+if(lv.lvl % 4 !== 0) return;
+lv.chains.forEach(function(ch){
+if(ch.length < 14 * k) return;
+const spots = ch.length > 70 * k ? [0.25, 0.75] : [0.5];
+spots.forEach(function(f){
+const p = ch[Math.floor(ch.length * f)], x = X(p[1]), y = Y(p[0]);
+const t = String(lv.lvl), tw = ctx.measureText(t).width;
+ctx.fillStyle = 'rgba(5,8,13,0.78)'; ctx.fillRect(x - tw / 2 - 4, y - 8, tw + 8, 16);
+ctx.fillStyle = '#e9f6f5'; ctx.fillText(t, x, y + 0.5);
+});
+});
+});
 }
 /* finished work comes back here: pixels become a picture, coordinates become lines */
 function wfWorkerResult(m){
@@ -3729,6 +3782,7 @@ const ctx = cv.getContext('2d');
 const img = ctx.createImageData(m.W, m.H);
 img.data.set(new Uint8ClampedArray(m.px));
 ctx.putImageData(img, 0, 0);
+if(m.levels && m.levels.length) wfPaintIso(ctx, m.W, m.H, m.levels);
 const done = function(url){
 WF_CACHE.img[m.key] = url;
 delete WF_CACHE.pending[m.key];
@@ -3737,47 +3791,28 @@ wfPrepareNext();
 };
 if(cv.toBlob) cv.toBlob(function(bl){ done(bl ? URL.createObjectURL(bl) : cv.toDataURL('image/png')); }, 'image/png');
 else done(cv.toDataURL('image/png'));
-} else if(m.type === 'iso'){
-if(!WF.isoR) WF.isoR = L.canvas({ pane:'isoPane', padding:0.5 });
-const lines = L.layerGroup(), labels = L.layerGroup();
-const d = WF.d, res = (d.lon1 - d.lon0) / (d.nlon - 1), k = 0.5 / res;   // k = 1 on the old 0.5-degree grid, 2 on 0.25
-m.levels.forEach(function(lv){
-const strong = lv.lvl % 10 === 0;
-L.polyline(lv.chains, { renderer:WF.isoR, color:'#e9f6f5', weight:strong ? 1.7 : 0.9, opacity:strong ? 0.8 : 0.45, interactive:false, noClip:false }).addTo(lines);
-if(lv.lvl % 4 !== 0) return;                                       // a number on every other line keeps it readable
-lv.chains.forEach(function(ch){
-if(ch.length < 14 * k) return;
-const spots = ch.length > 70 * k ? [0.25, 0.75] : [0.5];
-spots.forEach(function(f){
-const p = ch[Math.floor(ch.length * f)];
-L.marker(p, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-iso">' + lv.lvl + '</div>', iconSize:[0,0] }), interactive:false, keyboard:false }).addTo(labels);
-});
-});
-});
-WF_CACHE.iso[m.i] = { lines:lines, labels:labels };
-delete WF_CACHE.pending['iso' + m.i];
-if(WF.wantIso === m.i) wfShowIso(m.i);
-wfPrepareNext();
 }
 }
+/* two picture layers: the next picture is loaded and decoded on the hidden one, then the
+   two swap, so the map never waits on a decode and never shows a half-drawn picture */
 function wfShowFrame(url){
 const d = WF.d, bounds = [[d.lat0, d.lon0], [d.lat1, d.lon1]];
-if(!WF.overlay) WF.overlay = L.imageOverlay(url, bounds, { pane:'windPane', interactive:false, opacity:1 }).addTo(ST.map);
-else WF.overlay.setUrl(url);
+if(!WF.overlay){
+WF.overlay = L.imageOverlay(url, bounds, { pane:'windPane', interactive:false, opacity:1 }).addTo(ST.map);
+WF.overlay2 = L.imageOverlay(url, bounds, { pane:'windPane', interactive:false, opacity:0 }).addTo(ST.map);
+WF.overlay._el = WF.overlay.getElement(); WF.overlay2._el = WF.overlay2.getElement();
+WF.shown = url;
+return;
 }
-function wfShowIso(i){
-const g = WF_CACHE.iso[i];
-if(!g) return;
-if(WF.iso && WF.iso !== g.lines) ST.map.removeLayer(WF.iso);
-if(WF.isoLbl && WF.isoLbl !== g.labels) ST.map.removeLayer(WF.isoLbl);
-WF.iso = g.lines; WF.isoLbl = g.labels;
-if(!ST.map.hasLayer(WF.iso)) WF.iso.addTo(ST.map);
-if(!ST.map.hasLayer(WF.isoLbl)) WF.isoLbl.addTo(ST.map);
-}
-function wfDrawIso(i){
-WF.wantIso = i;
-if(WF_CACHE.iso[i]) wfShowIso(i);
-else wfRequestIso(i);                       // the current lines stay up until the new ones arrive
+if(WF.shown === url) return;
+WF.shown = url;
+const back = WF.overlay2, front = WF.overlay;
+back.once('load', function(){
+if(WF.shown !== url) return;                   // a newer picture has been asked for since
+back.setOpacity(1); front.setOpacity(0);
+WF.overlay = back; WF.overlay2 = front;
+});
+back.setUrl(url);
 }
 /* build every frame in the background, one at a time, starting from the slider and working forwards */
 function wfPrepareAll(){ WF_CACHE.prep = 0; wfPrepareNext(); }
@@ -3790,9 +3825,10 @@ const mode = ST.reachMode || 'now';
 const n = d.hours.length;
 while(WF_CACHE.prep < n){
 const i = (Math.round(ST.hour / d.step_hours) + WF_CACHE.prep) % n;
-if(mode !== 'off' && d[fkey][i] && !WF_CACHE.img[fkey + '|' + i + '|' + mode]){ wfRequestFrame(fkey, i, mode, type); return; }
-if(d.mslp[i] && !WF_CACHE.iso[i]){ wfRequestIso(i); return; }
-WF_CACHE.prep++;                                                          // this step is complete, move on
+WF_CACHE.prep++;
+const when = stHourDate(d.hours[i]);
+const fi = wfIdx(when, fkey), ip = wfIdx(when, 'mslp');
+if(fi >= 0 && ip >= 0 && !WF_CACHE.img[fkey + '|' + fi + '|' + mode + '|' + ip]){ wfRequestFrame(fkey, fi, mode, type, ip); return; }
 }
 }
 function wfUpdate(){
@@ -3811,22 +3847,17 @@ const key = mode + '|' + type + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
 if(key !== WF.key){
 WF.key = key;
 if(WF.legendType !== type) wfLegend(type);
-if(i >= 0 && mode !== 'off'){
-const ck = fkey + '|' + i + '|' + mode;
+const ip = (WF.d && when) ? wfIdx(when, 'mslp') : -1;
+if(ip >= 0){
+const fi = i >= 0 ? i : ip;
+const ck = fkey + '|' + fi + '|' + mode + '|' + ip;
 WF.wantImg = ck;
 if(WF_CACHE.img[ck]) wfShowFrame(WF_CACHE.img[ck]);
-else wfRequestFrame(fkey, i, mode, type);   // the current picture stays up until the new one arrives
+else wfRequestFrame(fkey, fi, mode, type, ip);   // the current picture stays up until the new one arrives
 } else if(WF.overlay){
-WF.wantImg = '';
-ST.map.removeLayer(WF.overlay); WF.overlay = null;
+WF.wantImg = ''; WF.shown = '';
+WF.overlay.setOpacity(0); WF.overlay2.setOpacity(0);
 }
-}
-const im = (WF.d && when) ? wfIdx(when, 'mslp') : -1;
-const ikey = (ST.isoOn ? 1 : 0) + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
-if(ikey !== WF.isoKey){
-WF.isoKey = ikey;
-if(im >= 0 && ST.isoOn) wfDrawIso(im);
-else { if(WF.iso) ST.map.removeLayer(WF.iso); if(WF.isoLbl) ST.map.removeLayer(WF.isoLbl); WF.iso = null; WF.isoLbl = null; }
 }
 /* the box under the map: Jersey's own hourly forecast, as a range across the models */
 let html = '';
@@ -3881,7 +3912,7 @@ if(WF.state === 'fail') html += '<small style="color:var(--amber);">THE WIND MAP
 else if(WF.d && ST.windType === 'wind' && !WF.d.wspd) html += '<small style="color:var(--amber);">AVERAGE WIND APPEARS AFTER THE NEXT WIND-FIELD UPDATE &mdash; SHOWING GUSTS FOR NOW.</small>';
 else if(WF.d && i < 0 && mode !== 'off') html += '<small>NO WIND MAP FOR THIS TIME.</small>';
 else if(WF.d) html += '<small>WIND MAP: NOAA GFS ' + swPad(new Date(WF.d.cycle).getUTCHours(), 2) + 'Z ' + ST_DAY.format(new Date(WF.d.cycle)).toUpperCase() + ' &middot; TAP THE MAP FOR THE WIND AT ANY POINT</small>';
-info.innerHTML = html;
+if(html !== WF.lastHtml){ WF.lastHtml = html; info.innerHTML = html; }
 const jl = document.getElementById('stReachJump');
 if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); stSetHour(WF.peakHour, true); });
 if(WF.pop && WF.popLL && ST.map.hasLayer(WF.pop)) WF.pop.setContent(wfPointInfo(WF.popLL));
