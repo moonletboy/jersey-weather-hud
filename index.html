@@ -565,15 +565,22 @@ font-size:8px; font-weight:800; line-height:1.2; letter-spacing:0.5px; color:#05
 position:relative; margin:10px 16px 0; border:1px solid rgba(76,211,255,0.38); border-radius:8px; overflow:hidden;
 background:#06222b; box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08); isolation:isolate;
 }
-#windy{ width:100%; height:540px; background:#06222b; }
-.st-embed{ height:560px; }
-.st-embed iframe{ width:100%; height:100%; border:0; display:block; }
-@media (max-width:640px){ .st-embed{ height:440px; } }
-@media (max-width:640px){ #windy{ height:400px; } }
-#windy .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
-#windy .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
-#windy .leaflet-control-attribution a{ color:var(--dim); }
-#windy .leaflet-bar a{ background:var(--bg-panel); color:var(--cyan); border-color:var(--line); }
+#st-map{ width:100%; height:540px; background:#06222b; }
+.st-hours{ display:flex; flex-wrap:wrap; gap:4px; padding:8px 16px 0; }
+.st-hours button{
+font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:0.5px; line-height:1;
+min-width:34px; padding:7px 4px; color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:4px; cursor:pointer;
+}
+.st-hours button.day{ border-left:2px solid var(--dim); }
+.st-hours button:hover{ border-color:var(--cyan); }
+.st-hours button.active{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
+.st-hours small{ display:block; font-size:8px; font-weight:400; color:var(--dim); margin-top:3px; letter-spacing:0; }
+.st-hours button.active small{ color:#05080d; }
+@media (max-width:640px){ #st-map{ height:400px; } }
+#st-map .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
+#st-map .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
+#st-map .leaflet-control-attribution a{ color:var(--dim); }
+#st-map .leaflet-bar a{ background:var(--bg-panel); color:var(--cyan); border-color:var(--line); }
 .st-mapwrap::after{
 content:""; position:absolute; inset:0; pointer-events:none; z-index:700;
 background:
@@ -617,10 +624,10 @@ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; bo
 .st-jbeacon span{ position:absolute; left:23px; top:-12px; padding:3px 8px; font:800 12px 'JetBrains Mono',monospace; letter-spacing:2px; color:#ffffff; background:rgba(5,8,13,0.92); border:1px solid #ffb020; border-left:4px solid #ffb020; border-radius:3px; box-shadow:0 0 10px rgba(0,0,0,0.85); white-space:nowrap; }
 @keyframes stJpulse{ 0%{ transform:scale(0.7); opacity:0.95; } 100%{ transform:scale(2.6); opacity:0; } }
 @media (prefers-reduced-motion:reduce){ .st-jbeacon .r2{ animation:none; opacity:0; } }
-#windy .leaflet-popup-content-wrapper{ background:rgba(5,14,20,0.96); color:var(--text); border:1px solid rgba(76,211,255,0.55); border-radius:8px; box-shadow:0 0 18px rgba(0,0,0,0.7); }
-#windy .leaflet-popup-tip{ background:rgba(5,14,20,0.96); border:1px solid rgba(76,211,255,0.55); }
-#windy .leaflet-popup-content{ margin:10px 14px; font:11px/1.75 'JetBrains Mono',monospace; letter-spacing:0.4px; }
-#windy a.leaflet-popup-close-button{ color:var(--cyan); }
+#st-map .leaflet-popup-content-wrapper{ background:rgba(5,14,20,0.96); color:var(--text); border:1px solid rgba(76,211,255,0.55); border-radius:8px; box-shadow:0 0 18px rgba(0,0,0,0.7); }
+#st-map .leaflet-popup-tip{ background:rgba(5,14,20,0.96); border:1px solid rgba(76,211,255,0.55); }
+#st-map .leaflet-popup-content{ margin:10px 14px; font:11px/1.75 'JetBrains Mono',monospace; letter-spacing:0.4px; }
+#st-map a.leaflet-popup-close-button{ color:var(--cyan); }
 .st-pop b{ color:var(--text); }
 .st-pop .hd{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:1px; color:var(--cyan); }
 .st-pop .dm{ color:var(--dim); font-size:10px; letter-spacing:0.8px; }
@@ -1097,18 +1104,44 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="panel" id="stPanel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="panel-head"><span>STORM TRACKER &middot; WHERE THE STORM CENTRES GO</span><span class="dot"></span></div>
-<div class="st-mapwrap st-embed">
-<iframe id="stWindy" title="Windy wind and pressure map centred on Jersey" loading="lazy" src="https://embed.windy.com/embed2.html?lat=49.21&amp;lon=-2.13&amp;detailLat=49.21&amp;detailLon=-2.13&amp;width=650&amp;height=560&amp;zoom=6&amp;level=surface&amp;overlay=wind&amp;product=ecmwf&amp;menu=&amp;message=true&amp;marker=true&amp;calendar=now&amp;pressure=true&amp;type=map&amp;location=coordinates&amp;detail=&amp;metricWind=mph&amp;metricTemp=%C2%B0C&amp;radarRange=-1"></iframe>
+<div class="sw-controls">
+<div class="sw-group">
+<span class="sw-lbl">WIND</span>
+<div class="sw-chips" id="stType">
+<button type="button" class="sw-chip active" data-v="gust">GUSTS</button>
+<button type="button" class="sw-chip" data-v="wind">AVERAGE WIND</button>
 </div>
-<div class="st-legend"><span style="color:var(--dim);">WINDY.COM &middot; WIND COLOURS, MOVING PARTICLES AND ISOBARS &middot; PRESS &#9654; IN THE MAP TO RUN FORWARD IN TIME, OR DRAG ITS TIMELINE &middot; THE MODEL MENU IN THE MAP SWITCHES ECMWF / GFS / ICON &middot; THE COLOUR KEY IS IN THE MAP CORNER</span></div>
+</div>
+<div class="sw-group">
+<span class="sw-lbl">SHADING</span>
+<div class="sw-chips" id="stReach">
+<button type="button" class="sw-chip active" data-v="now">AT THIS TIME</button>
+<button type="button" class="sw-chip" data-v="24">WORST OF NEXT 24 HOURS</button>
+<button type="button" class="sw-chip" data-v="off">OFF</button>
+</div>
+</div>
+</div>
+<div class="st-mapwrap">
+<div id="st-map"></div>
+<div class="st-msg" id="stMsg">LOADING STORM TRACKS&hellip;</div>
+</div>
+<div class="sw-readout">
+<div class="sw-valid" id="stValid">--<small></small></div>
+<div class="sw-run">HOURS AHEAD &middot; TAP A NUMBER TO SEE THE STORMS AND THE WIND AT THAT TIME</div>
+</div>
+<div class="st-hours" id="stHours"></div>
+<div class="anim-bar">
+<span><button type="button" class="anim-btn" id="stNearBtn">CLOSEST TO JERSEY</button></span>
+<span class="anim-time">NOW TO 10 DAYS AHEAD &middot; 6-HOUR STEPS</span>
+</div>
+<div class="st-legend" id="stLegend"></div>
+<div class="st-legend" id="stReachLegend"></div>
 <div class="st-reach" id="stReachInfo">LOADING THE WIND FORECAST&hellip;</div>
 <div class="st-status" id="stStatus"></div>
-<details class="st-more" id="stListWrap"><summary id="stListSum">ALL TRACKED STORMS &middot; NOAA GFS</summary><div class="st-list" id="stList"></div></details>
-<details class="st-more"><summary>HOW TO READ THIS</summary>
+<details class="st-more"><summary>HOW TO READ THIS MAP</summary>
 <div class="sw-note">
-<b>HOW TO READ THIS MAP:</b> the map is Windy.com, centred on Jersey. The colours are the forecast wind at 10 metres above the ground (the key is in the map corner, in mph), the moving particles show the direction the wind blows, and the thin lines are isobars &mdash; equal sea-level pressure &mdash; the closer together, the stronger the wind. Press &#9654; in the map to run forward through the coming days, or drag the timeline along the bottom. The map starts on the European model (ECMWF); the menu in the map corner switches to GFS or ICON, and the panels in the top corner change what is shown (gusts, rain, waves and more). Tap any spot for the forecast there.<br>
-<b>THE BOX BELOW THE MAP:</b> Jersey's own wind forecast from several models at once, shown as a range &mdash; when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. &ldquo;Strongest spell&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline. SHOW ME opens that time on the Windy map.<br>
-<b>THE STORM LIST:</b> the storm centres (lows) that NOAA's GFS model forecasts across the North Atlantic in the next 10 days, worked out automatically every 6 hours, with how close each one comes to Jersey and when.<br>
+<b>HOW TO READ THIS MAP:</b> the map is fixed on the area that matters to Jersey &mdash; Ireland and the Western Approaches across to the Low Countries, Biscay up to Scotland. The colours are NOAA's forecast wind at 10 metres above the ground at the chosen time (gusts or average wind, key below the map), and the thin white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10 &mdash; the closer together they are, the stronger the wind. Each glowing line is the forecast path of a storm centre (a low) over the next 10 days: the dots are every 12 hours, the number beside each is its pressure in hPa (the lower, the stronger), and the larger marker is where the centre is at the chosen time. <b>Tap a number in the row of hours</b> to jump to that time &mdash; it is the same NOAA GFS run as the big charts on Wetterzentrale and elsewhere, so the hours match. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger.<br>
+<b>THE BOX BELOW THE MAP:</b> Jersey's own wind forecast from several models at once, shown as a range &mdash; when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. &ldquo;Strongest spell&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -3017,55 +3050,9 @@ ST.map.setMinZoom(z);
 if(ST.map.getZoom() < z) ST.map.setZoom(z);
 }
 function stInWindow(ll){ return ST_WINDOW.contains(L.latLng(ll[0], ll[1])); }
-/* ---- Windy Map Forecast API key -------------------------------------------
-   Free key from api.windy.com (Map Forecast API). It is meant to be public in the
-   page; restrict it to the domain "github.io" on api.windy.com once the site is live.
-   Leave it empty to use the plain map with our own NOAA shading instead. */
-const WINDY_KEY = '0gN8wYlrgLFczuEh29sbupmivM6FsrHp';
-/* the map: Windy's engine (wind particles, gust colours and isobars drawn by Windy from
-   the same GFS run) with everything of ours on top. If Windy cannot start within 15 s
-   the plain map takes over, with our own shading from data/wind-field.json. */
-function stInitMap(done){
-const el = document.getElementById('windy');
-if(typeof L === 'undefined' || !el){ done(false); return; }
-const key = (WINDY_KEY || '').trim();
-const useWindy = key && key.indexOf('PASTE') < 0 && typeof windyInit === 'function';
-if(!useWindy){ stOwnMap(); done(true); return; }
-let settled = false;
-const giveUp = setTimeout(function(){ if(settled) return; settled = true; console.warn('Windy did not start - using the plain map'); stOwnMap(); done(true); }, 15000);
-try{
-windyInit({ key:key, lat:ST_JERSEY[0], lon:ST_JERSEY[1], zoom:5, overlay:'gust', level:'surface', product:'gfs', verbose:false }, function(api){
-if(settled) return;
-settled = true; clearTimeout(giveUp);
-ST.windy = api;
-ST.map = api.map;
-try{
-api.store.set('metric_wind', 'mph');
-api.store.set('isolines', 'pressure');
-api.store.set('product', 'gfs');
-}catch(e){ console.warn('windy settings', e); }
-ST.map.options.zoomSnap = 0.25;
-ST.map.options.bounceAtZoomLimits = false;
-ST.map.setMaxZoom(9);
-if(ST.map.scrollWheelZoom) ST.map.scrollWheelZoom.disable();
-ST.map.setMaxBounds(ST_WINDOW);
-ST.map.fitBounds(ST_WINDOW, { padding:[0, 0] });
-stLockWindow();
-ST.map.on('resize', stLockWindow);
-stMapCommon();
-document.body.classList.add('st-windy-on');
-done(true);
-});
-}catch(e){
-if(settled) return;
-settled = true; clearTimeout(giveUp);
-console.warn('windyInit failed - using the plain map', e);
-stOwnMap(); done(true);
-}
-}
 function stOwnMap(){
 ST.windy = null;
-ST.map = L.map('windy', { zoomControl:true, minZoom:3, maxZoom:9, zoomSnap:0.25, scrollWheelZoom:false, worldCopyJump:false, maxBounds:ST_WINDOW, maxBoundsViscosity:1.0, bounceAtZoomLimits:false });
+ST.map = L.map('st-map', { zoomControl:true, minZoom:3, maxZoom:9, zoomSnap:0.25, scrollWheelZoom:false, worldCopyJump:false, maxBounds:ST_WINDOW, maxBoundsViscosity:1.0, bounceAtZoomLimits:false });
 ST.map.fitBounds(ST_WINDOW, { padding:[0, 0] });
 stLockWindow();
 ST.map.on('resize', stLockWindow);
@@ -3203,7 +3190,7 @@ if(!ST.live.hasLayer(m.dot)){ ST.live.addLayer(m.dot); ST.live.addLayer(m.lbl); 
 Object.keys(ST.liveM).forEach(function(id){ if(!seen[id]){ ST.live.removeLayer(ST.liveM[id].dot); ST.live.removeLayer(ST.liveM[id].lbl); } });
 const when = stHourDate(h);
 document.getElementById('stValid').innerHTML = stTime(when) + '<small>' + (h === 0 ? 'NOW &mdash; START OF THE FORECAST' : '+' + h + ' HOURS &middot; JERSEY TIME') + '</small>';
-document.getElementById('stSlider').value = h;
+stMarkHours();
 wfUpdate();
 }
 function stCardHTML(t, h){
@@ -3277,7 +3264,6 @@ function stSetHour(h, stopPlay){
 h = Math.max(0, Math.min(240, Math.round(h / 6) * 6));
 ST.hour = h;
 if(stopPlay) stPause();
-if(ST.windy && ST.data){ try{ ST.windy.store.set('timestamp', stHourDate(h).getTime()); }catch(e){} }
 stRenderLive();
 stRenderCards();
 }
@@ -3324,7 +3310,7 @@ if(pend.length) head += '<br><span style="color:var(--amber);">NAME NOT MATCHED 
 el.className = 'st-status' + (stale ? ' warn' : '');
 el.innerHTML = head + '<small>' + run + (stale ? ' &middot; THIS DATA IS ' + Math.round(ageH) + ' HOURS OLD &mdash; THE AUTOMATIC UPDATE MAY HAVE STOPPED' : ' &middot; UPDATES EVERY 6 HOURS') + '</small>';
 const jn = document.getElementById('stJumpNear');
-if(jn) jn.addEventListener('click', function(e){ e.preventDefault(); stJumpClosest(); });
+if(jn) jn.addEventListener('click', function(e){ e.preventDefault(); stJumpClosest(); document.getElementById('st-map').scrollIntoView({ behavior:'smooth', block:'center' }); });
 }
 function stClosestInside(){
 let best = null;
@@ -3341,10 +3327,11 @@ f.scrollIntoView({ behavior:'smooth', block:'center' });
 }
 function stJumpClosest(){
 const t = stClosestInside();
-if(t && ST.data) stShowOnWindy(new Date(new Date(ST.data.cycle).getTime() + t.closest_hour * 3600000));
+if(t) stSetHour(Math.round(t.closest_hour / 6) * 6, true);
 }
 function stList(tracks){
 const d = ST.data;
+if(!document.getElementById('stList')) return;
 const cycle = new Date(d.cycle);
 const box = document.getElementById('stList');
 box.innerHTML = '';
@@ -3379,13 +3366,23 @@ return fetch(ST_URL + '?v=' + Math.floor(Date.now() / 600000), { cache:'no-store
 .then(function(d){
 if(!d || !Array.isArray(d.tracks) || !d.cycle) throw new Error('unexpected file contents');
 ST.data = d;
+stMsg('');
+if(ST.firstHour){
+ST.firstHour = false;
 ST.tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
-stStatus(ST.tracks);
-stList(ST.tracks);
+const t = stClosestInside();
+ST.hour = t ? Math.round(t.closest_hour / 6) * 6 : 0;
+}
+stRender();
+stMarkHours();
+setTimeout(wfPrepareAll, 2500);
 })
 .catch(function(e){
 console.warn('storm tracks not loaded', e);
-if(!ST.data) document.getElementById('stStatus').innerHTML = 'STORM TRACKS ARE NOT AVAILABLE RIGHT NOW &mdash; THEY UPDATE AUTOMATICALLY, PLEASE CHECK BACK SOON.';
+if(!ST.data){
+stMsg('STORM TRACKS ARE NOT AVAILABLE RIGHT NOW.<br>THEY UPDATE AUTOMATICALLY &mdash; PLEASE CHECK BACK SOON.');
+document.getElementById('stStatus').innerHTML = '';
+}
 });
 }
 /* ============================================================
@@ -3852,11 +3849,11 @@ WF.raf = requestAnimationFrame(function(){ WF.raf = 0; wfRun(); });
 }
 function wfRun(){
 const info = document.getElementById('stReachInfo');
-if(!info) return;
+if(!info || !ST.map) return;
 const mode = ST.reachMode || 'now';
 const type = (ST.windType === 'wind' && WF.d && WF.d.wspd) ? 'wind' : 'gust';
 const fkey = type === 'wind' ? 'wspd' : 'gust';
-const when = null;                                   // no slider: the box shows the coming days only
+const when = ST.data ? stHourDate(ST.hour) : null;
 const i = (WF.d && when) ? wfIdx(when, fkey) : -1;
 const key = mode + '|' + type + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
 if(key !== WF.key && !ST.windy){
@@ -3886,7 +3883,7 @@ const ws = [];
 if(ti !== undefined) js.models.forEach(function(m){ if(m.gust[ti] != null) gs.push(m.gust[ti]); if(m.wind[ti] != null) ws.push(m.wind[ti]); });
 if(gs.length){
 const glo = Math.round(Math.min.apply(null, gs)), ghi = Math.round(Math.max.apply(null, gs));
-html += '<b>JERSEY AT THE SLIDER TIME</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(ghi) + ';">' + wfRange(glo, ghi) + '</b>';
+html += '<b>JERSEY AT THE CHOSEN TIME</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(ghi) + ';">' + wfRange(glo, ghi) + '</b>';
 if(ws.length){
 const wlo = Math.round(Math.min.apply(null, ws)), whi = Math.round(Math.max.apply(null, ws));
 html += ' &middot; average wind <b style="color:' + stWindColor(whi) + ';">' + wfRange(wlo, whi) + '</b>';
@@ -3906,7 +3903,7 @@ WF.peakWhen = mid;
 html += (when ? '<br>' : '') + '<b>JERSEY &middot; STRONGEST SPELL IN THE NEXT 10 DAYS</b> (EACH MODEL\'S OWN PEAK): <b style="color:' + stWindColor(hi) + ';">' + wfRange(lo, hi) + '</b> ' + wfSpan(pd0, pd1);
 const spread = hi - lo;
 html += ' <span style="color:' + (spread > WF_DISAGREE_MPH ? 'var(--amber)' : 'var(--dim)') + ';">&middot; ' + pk.length + ' OF ' + (pk.length + (js.short || []).length) + ' MODELS, ' + (spread > WF_DISAGREE_MPH ? spread + ' MPH APART' : 'WITHIN ' + spread + ' MPH') + '</span>';
-html += ' &middot; <a href="#" id="stReachJump">SHOW ME ON THE MAP &rarr;</a>';
+html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
 if(spread > WF_DISAGREE_MPH) html += '<br><span style="color:var(--amber);">THE MODELS DISAGREE ON HOW STRONG &mdash; THE LOWER FIGURE IS MORE LIKELY, THE HIGHER IS POSSIBLE.</span>';
 if(js.trend && (js.trend.lo !== lo || js.trend.hi !== hi)){
 const up = hi > js.trend.hi || (hi === js.trend.hi && lo > js.trend.lo);
@@ -3917,7 +3914,7 @@ html += '<br><span style="color:var(--dim);">PEAK BY MODEL: ' + pk.map(p => p.lb
 /* the coarse NOAA grid the map is shaded from, at Jersey's own cell, for comparison */
 if(WF.d && i >= 0 && gs.length){
 const gridG = wfSample(WF.d.gust[wfIdx(when, 'gust')], ST_JERSEY[0], ST_JERSEY[1]);
-if(gridG != null && !isNaN(gridG)) html += '<br><span style="color:var(--dim);">NOAA GFS GRID AT JERSEY AT THE SLIDER TIME: ' + Math.round(gridG) + ' MPH (' + (WF.d.nlon > 80 ? '15' : '30') + '-MILE GRID, ONE MODEL &mdash; THE SAME RUN THE MAP IS DRAWN FROM)</span>';
+if(gridG != null && !isNaN(gridG)) html += '<br><span style="color:var(--dim);">NOAA GFS GRID AT JERSEY AT THE CHOSEN TIME: ' + Math.round(gridG) + ' MPH (' + (WF.d.nlon > 80 ? '15' : '30') + '-MILE GRID, ONE MODEL &mdash; THE SAME RUN THE MAP IS DRAWN FROM)</span>';
 }
 html += '<br><span style="color:var(--dim2);">JERSEY FORECAST FETCHED ' + ST_WD.format(js.fetched).toUpperCase() + ' &middot; STRONGEST SPELL = BEST 3-HOUR AVERAGE OF GUSTS, NOT A SINGLE HOUR</span>';
 } else if(WF.jstate === 'fail'){
@@ -3931,7 +3928,7 @@ else if(WF.d && i < 0 && mode !== 'off') html += '<small>NO WIND MAP FOR THIS TI
 else if(WF.d) html += '<small>WIND MAP: NOAA GFS ' + swPad(new Date(WF.d.cycle).getUTCHours(), 2) + 'Z ' + ST_DAY.format(new Date(WF.d.cycle)).toUpperCase() + ' &middot; TAP THE MAP FOR THE WIND AT ANY POINT</small>';
 if(html !== WF.lastHtml){ WF.lastHtml = html; info.innerHTML = html; }
 const jl = document.getElementById('stReachJump');
-if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); if(WF.peakWhen) stShowOnWindy(WF.peakWhen); });
+if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); if(WF.peakWhen && ST.data) stSetHour(Math.round((WF.peakWhen.getTime() - new Date(ST.data.cycle).getTime()) / 3600000 / 6) * 6, true); });
 if(WF.pop && WF.popLL && ST.map.hasLayer(WF.pop)) WF.pop.setContent(wfPointInfo(WF.popLL));
 }
 /* tap / click on the map: the wind at that point at the time on the slider */
@@ -3978,11 +3975,41 @@ WF.pop.setLatLng(ev.latlng).setContent(wfPointInfo(ev.latlng)).openOn(ST.map);
 WF.popLL = ev.latlng;
 }
 function initStormTracker(){
-if(!document.getElementById('stPanel')) return;
-stLoad();
-setInterval(stLoad, 30*60*1000);
-setTimeout(wfJerseyLoad, 2000);
-setInterval(wfJerseyLoad, 60*60*1000);
+if(!document.getElementById('stPanel') || typeof L === 'undefined') return;
+stOwnMap();
+stBuildHours();
+stWireControls();
+}
+/* the row of hour buttons: NOW, 6, 12 ... 240, with the day marked where it changes */
+function stBuildHours(){
+const box = document.getElementById('stHours');
+if(!box) return;
+box.innerHTML = '';
+for(let h=0; h<=240; h+=6){
+const b = document.createElement('button');
+b.type = 'button'; b.dataset.h = h;
+b.innerHTML = (h === 0 ? 'NOW' : h) + '<small>&nbsp;</small>';
+b.addEventListener('click', function(){ stSetHour(h, true); });
+box.appendChild(b);
+}
+}
+function stMarkHours(){
+const box = document.getElementById('stHours');
+if(!box || !ST.data) return;
+const cycle = new Date(ST.data.cycle);
+let prevDay = '';
+box.querySelectorAll('button').forEach(function(b){
+const h = Number(b.dataset.h);
+const when = new Date(cycle.getTime() + h * 3600000);
+const parts = ST_WD.formatToParts(when);
+const hh = (parts.find(p => p.type === 'hour') || {}).value || '';
+const day = ((parts.find(p => p.type === 'weekday') || {}).value || '').toUpperCase();
+const newDay = h > 0 && day !== prevDay;                                   // first step of each new day shows its name
+prevDay = day;
+b.querySelector('small').textContent = h === 0 ? 'NOW' : (newDay ? day + ' ' + hh : hh + 'h');
+b.classList.toggle('day', newDay);
+b.classList.toggle('active', h === ST.hour);
+});
 }
 function stWireControls(){
 function wire(id, apply){
@@ -3996,8 +4023,6 @@ stRender();
 }
 wire('stShow', function(v){ ST.maxP = v; });
 wire('stEvery', function(v){ ST.every = v; });
-document.getElementById('stSlider').addEventListener('input', function(e){ stSetHour(Number(e.target.value), true); });
-document.getElementById('stNowBtn').addEventListener('click', function(){ stSetHour(0, true); });
 document.getElementById('stNearBtn').addEventListener('click', function(){ stJumpClosest(); });
 document.querySelectorAll('#stReach .sw-chip').forEach(function(b){
 b.addEventListener('click', function(){
@@ -4012,10 +4037,9 @@ document.querySelectorAll('#stType .sw-chip').forEach(function(b){
 b.addEventListener('click', function(){
 ST.windType = b.dataset.v;
 document.querySelectorAll('#stType .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
-if(ST.windy){ try{ ST.windy.store.set('overlay', ST.windType === 'wind' ? 'wind' : 'gust'); }catch(e){} }
 WF.key = '';
 wfUpdate();
-if(!ST.windy) setTimeout(wfPrepareAll, 300);
+setTimeout(wfPrepareAll, 300);
 });
 });
 document.querySelectorAll('#stIso .sw-chip').forEach(function(b){
