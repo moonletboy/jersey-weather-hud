@@ -3043,17 +3043,15 @@ return Math.max(66, Math.min(300, Math.round(px * 2 + 10)));
    panned or zoomed out to. Must agree with LAT_MIN/LAT_MAX/LON_MIN/LON_MAX in
    scripts/wind_field.py. */
 const ST_WINDOW = L.latLngBounds([[43, -16], [60, 12]]);
+/* the map is fixed: no panning or zooming - it always shows the whole window, re-fitted if the frame changes size */
 function stLockWindow(){
 if(!ST.map) return;
-const z = ST.map.getBoundsZoom(ST_WINDOW, false);  // the zoom at which the whole window just fits in the frame
-ST.map.setMinZoom(z);
-if(ST.map.getZoom() < z) ST.map.setZoom(z);
+ST.map.fitBounds(ST_WINDOW, { padding:[0, 0], animate:false });
 }
 function stInWindow(ll){ return ST_WINDOW.contains(L.latLng(ll[0], ll[1])); }
 function stOwnMap(){
 ST.windy = null;
-ST.map = L.map('st-map', { zoomControl:true, minZoom:3, maxZoom:9, zoomSnap:0.25, scrollWheelZoom:false, worldCopyJump:false, maxBounds:ST_WINDOW, maxBoundsViscosity:1.0, bounceAtZoomLimits:false });
-ST.map.fitBounds(ST_WINDOW, { padding:[0, 0] });
+ST.map = L.map('st-map', { zoomControl:false, zoomSnap:0.1, dragging:false, touchZoom:false, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, worldCopyJump:false });
 stLockWindow();
 ST.map.on('resize', stLockWindow);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri' }).addTo(ST.map);
