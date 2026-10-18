@@ -606,6 +606,30 @@ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; bo
 .st-legend .st-key b{ display:inline-block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 8px currentColor; }
 .st-reach{ margin:14px 16px 0; padding:12px 14px; border:1px solid var(--line); border-left:3px solid var(--amber); background:rgba(255,176,32,0.05); font-size:11px; line-height:1.7; letter-spacing:0.5px; color:var(--text); }
 .st-reach b{ color:var(--amber); }
+.st-jbeacon{ position:relative; width:0; height:0; pointer-events:none; }
+.st-jbeacon i{ position:absolute; border-radius:50%; box-sizing:border-box; }
+.st-jbeacon .r1{ left:-15px; top:-15px; width:30px; height:30px; border:3px solid #ffffff; box-shadow:0 0 0 2px #05080d, inset 0 0 0 2px #05080d, 0 0 14px 3px rgba(255,255,255,0.75); }
+.st-jbeacon .r2{ left:-15px; top:-15px; width:30px; height:30px; border:2px solid #ffb020; animation:stJpulse 2.2s ease-out infinite; }
+.st-jbeacon .dot{ left:-6px; top:-6px; width:12px; height:12px; background:#ffb020; border:2px solid #05080d; box-shadow:0 0 0 2px #ffffff; }
+.st-jbeacon span{ position:absolute; left:23px; top:-12px; padding:3px 8px; font:800 12px 'JetBrains Mono',monospace; letter-spacing:2px; color:#ffffff; background:rgba(5,8,13,0.92); border:1px solid #ffb020; border-left:4px solid #ffb020; border-radius:3px; box-shadow:0 0 10px rgba(0,0,0,0.85); white-space:nowrap; }
+@keyframes stJpulse{ 0%{ transform:scale(0.7); opacity:0.95; } 100%{ transform:scale(2.6); opacity:0; } }
+@media (prefers-reduced-motion:reduce){ .st-jbeacon .r2{ animation:none; opacity:0; } }
+#st-map .leaflet-popup-content-wrapper{ background:rgba(5,14,20,0.96); color:var(--text); border:1px solid rgba(76,211,255,0.55); border-radius:8px; box-shadow:0 0 18px rgba(0,0,0,0.7); }
+#st-map .leaflet-popup-tip{ background:rgba(5,14,20,0.96); border:1px solid rgba(76,211,255,0.55); }
+#st-map .leaflet-popup-content{ margin:10px 14px; font:11px/1.75 'JetBrains Mono',monospace; letter-spacing:0.4px; }
+#st-map a.leaflet-popup-close-button{ color:var(--cyan); }
+.st-pop b{ color:var(--text); }
+.st-pop .hd{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:1px; color:var(--cyan); }
+.st-pop .dm{ color:var(--dim); font-size:10px; letter-spacing:0.8px; }
+.st-pop .rw{ display:flex; justify-content:space-between; gap:14px; }
+.st-more{ margin:12px 16px 0; border:1px solid var(--line); border-radius:8px; background:var(--bg-panel-2); }
+.st-more > summary{ cursor:pointer; padding:10px 14px; font-size:10px; letter-spacing:2px; font-weight:700; color:var(--cyan); list-style:none; }
+.st-more > summary::-webkit-details-marker{ display:none; }
+.st-more > summary::before{ content:'+ '; color:var(--amber); }
+.st-more[open] > summary::before{ content:'\2013 '; }
+.st-more[open] > summary{ border-bottom:1px solid var(--line); }
+.st-more .st-list{ margin:12px 14px 14px; }
+.st-more .sw-note{ padding:10px 14px 14px; }
 .st-grad{ display:inline-block; width:230px; max-width:60vw; height:10px; border-radius:5px; vertical-align:middle; border:1px solid rgba(233,246,245,0.25); background:linear-gradient(90deg, rgba(76,211,255,0.12) 0%, #4cd3ff 11%, #2de1a0 21%, #ffb020 36%, #ff7a28 50%, #ff4b5c 64%, #ff5fd2 79%, #ffeaff 100%); }
 .st-gradlbl{ display:inline-flex; justify-content:space-between; width:230px; max-width:60vw; font-size:9px; letter-spacing:0; color:var(--dim); }
 .st-iso{ transform:translate(-50%,-50%); font:700 9px 'JetBrains Mono',monospace; color:#e9f6f5; text-shadow:0 0 3px #05080d,0 0 3px #05080d,0 0 5px #05080d; white-space:nowrap; pointer-events:none; }
@@ -1086,7 +1110,14 @@ The further ahead you look, the less certain it is. This is a US model showing t
 </div>
 </div>
 <div class="sw-group">
-<span class="sw-lbl">WIND GUSTS</span>
+<span class="sw-lbl">WIND</span>
+<div class="sw-chips" id="stType">
+<button type="button" class="sw-chip active" data-v="gust">GUSTS</button>
+<button type="button" class="sw-chip" data-v="wind">AVERAGE WIND</button>
+</div>
+</div>
+<div class="sw-group">
+<span class="sw-lbl">SHADING</span>
 <div class="sw-chips" id="stReach">
 <button type="button" class="sw-chip active" data-v="now">AT THIS TIME</button>
 <button type="button" class="sw-chip" data-v="24">WORST OF NEXT 24 HOURS</button>
@@ -1117,20 +1148,21 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <span class="anim-time">0 TO 10 DAYS AHEAD</span>
 </div>
 <div class="st-legend" id="stLegend"></div>
-<div class="st-legend" id="stWindLegend"></div>
 <div class="st-legend" id="stReachLegend"></div>
 <div class="st-reach" id="stReachInfo">LOADING THE WIND FORECAST&hellip;</div>
 <div class="st-status" id="stStatus"></div>
-<div class="st-subhead" id="stNearHead" style="display:none;">NEAR JERSEY &middot; WHERE THE STRONGEST WINDS ARE</div>
+<div class="st-subhead" id="stNearHead" style="display:none;">NEAR JERSEY &middot; STRONGEST WIND BY COMPASS SIDE</div>
 <div class="st-near" id="stNear"></div>
-<div class="st-list" id="stList"></div>
+<details class="st-more" id="stListWrap"><summary id="stListSum">ALL TRACKED STORMS</summary><div class="st-list" id="stList"></div></details>
+<details class="st-more"><summary>HOW TO READ THIS MAP</summary>
 <div class="sw-note">
 <b>HOW TO READ THIS MAP:</b> each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
 <b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; appears in its card under the map. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes, or tap any part of a storm's track (or one of its dots) to jump to that time and place and see the rose there. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
-<b>WIND GUSTS AND PRESSURE LINES:</b> the coloured shading underneath the storm tracks is NOAA's forecast of the strongest gusts at 10 metres above the ground at the time on the slider &mdash; the same colours and the same size on the ground whatever the zoom, so you can see how far the strong winds reach from each storm and which parts of the coast and sea they cover. Nothing is shaded below 25 mph. Cyan and green are a breezy to windy day, amber is gale force (39 mph and over), red is storm force (55 mph and over) and pink to white is hurricane force (73 mph and over); the thin white lines mark the 39, 55 and 73 mph edges. The grey-white curved lines are isobars &mdash; lines of equal sea-level pressure, every 4 hPa, each labelled &mdash; and the closer together they are, the stronger the wind. Choose WORST OF NEXT 24 HOURS to see everywhere that gets the strongest gusts at some point in the day ahead. The map is NOAA's 30-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map gives the hourly forecast gust for Jersey itself, with a button to jump to the worst time.<br>
+<b>WIND SHADING AND PRESSURE LINES:</b> the colours under the storm tracks are NOAA's forecast wind at 10 metres above the ground at the time on the slider. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed); AT THIS TIME follows the slider and WORST OF NEXT 24 HOURS shows everywhere that gets the strongest wind at some point in the day ahead. The colours stay the same size on the ground at any zoom; nothing is shaded below the lowest legend value. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 4 hPa &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 30-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The box under the map uses a separate hourly forecast for Jersey itself.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
+</details>
 </div>
 </section>
 <!-- LIVE IMAGERY -->
@@ -3035,24 +3067,20 @@ ST.map.createPane('isoPane'); ST.map.getPane('isoPane').style.zIndex = 300; ST.m
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, opacity:0.75, pane:'refPane' }).addTo(ST.map);
 L.circle(ST_JERSEY, { radius:ST_RING_KM * 1000, color:'#ffb020', weight:1.2, opacity:0.55, dashArray:'4 6', fill:false, interactive:false }).addTo(ST.map);
 L.marker([ST_JERSEY[0] + ST_RING_KM / 111.19, ST_JERSEY[1]], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-jersey">500 MILES</div>', iconSize:[0,0], iconAnchor:[-6,6] }), interactive:false, keyboard:false }).addTo(ST.map);
-L.circleMarker(ST_JERSEY, { radius:9, color:'#ffb020', weight:1.5, opacity:0.9, fillOpacity:0.12, fillColor:'#ffb020', interactive:false }).addTo(ST.map);
-L.circleMarker(ST_JERSEY, { radius:3.5, color:'#05080d', weight:1, fillColor:'#ffb020', fillOpacity:1, interactive:false }).addTo(ST.map);
-L.marker(ST_JERSEY, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-jersey">JERSEY</div>', iconSize:[0,0], iconAnchor:[-13,6] }), interactive:false, keyboard:false }).addTo(ST.map);
+L.marker(ST_JERSEY, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-jbeacon"><i class="r2"></i><i class="r1"></i><i class="dot"></i><span>JERSEY</span></div>', iconSize:[0,0], iconAnchor:[0,0] }), interactive:false, keyboard:false, zIndexOffset:2000 }).addTo(ST.map);
 ST.reachMode = 'now';
+ST.windType = 'gust';
 ST.isoOn = true;
 ST.live = L.layerGroup().addTo(ST.map);
 ST.map.on('zoomend', stRenderLive);
+ST.map.on('click', wfMapClick);
+ST.map.on('popupclose', function(e){ if(e.popup === WF.pop) WF.popLL = null; });
 const lg = document.getElementById('stLegend');
 lg.innerHTML = '<span>LOWEST PRESSURE (hPa):</span>' +
 [['#4cd3ff','1000+ weak'], ['#2de1a0','990&ndash;999'], ['#ffb020','980&ndash;989'], ['#ff4b5c','970&ndash;979'], ['#ff5fd2','below 970 very deep']]
 .map(k => '<span class="st-key"><b style="background:' + k[0] + ';color:' + k[0] + ';"></b>' + k[1] + '</span>').join('') +
 '<span class="st-key" style="color:var(--amber);"><b style="background:transparent;border:1px dashed #ffb020;box-shadow:none;"></b>500 miles from Jersey</span>';
-document.getElementById('stReachLegend').innerHTML = '<span>WIND GUSTS (MPH):</span><span class="st-key" style="flex-direction:column;align-items:flex-start;gap:3px;"><i class="st-grad"></i><i class="st-gradlbl"><span>25</span><span>35</span><span>45</span><span>55</span><span>65</span><span>75</span><span>90+</span></i></span>' +
-'<span class="st-key">THIN WHITE LINES = 39 (GALE), 55 (STORM) AND 73 MPH (HURRICANE FORCE) &middot; PRESSURE LINES EVERY 4 hPa &middot; SHADING STAYS THE SAME SIZE WHEN YOU ZOOM</span>';
-document.getElementById('stWindLegend').innerHTML = '<span>WIND ROSE CARDS (MPH):</span>' +
-[['#4cd3ff','under 25'], ['#2de1a0','25&ndash;38'], ['#ffb020','39&ndash;54 gale'], ['#ff4b5c','55&ndash;72 storm'], ['#ff5fd2','73+ hurricane force']]
-.map(k => '<span class="st-key"><b style="background:' + k[0] + ';color:' + k[0] + ';"></b>' + k[1] + '</span>').join('') +
-'<span class="st-key">SOLID = WIND &middot; PALE = GUSTS &middot; WHITE OUTLINE = STRONGEST SIDE</span><span class="st-key" style="color:var(--cyan);">TAP ANY PART OF A TRACK TO SEE THE ROSE FOR THAT TIME AND PLACE</span>';
+wfLegend('gust');
 return true;
 }
 function stRender(){
@@ -3184,7 +3212,7 @@ let m = 0;
 for(let k=0; k<8; k++) if(x.g[k] > m) m = x.g[k];
 const inR = x.d <= ST_RING_KM;
 return '<span data-h="' + x.h + '" class="' + (x.h === h ? 'cur' : '') + (inR ? ' ring' : '') + '" style="background:' + stWindColor(m) + ';" title="' + stTime(stHourDate(x.h)) + ' &middot; peak gust ' + m + ' mph &middot; ' + stMi(x.d) + ' mi away"></span>';
-}).join('') + '</div><div class="st-strip-cap">PEAK GUST NEAR THE STORM, EVERY 6 HOURS &middot; AMBER TOP = INSIDE THE 500-MILE RING &middot; TAP TO JUMP</div>';
+}).join('') + '</div><div class="st-strip-cap">PEAK GUST EVERY 6 H &middot; AMBER TOP = INSIDE 500 MILES &middot; TAP TO JUMP</div>';
 }
 const rose = w ? stRose(w, 190, { labels:true, jersey:true, heading:stHeadingAt(t, h) }) : '<div class="st-norose">NO WIND<br>ROSE YET</div>';
 return '<div class="st-card' + (pos && stKm(ST_JERSEY, pos) <= ST_RING_KM ? '' : ' out') + '"><div class="st-card-rose">' + rose + '</div><div class="st-card-txt"><h4>' + head + '<em>' + bits.join(' &middot; ') + '</em><button type="button" class="st-rename" data-id="' + stEsc(t.id) + '" title="Rename (this device only)">&#9998; RENAME</button></h4><small>' + by + aka + '</small><p>' + body + '</p>' + strip + '</div></div>';
@@ -3200,7 +3228,9 @@ box.innerHTML = '';
 return;
 }
 head.style.display = '';
-box.innerHTML = near.map(t => stCardHTML(t, ST.hour)).join('');
+const wasOpen = !!(box.querySelector('details') && box.querySelector('details').open);
+const cards = near.map(t => stCardHTML(t, ST.hour));
+box.innerHTML = cards[0] + (cards.length > 1 ? '<details class="st-more" style="grid-column:1/-1;margin:0;"' + (wasOpen ? ' open' : '') + '><summary>' + (cards.length - 1) + ' MORE STORM' + (cards.length > 2 ? 'S' : '') + ' NEAR JERSEY</summary><div class="st-near" style="margin:10px 14px 14px;">' + cards.slice(1).join('') + '</div></details>' : '');
 box.querySelectorAll('.st-strip span').forEach(function(sp){
 sp.addEventListener('click', function(){ stSetHour(Number(sp.dataset.h), true); });
 });
@@ -3243,18 +3273,12 @@ head = 'No storms at this strength are forecast over the North Atlantic in the n
 let near = tracks[0];
 tracks.forEach(t => { if(t.closest_km < near.closest_km) near = t; });
 const when = new Date(cycle.getTime() + near.closest_hour * 3600000);
-head = '<b>' + tracks.length + ' storm' + (tracks.length === 1 ? '' : 's') + '</b> tracked over the next 10 days. Closest to Jersey: <b>storm ' + stEsc(stLabel(near)) + '</b>, about <b>' + stMi(near.closest_km) + ' miles</b> away around ' + stTime(when) + ' (lowest pressure ' + Math.round(near.min_hpa) + ' hPa).';
+head = '<b>' + tracks.length + ' storm' + (tracks.length === 1 ? '' : 's') + '</b> tracked &middot; closest to Jersey <b>' + stEsc(stLabel(near)) + '</b>, ' + stMi(near.closest_km) + ' mi away, ' + stTime(when) + ' (' + Math.round(near.min_hpa) + ' hPa)';
 const inside = tracks.filter(t => t.within_500mi);
 if(inside.length){
 head += '<br><span style="color:var(--amber);"><b>INSIDE THE 500-MILE RING:</b> ' + inside.map(function(t){
 const w = t.within_500mi;
 let txt = '<b>' + stEsc(stLabel(t)) + '</b> ' + stTime(stHourDate(w.from_h)) + ' to ' + stTime(stHourDate(w.to_h));
-const cw = stWindAt(t, Math.round(t.closest_hour / 6) * 6);
-if(cw){
-let b = 0;
-for(let k=1; k<8; k++) if(cw.g[k] > cw.g[b]) b = k;
-txt += ' (strongest winds on its ' + ST_SECT[b] + ' side, gusts ' + cw.g[b] + ' mph)';
-}
 return txt;
 }).join('; ') + '. <a href="#" id="stJumpNear" style="color:var(--cyan);">SHOW ME &rarr;</a></span>';
 }
@@ -3283,6 +3307,7 @@ const d = ST.data;
 const cycle = new Date(d.cycle);
 const box = document.getElementById('stList');
 box.innerHTML = '';
+document.getElementById('stListSum').textContent = 'ALL ' + tracks.length + ' TRACKED STORMS';
 tracks.forEach(function(t){
 const col = stColor(t.min_hpa);
 const tag = t.min_hpa < 970 ? 'VERY DEEP' : (t.min_hpa < 980 ? 'DEEP' : '');
@@ -3337,20 +3362,30 @@ document.getElementById('stStatus').innerHTML = '';
    their value written along them. Jersey's own hourly gust forecast comes
    from a single small Open-Meteo request.
    ============================================================ */
-const WF = { url:'data/wind-field.json', d:null, state:'idle', jer:null, jstate:'idle', overlay:null, iso:null, isoLbl:null, isoR:null, key:'', isoKey:'', raf:0, peakHour:-1 };
-const WF_RAMP = [[20,76,211,255,0],[28,76,211,255,60],[35,45,225,160,112],[45,255,176,32,152],[55,255,110,40,178],[65,255,75,92,198],[75,255,95,210,218],[90,255,238,255,238]];
-const WF_LUT = (function(){
-const n = 121 * 4, t = new Uint8ClampedArray(n * 4);
+const WF = { url:'data/wind-field.json', d:null, state:'idle', jer:null, jstate:'idle', overlay:null, iso:null, isoLbl:null, isoR:null, key:'', isoKey:'', raf:0, peakHour:-1, legendType:'', pop:null, popLL:null };
+const WF_RAMPS = {
+gust:[[20,76,211,255,0],[28,76,211,255,60],[35,45,225,160,112],[45,255,176,32,152],[55,255,110,40,178],[65,255,75,92,198],[75,255,95,210,218],[90,255,238,255,238]],
+wind:[[15,76,211,255,0],[20,76,211,255,60],[27,45,225,160,112],[34,255,176,32,152],[42,255,110,40,178],[50,255,75,92,198],[60,255,95,210,218],[75,255,238,255,238]]
+};
+const WF_EDGES = { gust:[39,55,73], wind:[39,55,64] };
+const WF_LUTS = {};
+Object.keys(WF_RAMPS).forEach(function(type){
+const R = WF_RAMPS[type], n = 121 * 4, t = new Uint8ClampedArray(n * 4);
 for(let i=0; i<n; i++){
 const v = i / 4;
 let k = 0;
-while(k < WF_RAMP.length - 2 && v > WF_RAMP[k + 1][0]) k++;
-const a = WF_RAMP[k], b = WF_RAMP[k + 1];
+while(k < R.length - 2 && v > R[k + 1][0]) k++;
+const a = R[k], b = R[k + 1];
 const f = Math.max(0, Math.min(1, (v - a[0]) / (b[0] - a[0])));
 for(let c=0; c<4; c++) t[i * 4 + c] = a[c + 1] + (b[c + 1] - a[c + 1]) * f;
 }
-return t;
-})();
+WF_LUTS[type] = t;
+});
+function wfLegend(type){
+WF.legendType = type;
+const lb = type === 'wind' ? ['15','25','35','45','55','65','75+'] : ['25','35','45','55','65','75','90+'];
+document.getElementById('stReachLegend').innerHTML = '<span>' + (type === 'wind' ? 'AVERAGE WIND' : 'WIND GUSTS') + ' (MPH):</span><span class="st-key" style="flex-direction:column;align-items:flex-start;gap:3px;"><i class="st-grad"></i><i class="st-gradlbl">' + lb.map(x => '<span>' + x + '</span>').join('') + '</i></span><span class="st-key">WHITE LINES = GALE 39 &middot; STORM 55 &middot; HURRICANE FORCE ' + (type === 'wind' ? '64' : '73') + '</span>';
+}
 async function wfLoad(){
 if(WF.state === 'loading') return;
 WF.state = 'loading';
@@ -3378,34 +3413,44 @@ WF.jstate = 'ok';
 WF.key = '';
 wfUpdate();
 }
-/* which stored map matches the time on the slider (nearest 6-hourly map) */
-function wfIdx(date){
-const d = WF.d;
-if(!d) return -1;
+/* which stored map matches the time on the slider (nearest 6-hourly map that has this field) */
+function wfIdx(date, key){
+const d = WF.d, arr = d && d[key || 'gust'];
+if(!arr) return -1;
 let i = Math.round((date.getTime() - d.cycleT) / 3600000 / d.step_hours);
 if(i < -1 || i > d.hours.length) return -1;
 i = Math.max(0, Math.min(d.hours.length - 1, i));
 for(let k=0; k<d.hours.length; k++){
-for(const s of [i - k, i + k]) if(s >= 0 && s < d.hours.length && d.gust[s]) return s;
+for(const s of [i - k, i + k]) if(s >= 0 && s < d.hours.length && arr[s]) return s;
 }
 return -1;
 }
-function wfGustNodes(i, win){
+function wfNodes(key, i, win){
 const d = WF.d, nn = d.nlat * d.nlon, out = new Float32Array(nn);
 const last = win ? Math.min(d.hours.length - 1, i + 4) : i;       // 5 maps x 6 h = the next 24 hours
 for(let k=i; k<=last; k++){
-const a = d.gust[k];
+const a = d[key][k];
 if(!a) continue;
 for(let n=0; n<nn; n++) if(a[n] > out[n]) out[n] = a[n];
 }
 return out;
 }
+/* bilinear value of one stored map at a latitude / longitude (NaN outside the map) */
+function wfSample(arr, lat, lon){
+const d = WF.d;
+const fi = (lat - d.lat0) / (d.lat1 - d.lat0) * (d.nlat - 1), fj = (lon - d.lon0) / (d.lon1 - d.lon0) * (d.nlon - 1);
+if(!(fi >= 0 && fj >= 0 && fi <= d.nlat - 1 && fj <= d.nlon - 1)) return NaN;
+const i0 = Math.min(d.nlat - 2, Math.floor(fi)), j0 = Math.min(d.nlon - 2, Math.floor(fj)), a = fi - i0, b = fj - j0;
+const r0 = i0 * d.nlon + j0, r1 = (i0 + 1) * d.nlon + j0;
+return arr[r0] * (1 - a) * (1 - b) + arr[r0 + 1] * (1 - a) * b + arr[r1] * a * (1 - b) + arr[r1 + 1] * a * b;
+}
 function wfMerc(lat){ return Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)); }
 function wfInvMerc(y){ return (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI; }
-function wfCls(v){ return v >= 73 ? 3 : (v >= 55 ? 2 : (v >= 39 ? 1 : 0)); }
+
 /* smooth colour picture of the gust field; thin white lines where it crosses 39 / 55 / 73 mph */
-function wfImage(g, W, H){
-const d = WF.d, nlat = d.nlat, nlon = d.nlon;
+function wfImage(g, W, H, type){
+const d = WF.d, nlat = d.nlat, nlon = d.nlon, LUT = WF_LUTS[type], E = WF_EDGES[type];
+const wfCls = function(v){ return v >= E[2] ? 3 : (v >= E[1] ? 2 : (v >= E[0] ? 1 : 0)); };
 const my0 = wfMerc(d.lat1), my1 = wfMerc(d.lat0);
 const fj = new Float32Array(W), j0s = new Int32Array(W);
 for(let x=0; x<W; x++){
@@ -3431,7 +3476,7 @@ for(let x=0; x<W; x++){
 const p = y * W + x, o = p * 4;
 const v = vals[p];
 const li = Math.max(0, Math.min(480, Math.round(v * 4))) * 4;
-px[o] = WF_LUT[li]; px[o + 1] = WF_LUT[li + 1]; px[o + 2] = WF_LUT[li + 2]; px[o + 3] = WF_LUT[li + 3];
+px[o] = LUT[li]; px[o + 1] = LUT[li + 1]; px[o + 2] = LUT[li + 2]; px[o + 3] = LUT[li + 3];
 const c = cls[p];
 if((x < W - 1 && cls[p + 1] !== c) || (y < H - 1 && cls[p + W] !== c)){
 if(c > 0 || cls[p + 1] > 0 || (y < H - 1 && cls[p + W] > 0)){ px[o] = 255; px[o + 1] = 255; px[o + 2] = 255; px[o + 3] = 150; }
@@ -3555,19 +3600,21 @@ function wfRun(){
 const info = document.getElementById('stReachInfo');
 if(!info || !ST.map) return;
 const mode = ST.reachMode || 'now';
+const type = (ST.windType === 'wind' && WF.d && WF.d.wspd) ? 'wind' : 'gust';
+const fkey = type === 'wind' ? 'wspd' : 'gust';
 const when = ST.data ? stHourDate(ST.hour) : null;
-/* shading and pressure lines */
-const i = (WF.d && when) ? wfIdx(when) : -1;
-const key = mode + '|' + (ST.isoOn ? 1 : 0) + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
+const i = (WF.d && when) ? wfIdx(when, fkey) : -1;
+const key = mode + '|' + type + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
 if(key !== WF.key){
 WF.key = key;
+if(WF.legendType !== type) wfLegend(type);
 if(i >= 0 && mode !== 'off'){
 const d = WF.d, W = (d.nlon - 1) * 10;
 const H = Math.round(W * (wfMerc(d.lat1) - wfMerc(d.lat0)) / ((d.lon1 - d.lon0) * Math.PI / 180));
 const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
 const ctx = cv.getContext('2d');
 const img = ctx.createImageData(W, H);
-img.data.set(wfImage(wfGustNodes(i, mode === '24'), W, H));
+img.data.set(wfImage(wfNodes(fkey, i, mode === '24'), W, H, type));
 ctx.putImageData(img, 0, 0);
 const url = cv.toDataURL('image/png');
 const bounds = [[d.lat0, d.lon0], [d.lat1, d.lon1]];
@@ -3576,46 +3623,91 @@ else WF.overlay.setUrl(url);
 } else if(WF.overlay){
 ST.map.removeLayer(WF.overlay); WF.overlay = null;
 }
-if(i >= 0 && ST.isoOn){ wfDrawIso(i); }
+}
+const im = (WF.d && when) ? wfIdx(when, 'mslp') : -1;
+const ikey = (ST.isoOn ? 1 : 0) + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
+if(ikey !== WF.isoKey){
+WF.isoKey = ikey;
+if(im >= 0 && ST.isoOn) wfDrawIso(im);
 else if(WF.iso){ WF.iso.clearLayers(); WF.isoLbl.clearLayers(); }
 }
-/* the box under the map */
+/* the box under the map: Jersey's own hourly forecast */
 let html = '';
 const js = WF.jer;
 if(js && when){
 const hk = function(dt){ return dt.toISOString().slice(0, 13) + ':00'; };
 const ti = js.idx[hk(when)];
 if(ti !== undefined && js.gust[ti] != null){
-const nowG = js.gust[ti];
-let w24 = -1;
-for(let t=ti; t<=Math.min(js.gust.length - 1, ti + 24); t++) if(js.gust[t] != null && js.gust[t] > w24) w24 = js.gust[t];
-html += '<b>JERSEY</b> &middot; ' + stTimeD(when) + ': forecast gusts <b style="color:' + stWindColor(nowG) + ';">' + Math.round(nowG) + ' mph</b>';
-if(w24 >= 0) html += ' &middot; worst in the 24 hours from then <b style="color:' + stWindColor(w24) + ';">' + Math.round(w24) + ' mph</b>';
+html += '<b>JERSEY</b> &middot; ' + stTimeD(when) + ': gusts <b style="color:' + stWindColor(js.gust[ti]) + ';">' + Math.round(js.gust[ti]) + ' mph</b> &middot; average wind <b style="color:' + stWindColor(js.wind[ti]) + ';">' + Math.round(js.wind[ti]) + ' mph</b>';
 const t0 = js.idx[hk(new Date())] || 0;
 let pk = -1, pt = -1;
 for(let t=t0; t<js.gust.length; t++) if(js.gust[t] != null && js.gust[t] > pk){ pk = js.gust[t]; pt = t; }
 if(pt >= 0){
 const pd = new Date(js.times[pt] + ':00Z');
 const ph = Math.round((pd.getTime() - new Date(ST.data.cycle).getTime()) / 3600000 / 6) * 6;
-html += '<br>WORST GUSTS FOR JERSEY IN THE NEXT 10 DAYS: <b style="color:' + stWindColor(pk) + ';">' + Math.round(pk) + ' mph</b> around ' + stTimeD(pd);
 WF.peakHour = ph;
+html += '<br>WORST GUSTS IN THE NEXT 10 DAYS: <b style="color:' + stWindColor(pk) + ';">' + Math.round(pk) + ' mph</b> around ' + stTimeD(pd);
 if(ph >= 0 && ph <= 240) html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
 }
-html += '<small>HOURLY FORECAST FOR JERSEY (OPEN-METEO) &middot; THE MAP SHADING IS NOAA\'S 30-MILE GRID, SO LOCAL GUSTS ON EXPOSED COASTS AND HEADLANDS CAN DIFFER</small>';
 } else {
-html += 'NO JERSEY GUST FORECAST FOR THIS TIME (IT COVERS ABOUT 10 DAYS FROM TODAY).';
+html += 'NO JERSEY WIND FORECAST FOR THIS TIME (IT COVERS ABOUT 10 DAYS FROM TODAY).';
 }
 } else if(WF.jstate === 'fail'){
-html += 'THE JERSEY GUST FORECAST IS NOT AVAILABLE RIGHT NOW.';
+html += 'THE JERSEY WIND FORECAST IS NOT AVAILABLE RIGHT NOW.';
 } else {
-html += 'LOADING THE JERSEY GUST FORECAST&hellip;';
+html += 'LOADING THE JERSEY WIND FORECAST&hellip;';
 }
-if(WF.state === 'fail') html += '<small style="color:var(--amber);">THE WIND MAP SHADING IS NOT AVAILABLE YET &mdash; IT APPEARS AFTER THE NEXT AUTOMATIC UPDATE (EVERY 6 HOURS). THE STORM TRACKS ARE UNAFFECTED.</small>';
-else if(WF.d && i < 0) html += '<small>NO WIND MAP FOR THIS TIME.</small>';
-else if(WF.d) html += '<small>WIND MAP: NOAA GFS RUN ' + swPad(new Date(WF.d.cycle).getUTCHours(), 2) + 'Z ' + ST_DAY.format(new Date(WF.d.cycle)).toUpperCase() + '</small>';
+if(WF.state === 'fail') html += '<small style="color:var(--amber);">THE WIND MAP IS NOT AVAILABLE RIGHT NOW &mdash; THE STORM TRACKS ARE UNAFFECTED.</small>';
+else if(WF.d && ST.windType === 'wind' && !WF.d.wspd) html += '<small style="color:var(--amber);">AVERAGE WIND APPEARS AFTER THE NEXT WIND-FIELD UPDATE &mdash; SHOWING GUSTS FOR NOW.</small>';
+else if(WF.d && i < 0 && mode !== 'off') html += '<small>NO WIND MAP FOR THIS TIME.</small>';
+else if(WF.d) html += '<small>WIND MAP: NOAA GFS ' + swPad(new Date(WF.d.cycle).getUTCHours(), 2) + 'Z ' + ST_DAY.format(new Date(WF.d.cycle)).toUpperCase() + ' &middot; TAP THE MAP FOR THE WIND AT ANY POINT</small>';
 info.innerHTML = html;
 const jl = document.getElementById('stReachJump');
 if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); stSetHour(WF.peakHour, true); });
+if(WF.pop && WF.popLL && ST.map.hasLayer(WF.pop)) WF.pop.setContent(wfPointInfo(WF.popLL));
+}
+/* tap / click on the map: the wind at that point at the time on the slider */
+function wfPointInfo(ll){
+const d = WF.d;
+if(!d || !ST.data) return '<div class="st-pop">THE WIND MAP HAS NOT LOADED YET.</div>';
+const when = stHourDate(ST.hour);
+const lat = ll.lat, lon = ll.lng;
+const ns = lat >= 0 ? 'N' : 'S', ew = lon >= 0 ? 'E' : 'W';
+let h = '<div class="st-pop"><div class="hd">' + Math.abs(lat).toFixed(2) + '&deg;' + ns + ' ' + Math.abs(lon).toFixed(2) + '&deg;' + ew + '</div>';
+const km = stKm(ST_JERSEY, [lat, lon]);
+h += '<div class="dm">' + (km < 15 ? 'AT JERSEY' : stMi(km) + ' MILES ' + ST_SECT[stCompass(stBearing(ST_JERSEY, [lat, lon]))] + ' OF JERSEY') + ' &middot; ' + stTimeD(when) + '</div>';
+if(!(lat >= d.lat0 && lat <= d.lat1 && lon >= d.lon0 && lon <= d.lon1)) return h + '<div class="dm">OUTSIDE THE WIND MAP AREA (ABOUT ' + d.lat0 + '&ndash;' + d.lat1 + '&deg;N, ' + Math.abs(d.lon0) + '&deg;W&ndash;' + d.lon1 + '&deg;E)</div></div>';
+const ig = wfIdx(when, 'gust');
+if(ig >= 0){
+const g = wfSample(d.gust[ig], lat, lon);
+h += '<div class="rw"><span>GUSTS</span><b style="color:' + stWindColor(g) + ';">' + Math.round(g) + ' mph</b></div>';
+}
+const iw = d.wspd ? wfIdx(when, 'wspd') : -1;
+if(iw >= 0){
+const w = wfSample(d.wspd[iw], lat, lon);
+let from = '';
+if(d.wdir && d.wdir[iw]){
+const fi = Math.round((lat - d.lat0) / (d.lat1 - d.lat0) * (d.nlat - 1)), fj = Math.round((lon - d.lon0) / (d.lon1 - d.lon0) * (d.nlon - 1));
+const deg = parseInt(d.wdir[iw].charAt(fi * d.nlon + fj), 36) * 10;
+if(!isNaN(deg)) from = ' <span class="dm">FROM ' + ST_SECT[stCompass(deg)] + '</span>';
+}
+h += '<div class="rw"><span>AVERAGE WIND</span><span><b style="color:' + stWindColor(w * 1.35) + ';">' + Math.round(w) + ' mph</b>' + from + '</span></div>';
+}
+const im = wfIdx(when, 'mslp');
+if(im >= 0) h += '<div class="rw"><span>PRESSURE</span><b>' + Math.round(d.mslp_base + wfSample(d.mslp[im], lat, lon) / d.mslp_scale) + ' hPa</b></div>';
+if(ig >= 0){
+let mx = 0;
+for(let k=ig; k<=Math.min(d.hours.length - 1, ig + 4); k++) if(d.gust[k]){ const v = wfSample(d.gust[k], lat, lon); if(v > mx) mx = v; }
+h += '<div class="rw"><span>WORST GUST, NEXT 24 H</span><b style="color:' + stWindColor(mx) + ';">' + Math.round(mx) + ' mph</b></div>';
+}
+return h + '</div>';
+}
+function wfMapClick(ev){
+const tg = ev.originalEvent && ev.originalEvent.target;
+if(tg && tg.classList && tg.classList.contains('leaflet-interactive')) return;      // a storm track or dot was tapped instead
+if(!WF.pop) WF.pop = L.popup({ className:'st-pop-wrap', autoPan:false, maxWidth:280, closeOnClick:false });
+WF.pop.setLatLng(ev.latlng).setContent(wfPointInfo(ev.latlng)).openOn(ST.map);
+WF.popLL = ev.latlng;
 }
 function initStormTracker(){
 if(!document.getElementById('stPanel')) return;
@@ -3642,6 +3734,14 @@ document.querySelectorAll('#stReach .sw-chip').forEach(function(b){
 b.addEventListener('click', function(){
 ST.reachMode = b.dataset.v;
 document.querySelectorAll('#stReach .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
+WF.key = '';
+wfUpdate();
+});
+});
+document.querySelectorAll('#stType .sw-chip').forEach(function(b){
+b.addEventListener('click', function(){
+ST.windType = b.dataset.v;
+document.querySelectorAll('#stType .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
 WF.key = '';
 wfUpdate();
 });
