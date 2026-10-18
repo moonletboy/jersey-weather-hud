@@ -15,9 +15,8 @@
 <title>JWC LIVE OPS — Jersey Weather Command</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.4.0/leaflet.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.4.0/leaflet.js"></script>
-<script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
 --bg:#05080d;
@@ -567,9 +566,9 @@ position:relative; margin:10px 16px 0; border:1px solid rgba(76,211,255,0.38); b
 background:#06222b; box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08); isolation:isolate;
 }
 #windy{ width:100%; height:540px; background:#06222b; }
-#windy .windy-logo{ opacity:0.85; }
-#windy #logo-wrapper, #windy .bottom-border{ z-index:900; }
-#windy.leaflet-container{ font-family:'JetBrains Mono',monospace; }
+.st-embed{ height:560px; }
+.st-embed iframe{ width:100%; height:100%; border:0; display:block; }
+@media (max-width:640px){ .st-embed{ height:440px; } }
 @media (max-width:640px){ #windy{ height:400px; } }
 #windy .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
 #windy .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
@@ -1098,49 +1097,18 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="panel" id="stPanel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="panel-head"><span>STORM TRACKER &middot; WHERE THE STORM CENTRES GO</span><span class="dot"></span></div>
-<div class="sw-controls">
-<div class="sw-group">
-<span class="sw-lbl">WIND</span>
-<div class="sw-chips" id="stType">
-<button type="button" class="sw-chip active" data-v="gust">GUSTS</button>
-<button type="button" class="sw-chip" data-v="wind">AVERAGE WIND</button>
+<div class="st-mapwrap st-embed">
+<iframe id="stWindy" title="Windy wind and pressure map centred on Jersey" loading="lazy" src="https://embed.windy.com/embed2.html?lat=49.21&amp;lon=-2.13&amp;detailLat=49.21&amp;detailLon=-2.13&amp;width=650&amp;height=560&amp;zoom=6&amp;level=surface&amp;overlay=wind&amp;product=ecmwf&amp;menu=&amp;message=true&amp;marker=true&amp;calendar=now&amp;pressure=true&amp;type=map&amp;location=coordinates&amp;detail=&amp;metricWind=mph&amp;metricTemp=%C2%B0C&amp;radarRange=-1"></iframe>
 </div>
-</div>
-<div class="sw-group">
-<span class="sw-lbl">SHADING</span>
-<div class="sw-chips" id="stReach">
-<button type="button" class="sw-chip active" data-v="now">AT THIS TIME</button>
-<button type="button" class="sw-chip" data-v="24">WORST OF NEXT 24 HOURS</button>
-<button type="button" class="sw-chip" data-v="off">OFF</button>
-</div>
-</div>
-</div>
-<div class="st-mapwrap">
-<div id="windy"></div>
-<div class="st-msg" id="stMsg">LOADING STORM TRACKS&hellip;</div>
-</div>
-<div class="sw-readout">
-<div class="sw-valid" id="stValid">--<small></small></div>
-<div class="sw-run">MOVE THE SLIDER TO STEP THE STORMS AND THE WIND THROUGH TIME</div>
-</div>
-<div class="sw-slider">
-<input type="range" id="stSlider" min="0" max="240" step="6" value="0" aria-label="Forecast time for the storm tracker">
-</div>
-<div class="anim-bar">
-<span><button type="button" class="anim-btn" id="stNowBtn">NOW</button> <button type="button" class="anim-btn" id="stNearBtn">CLOSEST TO JERSEY</button></span>
-<span class="anim-time">0 TO 10 DAYS AHEAD</span>
-</div>
-<div class="st-legend" id="stLegend"></div>
-<div class="st-legend" id="stReachLegend"></div>
+<div class="st-legend"><span style="color:var(--dim);">WINDY.COM &middot; WIND COLOURS, MOVING PARTICLES AND ISOBARS &middot; PRESS &#9654; IN THE MAP TO RUN FORWARD IN TIME, OR DRAG ITS TIMELINE &middot; THE MODEL MENU IN THE MAP SWITCHES ECMWF / GFS / ICON &middot; THE COLOUR KEY IS IN THE MAP CORNER</span></div>
 <div class="st-reach" id="stReachInfo">LOADING THE WIND FORECAST&hellip;</div>
 <div class="st-status" id="stStatus"></div>
-<details class="st-more" id="stNearHead" style="display:none;"><summary>NEAR JERSEY &middot; STRONGEST WIND BY COMPASS SIDE (WIND ROSES)</summary><div class="st-near" id="stNear"></div></details>
-<details class="st-more" id="stListWrap"><summary id="stListSum">ALL TRACKED STORMS</summary><div class="st-list" id="stList"></div></details>
-<details class="st-more"><summary>HOW TO READ THIS MAP</summary>
+<details class="st-more" id="stListWrap"><summary id="stListSum">ALL TRACKED STORMS &middot; NOAA GFS</summary><div class="st-list" id="stList"></div></details>
+<details class="st-more"><summary>HOW TO READ THIS</summary>
 <div class="sw-note">
-<b>HOW TO READ THIS MAP:</b> the map is fixed on the area that matters to Jersey &mdash; Ireland and the Western Approaches across to the Low Countries, Biscay up to Scotland &mdash; so the wind shading always fills it and shows more detail than a whole-Atlantic view could. Storms are still followed right across the Atlantic: one that is outside the map is listed under ALL TRACKED STORMS with the time it enters the map. Each glowing line is the forecast path of a storm (a low-pressure centre) over the next 10 days. The dots show where the centre is expected to be every 12 hours, and the number beside each dot is the lowest pressure forecast at that moment in hPa &mdash; the lower the number, the stronger the storm (below about 980 is a deep storm). Colours go from cyan and green (weak) through amber and red to pink (very deep). Every 24 hours the day and time is shown (Jersey time). Tap a dot for details, or tap a storm in the list to zoom to it. The arrow shows the direction it is heading.<br>
-<b>WIND ROSE:</b> when a storm centre is within about 700 miles of Jersey a coloured &ldquo;rose&rdquo; appears in its card under the map. Each petal is one compass direction (N, NE, E &hellip;) and shows the strongest wind (solid) and gust (pale) forecast within about 250 miles of the centre on that side &mdash; the longer and redder the petal, the stronger the wind. The white outline marks the stormiest side; for Atlantic lows that is usually the south-west and south, where the winds blow along the same direction the storm is travelling. The little amber diamond marked J is Jersey, so you can see which side of the storm we are on. The white arrow shows which way the storm is moving. Use the slider or PLAY to watch the rose change as the storm passes, or tap any part of a storm's track (or one of its dots) to jump to that time and place and see the rose there. The forecast model smooths the winds, so real gusts can be higher than shown.<br>
-<b>WIND, PARTICLES AND PRESSURE LINES:</b> the map itself is drawn by Windy.com from the same NOAA GFS run as the storm tracks &mdash; the colours are the forecast wind at 10 metres above the ground at the time on the slider, the moving particles show the direction, and the colour key is in the corner of the map. Choose GUSTS (the strongest short bursts) or AVERAGE WIND (the steady speed). The slider steps both the storms and the wind through time; there is no play button because stepping a weather map hour by hour is never smooth on an ordinary PC or phone, whoever draws it. Thin white lines mark gale (39 mph), storm (55 mph) and hurricane force (73 mph for gusts, 64 mph for average wind). The curved grey-white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10, numbered every 4 &mdash; and the closer together they are, the stronger the wind. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger. The Windy map above it is a separate, independent picture from the European (ECMWF) model with its own play button &mdash; if the two disagree, that is two models disagreeing, which is worth knowing. The box under the map uses a separate hourly forecast for Jersey itself from several weather models (GFS, ECMWF, ICON, the UK Met Office and M&eacute;t&eacute;o-France, where each reaches that far ahead), shown as a range: when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. Its &ldquo;strongest in the next 10 days&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
+<b>HOW TO READ THIS MAP:</b> the map is Windy.com, centred on Jersey. The colours are the forecast wind at 10 metres above the ground (the key is in the map corner, in mph), the moving particles show the direction the wind blows, and the thin lines are isobars &mdash; equal sea-level pressure &mdash; the closer together, the stronger the wind. Press &#9654; in the map to run forward through the coming days, or drag the timeline along the bottom. The map starts on the European model (ECMWF); the menu in the map corner switches to GFS or ICON, and the panels in the top corner change what is shown (gusts, rain, waves and more). Tap any spot for the forecast there.<br>
+<b>THE BOX BELOW THE MAP:</b> Jersey's own wind forecast from several models at once, shown as a range &mdash; when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. &ldquo;Strongest spell&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline. SHOW ME opens that time on the Windy map.<br>
+<b>THE STORM LIST:</b> the storm centres (lows) that NOAA's GFS model forecasts across the North Atlantic in the next 10 days, worked out automatically every 6 hours, with how close each one comes to Jersey and when.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -3356,16 +3324,24 @@ if(pend.length) head += '<br><span style="color:var(--amber);">NAME NOT MATCHED 
 el.className = 'st-status' + (stale ? ' warn' : '');
 el.innerHTML = head + '<small>' + run + (stale ? ' &middot; THIS DATA IS ' + Math.round(ageH) + ' HOURS OLD &mdash; THE AUTOMATIC UPDATE MAY HAVE STOPPED' : ' &middot; UPDATES EVERY 6 HOURS') + '</small>';
 const jn = document.getElementById('stJumpNear');
-if(jn) jn.addEventListener('click', function(e){ e.preventDefault(); stJumpClosest(); document.getElementById('stNear').scrollIntoView({ behavior:'smooth', block:'center' }); });
+if(jn) jn.addEventListener('click', function(e){ e.preventDefault(); stJumpClosest(); });
 }
 function stClosestInside(){
 let best = null;
 (ST.tracks || []).forEach(t => { if(t.within_500mi && (!best || t.closest_km < best.closest_km)) best = t; });
 return best;
 }
+/* point the Windy map at a time: reload the embed with that start time and scroll to it */
+function stShowOnWindy(when){
+const f = document.getElementById('stWindy');
+if(!f || !when) return;
+const iso = when.toISOString().slice(0, 13).replace('T', '-');          // Windy wants YYYY-MM-DD-HH
+f.src = f.src.replace(/&calendar=[^&]*/, '&calendar=' + iso);
+f.scrollIntoView({ behavior:'smooth', block:'center' });
+}
 function stJumpClosest(){
 const t = stClosestInside();
-if(t) stSetHour(Math.round(t.closest_hour / 6) * 6, true);
+if(t && ST.data) stShowOnWindy(new Date(new Date(ST.data.cycle).getTime() + t.closest_hour * 3600000));
 }
 function stList(tracks){
 const d = ST.data;
@@ -3392,9 +3368,7 @@ const item = document.createElement('div');
 item.className = 'st-item';
 item.innerHTML = '<span class="st-dot" style="background:' + col + ';color:' + col + ';"></span><div><b>STORM ' + stEsc(stLabel(t)) + (bits.length ? '<em>' + bits.join(' &middot; ') + '</em>' : '') + '</b><small>Lowest pressure ' + Math.round(t.min_hpa) + ' hPa around ' + stTime(deepAt) + '<br>Closest to Jersey ' + stMi(t.closest_km) + ' miles around ' + stTime(nearAt) + '<br>Tracked ' + stTime(from) + ' to ' + stTime(to) + '</small></div>';
 item.addEventListener('click', function(){
-if(ST.boxes[t.id] && ST_WINDOW.intersects(ST.boxes[t.id])) ST.map.fitBounds(ST.boxes[t.id].pad(0.2), { maxZoom:6 });
-else if(ST.boxes[t.id]){ ST.map.fitBounds(ST_WINDOW); if(t.enterH >= 0) stSetHour(t.enterH, true); }
-document.getElementById('windy').scrollIntoView({ behavior:'smooth', block:'center' });
+stShowOnWindy(new Date(cycle.getTime() + t.closest_hour * 3600000));
 });
 box.appendChild(item);
 });
@@ -3405,22 +3379,13 @@ return fetch(ST_URL + '?v=' + Math.floor(Date.now() / 600000), { cache:'no-store
 .then(function(d){
 if(!d || !Array.isArray(d.tracks) || !d.cycle) throw new Error('unexpected file contents');
 ST.data = d;
-stMsg('');
-if(ST.firstHour){
-ST.firstHour = false;
 ST.tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
-const t = stClosestInside();
-ST.hour = t ? Math.round(t.closest_hour / 6) * 6 : 0;
-}
-stRender();
-setTimeout(wfPrepareAll, 2500);
+stStatus(ST.tracks);
+stList(ST.tracks);
 })
 .catch(function(e){
 console.warn('storm tracks not loaded', e);
-if(!ST.data){
-stMsg('STORM TRACKS ARE NOT AVAILABLE RIGHT NOW.<br>THEY UPDATE AUTOMATICALLY &mdash; PLEASE CHECK BACK SOON.');
-document.getElementById('stStatus').innerHTML = '';
-}
+if(!ST.data) document.getElementById('stStatus').innerHTML = 'STORM TRACKS ARE NOT AVAILABLE RIGHT NOW &mdash; THEY UPDATE AUTOMATICALLY, PLEASE CHECK BACK SOON.';
 });
 }
 /* ============================================================
@@ -3456,6 +3421,7 @@ WF_LUTS[type] = t;
 });
 function wfLegend(type){
 WF.legendType = type;
+if(!document.getElementById('stReachLegend')) return;
 const lb = type === 'wind' ? ['15','25','35','45','55','65','75+'] : ['25','35','45','55','65','75','90+'];
 document.getElementById('stReachLegend').innerHTML = '<span>' + (type === 'wind' ? 'AVERAGE WIND' : 'WIND GUSTS') + ' (MPH):</span><span class="st-key" style="flex-direction:column;align-items:flex-start;gap:3px;"><i class="st-grad"></i><i class="st-gradlbl">' + lb.map(x => '<span>' + x + '</span>').join('') + '</i></span><span class="st-key">WHITE LINES = GALE 39 &middot; STORM 55 &middot; HURRICANE FORCE ' + (type === 'wind' ? '64' : '73') + '</span>';
 }
@@ -3886,11 +3852,11 @@ WF.raf = requestAnimationFrame(function(){ WF.raf = 0; wfRun(); });
 }
 function wfRun(){
 const info = document.getElementById('stReachInfo');
-if(!info || !ST.map) return;
+if(!info) return;
 const mode = ST.reachMode || 'now';
 const type = (ST.windType === 'wind' && WF.d && WF.d.wspd) ? 'wind' : 'gust';
 const fkey = type === 'wind' ? 'wspd' : 'gust';
-const when = ST.data ? stHourDate(ST.hour) : null;
+const when = null;                                   // no slider: the box shows the coming days only
 const i = (WF.d && when) ? wfIdx(when, fkey) : -1;
 const key = mode + '|' + type + '|' + ST.hour + '|' + (WF.d ? WF.d.cycle : '');
 if(key !== WF.key && !ST.windy){
@@ -3911,10 +3877,12 @@ WF.overlay.setOpacity(0); WF.overlay2.setOpacity(0);
 /* the box under the map: Jersey's own hourly forecast, as a range across the models */
 let html = '';
 const js = WF.jer;
-if(js && when){
+if(js){
+const gs = [];
+if(when){
 const hk = function(dt){ return dt.toISOString().slice(0, 13) + ':00'; };
 const ti = js.idx[hk(when)];
-const gs = [], ws = [];
+const ws = [];
 if(ti !== undefined) js.models.forEach(function(m){ if(m.gust[ti] != null) gs.push(m.gust[ti]); if(m.wind[ti] != null) ws.push(m.wind[ti]); });
 if(gs.length){
 const glo = Math.round(Math.min.apply(null, gs)), ghi = Math.round(Math.max.apply(null, gs));
@@ -3927,18 +3895,18 @@ html += ' <span style="color:var(--dim);">&middot; ' + gs.length + ' MODELS' + (
 } else {
 html += 'NO JERSEY WIND FORECAST FOR THIS TIME (IT COVERS ABOUT 10 DAYS FROM TODAY).';
 }
+}
 const pk = js.peaks || [];
 if(pk.length){
 const lo = Math.round(Math.min.apply(null, pk.map(p => p.v))), hi = Math.round(Math.max.apply(null, pk.map(p => p.v)));
 const ts = pk.map(p => p.t).sort((x, y) => x - y);
 const pd0 = new Date(js.times[ts[0]] + ':00Z'), pd1 = new Date(js.times[ts[ts.length - 1]] + ':00Z');
 const mid = new Date(js.times[ts[Math.floor(ts.length / 2)]] + ':00Z');
-const ph = Math.round((mid.getTime() - new Date(ST.data.cycle).getTime()) / 3600000 / 6) * 6;
-WF.peakHour = ph;
-html += '<br><b>STRONGEST SPELL IN THE NEXT 10 DAYS</b> (EACH MODEL\'S OWN PEAK): <b style="color:' + stWindColor(hi) + ';">' + wfRange(lo, hi) + '</b> ' + wfSpan(pd0, pd1);
+WF.peakWhen = mid;
+html += (when ? '<br>' : '') + '<b>JERSEY &middot; STRONGEST SPELL IN THE NEXT 10 DAYS</b> (EACH MODEL\'S OWN PEAK): <b style="color:' + stWindColor(hi) + ';">' + wfRange(lo, hi) + '</b> ' + wfSpan(pd0, pd1);
 const spread = hi - lo;
 html += ' <span style="color:' + (spread > WF_DISAGREE_MPH ? 'var(--amber)' : 'var(--dim)') + ';">&middot; ' + pk.length + ' OF ' + (pk.length + (js.short || []).length) + ' MODELS, ' + (spread > WF_DISAGREE_MPH ? spread + ' MPH APART' : 'WITHIN ' + spread + ' MPH') + '</span>';
-if(ph >= 0 && ph <= 240) html += ' &middot; <a href="#" id="stReachJump">SHOW ME &rarr;</a>';
+html += ' &middot; <a href="#" id="stReachJump">SHOW ME ON THE MAP &rarr;</a>';
 if(spread > WF_DISAGREE_MPH) html += '<br><span style="color:var(--amber);">THE MODELS DISAGREE ON HOW STRONG &mdash; THE LOWER FIGURE IS MORE LIKELY, THE HIGHER IS POSSIBLE.</span>';
 if(js.trend && (js.trend.lo !== lo || js.trend.hi !== hi)){
 const up = hi > js.trend.hi || (hi === js.trend.hi && lo > js.trend.lo);
@@ -3963,7 +3931,7 @@ else if(WF.d && i < 0 && mode !== 'off') html += '<small>NO WIND MAP FOR THIS TI
 else if(WF.d) html += '<small>WIND MAP: NOAA GFS ' + swPad(new Date(WF.d.cycle).getUTCHours(), 2) + 'Z ' + ST_DAY.format(new Date(WF.d.cycle)).toUpperCase() + ' &middot; TAP THE MAP FOR THE WIND AT ANY POINT</small>';
 if(html !== WF.lastHtml){ WF.lastHtml = html; info.innerHTML = html; }
 const jl = document.getElementById('stReachJump');
-if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); stSetHour(WF.peakHour, true); });
+if(jl) jl.addEventListener('click', function(e){ e.preventDefault(); if(WF.peakWhen) stShowOnWindy(WF.peakWhen); });
 if(WF.pop && WF.popLL && ST.map.hasLayer(WF.pop)) WF.pop.setContent(wfPointInfo(WF.popLL));
 }
 /* tap / click on the map: the wind at that point at the time on the slider */
@@ -4011,10 +3979,10 @@ WF.popLL = ev.latlng;
 }
 function initStormTracker(){
 if(!document.getElementById('stPanel')) return;
-stInitMap(function(ok){
-if(!ok){ stMsg('THE MAP COULD NOT START. PLEASE RELOAD THE PAGE.'); return; }
-stWireControls();
-});
+stLoad();
+setInterval(stLoad, 30*60*1000);
+setTimeout(wfJerseyLoad, 2000);
+setInterval(wfJerseyLoad, 60*60*1000);
 }
 function stWireControls(){
 function wire(id, apply){
