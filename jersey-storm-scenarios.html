@@ -774,7 +774,13 @@ background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; pa
 .sc-card.likely .lab, .sc-card.likely .big{ color:var(--amber); }
 .sc-card.worst .lab, .sc-card.worst .big{ color:var(--red); }
 .sc-card .sub{ font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:2px; }
-.sc-card .big{ font-family:'Orbitron',sans-serif; font-weight:900; font-size:40px; line-height:1; margin:14px 0 2px; }
+.sc-card .big{ font-family:'Orbitron',sans-serif; font-weight:900; font-size:34px; line-height:1; margin:10px 0 2px; }
+.sc-card .chance{ position:absolute; top:14px; right:16px; font-family:'Orbitron',sans-serif; font-weight:900; font-size:30px; line-height:1; text-align:right; }
+.sc-card .chance small{ display:block; font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:1.5px; color:var(--dim); margin-top:3px; }
+.sc-card.best .chance{ color:var(--green); } .sc-card.likely .chance{ color:var(--amber); } .sc-card.worst .chance{ color:var(--red); }
+.sc-card .star{ font-size:9px; letter-spacing:1px; padding:2px 6px; border-radius:4px; background:currentColor; }
+.sc-card .star{ color:#05080d; }
+.sc-card.best .star{ background:var(--green); } .sc-card.worst .star{ background:var(--red); }
 .sc-card .unit{ font-size:10px; letter-spacing:2px; color:var(--dim); }
 .sc-card .row{ display:flex; justify-content:space-between; gap:8px; font-size:10.5px; padding:7px 0; border-top:1px solid var(--line); color:var(--dim); margin-top:10px; }
 .sc-card .row .v{ color:var(--text); font-weight:700; text-align:right; }
@@ -814,6 +820,35 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 .sc-copy.done{ background:var(--cyan); }
 .sc-post .hint{ font-size:9.5px; color:var(--dim); letter-spacing:0.5px; }
 .sc-method{ margin-bottom:22px; }
+.sc-sum{ margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+.sc-sum h4{ margin:0 0 4px; font-size:11px; letter-spacing:2px; color:var(--cyan); }
+.sc-sum img{ display:block; width:100%; max-width:560px; height:auto; border-radius:8px; margin:10px 0; border:1px solid var(--line); min-height:60px; background:var(--bg); }
+.sc-chart{ position:relative; }
+.sc-imgbtn{ float:right; margin:0 0 8px 12px; font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:800; letter-spacing:1px; cursor:pointer; color:#fff; background:#1877f2; border:0; border-radius:6px; padding:6px 10px; }
+.sc-imgbtn:hover{ filter:brightness(1.12); }
+.sc-imgbox{ display:none; position:fixed; inset:0; z-index:5000; background:rgba(0,0,0,0.78); padding:24px 14px; overflow:auto; }
+.sc-imgbox.show{ display:block; }
+.sc-imgpanel{ position:relative; max-width:860px; margin:0 auto; padding:18px; border-radius:14px; background:var(--bg-panel); border:1px solid rgba(24,119,242,0.6); }
+.sc-imgpanel h4{ margin:0 0 4px; font-size:11px; letter-spacing:2px; color:var(--cyan); }
+.sc-imgpanel img{ display:block; width:100%; height:auto; border-radius:8px; margin:10px 0; border:1px solid var(--line); }
+.sc-imgpanel .acts{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.sc-imgclose{ position:absolute; top:8px; right:10px; width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:20px; cursor:pointer; }
+.sc-news{ display:none; margin:0 0 14px; padding:10px 14px; border-radius:10px; font-size:10.5px; line-height:1.7; letter-spacing:0.6px; }
+.sc-news.show{ display:block; }
+.sc-news.fresh{ color:#05080d; background:var(--amber); font-weight:700; }
+.sc-news.quiet{ color:var(--dim); border:1px dashed var(--line); }
+.sc-news b{ font-weight:800; }
+.sc-runs{ display:grid; grid-template-columns:auto auto auto auto; gap:3px 18px; margin:0 0 16px; padding:10px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg-panel); font-size:9.5px; letter-spacing:0.8px; width:max-content; max-width:100%; }
+.sc-runs:empty{ display:none; }
+.sc-runs .h{ color:var(--dim2); font-size:8.5px; letter-spacing:1.5px; }
+.sc-runs .m{ font-weight:800; }
+.sc-runs .d{ color:var(--dim); }
+.sc-runs .ok{ color:var(--cyan); font-weight:700; }
+.sc-runs .due{ color:var(--amber); font-weight:700; }
+.sc-runs .late{ color:var(--red); font-weight:700; }
+@media (max-width:520px){ .sc-runs{ gap:3px 10px; font-size:8.5px; width:auto; } }
+.sc-bell{ font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:800; letter-spacing:1px; cursor:pointer; color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:6px; padding:5px 9px; margin-left:8px; }
+@media (max-width:820px){ .sc-imgbtn{ float:none; display:block; margin:0 0 10px auto; } }
 .sc-lad{ display:grid; grid-template-columns:repeat(7, 1fr); gap:10px; }
 .sc-rung{ text-align:center; }
 .sc-rung .lv{ font-size:10px; font-weight:800; letter-spacing:1px; }
@@ -831,7 +866,7 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 .sc-gauge .n{ font-size:7.5px; }
 .sc-days{ grid-template-columns:repeat(4, 1fr); }
 .sc-headline h2{ font-size:17px; }
-.sc-card .big{ font-size:34px; }
+.sc-card .big{ font-size:30px; }
 }
 
 </style>
@@ -891,8 +926,10 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 <div class="tag">BEST &middot; LIKELY &middot; WORST</div>
 </div>
 <div class="sc-status" style="color:var(--amber);">&#9888; PRIVATE PREVIEW &middot; NOT LINKED FROM THE REST OF THE SITE &middot; NOT INDEXED BY SEARCH ENGINES</div>
-<p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and shows the range: the <b>best case</b> (only 1 in 10 runs are calmer), the <b>most likely</b> (the middle run) and the <b>worst case</b> (only 1 in 10 runs are wilder). The percentages are simply how many runs show it. Pick a day below.</p>
+<p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and splits them into three scenarios &mdash; <b>best case</b>, <b>most likely</b> and <b>worst case</b> &mdash; each a range of gust speeds. A scenario&rsquo;s chance is simply the share of runs that fall in it, so the three always add up to 100%. Pick a day below.</p>
 <div class="sc-status" id="scStatus">LOADING THE MODEL RUNS&hellip;</div>
+<div class="sc-news" id="scNews"></div>
+<div class="sc-runs" id="scRuns"></div>
 <div class="sc-days" id="scDays"></div>
 <div id="scMain"><div class="sc-loading">LOADING THE MODEL RUNS&hellip;</div></div>
 </section>
@@ -926,10 +963,10 @@ if(a && box) a.addEventListener('click', function(e){ e.preventDefault(); box.op
    scenario (not from all runs at once, because runs time the peak differently). */
 const LAT = 49.21, LON = -2.13;
 const ENS = [
-{ id:'ecmwf_ifs025',              lbl:'ECMWF',          col:'#4cd3ff' },
-{ id:'gfs_seamless',              lbl:'GFS',            col:'#b48cff' },
-{ id:'icon_seamless',             lbl:'ICON',           col:'#ffd166' },
-{ id:'ukmo_global_ensemble_20km', lbl:'UK MET OFFICE',  col:'#ff8fab', nm:'UK Met Office' }
+{ id:'ecmwf_ifs025',              lbl:'ECMWF',          col:'#4cd3ff', meta:['ecmwf_ifs025_ensemble'] },
+{ id:'gfs_seamless',              lbl:'GFS',            col:'#b48cff', meta:['ncep_gefs025'] },
+{ id:'icon_seamless',             lbl:'ICON',           col:'#ffd166', meta:['dwd_icon_eu_eps', 'dwd_icon_eps'] },   // the European ICON ensemble is the one in use (about 5 days ahead)
+{ id:'ukmo_global_ensemble_20km', lbl:'UK MET OFFICE',  col:'#ff8fab', nm:'UK Met Office', meta:['ukmo_global_ensemble_20km'] }
 ];
 const DET = [
 { id:'gfs_seamless',         lbl:'GFS' },
@@ -1034,24 +1071,45 @@ const share = function(x){ return Math.round(100 * peaks.filter(v => v >= x).len
 const st = { day:day, n:recs.length, recs:recs, c50:share(50), c60:share(60), c70:share(70), ch:{}, models:{} };
 THRESH.forEach(function(t){ st.ch[t] = share(t); });
 recs.forEach(function(r){ st.models[r.model.lbl] = (st.models[r.model.lbl] || 0) + 1; });
-const sorted = recs.slice().sort((a, b) => a.pk - b.pk);
-const k = Math.max(5, Math.round(recs.length * 0.1));
+/* percentiles of all the runs' peaks (used for the day tiles, the main-runs chart and "since you last looked") */
+st.q10 = pct(peaks, 0.1); st.q50 = pct(peaks, 0.5); st.q90 = pct(peaks, 0.9);
+/* The three scenarios are RANGES of peak gust, so each has a real chance: the share of runs in it.
+   The two dividing lines are impact levels (39, 47, 58, 70, 80, 90, 100 mph), picked for each day
+   so the split reads like a forecast: about a quarter / half / quarter where possible, with at
+   least 8% in each outer range, and the middle range spanning no more than two impact levels.
+   If no pair of levels works (all runs bunched together), the lines fall half-way between the
+   10th, 50th and 90th percentiles instead. */
+const LV = [39, 47, 58, 70, 80, 90, 100];
+const below = function(b){ return peaks.filter(v => v < b).length / peaks.length; };
+let cut = null;
+for(let i = 0; i < LV.length; i++) for(let j = i + 1; j < LV.length && j <= i + 2; j++){
+const lo = below(LV[i]), hi = 1 - below(LV[j]), mid = 1 - lo - hi;
+if(lo < 0.08 || hi < 0.08) continue;
+const score = Math.abs(lo - 0.25) + Math.abs(mid - 0.5) + Math.abs(hi - 0.25);
+if(!cut || score < cut.score) cut = { b1:LV[i], b2:LV[j], score:score, levels:true };
+}
+if(!cut) cut = { b1:Math.round((st.q10 + st.q50) / 2), b2:Math.max(Math.round((st.q10 + st.q50) / 2) + 1, Math.round((st.q50 + st.q90) / 2)), levels:false };
+st.b1 = cut.b1; st.b2 = cut.b2; st.levelCut = cut.levels;
+const groups = [recs.filter(r => r.pk < cut.b1), recs.filter(r => r.pk >= cut.b1 && r.pk < cut.b2), recs.filter(r => r.pk >= cut.b2)];
+const pcs = groups.map(g => Math.round(100 * g.length / recs.length));
+pcs[1] = 100 - pcs[0] - pcs[2];                                   // so the three always add up to 100%
+const biggest = pcs.indexOf(Math.max.apply(null, pcs));
 st.sc = [
-{ key:'best',   lbl:'BEST CASE',   emo:'\ud83d\udfe2', sub:'ONLY 1 IN 10 RUNS ARE CALMER', q:0.1 },
-{ key:'likely', lbl:'MOST LIKELY', emo:'\ud83d\udfe0', sub:'THE MIDDLE RUN',               q:0.5 },
-{ key:'worst',  lbl:'WORST CASE',  emo:'\ud83d\udd34', sub:'ONLY 1 IN 10 RUNS ARE WILDER',  q:0.9 }
-].map(function(s){
-s.v = pct(peaks, s.q);
-const c = Math.round(s.q * (sorted.length - 1));
-const a = Math.max(0, Math.min(sorted.length - k, c - Math.floor(k / 2)));
-const near = sorted.slice(a, a + k);
-s.wind = med(near.map(r => r.wpk));
-const hit = near.filter(r => r.f60 >= 0);
-s.win = hit.length >= near.length / 2 ? [Math.round(med(hit.map(r => r.f60))), Math.max(Math.round(med(hit.map(r => r.f60))) + 1, Math.round(med(hit.map(r => r.l60))) + 1)] : null;   // [start hour, hour it ends]
-/* which models are over-represented among the runs like this scenario */
+{ key:'best',   lbl:'BEST CASE',   emo:'\ud83d\udfe2', range:'UNDER ' + cut.b1, rangeTxt:'under ' + cut.b1 },
+{ key:'likely', lbl:biggest === 1 ? 'MOST LIKELY' : 'IN BETWEEN', emo:'\ud83d\udfe0', range:cut.b1 + '&ndash;' + (cut.b2 - 1), rangeTxt:cut.b1 + '\u2013' + (cut.b2 - 1) },
+{ key:'worst',  lbl:'WORST CASE',  emo:'\ud83d\udd34', range:cut.b2 + '+', rangeTxt:cut.b2 + '+' }
+].map(function(s, i){
+const g = groups[i];
+s.n = g.length; s.p = pcs[i]; s.top = (i === biggest);
+if(!g.length){ s.v = i === 0 ? cut.b1 - 3 : i === 1 ? (cut.b1 + cut.b2) / 2 : cut.b2 + 3; s.wind = 0; s.win = null; s.lean = []; s.leanNm = []; return s; }
+s.v = med(g.map(r => r.pk));                                      // the typical peak gust within this range
+s.wind = med(g.map(r => r.wpk));
+const hit = g.filter(r => r.f60 >= 0);
+s.win = hit.length >= g.length / 2 ? [Math.round(med(hit.map(r => r.f60))), Math.max(Math.round(med(hit.map(r => r.f60))) + 1, Math.round(med(hit.map(r => r.l60))) + 1)] : null;   // [start hour, hour it ends]
+/* which models are over-represented in this range */
 const cnt = {}, nmOf = {};
-near.forEach(r => { cnt[r.model.lbl] = (cnt[r.model.lbl] || 0) + 1; nmOf[r.model.lbl] = r.model.nm || r.model.lbl; });
-s.lean = Object.keys(cnt).filter(m => cnt[m] >= 2 && cnt[m] / near.length >= 1.4 * st.models[m] / st.n).sort((x, y) => cnt[y] - cnt[x]);
+g.forEach(r => { cnt[r.model.lbl] = (cnt[r.model.lbl] || 0) + 1; nmOf[r.model.lbl] = r.model.nm || r.model.lbl; });
+s.lean = Object.keys(cnt).filter(m => cnt[m] >= 2 && cnt[m] / g.length >= 1.4 * st.models[m] / st.n).sort((x, y) => cnt[y] - cnt[x]);
 s.leanNm = s.lean.map(m => nmOf[m]);
 return s;
 });
@@ -1114,26 +1172,29 @@ const maxStack = Math.max.apply(null, Object.values(bins).map(a => a.length));
 const top = SC.W < 1000 ? 96 : 48, base = top + maxStack * step + 8, H = base + 34;
 let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Each model run\'s peak gust">';
 s += tierBands(x, top - 26, base, false, lo, hi);   // bands start just below the scenario labels
-BANDS.forEach(b => { if(b[0] < hi) s += '<text x="' + (x(b[0]) + 4) + '" y="' + (top - 12) + '" fill="#5f7c88" font-size="' + fsz(10) + '" font-family="JetBrains Mono, monospace">' + b[3] + '</text>'; });
+BANDS.forEach(b => { if(b[0] < hi) s += '<text x="' + (x(b[0]) + 4) + '" y="' + (top - 12) + '" fill="#5f7c88" font-size="' + fsz(SC.W < 1000 ? 8.5 : 10) + '" font-family="JetBrains Mono, monospace">' + b[3] + '</text>'; });
 Object.keys(bins).forEach(function(b){
 bins[b].forEach(function(r, i){ s += '<circle cx="' + x(+b).toFixed(1) + '" cy="' + (base - 6 - i * step) + '" r="' + rad + '" fill="' + r.model.col + '" fill-opacity="0.9"/>'; });
 });
+/* the scenario ranges: dividing lines, and each range's name and chance above it */
+[st.b1, st.b2].forEach(function(b){ if(b > lo && b < hi) s += '<line x1="' + x(b) + '" x2="' + x(b) + '" y1="' + (top - 30) + '" y2="' + base + '" stroke="#e9f6f5" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="6 4"/>'; });
+const edges = [[lo, st.b1], [st.b1, st.b2], [st.b2, hi]];
 st.sc.forEach(function(sc, si){
 const mob = SC.W < 1000, ly = mob ? 18 + si * 22 : top - 34;   // on phones each label gets its own line
 const col = sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c';
-s += '<line x1="' + x(sc.v) + '" x2="' + x(sc.v) + '" y1="' + (ly + 5) + '" y2="' + base + '" stroke="' + col + '" stroke-width="2" stroke-dasharray="5 4"/>';
-s += '<text x="' + x(sc.v) + '" y="' + ly + '" fill="' + col + '" font-size="' + fsz(10.5) + '" font-weight="700" text-anchor="middle" font-family="JetBrains Mono, monospace">' + (mob ? sc.lbl.replace('MOST ', '').replace(' CASE', '') : sc.lbl) + ' ' + Math.round(sc.v) + '</text>';
+const cx = (x(Math.max(lo, edges[si][0])) + x(Math.min(hi, edges[si][1]))) / 2;
+s += '<text x="' + cx + '" y="' + ly + '" fill="' + col + '" font-size="' + fsz(10.5) + '" font-weight="700" text-anchor="middle" font-family="JetBrains Mono, monospace">' + (mob ? sc.lbl.replace('MOST ', '').replace(' CASE', '') : sc.lbl) + ' ' + sc.p + '%</text>';
 });
 s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + base + '" y2="' + base + '" stroke="#3a4e58"/>';
 for(let v = lo; v <= hi; v += 10) s += '<text x="' + x(v) + '" y="' + (base + 16) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="middle" font-family="JetBrains Mono, monospace">' + v + '</text>';
 s += '<text x="' + (W - R) + '" y="' + (base + 30) + '" fill="#5f7c88" font-size="' + fsz(9.5) + '" text-anchor="end" font-family="JetBrains Mono, monospace">PEAK GUST IN MPH</text>';
 return s + '</svg>';
 }
-function fanChart(st){
+function fanChart(st, hOverride){
 const f = st.fan.filter(Boolean);
 if(!f.length) return '';
 const top = Math.max(70, Math.ceil((Math.max.apply(null, f.map(p => p.p90)) + 5) / 10) * 10);
-const W = SC.W, H = SC.W < 1000 ? 380 : 300, L = SC.W < 1000 ? 52 : 44, R = SC.W < 1000 ? 96 : 70, T = 14, B = 34;
+const W = SC.W, H = hOverride || (SC.W < 1000 ? 380 : 300), L = SC.W < 1000 ? 52 : 44, R = SC.W < 1000 ? 96 : 70, T = 14, B = 34;
 const X = h => L + h * (W - L - R) / 23, Y = v => T + (top - Math.max(0, Math.min(top, v))) * (H - T - B) / top;
 const path = (k1, k2) => { const a = f.map(p => X(p.h).toFixed(1) + ',' + Y(p[k1]).toFixed(1)); const b = f.slice().reverse().map(p => X(p.h).toFixed(1) + ',' + Y(p[k2]).toFixed(1)); return 'M' + a.join('L') + 'L' + b.join('L') + 'Z'; };
 let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gusts through the day">';
@@ -1149,7 +1210,7 @@ return s + '</svg>';
 }
 function detChart(st, dp){
 if(!dp.length) return '<div class="cap">The main model runs are not available right now.</div>';
-const p10 = st.sc[0].v, p50 = st.sc[1].v, p90 = st.sc[2].v;
+const p10 = st.q10, p50 = st.q50, p90 = st.q90;
 const hi = Math.max(90, Math.ceil((Math.max(p90, Math.max.apply(null, dp.map(d => d.pk))) + 5) / 10) * 10), lo = 20;
 const W = SC.W, L = SC.W < 1000 ? 170 : 150, R = 60, rowH = SC.W < 1000 ? 38 : 30, T = 10, H = T + dp.length * rowH + 30;
 const x = v => L + (Math.max(lo, Math.min(hi, v)) - lo) * (W - L - R) / (hi - lo);
@@ -1173,7 +1234,7 @@ const box = document.getElementById('scDays');
 box.innerHTML = SC.days.map(function(d){
 const st = SC.stats[d];
 if(!st) return '<div class="sc-day off"><div class="dn">' + DAYS.format(dayDate(d)).toUpperCase() + '</div><div class="dd">' + nc(DAYF.format(dayDate(d))).split(' ').slice(1).join(' ') + '</div><div class="bar"></div><div class="pl">NOT ENOUGH RUNS</div></div>';
-const t = tierOf(st.sc[1].v);
+const t = tierOf(st.q50);
 const col = t ? t.hex : 'var(--cyan)';
 return '<button type="button" class="sc-day' + (d === SC.day ? ' active' : '') + '" data-day="' + d + '"><div class="dn">' + DAYS.format(dayDate(d)).toUpperCase() + '</div><div class="dd">' + nc(DAYF.format(dayDate(d))).split(' ').slice(1).join(' ') + '</div>' +
 '<div class="bar"><i style="height:' + Math.max(2, st.c60) + '%;background:' + col + ';"></i></div><div class="pc" style="color:' + col + ';">' + st.c60 + '%</div><div class="pl">CHANCE OF 60+</div></button>';
@@ -1181,37 +1242,54 @@ return '<button type="button" class="sc-day' + (d === SC.day ? ' active' : '') +
 box.querySelectorAll('button[data-day]').forEach(b => b.addEventListener('click', function(){ SC.day = b.dataset.day; SC.userPicked = true; renderDays(); renderMain(); }));
 }
 function headline(st){
-const L = st.sc[1], W = st.sc[2];
+const L = st.sc[1], W = st.sc[2], B = st.sc[0];
+const hp = headText(st), h = hp.h, col = hp.col;
+return '<div class="sc-headline" style="border-color:' + col + ';"><div class="when">' + nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' &middot; ' + st.n + ' MODEL RUNS</div>' +
+'<h2 style="color:' + col + ';">' + h + '</h2><p>' + (L.top ? 'Most likely' : 'In between') + ' (<b>' + L.p + '% chance</b>): gusts of <b>' + L.range + ' mph</b>, typically about ' + Math.round(L.v) + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
+'. Best case (' + B.p + '%): ' + B.range.toLowerCase() + ' mph. Worst case (' + W.p + '%): ' + W.range + ' mph, typically about ' + Math.round(W.v) + ', higher on exposed coasts.' + (st.levelCut ? '' : ' <b>The runs agree closely today, so the three ranges are narrow.</b>') + '</p></div>';
+}
+/* the big headline sentence and its colour (used on the page and in the Facebook picture) */
+function headText(st){
 /* lead with the highest level that most runs reach (60+ on an ordinary stormy day) */
 const base = [100, 90, 80, 70].find(t => st.ch[t] >= 50) || 60;
 const cb = st.ch[base], n10 = Math.round(cb / 10);
 let h;
-if(W.v < 39) h = 'NO GALES EXPECTED &mdash; EVEN THE WILDEST RUNS KEEP GUSTS BELOW 39 MPH';
-else if(cb < 5) h = '60+ MPH GUSTS VERY UNLIKELY &mdash; MOST LIKELY PEAK ABOUT ' + Math.round(L.v) + ' MPH';
+if(st.q90 < 39) h = 'NO GALES EXPECTED &mdash; EVEN THE WILDEST RUNS KEEP GUSTS BELOW 39 MPH';
+else if(cb < 5) h = '60+ MPH GUSTS VERY UNLIKELY &mdash; MIDDLE RUN PEAKS ABOUT ' + Math.round(st.q50) + ' MPH';
 else if(cb < 10) h = 'FEWER THAN 1 IN 10 RUNS GIVE JERSEY GUSTS OF 60+ MPH';
 else if(cb >= 95) h = 'ALMOST EVERY RUN GIVES JERSEY GUSTS OF ' + base + '+ MPH';
 else h = 'ABOUT ' + n10 + ' IN 10 RUNS GIVE JERSEY GUSTS OF ' + base + '+ MPH';
 /* and if a still higher level has at least a 1 in 10 chance, say so too */
 const hiT = [100, 90, 80, 70].find(t => t > base && st.ch[t] >= 10);
 if(hiT && cb >= 10) h += ' &middot; ABOUT ' + Math.round(st.ch[hiT] / 10) + ' IN 10 GIVE ' + hiT + '+ MPH';
-const t = tierOf(L.v);
-const col = t ? t.hex : 'var(--green)';
-return '<div class="sc-headline" style="border-color:' + col + ';"><div class="when">' + nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' &middot; ' + st.n + ' MODEL RUNS</div>' +
-'<h2 style="color:' + col + ';">' + h + '</h2><p>Most likely peak gusts <b>' + rng(L.v) + ' mph</b>' + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
-'. Best case ' + rng(st.sc[0].v) + ' mph; worst case ' + rng(W.v) + ' mph, higher on exposed coasts.</p></div>';
+const t = tierOf(st.q50);
+return { h:h, col:t ? t.hex : '#2de1a0' };
 }
 function card(sc){
 const t = tierOf(sc.v);
 const col = sc.key === 'best' ? 'var(--green)' : sc.key === 'likely' ? 'var(--amber)' : 'var(--red)';
-return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + sc.lbl + '</div><div class="sub">' + sc.sub + '</div>' +
-'<div class="big">' + rng(sc.v) + '</div><div class="unit">MPH PEAK GUSTS</div>' +
-'<div class="row"><span>AVERAGE WIND UP TO</span><span class="v">' + Math.round(sc.wind) + ' MPH</span></div>' +
+const st = SC.stats[SC.day];
+return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' <span class="star">&#9733; MOST LIKELY</span>' : '') + '</div><div class="sub">' + sc.n + ' OF ' + st.n + ' RUNS</div>' +
+'<div class="chance">' + sc.p + '<small>% CHANCE</small></div>' +
+'<div class="big">' + sc.range + '</div><div class="unit">MPH PEAK GUSTS</div>' +
+'<div class="row"><span>TYPICAL PEAK GUST</span><span class="v">' + (sc.n ? 'ABOUT ' + Math.round(sc.v) + ' MPH' : '&ndash;') + '</span></div>' +
+'<div class="row" style="margin-top:0;"><span>AVERAGE WIND UP TO</span><span class="v">' + (sc.n ? Math.round(sc.wind) + ' MPH' : '&ndash;') + '</span></div>' +
 '<div class="row" style="margin-top:0;"><span>60+ MPH GUSTS</span><span class="v">' + (sc.win ? hh(sc.win[0]) + '&ndash;' + hh(sc.win[1]) : 'NONE') + '</span></div>' +
 '<div class="tl">' + timeline(sc.win, col) + '</div>' +
 (t ? '<div class="imp" style="color:' + t.col + ';background:' + t.bg + ';"><b>' + t.head + '</b>' + t.body + '</div>' : '<div class="imp" style="color:var(--green);background:rgba(45,225,160,0.07);"><b>BELOW GALE FORCE</b>Breezy at most; no wind impacts expected.</div>') +
 '<div class="lean">' + (sc.lean.length ? 'RUNS LIKE THIS: MOSTLY ' + sc.lean.join(' &amp; ') : 'RUNS LIKE THIS: A MIX OF ALL MODELS') + '</div></div>';
 }
 /* three dials: normally 50+, 60+, 70+; moves up when a higher level has at least a 1 in 20 chance */
+/* colour a speed by the scenario that reaches it, to match the three cards:
+   green = even the best case reaches it, amber = the most likely case does,
+   red = only the worst case does, grey = beyond even the worst case */
+function scenCol(st, t){
+if(!st.ch[t]) return '#5f7c88';
+if(t < st.b1) return '#2de1a0';
+if(t < st.b2) return '#ffb020';
+return '#ff4b5c';
+}
+const SCEN_KEY = 'COLOURED BY THE SCENARIO EACH SPEED FALLS IN: <span style="color:#2de1a0;">BEST CASE</span> &middot; <span style="color:#ffb020;">MOST LIKELY</span> &middot; <span style="color:#ff4b5c;">WORST CASE</span> &middot; <span style="color:#5f7c88;">GREY</span> = NO RUNS';
 function dialSet(st){
 const top = [100, 90, 80].find(t => st.ch[t] >= 5) || 70;
 return [top - 20, top - 10, top];
@@ -1220,9 +1298,9 @@ return [top - 20, top - 10, top];
 function ladder(st){
 const names = { 39:'GALE 39+', 50:'50+', 60:'60+', 70:'70+', 80:'80+', 90:'90+', 100:'100+' };
 return '<div class="sc-chart sc-ladder"><h4>CHANCE OF GUSTS OF AT LEAST&hellip;</h4><div class="sc-lad">' + THRESH.map(function(t){
-const p = st.ch[t], col = THCOL[t];
+const p = st.ch[t], col = scenCol(st, t);
 return '<div class="sc-rung' + (p ? '' : ' zero') + '"><div class="lv" style="color:' + col + ';">' + names[t] + '</div><div class="tr"><i style="width:' + p + '%;background:' + col + ';"></i></div><div class="pc" style="color:' + (p ? col : 'var(--dim2)') + ';">' + p + '%</div></div>';
-}).join('') + '</div><p class="cap" style="margin:8px 0 0;">Share of all ' + st.n + ' runs reaching each speed at some point in the day. Most of these stay at 0% on most days &mdash; that is good news.</p></div>';
+}).join('') + '</div><p class="cap" style="margin:8px 0 0;">Share of all ' + st.n + ' runs reaching each speed at some point in the day.<br>' + SCEN_KEY + '</p></div>';
 }
 function renderMain(){
 const st = SC.stats[SC.day];
@@ -1234,17 +1312,26 @@ const legend = ENS.filter(m => st.models[m.lbl]).map(m => '<span><i style="backg
 main.innerHTML = headline(st) +
 '<div class="sc-cards">' + st.sc.map(card).join('') + '</div>' +
 '<div class="sc-gauges">' +
-dialSet(st).map(t => gauge(st.ch[t], THCOL[t], 'CHANCE OF ' + t + '+ MPH GUSTS', Math.round(st.n * st.ch[t] / 100) + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
+st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c', 'CHANCE OF ' + sc.lbl, 'GUSTS ' + sc.range + ' MPH &middot; ' + sc.n + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
 ladder(st) +
-'<div class="sc-chart"><h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree; the dashed lines are the three scenarios.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + '</div></div>' +
-'<div class="sc-chart"><h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + '</div>' +
-'<div class="sc-chart"><h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band is best to worst case, the dashed line the most likely. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
+'<div class="sc-chart"><button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button><h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + '</div></div>' +
+'<div class="sc-chart"><button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button><h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + '</div>' +
+'<div class="sc-chart"><button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button><h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
 '<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' +
 '<div class="sc-post" id="scPost"><div class="inputs"><label>STORM NAME (OPTIONAL) <input id="scName" placeholder="e.g. Austen" size="14"></label><label>UPDATE NO. <input id="scNum" type="number" min="1" placeholder="1" style="width:64px;"></label><span>Changing these rebuilds the text below. You can also edit the text itself before copying.</span></div>' +
-'<textarea id="scText" spellcheck="true"></textarea><div class="acts"><button type="button" class="sc-copy" id="scCopy">COPY POST</button><span class="hint">Then paste it straight into Facebook.</span></div></div>' +
-'<details class="st-more sc-method"><summary>HOW THIS IS WORKED OUT</summary><div class="sw-note"><b>Ensembles:</b> each model is run many times from slightly different starting points &mdash; ECMWF 51 times, GFS 31, ICON 40 (about 5 days ahead only) and the UK Met Office 18. For the chosen day the page takes the strongest gust and strongest average wind each run gives a point near the middle of Jersey. Best case is the speed only 1 in 10 runs fall below, most likely is the middle run, worst case is the speed only 1 in 10 runs go above. The 60+ mph times for each scenario come from the runs closest to that scenario, because different runs time the peak differently. <b>Chance</b> is simply the share of all runs that reach that speed at some point in the day. The levels go from gale force (39 mph) up to 100+ mph; the three dials show the levels that matter most for the day, moving up automatically if a run shows 80, 90 or 100+ mph. Ensembles are run at lower detail than the main runs, so they can be a little low on the very strongest gusts &mdash; which is why the main runs are shown alongside. Exposed coasts and high ground can be stronger than the figures here. Updated about every 6 hours as new runs arrive; this page refreshes itself every 30 minutes.</div></details>';
+'<textarea id="scText" spellcheck="true"></textarea><div class="acts"><button type="button" class="sc-copy" id="scCopy">COPY POST</button><span class="hint">Then paste it straight into Facebook.</span></div>' +
+'<div class="sc-sum"><h4>&#128247; PICTURE FOR THE POST &mdash; THE WHOLE PAGE IN ONE</h4><p class="cap">The three scenarios, the dot chart, the day&rsquo;s timeline, the chances and the main model runs in one picture. <b>On a computer:</b> copy the post and paste it into Facebook, then COPY PICTURE and paste that in too. <b>On a phone:</b> copy the post first, then SHARE PICTURE to the Facebook app and paste the text in.</p>' +
+'<img id="scSumImg" alt="Summary picture for Facebook"><div class="acts"><button type="button" class="sc-copy" id="scSumCopy">COPY PICTURE</button><button type="button" class="sc-copy" id="scSumSave" style="background:var(--cyan);">SAVE PICTURE</button><button type="button" class="sc-copy" id="scSumShare" style="background:#1877f2;color:#fff;display:none;">SHARE PICTURE&hellip;</button><span class="hint" id="scSumMsg"></span></div></div></div>' +
+'<details class="st-more sc-method"><summary>HOW THIS IS WORKED OUT</summary><div class="sw-note"><b>Ensembles:</b> each model is run many times from slightly different starting points &mdash; ECMWF 51 times, GFS 31, ICON 40 (about 5 days ahead only) and the UK Met Office 18. For the chosen day the page takes the strongest gust and strongest average wind each run gives a point near the middle of Jersey. The runs are split into three ranges of peak gust at two of the impact levels (39, 47, 58, 70, 80, 90 and 100 mph), chosen for each day so the split is roughly a quarter, a half and a quarter &mdash; for example under 58, 58&ndash;69 and 70+ mph. Each scenario&rsquo;s chance is the share of runs in its range; &ldquo;typically&rdquo; is the middle of the runs in that range. If the biggest share is not the middle range, the middle card is called &ldquo;in between&rdquo; and the biggest is starred as most likely. The 60+ mph times for each scenario come from the runs in that range, because different runs time the peak differently. <b>Chance</b> is simply the share of all runs that reach that speed at some point in the day. The levels go from gale force (39 mph) up to 100+ mph; the three dials show the levels that matter most for the day, moving up automatically if a run shows 80, 90 or 100+ mph. Ensembles are run at lower detail than the main runs, so they can be a little low on the very strongest gusts &mdash; which is why the main runs are shown alongside. Exposed coasts and high ground can be stronger than the figures here. Updated about every 6 hours as new runs arrive; this page checks for new runs every 15 minutes while it is open and tells you when they arrive. The run-times box at the top shows when each model&rsquo;s latest run started (in UTC, &ldquo;Z&rdquo;), when it reached Open-Meteo and roughly when the next is due; ECMWF&rsquo;s runs usually arrive last, many hours after they start.</div></details>';
 const save = function(){ try{ localStorage.setItem('jwcScen:' + st.day, JSON.stringify({ name:document.getElementById('scName').value, num:document.getElementById('scNum').value })); }catch(e){} };
-const rebuild = function(){ save(); document.getElementById('scText').value = buildPost(st, document.getElementById('scName').value.trim(), document.getElementById('scNum').value.trim()); };
+let sumTimer = 0;
+const rebuild = function(){
+save();
+const nm = document.getElementById('scName').value.trim(), no = document.getElementById('scNum').value.trim();
+document.getElementById('scText').value = buildPost(st, nm, no);
+clearTimeout(sumTimer);
+sumTimer = setTimeout(function(){ showSummary(st, nm, no); }, 500);      // redraw the picture once typing pauses
+};
 document.getElementById('scMake').addEventListener('click', function(){
 const p = document.getElementById('scPost');
 try{ const v = JSON.parse(localStorage.getItem('jwcScen:' + st.day) || '{}'); document.getElementById('scName').value = v.name || ''; document.getElementById('scNum').value = v.num || ''; }catch(e){}
@@ -1252,6 +1339,7 @@ rebuild();
 p.classList.add('show');
 p.scrollIntoView({ behavior:'smooth', block:'start' });
 });
+main.querySelectorAll('.sc-imgbtn').forEach(b => b.addEventListener('click', function(){ showImage(b.dataset.img); }));
 document.getElementById('scName').addEventListener('input', rebuild);
 document.getElementById('scNum').addEventListener('input', rebuild);
 document.getElementById('scCopy').addEventListener('click', function(){
@@ -1261,23 +1349,349 @@ if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(
 else { ta.select(); document.execCommand('copy'); ok(); }
 });
 }
+/* ---------- Facebook images of the charts ----------
+   The chart is redrawn at phone proportions (big text, because most people see Facebook on
+   a phone), then put on a 1200-pixel-wide picture with a title, the three scenarios, a key
+   and the gov.je line. */
+function loadImg(src){ return new Promise(function(ok, bad){ const i = new Image(); i.onload = function(){ ok(i); }; i.onerror = bad; i.src = src; }); }
+async function makeImage(kind){
+const st = SC.stats[SC.day];
+const kw = SC.W, kf = SC.F;
+SC.W = 560; SC.F = 1.45;
+let svg = kind === 'dots' ? dotPlot(st) : kind === 'fan' ? fanChart(st) : detChart(st, detPeaks(st.day));
+SC.W = kw; SC.F = kf;
+const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+const vw = +m[1], vh = +m[2];
+const OUT = 1200, PAD = 48, cw = OUT - 2 * PAD, chh = Math.round(vh * cw / vw);
+svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="' + cw + '" height="' + chh + '" ')
+.replace(/&middot;/g, '\u00b7').replace(/&ndash;/g, '\u2013').replace(/&mdash;/g, '\u2014').replace(/&nbsp;/g, ' ');
+const img = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+try{ await Promise.all([document.fonts.load('900 40px Orbitron'), document.fonts.load('700 22px "JetBrains Mono"')]); }catch(e){}
+const TITLE = { dots:'EVERY RUN, ONE DOT', fan:'THROUGH THE DAY', det:'THE MAIN MODEL RUNS' };
+const SUB = { dots:'Each dot is one run of a weather model \u2014 its strongest gust for Jersey that day',
+fan:'Middle run hour by hour; the bands hold half and 8 in 10 of all runs',
+det:'The single main run of each model against the spread of all ' + st.n + ' runs' };
+const HEAD = 210, LEG = kind === 'dots' ? 64 : 0, FOOT = 104, H = HEAD + chh + LEG + FOOT;
+const cv = document.createElement('canvas'); cv.width = OUT; cv.height = H;
+const c = cv.getContext('2d');
+c.fillStyle = '#05080d'; c.fillRect(0, 0, OUT, H);
+c.strokeStyle = 'rgba(76,211,255,0.45)'; c.lineWidth = 2; c.strokeRect(12, 12, OUT - 24, H - 24);
+c.textBaseline = 'alphabetic';
+c.fillStyle = '#4cd3ff'; c.font = '700 22px "JetBrains Mono", Consolas, monospace';
+c.fillText('JERSEY WEATHER CHAT \u00b7 STORM SCENARIOS', PAD, 58);
+c.fillStyle = '#e9f6f5'; c.font = '900 40px Orbitron, Arial, sans-serif';
+c.fillText(nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' \u00b7 ' + TITLE[kind], PAD, 112);
+/* the three scenarios in their colours */
+c.font = '700 24px "JetBrains Mono", Consolas, monospace';
+let x = PAD;
+[['BEST ', st.sc[0], '#2de1a0'], [st.sc[1].top ? 'LIKELY ' : 'BETWEEN ', st.sc[1], '#ffb020'], ['WORST ', st.sc[2], '#ff4b5c']].forEach(function(p){
+c.fillStyle = '#5f7c88'; c.fillText(p[0], x, 154); x += c.measureText(p[0]).width;
+c.fillStyle = p[2]; const v = p[1].rangeTxt.replace('under ', '<') + ' MPH \u00b7 ' + p[1].p + '%'; c.fillText(v, x, 154); x += c.measureText(v).width + 30;
+});
+c.fillStyle = '#5f7c88'; c.font = '400 19px "JetBrains Mono", Consolas, monospace';
+c.fillText(SUB[kind], PAD, 188);
+c.drawImage(img, PAD, HEAD, cw, chh);
+let y = HEAD + chh;
+if(kind === 'dots'){
+c.font = '700 19px "JetBrains Mono", Consolas, monospace';
+let lx = PAD;
+ENS.filter(mm => st.models[mm.lbl]).forEach(function(mm){
+c.fillStyle = mm.col; c.beginPath(); c.arc(lx + 8, y + 36, 8, 0, Math.PI * 2); c.fill();
+c.fillStyle = '#9db4bd'; const t = mm.lbl + ' (' + st.models[mm.lbl] + ')'; c.fillText(t, lx + 24, y + 43); lx += 24 + c.measureText(t).width + 30;
+});
+y += LEG;
+}
+c.fillStyle = '#5f7c88'; c.font = '400 17px "JetBrains Mono", Consolas, monospace';
+c.fillText('Model data ' + nc(FETCHF.format(SC.fetched)) + ' \u00b7 a point near the middle of the island; exposed coasts can be stronger.', PAD, y + 44);
+c.fillStyle = '#ffb020';
+c.fillText('Computer forecasts, not an official warning \u2014 check gov.je/weather', PAD, y + 72);
+return cv;
+}
+async function showImage(kind){
+let box = document.getElementById('scImgBox');
+if(!box){
+box = document.createElement('div'); box.id = 'scImgBox'; box.className = 'sc-imgbox';
+box.innerHTML = '<div class="sc-imgpanel"><button type="button" class="sc-imgclose" aria-label="Close">&times;</button><h4>PICTURE FOR FACEBOOK</h4><p class="cap" id="scImgCap"></p><img id="scImg" alt="Chart picture for Facebook"><div class="acts"><button type="button" class="sc-copy" id="scImgCopy">COPY IMAGE</button><button type="button" class="sc-copy" id="scImgSave" style="background:var(--cyan);">SAVE IMAGE</button><button type="button" class="sc-copy" id="scImgShare" style="background:#1877f2;color:#fff;display:none;">SHARE&hellip;</button><span class="hint" id="scImgMsg"></span></div></div>';
+document.body.appendChild(box);
+box.addEventListener('click', function(e){ if(e.target === box || e.target.classList.contains('sc-imgclose')) box.classList.remove('show'); });
+}
+const msg = document.getElementById('scImgMsg');
+msg.textContent = 'Drawing\u2026';
+box.classList.add('show');
+let cv;
+try{ cv = await makeImage(kind); }catch(e){ console.warn(e); msg.textContent = 'Sorry \u2014 the picture could not be drawn in this browser.'; return; }
+document.getElementById('scImgCap').textContent = 'Copy it and paste into your Facebook post (on a computer), or save it and add it as a photo. On a phone, SHARE sends it straight to the Facebook app.';
+msg.textContent = '';
+await wireImage(cv, 'jersey-storm-' + SC.day + '-' + kind + '.png', { img:'scImg', copy:'scImgCopy', save:'scImgSave', share:'scImgShare', msg:'scImgMsg' });
+}
+/* put a finished picture on the page and make its COPY / SAVE / SHARE buttons work */
+async function wireImage(cv, fname, ids){
+const msg = document.getElementById(ids.msg);
+document.getElementById(ids.img).src = cv.toDataURL('image/png');
+const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+const file = new File([blob], fname, { type:'image/png' });
+const cp = document.getElementById(ids.copy), sv = document.getElementById(ids.save), sh = document.getElementById(ids.share);
+cp.style.display = (navigator.clipboard && window.ClipboardItem && window.isSecureContext) ? '' : 'none';
+cp.onclick = async function(){ try{ await navigator.clipboard.write([new ClipboardItem({ 'image/png':blob })]); msg.textContent = 'Copied \u2713 \u2014 now paste into Facebook.'; }catch(e){ msg.textContent = 'This browser will not copy pictures \u2014 use SAVE instead.'; } };
+sv.onclick = function(){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = 'Saved as ' + fname; };
+const canShare = navigator.canShare && navigator.canShare({ files:[file] });
+sh.style.display = canShare ? '' : 'none';
+sh.onclick = function(){ navigator.share({ files:[file], title:'Jersey storm scenarios' }).catch(function(){}); };
+}
+/* ---------- the one-picture summary for the Facebook post ----------
+   1200 pixels wide, drawn big enough to read on a phone: title, headline, the three
+   scenarios with their chances, the dot chart, the day's timeline, the chance strip,
+   the main model runs and the gov.je line. */
+function decodeEnt(t){ return String(t).replace(/&mdash;/g, '\u2014').replace(/&ndash;/g, '\u2013').replace(/&middot;/g, '\u00b7').replace(/&hellip;/g, '\u2026').replace(/&rsquo;/g, '\u2019').replace(/&amp;/g, '&').replace(/<[^>]+>/g, ''); }
+async function svgAt(svg, cw){
+const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+const ch = Math.round(+m[2] * cw / +m[1]);
+svg = svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="' + cw + '" height="' + ch + '" ')
+.replace(/&middot;/g, '\u00b7').replace(/&ndash;/g, '\u2013').replace(/&mdash;/g, '\u2014').replace(/&nbsp;/g, ' ');
+return { img:await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)), h:ch };
+}
+function wrapText(c, text, x, y, maxW, lh){
+const words = String(text).split(' ');
+let line = '';
+words.forEach(function(w){
+const test = line ? line + ' ' + w : w;
+if(c.measureText(test).width > maxW && line){ c.fillText(line, x, y); y += lh; line = w; }
+else line = test;
+});
+if(line){ c.fillText(line, x, y); y += lh; }
+return y;
+}
+function rrect(c, x, y, w, h, r){ c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+async function makeSummary(st, name, num){
+const kw = SC.W, kf = SC.F;
+SC.W = 640; SC.F = 1.3;
+const dotsSvg = dotPlot(st), fanSvg = fanChart(st, 250);
+SC.W = kw; SC.F = kf;
+const OUT = 1200, PAD = 44, IW = OUT - 2 * PAD;
+const dots = await svgAt(dotsSvg, IW), fan = await svgAt(fanSvg, IW);
+try{ await Promise.all([document.fonts.load('900 46px Orbitron'), document.fonts.load('700 22px "JetBrains Mono"'), document.fonts.load('400 20px "JetBrains Mono"')]); }catch(e){}
+const MONO = '"JetBrains Mono", Consolas, monospace', ORB = 'Orbitron, Arial, sans-serif';
+const SCOL = { best:'#2de1a0', likely:'#ffb020', worst:'#ff4b5c' };
+const cv = document.createElement('canvas'); cv.width = OUT; cv.height = 3400;
+const c = cv.getContext('2d');
+c.fillStyle = '#05080d'; c.fillRect(0, 0, OUT, cv.height);
+let y = 60;
+c.fillStyle = '#4cd3ff'; c.font = '700 22px ' + MONO; c.fillText('JERSEY WEATHER CHAT \u00b7 STORM SCENARIOS', PAD, y);
+y += 58;
+const nm = name ? 'STORM ' + name.replace(/^storm\s+/i, '').toUpperCase() + ' \u00b7 ' : '';
+c.fillStyle = '#e9f6f5'; c.font = '900 44px ' + ORB; y = wrapText(c, nm + nc(DAYF.format(dayDate(st.day))).toUpperCase(), PAD, y, IW, 54) - 54;
+y += 40;
+c.fillStyle = '#5f7c88'; c.font = '400 20px ' + MONO;
+c.fillText((num ? 'UPDATE #' + num + ' \u00b7 ' : '') + st.n + ' COMPUTER RUNS FROM 4 WEATHER MODELS \u00b7 MODEL DATA ' + nc(FETCHF.format(SC.fetched)).toUpperCase(), PAD, y);
+/* headline */
+y += 56;
+const hp = headText(st);
+c.fillStyle = hp.col; c.font = '800 30px ' + MONO;
+y = wrapText(c, decodeEnt(hp.h), PAD, y, IW, 40);
+/* the three scenarios */
+y += 14;
+const gap = 20, bw = (IW - 2 * gap) / 3, bh = 262;
+st.sc.forEach(function(sc, i){
+const x = PAD + i * (bw + gap), col = SCOL[sc.key];
+rrect(c, x, y, bw, bh, 14);
+c.fillStyle = col === '#2de1a0' ? 'rgba(45,225,160,0.07)' : col === '#ffb020' ? 'rgba(255,176,32,0.08)' : 'rgba(255,75,92,0.08)'; c.fill();
+c.lineWidth = 2.5; c.strokeStyle = col; c.stroke();
+const ix = x + 18;
+c.fillStyle = col; c.font = '800 21px ' + MONO; c.fillText(sc.lbl + (sc.top && sc.key !== 'likely' ? ' \u2605' : ''), ix, y + 36);
+c.font = '900 62px ' + ORB; c.fillText(sc.p + '%', ix, y + 104);
+c.fillStyle = '#5f7c88'; c.font = '700 16px ' + MONO; c.fillText('CHANCE \u00b7 ' + sc.n + ' OF ' + st.n + ' RUNS', ix, y + 130);
+c.fillStyle = '#e9f6f5'; c.font = '800 28px ' + MONO; c.fillText(decodeEnt(sc.range) + ' MPH', ix, y + 172);
+c.fillStyle = '#9db4bd'; c.font = '400 18px ' + MONO;
+c.fillText(sc.n ? 'typically about ' + Math.round(sc.v) + ' mph' : 'no runs in this range', ix, y + 200);
+c.fillText(sc.win ? '60+ mph ' + hh(sc.win[0]) + '\u2013' + hh(sc.win[1]) : 'no 60+ mph gusts', ix, y + 224);
+const t = tierOf(sc.v);
+c.fillStyle = t ? t.hex : '#2de1a0'; c.font = '800 15px ' + MONO;
+c.fillText(sc.n ? decodeEnt(t ? t.head : 'BELOW GALE FORCE') : '', ix, y + 249);
+});
+y += bh + 46;
+/* the dot chart */
+c.fillStyle = '#4cd3ff'; c.font = '800 20px ' + MONO; c.fillText('EVERY RUN, ONE DOT', PAD, y);
+const hw = c.measureText('EVERY RUN, ONE DOT').width;
+c.fillStyle = '#5f7c88'; c.font = '400 17px ' + MONO; c.fillText('one dot per computer run \u00b7 dashed lines split the scenarios', PAD + hw + 24, y);
+y += 8;
+c.drawImage(dots.img, PAD, y, IW, dots.h); y += dots.h + 8;
+c.font = '700 17px ' + MONO;
+let lx = PAD;
+ENS.filter(mm => st.models[mm.lbl]).forEach(function(mm){
+c.fillStyle = mm.col; c.beginPath(); c.arc(lx + 7, y + 4, 7, 0, Math.PI * 2); c.fill();
+c.fillStyle = '#9db4bd'; const tx = mm.lbl + ' (' + st.models[mm.lbl] + ')'; c.fillText(tx, lx + 20, y + 10); lx += 20 + c.measureText(tx).width + 26;
+});
+y += 56;
+/* through the day */
+c.fillStyle = '#4cd3ff'; c.font = '800 20px ' + MONO; c.fillText('THROUGH THE DAY', PAD, y);
+const hw2 = c.measureText('THROUGH THE DAY').width;
+c.fillStyle = '#5f7c88'; c.font = '400 17px ' + MONO; c.fillText('middle run hour by hour \u00b7 bands hold half and 8 in 10 of runs', PAD + hw2 + 24, y);
+y += 8;
+c.drawImage(fan.img, PAD, y, IW, fan.h); y += fan.h + 40;
+/* chance of at least ... */
+c.fillStyle = '#4cd3ff'; c.font = '800 20px ' + MONO; c.fillText('CHANCE OF GUSTS OF AT LEAST\u2026', PAD, y);
+y += 20;
+const cw7 = (IW - 6 * 14) / 7;
+THRESH.forEach(function(tq, i){
+const x = PAD + i * (cw7 + 14), p = st.ch[tq], col = scenCol(st, tq);
+c.fillStyle = col; c.font = '800 17px ' + MONO; c.textAlign = 'center'; c.fillText(tq === 39 ? 'GALE 39+' : tq + '+', x + cw7 / 2, y + 20);
+c.fillStyle = 'rgba(95,124,136,0.25)'; rrect(c, x, y + 32, cw7, 14, 7); c.fill();
+if(p){ c.fillStyle = col; rrect(c, x, y + 32, Math.max(14, cw7 * p / 100), 14, 7); c.fill(); }
+c.fillStyle = p ? col : '#3a4e58'; c.font = '900 28px ' + ORB; c.fillText(p + '%', x + cw7 / 2, y + 82);
+c.textAlign = 'left';
+});
+y += 120;
+/* the main runs */
+const dp = detPeaks(st.day);
+if(dp.length){
+c.fillStyle = '#4cd3ff'; c.font = '800 20px ' + MONO; c.fillText('MAIN MODEL RUNS \u00b7 PEAK GUST', PAD, y);
+y += 36;
+let mx = PAD;
+c.font = '700 21px ' + MONO;
+dp.forEach(function(d, i){
+const t = tierOf(d.pk), part = d.lbl + ' ', val = Math.round(d.pk) + (i < dp.length - 1 ? '   ' : ' MPH');
+if(mx + c.measureText(part + val).width > PAD + IW){ mx = PAD; y += 32; }
+c.fillStyle = '#9db4bd'; c.fillText(part, mx, y); mx += c.measureText(part).width;
+c.fillStyle = t ? t.hex : '#4cd3ff'; c.fillText(val, mx, y); mx += c.measureText(val).width;
+});
+y += 48;
+}
+/* footer */
+c.strokeStyle = 'rgba(95,124,136,0.4)'; c.lineWidth = 1; c.beginPath(); c.moveTo(PAD, y); c.lineTo(PAD + IW, y); c.stroke();
+y += 34;
+c.fillStyle = '#5f7c88'; c.font = '400 18px ' + MONO;
+y = wrapText(c, 'Chances are the share of all ' + st.n + ' runs in each range. Gusts are for a point near the middle of the island; exposed coasts can be stronger.', PAD, y, IW, 26);
+c.fillStyle = '#ffb020'; c.font = '700 19px ' + MONO;
+y = wrapText(c, 'Computer forecasts, not an official warning \u2014 check gov.je/weather', PAD, y + 4, IW, 26);
+y += 26;
+/* trim to the height used, with a frame */
+const out = document.createElement('canvas'); out.width = OUT; out.height = Math.ceil(y);
+const o = out.getContext('2d');
+o.drawImage(cv, 0, 0);
+o.strokeStyle = 'rgba(76,211,255,0.45)'; o.lineWidth = 2; o.strokeRect(12, 12, OUT - 24, out.height - 24);
+return out;
+}
+async function showSummary(st, name, num){
+const msg = document.getElementById('scSumMsg');
+if(!msg) return;
+msg.textContent = 'Drawing the picture\u2026';
+try{
+const cv = await makeSummary(st, name, num);
+await wireImage(cv, 'jersey-storm-' + st.day + (num ? '-update' + num : '') + '.png', { img:'scSumImg', copy:'scSumCopy', save:'scSumSave', share:'scSumShare', msg:'scSumMsg' });
+msg.textContent = '';
+}catch(e){ console.warn(e); msg.textContent = 'Sorry \u2014 the picture could not be drawn in this browser.'; }
+}
 function buildPost(st, name, num){
 const day = nc(DAYF.format(dayDate(st.day)));
 const title = (num ? 'SCENARIO DRIFT #' + num : 'STORM SCENARIOS') + (name ? ' \u2013 Storm ' + name.replace(/^storm\s+/i, '') : '') + ' \u2013 ' + day;
 const line = function(sc){
 const short = DAYS.format(dayDate(st.day));
-let t = sc.emo + ' ' + sc.lbl + ': gusts ' + rngTxt(sc.v) + ' mph' + (sc.key === 'worst' ? ', higher on exposed coasts' : '') + ', average winds up to about ' + Math.round(sc.wind) + ' mph';
+let t = sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' (most likely)' : '') + ' \u2013 ' + sc.p + '% chance: gusts ' + sc.rangeTxt + ' mph';
+if(!sc.n) return t + '. No model runs show this today.';
+t += ' (typically about ' + Math.round(sc.v) + ')' + (sc.key === 'worst' ? ', higher on exposed coasts' : '') + ', average winds up to about ' + Math.round(sc.wind) + ' mph';
 t += sc.win ? ', 60+ mph gusts about ' + hh(sc.win[0]) + '\u2013' + hh(sc.win[1]) + ' ' + short + '.' : '. No 60+ mph gusts.';
-t += ' (' + sc.sub.charAt(0) + sc.sub.slice(1).toLowerCase() + (sc.leanNm.length ? ' \u2013 mostly ' + sc.leanNm.join(' & ') : '') + ')';
+if(sc.leanNm.length) t += ' (mostly ' + sc.leanNm.join(' & ') + ' runs)';
 return t;
 };
 return '\ud83c\udf00 ' + title + ' (model data, ' + nc(FETCHF.format(SC.fetched)) + ')\n\n' +
 st.sc.map(line).join('\n\n') + '\n\n' +
-'\ud83d\udcca HOW SURE? ' + st.c60 + '% of ' + st.n + ' computer runs give Jersey 60+ mph gusts' + [70, 80, 90, 100].filter(t => st.ch[t] >= 5).map(t => '; ' + st.ch[t] + '% give ' + t + '+').join('') + '.\n\n' +
+'\ud83d\udcca Chances are the share of ' + st.n + ' computer runs from 4 weather models. Overall, ' + st.c60 + '% give Jersey 60+ mph gusts' + [70, 80, 90, 100].filter(t => st.ch[t] >= 5).map(t => '; ' + st.ch[t] + '% give ' + t + '+').join('') + '.\n\n' +
 'Gust figures are for a point near the middle of the island, so exposed coasts can be stronger. We\u2019ll post the next update after the next model runs. For official warnings, check gov.je/weather.';
 }
+/* ---------- model run times ----------
+   Open-Meteo publishes, for each model, when its latest run started, when it reached the
+   API and how often it updates (these calls do not count towards usage limits). From that
+   the page says when the next run should arrive. Open-Meteo advises allowing 10 minutes
+   after a run arrives for all its servers to have it. A record that has not changed for
+   more than three update periods is treated as not listed (the global ICON ensemble record
+   stopped on 6 Oct 2026 while the European one in use carries on). */
+const META_HOST = 'https://ensemble-api.open-meteo.com/data/';
+const HM = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const RUNF = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', weekday:'short', day:'numeric' });
+async function loadMeta(m){
+for(const name of m.meta || []){
+try{
+const j = await getJson(META_HOST + name + '/static/meta.json', 12000);
+if(!j || !j.last_run_availability_time) continue;
+const every = (j.update_interval_seconds || 21600) * 1000, avail = j.last_run_availability_time * 1000;
+if(Date.now() - avail > 3 * every) continue;                       // stale record: try the next one, else "not listed"
+return { init:j.last_run_initialisation_time * 1000, avail:avail, every:every, due:avail + every + 10 * 60000 };
+}catch(e){}
+}
+return null;
+}
+function renderRuns(metas){
+const el = document.getElementById('scRuns');
+const now = Date.now();
+let next = null, dueNow = [];
+let h = '<span class="h">MODEL</span><span class="h">LATEST RUN</span><span class="h">ARRIVED</span><span class="h">NEXT EXPECTED</span>';
+ENS.forEach(function(m, i){
+const r = metas[i];
+if(!r){ h += '<span class="m" style="color:' + m.col + ';">' + m.lbl + '</span><span class="d">&ndash;</span><span class="d">&ndash;</span><span class="d">TIMES NOT LISTED</span>'; return; }
+const run = new Date(r.init);
+let nx;
+if(now < r.due){ nx = '<span class="ok">ABOUT ' + HM.format(new Date(r.due)) + '</span>'; if(!next || r.due < next.due) next = { due:r.due, lbl:m.lbl }; }
+else if(now < r.due + r.every){ nx = '<span class="due">DUE NOW</span>'; dueNow.push(m.lbl); }
+else nx = '<span class="late">LATE</span>';
+h += '<span class="m" style="color:' + m.col + ';">' + m.lbl + '</span><span>' + String(run.getUTCHours()).padStart(2, '0') + 'Z ' + nc(RUNF.format(run)).toUpperCase() + '</span><span class="d">' + HM.format(new Date(r.avail)) + '</span>' + nx;
+});
+el.innerHTML = h;
+SC.nextTxt = dueNow.length ? 'NEW ' + dueNow.join(' &amp; ') + ' RUN' + (dueNow.length > 1 ? 'S' : '') + ' DUE NOW &mdash; THIS PAGE WILL PICK ' + (dueNow.length > 1 ? 'THEM' : 'IT') + ' UP BY ITSELF.'
+: next ? 'NEXT NEW RUN EXPECTED ABOUT <b>' + HM.format(new Date(next.due)) + '</b> (' + next.lbl + ').' : '';
+}
+/* ---------- telling you when new model runs arrive ----------
+   Each model's numbers for a handful of future hours act as its signature. If the signature
+   differs from last time, that model has published a new run. "Last time" is both the previous
+   check while this page is open (it re-checks every 15 minutes) and the last time you had the
+   page open on this device, so it can say what changed since you last looked. */
+const SEEN_KEY = 'jwcScenLast';
+function sigOf(md){
+const r = md.runs[0], out = {};
+for(let i = 48; i < Math.min(md.time.length, 150); i += 6) if(r.g[i] != null) out[md.time[i]] = r.g[i];
+return out;
+}
+function sigChanged(a, b){
+if(!a || !b) return false;
+let common = 0;
+for(const k in a){ if(k in b){ common++; if(Math.abs(a[k] - b[k]) >= 0.1) return true; } }
+return false;
+}
+function headStats(st){ return st ? { b:Math.round(st.q10), l:Math.round(st.q50), w:Math.round(st.q90), c60:st.c60 } : null; }
+function newsLine(changed, prevDay, nowDay, sinceTxt, live){
+const el = document.getElementById('scNews');
+if(!changed.length){
+el.className = 'sc-news show quiet';
+el.innerHTML = (sinceTxt ? 'NO NEW MODEL RUNS SINCE YOU LAST LOOKED (' + sinceTxt + '). ' : '') + (SC.nextTxt ? SC.nextTxt + ' ' : '') + 'LEAVE THIS PAGE OPEN AND IT WILL TELL YOU WHEN NEW RUNS ARRIVE.' + bellButton();
+wireBell();
+return;
+}
+let drift = '';
+if(prevDay && nowDay){
+const d = function(lbl, a, b, u){ return a === b ? lbl + ' ' + b + u + ' (NO CHANGE)' : lbl + ' ' + a + u + ' &rarr; <b>' + b + u + '</b>'; };
+drift = '<br>FOR ' + nc(DAYF.format(dayDate(SC.day))).toUpperCase() + ': ' + d('MIDDLE RUN', prevDay.l, nowDay.l, ' MPH') + ' &middot; ' + d('WILDEST 1 IN 10', prevDay.w, nowDay.w, ' MPH') + ' &middot; ' + d('CHANCE OF 60+', prevDay.c60, nowDay.c60, '%');
+}
+el.className = 'sc-news show fresh';
+el.innerHTML = '&#128276; ' + (live ? 'NEW MODEL RUNS JUST ARRIVED' : 'NEW MODEL RUNS SINCE YOU LAST LOOKED' + (sinceTxt ? ' (' + sinceTxt + ')' : '')) + ': <b>' + changed.join(', ') + '</b> &mdash; THE NUMBERS BELOW ARE UPDATED.' + drift;
+if(live){
+if(document.hidden) document.title = '\ud83d\udd14 NEW RUNS \u2014 ' + SC.title;
+try{ if(window.Notification && Notification.permission === 'granted') new Notification('Jersey storm scenarios', { body:'New model runs: ' + changed.join(', ') + (nowDay ? '. Middle run ' + nowDay.l + ' mph, chance of 60+ ' + nowDay.c60 + '%.' : '') }); }catch(e){}
+}
+}
+function bellButton(){
+if(!window.Notification || !window.isSecureContext || Notification.permission === 'granted' || Notification.permission === 'denied') return '';
+return '<button type="button" class="sc-bell" id="scBell">&#128276; ALSO NOTIFY ME ON THIS COMPUTER</button>';
+}
+function wireBell(){
+const b = document.getElementById('scBell');
+if(b) b.addEventListener('click', function(){ Notification.requestPermission().then(function(p){ b.textContent = p === 'granted' ? 'NOTIFICATIONS ON \u2713' : 'NOTIFICATIONS NOT ALLOWED'; }); });
+}
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && SC.title) document.title = SC.title; });
+SC.title = document.title;
+SC.prevSig = null;
 async function loadAll(){
+const metaP = Promise.all(ENS.map(loadMeta));
 const res = await Promise.all(ENS.map(loadEnsemble).concat([loadDet()]));
+try{ SC.lastMetas = await metaP; renderRuns(SC.lastMetas); }catch(e){ console.warn('run times not shown', e); }
 const det = res.pop();
 const ens = res.filter(Boolean);
 if(!ens.length){
@@ -1294,17 +1708,36 @@ SC.days.forEach(d => { SC.stats[d] = dayStats(d); });
 if(!SC.userPicked || !SC.stats[SC.day]){
 /* start on the stormiest day: highest chance of 60+, then highest most-likely peak */
 let best = null;
-SC.days.forEach(d => { const s = SC.stats[d]; if(s && (!best || s.c60 > best.c60 || (s.c60 === best.c60 && s.sc[1].v > best.sc[1].v))) best = s; });
+SC.days.forEach(d => { const s = SC.stats[d]; if(s && (!best || s.c60 > best.c60 || (s.c60 === best.c60 && s.q50 > best.q50))) best = s; });
 SC.day = best ? best.day : SC.days[0];
 }
 const runs = ens.reduce((a, m) => a + m.runs.length, 0);
-document.getElementById('scStatus').innerHTML = '<b>' + runs + ' MODEL RUNS</b> FROM ' + ens.length + ' MODELS (' + ens.map(m => m.m.lbl).join(', ') + ') &middot; FETCHED ' + nc(FETCHF.format(SC.fetched)).toUpperCase() + ' &middot; REFRESHES EVERY 30 MIN';
+/* what is new: against the previous check in this tab, else against your last visit */
+const sig = {};
+ens.forEach(md => { sig[md.m.lbl] = sigOf(md); });
+let last = null;
+try{ last = JSON.parse(localStorage.getItem(SEEN_KEY) || 'null'); }catch(e){}
+const live = !!SC.prevSig;
+const ref = live ? SC.prevSig : (last ? last.sig : null);
+const changed = ref ? Object.keys(sig).filter(k => sigChanged(ref[k], sig[k])) : [];
+const prevDay = live ? SC.prevDayStats : (last && last.days ? last.days[SC.day] : null);
+const nowDay = headStats(SC.stats[SC.day]);
+const sinceTxt = (!live && last) ? nc(FETCHF.format(new Date(last.at))).toUpperCase() : '';
+if(live && !changed.length){ /* nothing new since the last check: keep whatever the line says */ }
+else newsLine(changed, changed.length ? prevDay : null, nowDay, sinceTxt, live);
+SC.prevSig = sig;
+SC.prevDayStats = nowDay;
+const daysStats = {};
+SC.days.forEach(d => { const h = headStats(SC.stats[d]); if(h) daysStats[d] = h; });
+try{ localStorage.setItem(SEEN_KEY, JSON.stringify({ at:SC.fetched.getTime(), sig:sig, days:daysStats })); }catch(e){}
+document.getElementById('scStatus').innerHTML = '<b>' + runs + ' MODEL RUNS</b> FROM ' + ens.length + ' MODELS (' + ens.map(m => m.m.lbl).join(', ') + ') &middot; FETCHED ' + nc(FETCHF.format(SC.fetched)).toUpperCase() + ' &middot; CHECKS FOR NEW RUNS EVERY 15 MIN';
 renderDays();
 const postOpen = document.getElementById('scPost') && document.getElementById('scPost').classList.contains('show');
 if(!postOpen) renderMain();                         // do not wipe a post being edited
 }
 loadAll();
-setInterval(loadAll, 30 * 60 * 1000);
+setInterval(loadAll, 15 * 60 * 1000);
+setInterval(function(){ if(SC.lastMetas) renderRuns(SC.lastMetas); }, 60 * 1000);
 let scMob = window.innerWidth < 700;
 window.addEventListener('resize', function(){
 const m = window.innerWidth < 700;
