@@ -627,6 +627,21 @@ repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px
 repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) right/7px 100% no-repeat,
 radial-gradient(ellipse at center, transparent 62%, rgba(0,0,0,0.45) 100%);
 }
+/* which model run the map shows, and when the next arrives (top-left corner of the map) */
+.st-runbadge{
+position:absolute; top:10px; left:10px; z-index:800; pointer-events:none;
+display:grid; grid-template-columns:auto auto; column-gap:10px; row-gap:2px;
+padding:8px 11px; border:1px solid rgba(76,211,255,0.45); border-radius:7px;
+background:rgba(5,8,13,0.86); box-shadow:0 0 16px rgba(76,211,255,0.15);
+font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.8px; line-height:1.45; color:var(--text);
+}
+.st-runbadge:empty{ display:none; }
+.st-runbadge .k{ color:var(--dim); }
+.st-runbadge .v{ font-weight:700; }
+.st-runbadge .v.cy{ color:var(--cyan); }
+.st-runbadge .v.am{ color:var(--amber); }
+.st-runbadge .v.rd{ color:var(--red); }
+@media (max-width:640px){ .st-runbadge{ font-size:8.5px; padding:6px 8px; column-gap:7px; top:6px; left:6px; } }
 .st-msg{
 position:absolute; inset:0; z-index:650; display:flex; align-items:center; justify-content:center; text-align:center;
 padding:24px; background:rgba(5,26,34,0.78); color:var(--dim); font-size:11px; letter-spacing:1px; line-height:1.9;
@@ -1176,6 +1191,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 </div>
 <div class="st-mapwrap">
 <div id="st-map"></div>
+<div class="st-runbadge" id="stRunBadge" aria-live="polite"></div>
 <div class="st-msg" id="stMsg">LOADING STORM TRACKS&hellip;</div>
 </div>
 <div class="sw-readout">
@@ -1193,6 +1209,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <div class="st-status" id="stStatus"></div>
 <details class="st-more"><summary>HOW TO READ THIS MAP</summary>
 <div class="sw-note">
+<b>WHERE THE DATA COMES FROM:</b> the box in the top-left corner of the map shows the model (NOAA&rsquo;s American GFS), which run it is &mdash; runs start at 00, 06, 12 and 18 UTC (&ldquo;Z&rdquo;) and take a few hours to compute &mdash; and roughly when the next one will reach this map. Each new run can shift a storm&rsquo;s track and strength, so it is worth checking back after an update.<br>
 <b>HOW TO READ THIS MAP:</b> the map is fixed on the area that matters to Jersey &mdash; Ireland and the Western Approaches across to the Low Countries, Biscay up to Scotland. The colours are NOAA's forecast wind at 10 metres above the ground at the chosen time (gusts or average wind, key below the map), and the thin white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10 &mdash; the closer together they are, the stronger the wind. Each glowing line is the forecast path of a storm centre (a low) over the next 10 days: the dots are every 12 hours, the number beside each is its pressure in hPa (the lower, the stronger), and the larger marker is where the centre is at the chosen time. <b>Tap a number in the row of hours</b> to jump to that time &mdash; it is the same NOAA GFS run as the big charts on Wetterzentrale and elsewhere, so the hours match. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger.<br>
 <b>THE BOX BELOW THE MAP:</b> Jersey's own wind forecast from several models at once, shown as a range &mdash; when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. &ldquo;Strongest spell&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
@@ -3567,6 +3584,7 @@ ST.hour = t ? Math.round(t.closest_hour / 6) * 6 : 0;
 }
 stRender();
 stMarkHours();
+stRunBadge();
 setTimeout(wfPrepareAll, 2500);
 })
 .catch(function(e){
@@ -3639,6 +3657,7 @@ return out;
 }
 d.cycleT = new Date(d.cycle).getTime();
 WF.d = d; WF.state = 'ok'; WF.key = ''; WF.isoKey = '';
+stRunBadge();
 if(WF_CACHE.cycle !== d.cycle){ wfCacheClear(); WF_CACHE.cycle = d.cycle; wfWorkerData(d); }
 setTimeout(wfPrepareAll, 1500);
 }catch(e){
@@ -4158,6 +4177,43 @@ stOwnMap();
 stBuildHours();
 stWireControls();
 }
+/* ---- which model run the map shows, and when the next one arrives ----------
+   Both data jobs run on GitHub four times a day, once each NOAA run is complete:
+   storm tracks at :27 and the wind map at :47 past 05, 11, 17 and 23 UTC, i.e. about
+   5 h 47 min after the run starts. Allowing ~20 min for the job and publishing, the next
+   run reaches this map about 12 h 7 min after the start time of the run it shows now.
+   GitHub can start scheduled jobs late, so the time is given as "about". */
+const ST_NEXT_AFTER_MIN = 12 * 60 + 7;
+const ST_LATE_MIN = 180;                             // after this long past due, say the update is late
+let stRunPoll = 0;
+function stRunBadge(){
+const el = document.getElementById('stRunBadge');
+if(!el) return;
+const cw = WF.d ? new Date(WF.d.cycle) : null, ct = ST.data ? new Date(ST.data.cycle) : null;
+if(!cw && !ct){ el.innerHTML = ''; return; }
+const runTxt = function(c){ return swPad(c.getUTCHours(), 2) + 'Z ' + ST_WD.format(c).slice(0, 3).toUpperCase() + ' ' + ST_DAY.format(c).toUpperCase(); };
+const older = (cw && ct) ? (cw < ct ? cw : ct) : (cw || ct);
+let run = runTxt(older);
+if(cw && ct && cw.getTime() !== ct.getTime()) run = 'MAP ' + runTxt(cw) + ' &middot; TRACKS ' + runTxt(ct);
+const res = WF.d && WF.d.model && WF.d.model.indexOf('0.25') >= 0 ? '0.25&deg; (15-MILE GRID)' : '0.5&deg; (30-MILE GRID)';
+const due = new Date(older.getTime() + ST_NEXT_AFTER_MIN * 60000);
+const left = Math.round((due.getTime() - Date.now()) / 60000);
+let nextTxt, cls = 'cy';
+if(left > 0){
+const h = Math.floor(left / 60), m = left % 60;
+nextTxt = 'ABOUT ' + ST_WD.format(due).slice(4) + ' &middot; IN ' + (h ? h + ' H ' : '') + m + ' MIN';
+} else if(-left < ST_LATE_MIN){
+nextTxt = 'DUE NOW &mdash; THE MAP WILL UPDATE BY ITSELF'; cls = 'am';
+if(Date.now() - stRunPoll > 5 * 60000){ stRunPoll = Date.now(); stLoad(); if(typeof wfLoad === 'function') wfLoad(); }   // check every 5 min until it lands
+} else {
+nextTxt = 'RUNNING LATE &mdash; SHOWING THE LAST GOOD RUN'; cls = 'rd';
+if(Date.now() - stRunPoll > 15 * 60000){ stRunPoll = Date.now(); stLoad(); if(typeof wfLoad === 'function') wfLoad(); }
+}
+el.innerHTML = '<span class="k">MODEL</span><span class="v">NOAA GFS &middot; ' + res + '</span>' +
+'<span class="k">RUN</span><span class="v cy">' + run + '</span>' +
+'<span class="k">NEXT RUN</span><span class="v ' + cls + '">' + nextTxt + '</span>';
+}
+setInterval(stRunBadge, 30000);
 /* the row of hour buttons: NOW, 6, 12 ... 240, with the day marked where it changes */
 function stBuildHours(){
 const box = document.getElementById('stHours');
