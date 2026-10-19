@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-74T6F4C6YH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-74T6F4C6YH');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWC STORM SCENARIOS — Jersey Weather Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<meta name="description" content="Best case, most likely and worst case winds for Jersey from every run of four weather models.">
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root{
+--bg:#05080d;
+--bg-panel:#0b131c;
+--bg-panel-2:#0e1822;
+--line:rgba(76,211,255,0.14);
+--cyan:#4cd3ff;
+--green:#2de1a0;
+--amber:#ffb020;
+--red:#ff4b5c;
+--text:#e9f6f5;
+--dim:#5f7c88;
+--dim2:#3a4e58;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+background:
+radial-gradient(ellipse at 20% -10%, rgba(76,211,255,0.08), transparent 55%),
+radial-gradient(ellipse at 90% 10%, rgba(45,225,160,0.06), transparent 50%),
+var(--bg);
+color:var(--text);
+font-family:'JetBrains Mono', monospace;
+min-height:100vh;
+overflow-x:hidden;
+position:relative;
+}
+body::before{
+content:"";
+position:fixed; inset:0;
+background-image:
+linear-gradient(var(--line) 1px, transparent 1px),
+linear-gradient(90deg, var(--line) 1px, transparent 1px);
+background-size:42px 42px;
+opacity:0.35;
+pointer-events:none;
+z-index:0;
+mask-image: radial-gradient(ellipse at 50% 0%, black, transparent 75%);
+}
+.scanline{
+position:fixed; left:0; right:0; height:120px;
+background:linear-gradient(180deg, transparent, rgba(76,211,255,0.05), transparent);
+animation:scan 7s linear infinite;
+pointer-events:none; z-index:1;
+}
+@keyframes scan{ 0%{top:-120px;} 100%{top:100vh;} }
+.wrap{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:22px 20px 70px; }
+/* HEADER */
+header{
+display:flex; align-items:center; justify-content:space-between;
+flex-wrap:wrap; gap:14px;
+border-bottom:1px solid var(--line);
+padding-bottom:16px; margin-bottom:26px;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+width:38px;height:38px; border-radius:8px;
+background:conic-gradient(from 0deg, var(--cyan), var(--green), var(--cyan));
+display:flex; align-items:center; justify-content:center;
+animation:spin 6s linear infinite;
+box-shadow:0 0 18px rgba(76,211,255,0.5);
+}
+.brand-mark::after{
+content:"◉"; color:#05080d; font-size:16px; font-weight:900;
+animation:spin 6s linear infinite reverse;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.brand h1{
+font-family:'Orbitron', sans-serif; font-weight:900; font-size:19px;
+letter-spacing:2px; color:var(--text);
+}
+.brand span{ display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:2px; }
+.status{ display:flex; align-items:center; gap:18px; font-size:12px; color:var(--dim); }
+.live-pill{
+display:flex; align-items:center; gap:7px;
+border:1px solid var(--red); color:var(--red);
+padding:5px 11px; border-radius:20px; letter-spacing:2px; font-weight:700; font-size:11px;
+}
+.live-dot{ width:7px;height:7px;border-radius:50%; background:var(--red); animation:pulse 1.4s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(255,75,92,0.6);} 50%{opacity:0.4;} }
+#clock{ color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; }
+.fb-banner{
+display:flex; align-items:center; gap:10px;
+background:linear-gradient(90deg, rgba(24,119,242,0.12), rgba(24,119,242,0.03));
+border:1px solid rgba(24,119,242,0.35); border-radius:10px;
+padding:10px 16px; margin-bottom:22px;
+}
+.fb-icon{
+flex:0 0 auto; width:26px; height:26px; border-radius:50%;
+background:#1877F2; display:flex; align-items:center; justify-content:center;
+}
+.fb-text{ font-size:11.5px; color:var(--text); letter-spacing:0.3px; line-height:1.5; }
+.fb-text b{ color:var(--cyan); }
+.fb-about-link{ color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); white-space:nowrap; }
+.fb-about-link:hover{ color:var(--text); border-bottom-color:var(--text); }
+/* the About & disclaimer panel under the banner */
+.about-box{ margin:8px 0 0; border:1px solid var(--line); border-radius:10px; background:var(--bg-panel-2); }
+.about-box > summary{ list-style:none; cursor:pointer; padding:10px 14px; font-size:10px; letter-spacing:2px; font-weight:700; color:var(--cyan); }
+.about-box > summary::-webkit-details-marker{ display:none; }
+.about-box > summary::before{ content:"+ "; color:var(--dim); }
+.about-box[open] > summary::before{ content:"\2212  "; }
+.about-body{ padding:0 16px 14px; font-size:11px; line-height:1.75; letter-spacing:0.3px; color:var(--text); max-width:90ch; }
+.about-body p{ margin:0 0 8px; }
+.about-body ul{ margin:0; padding-left:18px; }
+.about-body li{ margin:0 0 6px; color:var(--dim); }
+.about-body li b, .about-body p b{ color:var(--text); }
+.about-body a{ color:var(--cyan); }
+@media (max-width:560px){ .fb-text{ font-size:10.5px; } }
+.special-msg-panel{
+position:relative; overflow:hidden;
+border:1px solid var(--red); border-radius:10px; padding:20px 22px; margin-bottom:22px;
+background:linear-gradient(90deg, rgba(255,75,92,0.10), rgba(255,75,92,0.02));
+display:none;
+}
+.special-msg-panel::before{
+content:"";
+position:absolute; top:0; bottom:0; left:-2px; width:2px;
+background:linear-gradient(180deg, transparent, rgba(255,75,92,0.95), transparent);
+box-shadow:0 0 14px rgba(255,75,92,0.8);
+animation: msgScan 5s linear infinite;
+pointer-events:none;
+}
+@keyframes msgScan{ 0%{ left:-2px; } 100%{ left:100%; } }
+.special-msg-title{
+font-family:'Orbitron',sans-serif; font-size:12.5px; letter-spacing:2px; color:var(--red);
+margin-bottom:10px; display:flex; align-items:center; gap:8px; position:relative; z-index:2;
+}
+.special-msg-text{ font-size:13px; color:var(--text); line-height:1.65; position:relative; z-index:2; }
+.special-msg-meta{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:14px; position:relative; z-index:2; }
+.special-msg-meta b{ color:var(--red); }
+nav.tabs{ display:flex; gap:10px; margin-bottom:32px; flex-wrap:wrap; }
+nav.tabs a{
+font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
+color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+transition:all .2s ease;
+}
+nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
+nav.tabs a.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); font-weight:700; }
+/* HERO */
+.hero{
+display:flex; flex-direction:column; align-items:center; gap:22px;
+padding:30px 10px 46px; border-bottom:1px solid var(--line); margin-bottom:36px;
+}
+.radar-hero{
+position:relative; width:280px; height:280px; margin:0 auto;
+border-radius:50%;
+border:1px solid var(--line);
+background:
+repeating-radial-gradient(circle, transparent 0, transparent 42px, var(--line) 43px),
+var(--bg-panel);
+}
+.radar-hero .sweep{
+position:absolute; inset:0; border-radius:50%;
+background:conic-gradient(from 0deg, rgba(45,225,160,0.55), transparent 34%);
+animation:sweep 4s linear infinite;
+mix-blend-mode:screen;
+}
+@keyframes sweep{ to{ transform:rotate(360deg); } }
+.radar-hero .ring{ position:absolute; inset:0; border-radius:50%; border:1px solid rgba(76,211,255,0.25); }
+.radar-hero .center{
+position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+text-align:center; padding:0 20px;
+}
+.radar-hero .dial-value{ font-family:'Orbitron',sans-serif; font-size:54px; font-weight:900; color:var(--text); text-shadow:0 0 22px rgba(76,211,255,0.35); line-height:1; }
+.radar-hero .dial-value .unit{ font-size:20px; color:var(--cyan); vertical-align:top; margin-left:2px; }
+.radar-hero .cond{ font-size:13px; letter-spacing:2px; color:var(--green); margin-top:12px; }
+.radar-hero .loc-mini{ font-size:9px; letter-spacing:1.5px; color:var(--dim); margin-top:6px; }
+.ice-icon{ display:inline-block; animation: iceSpin 3s linear infinite; }
+.ice-warn{ color:var(--red, #ff4b5c); animation: icePulse 1.2s ease-in-out infinite; }
+@keyframes iceSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+@keyframes icePulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+.blip{ position:absolute; width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blipfade 3s ease-in-out infinite; }
+.hero-stack{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:14px; }
+.stat-block{
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:18px 20px;
+}
+.stat-block-label{ font-size:10px; letter-spacing:3px; color:var(--dim); margin-bottom:9px; }
+.stat-block-main{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.stat-block-value{ font-family:'Orbitron',sans-serif; font-size:36px; font-weight:800; color:var(--text); line-height:1; }
+.stat-block-value .unit{ font-size:15px; color:var(--dim); font-weight:600; margin-left:3px; }
+.stat-block-gust{ font-size:14px; color:var(--red); font-weight:700; }
+.stat-block-sub{ font-size:11.5px; color:var(--dim); margin-top:9px; letter-spacing:0.5px; line-height:1.55; }
+.stat-block-trend{ font-size:12px; letter-spacing:1px; margin-top:9px; font-weight:700; line-height:1.5; }
+.stat-block-trend.severe{ animation: icePulse 1.1s ease-in-out infinite; }
+.wind-arrow{ display:inline-block; animation: windBob 1.6s ease-in-out infinite; }
+.wind-arrow-big{ font-size:26px; }
+@keyframes windBob{ 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
+#pressureIcon{ display:inline-block; }
+#pressureIcon.fast{ animation: pressureBounce 1s ease-in-out infinite; }
+@keyframes pressureBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+.uv-legend{ display:flex; gap:4px; margin-top:13px; border-radius:6px; overflow:hidden; }
+.uv-seg{ flex:1; text-align:center; font-size:8px; letter-spacing:0.5px; padding:6px 2px; color:#05080d; font-weight:800; opacity:0.32; transition:opacity .3s ease; }
+.uv-seg.active{ opacity:1; box-shadow:0 0 12px rgba(0,0,0,0.25) inset; }
+@media (min-width:860px){
+.hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
+.hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
+.rainfall-block{ grid-column:1 / -1; }
+}
+.rain-row{ display:flex; gap:32px; flex-wrap:wrap; }
+.rain-item-label{ font-size:9px; letter-spacing:2px; color:var(--dim2); margin-bottom:6px; }
+.rain-visual-row{ display:flex; align-items:center; gap:26px; flex-wrap:wrap; }
+.rain-week{ margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+.rain-week-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.rain-week-total{ font-family:'Orbitron',sans-serif; font-size:15px; font-weight:800; color:var(--cyan); }
+.rain-week-total .unit{ font-size:10px; color:var(--dim); font-weight:600; margin-left:3px; }
+.rain-week-bars{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; align-items:end; }
+.rw-col{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.rw-val{ font-size:10px; color:var(--text); white-space:nowrap; }
+.rw-val.zero{ color:var(--dim2); }
+.rw-bar-wrap{ height:56px; width:100%; display:flex; align-items:flex-end; }
+.rw-bar{ width:100%; min-height:2px; border-radius:3px 3px 0 0; background:var(--cyan); transition:height .8s ease; }
+.rw-day{ font-size:9px; letter-spacing:1px; color:var(--dim); text-align:center; line-height:1.3; }
+.rw-day.today{ color:var(--cyan); font-weight:700; }
+.rain-note{ font-size:9px; letter-spacing:0.5px; color:var(--dim2); line-height:1.6; margin-top:10px; }
+.rain-bucket{ position:relative; width:50px; height:64px; flex-shrink:0; }
+.rain-bucket::before{
+content:''; position:absolute; inset:0;
+clip-path:polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+border:2px solid var(--line); border-top:none; background:rgba(255,255,255,0.03);
+box-sizing:border-box;
+}
+.rain-bucket-fill{
+position:absolute; left:2px; right:2px; bottom:2px; height:0%;
+clip-path:polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+background:linear-gradient(180deg, var(--cyan), rgba(76,211,255,0.55));
+transition:height 1.1s ease, background .6s ease;
+overflow:hidden;
+}
+.rain-bucket-wave{
+position:absolute; top:-2px; left:-15%; width:130%; height:6px;
+background:radial-gradient(circle at 8px 3px, rgba(255,255,255,0.55) 2.5px, transparent 3px) repeat-x;
+background-size:16px 6px;
+animation: waveScroll 1.6s linear infinite;
+}
+@keyframes waveScroll{ from{ background-position-x:0; } to{ background-position-x:-16px; } }
+.rain-drop{
+position:absolute; width:2px; height:9px; border-radius:1px; background:var(--cyan);
+top:-12px; opacity:0; animation: dropFall 1.5s linear infinite; animation-play-state:paused;
+}
+.rain-bucket.active .rain-drop{ animation-play-state:running; }
+.rain-drop.rd1{ left:18%; animation-delay:0s; }
+.rain-drop.rd2{ left:48%; animation-delay:.5s; }
+.rain-drop.rd3{ left:76%; animation-delay:1s; }
+@keyframes dropFall{ 0%{ top:-12px; opacity:0; } 12%{ opacity:1; } 85%{ opacity:1; } 100%{ top:88%; opacity:0; } }
+.drought-banner{
+margin-top:14px; padding:12px 14px; border-radius:8px;
+background:rgba(255,75,92,0.08); border:1px solid rgba(255,75,92,0.3);
+}
+.drought-title{ font-size:11px; letter-spacing:1px; font-weight:800; color:var(--red); animation: icePulse 1.4s ease-in-out infinite; }
+.drought-advice{ font-size:11px; color:var(--text); line-height:1.55; margin-top:7px; letter-spacing:0.3px; }
+.radar-read{ display:flex; align-items:center; gap:8px; margin-top:12px; font-size:11.5px; color:var(--text); }
+.radar-read-dot{ width:6px; height:6px; border-radius:50%; background:var(--dim2); flex-shrink:0; }
+.radar-read-dot.active{ background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+.radar-read-dot.rising{ background:var(--red); box-shadow:0 0 6px var(--red); }
+.radar-read-dot.easing{ background:var(--green); box-shadow:0 0 6px var(--green); }
+/* SECTION LABELS */
+.sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.sec-head h3{
+font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap;
+}
+.sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
+.sec-head .tag{ font-size:10px; color:var(--bg); background:var(--green); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+.sec-head.storm .tag{ background:var(--amber); }
+.sec-head.storm h3{ color:var(--amber); }
+.sec-head.imagery .tag{ background:var(--cyan); }
+.sec-head.imagery h3{ color:var(--cyan); }
+section{ margin-bottom:52px; }
+/* CONDITIONS GRID */
+.grid5{ display:grid; grid-template-columns:repeat(6,1fr); gap:16px; }
+@media (max-width:1080px){ .grid5{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:560px){ .grid5{ grid-template-columns:repeat(2,1fr); } }
+.tile{
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:10px; padding:18px 14px;
+text-align:center; position:relative; overflow:hidden;
+transition:transform .25s ease, box-shadow .25s ease;
+opacity:0; transform:translateY(14px);
+}
+.tile.show{ opacity:1; transform:translateY(0); transition:opacity .5s ease, transform .5s ease; }
+.tile:hover{ transform:translateY(-4px); box-shadow:0 10px 30px rgba(76,211,255,0.12); }
+.tile .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:12px; }
+.gauge{ width:84px; height:84px; border-radius:50%; margin:0 auto 10px; position:relative;
+background:conic-gradient(var(--gc,var(--cyan)) calc(var(--pct,0)*1%), rgba(255,255,255,0.06) 0); }
+.gauge::before{ content:""; position:absolute; inset:7px; border-radius:50%; background:var(--bg-panel); }
+.gauge b{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:var(--text); }
+.tile .sub{ font-size:10px; color:var(--dim2); margin-top:4px; letter-spacing:1px; }
+.wind-gauge{ position:relative; width:84px; height:84px; margin:0 auto 10px; }
+.wind-gauge .ring{ position:absolute; inset:0; border-radius:50%; }
+.wind-gauge .ring.outer{
+background:conic-gradient(var(--gust-c,var(--red)) calc(var(--gust-pct,0)*1%), rgba(255,255,255,0.06) 0);
+-webkit-mask:radial-gradient(closest-side, transparent 75%, black 76%, black 100%);
+mask:radial-gradient(closest-side, transparent 75%, black 76%, black 100%);
+}
+.wind-gauge .ring.inner{
+position:absolute; inset:15px;
+background:conic-gradient(var(--wind-c,var(--cyan)) calc(var(--wind-pct,0)*1%), rgba(255,255,255,0.06) 0);
+-webkit-mask:radial-gradient(closest-side, transparent 62%, black 63%, black 100%);
+mask:radial-gradient(closest-side, transparent 62%, black 63%, black 100%);
+}
+.wind-gauge b{
+position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+font-size:15px; font-weight:800; color:var(--text); line-height:1.15;
+}
+.wind-gauge b small{ font-size:8px; color:var(--red); font-weight:700; letter-spacing:0.5px; margin-top:1px; }
+.wind-legend{ display:flex; justify-content:center; gap:10px; font-size:8px; letter-spacing:1px; color:var(--dim2); margin-top:2px; }
+.wind-legend span{ display:flex; align-items:center; gap:4px; }
+.wind-legend i{ width:6px;height:6px;border-radius:50%; display:inline-block; }
+.wind-dir-arrow{ position:absolute; inset:0; transition:transform .6s ease; }
+/* TEMPERATURE — thermometer */
+.thermo-wrap{ display:flex; justify-content:center; align-items:flex-end; height:64px; margin:0 auto; }
+.thermo-tube{ position:relative; width:13px; height:64px; border-radius:7px 7px 0 0; background:rgba(255,255,255,0.06); overflow:hidden; }
+.thermo-fill{ position:absolute; bottom:0; left:0; right:0; height:0%; border-radius:7px 7px 0 0; background:var(--cyan); transition:height .6s ease, background .6s ease; }
+.thermo-bulb{ width:19px; height:19px; border-radius:50%; margin:-3px auto 8px; background:var(--cyan); transition:background .6s ease; }
+.tile .val-lg{ font-family:'Orbitron',sans-serif; font-size:17px; font-weight:900; color:var(--text); }
+/* HUMIDITY / AIR QUALITY — bar */
+.bar-track{ position:relative; height:8px; border-radius:4px; background:rgba(255,255,255,0.06); margin:10px 0 4px; }
+.bar-fill{ position:absolute; left:0; top:0; bottom:0; border-radius:4px; width:0%; background:var(--cyan); transition:width .6s ease; }
+.bar-zoned{ background:linear-gradient(90deg, #2de1a0 0%, #e0d341 25%, #ff8c30 50%, #ff4b5c 75%, #7d1935 100%); }
+.bar-marker{ position:absolute; top:-3px; width:2px; height:14px; background:#fff; box-shadow:0 0 5px #fff; left:0%; transition:left .6s ease; }
+/* HEAT INDEX — risk ladder */
+.ladder{ display:flex; flex-direction:column; gap:2px; margin-bottom:8px; }
+.ladder-step{ height:4px; border-radius:2px; opacity:0.25; transition:opacity .4s ease; }
+.ladder-step.active{ opacity:1; }
+/* UV INDEX — semi-circle dial */
+.arc-wrap{ display:flex; justify-content:center; margin:0 auto 2px; }
+.uv-needle{ transition:transform .6s ease; }
+.mini-spark{ width:100%; height:22px; display:block; margin-top:8px; }
+.history-panel{
+margin-top:16px; background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:18px 20px;
+}
+.history-head{ font-size:10px; letter-spacing:3px; color:var(--dim); margin-bottom:16px; }
+.history-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px 24px; }
+@media (max-width:700px){ .history-grid{ grid-template-columns:repeat(2,1fr); } }
+.history-item{}
+.history-lbl{ font-size:9px; letter-spacing:1.5px; color:var(--dim2); margin-bottom:6px; }
+.mini-spark-lg{ height:38px; }
+.warning-banner{
+display:flex; align-items:flex-start; gap:16px;
+background:var(--bg-panel); border:1px solid var(--green); border-left:5px solid var(--green);
+border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
+}
+.warning-icon{ font-size:26px; color:var(--green); flex:0 0 auto; line-height:1; }
+.warning-body{ flex:1; }
+.warning-title{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:2px; color:var(--green); margin-bottom:6px; }
+.warning-text{ font-size:12px; color:var(--text); line-height:1.6; margin-bottom:8px; }
+.warning-disclaimer{ font-size:10px; color:var(--dim); line-height:1.6; }
+.warning-disclaimer a{ color:var(--cyan); }
+/* 5-DAY FORECAST */
+.forecast-scroll{ display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch; }
+.forecast-scroll::-webkit-scrollbar{ height:6px; }
+.forecast-scroll::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+.day-card{
+flex:0 0 auto; width:240px;
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:18px;
+}
+.day-card .day-label{ font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:2px; color:var(--cyan); }
+.day-card .day-date{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-bottom:12px; }
+.day-card .day-icon{ font-size:36px; text-align:center; margin-bottom:6px; }
+.day-card .day-temps{ display:flex; justify-content:center; align-items:baseline; gap:8px; margin-bottom:6px; }
+.day-card .day-temps .hi{ font-family:'Orbitron',sans-serif; font-size:24px; font-weight:800; color:var(--text); }
+.day-card .day-temps .lo{ font-size:14px; color:var(--dim); }
+.day-card .day-cond{ text-align:center; font-size:10px; letter-spacing:1.5px; color:var(--green); margin-bottom:10px; }
+/* wind impact strip: only on days that earn it */
+.day-impact{ display:none; margin:0 0 12px; padding:8px 10px; border-radius:7px; font-size:9.5px; line-height:1.5; letter-spacing:0.8px; font-weight:700; }
+.day-impact b{ display:block; font-size:10px; letter-spacing:1.5px; margin-bottom:2px; }
+.day-impact small{ display:block; font-weight:400; color:inherit; opacity:0.85; letter-spacing:0.5px; }
+.day-impact.show{ display:block; }
+.day-impact.t1{ color:var(--amber); border:1px solid rgba(255,176,32,0.55); background:rgba(255,176,32,0.06); }
+.day-impact.t2{ color:#05080d; background:var(--amber); border:1px solid var(--amber); }
+.day-impact.t3{ color:var(--red); border:1px solid rgba(255,75,92,0.65); background:rgba(255,75,92,0.08); }
+.day-impact.t4{ color:#fff; background:var(--red); border:1px solid var(--red); }
+.day-card.wind-t1, .day-card.wind-t2{ border-color:rgba(255,176,32,0.6); box-shadow:0 0 18px rgba(255,176,32,0.18); }
+.day-card.wind-t3, .day-card.wind-t4{ border-color:rgba(255,75,92,0.7); box-shadow:0 0 22px rgba(255,75,92,0.28); }
+.day-actions{ display:flex; gap:8px; margin-top:12px; }
+.day-btn{
+flex:1; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1px; font-weight:700;
+color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:6px;
+padding:8px 4px; cursor:pointer; transition:all .15s ease;
+}
+.day-btn:hover{ border-color:var(--cyan); background:rgba(76,211,255,0.08); }
+.fc-modal-backdrop{
+position:fixed; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(3px);
+z-index:500; display:none; align-items:flex-end; justify-content:center;
+}
+.fc-modal-backdrop.open{ display:flex; }
+.fc-modal{
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:16px 16px 0 0; width:100%; max-width:720px;
+max-height:82vh; overflow-y:auto; padding:22px 20px 26px; position:relative;
+animation: fcModalUp .25s ease;
+}
+@media (min-width:760px){
+.fc-modal-backdrop{ align-items:center; }
+.fc-modal{ border-radius:16px; max-height:78vh; }
+}
+@keyframes fcModalUp{ from{ transform:translateY(24px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+.fc-modal-close{
+position:absolute; top:14px; right:14px; width:28px; height:28px; border-radius:50%;
+background:transparent; border:1px solid var(--line); color:var(--dim); font-size:16px;
+line-height:1; cursor:pointer;
+}
+.fc-modal-close:hover{ border-color:var(--red); color:var(--red); }
+.fc-modal-title{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:2px; color:var(--cyan); margin-bottom:4px; padding-right:36px; }
+.fc-modal-sub{ font-size:10px; letter-spacing:1px; color:var(--dim); margin-bottom:18px; }
+.hr-head, .hr-row{
+display:grid; grid-template-columns:52px 30px 1fr 128px 76px; align-items:center; gap:10px;
+padding:8px 2px; border-bottom:1px solid var(--line);
+}
+.hr-head{ font-size:8.5px; letter-spacing:1.5px; color:var(--dim2); border-bottom:1px solid var(--line); }
+.hr-row{ font-size:12px; }
+.hr-row .hr-time{ font-size:10.5px; color:var(--dim); }
+.hr-row .hr-icon{ font-size:16px; text-align:center; }
+.hr-row .hr-temp{ font-family:'Orbitron',sans-serif; font-weight:800; }
+.hr-row .hr-wind, .hr-row .hr-rain{ font-size:10px; color:var(--dim2); text-align:right; }
+/* gust level, same colours as the wind strip on the 5-day cards */
+.hr-row.wind-t1, .hr-row.wind-t2{ box-shadow:inset 3px 0 0 var(--amber); }
+.hr-row.wind-t3, .hr-row.wind-t4{ box-shadow:inset 3px 0 0 var(--red); }
+.hr-row.wind-t1 .hr-wind{ color:var(--amber); }
+.hr-row.wind-t2 .hr-wind{ color:var(--amber); font-weight:700; }
+.hr-row.wind-t3 .hr-wind{ color:var(--red); font-weight:700; }
+.hr-row.wind-t4 .hr-wind span{ color:#fff; background:var(--red); font-weight:700; padding:2px 5px; border-radius:4px; }
+.hr-key{ font-size:9px; letter-spacing:0.8px; color:var(--dim); margin:-8px 0 10px; line-height:1.7; }
+.hr-key b{ font-weight:700; }
+@media (max-width:520px){
+.hr-head, .hr-row{ grid-template-columns:42px 24px 1fr 112px 58px; gap:6px; }
+}
+.fc-overview-text{ font-size:13px; line-height:1.7; color:var(--text); }
+.day-row{ display:flex; justify-content:space-between; gap:8px; font-size:10.5px; padding:6px 0; border-top:1px solid var(--line); color:var(--dim); letter-spacing:0.5px; }
+.day-row .v{ color:var(--text); font-weight:700; text-align:right; }
+.storm-wrap{
+background:linear-gradient(160deg, rgba(255,176,32,0.05), rgba(11,19,28,0.4));
+border:1px solid rgba(255,176,32,0.25); border-radius:14px; padding:24px;
+}
+.storm-outlook{
+display:flex; gap:18px; align-items:flex-start;
+background:linear-gradient(160deg, rgba(255,176,32,0.10), rgba(11,19,28,0.55));
+border:2px solid var(--amber); border-radius:14px; padding:22px 24px; margin-bottom:22px;
+position:relative; overflow:hidden;
+}
+.storm-outlook-icon{ font-size:42px; flex:0 0 auto; line-height:1; filter:drop-shadow(0 0 10px rgba(255,176,32,0.6)); }
+.bolt-flash{ display:inline-block; animation: boltFlash 2.6s ease-in-out infinite; }
+@keyframes boltFlash{
+0%, 88%, 100%{ opacity:0.35; transform:scale(1); }
+90%{ opacity:1; transform:scale(1.18); }
+93%{ opacity:0.5; transform:scale(1); }
+95%{ opacity:1; transform:scale(1.1); }
+97%{ opacity:0.4; transform:scale(1); }
+}
+.storm-outlook-body{ flex:1; }
+.storm-outlook-title{ font-family:'Orbitron',sans-serif; font-size:16px; letter-spacing:1.5px; font-weight:900; margin-bottom:9px; }
+.storm-outlook-desc{ font-size:12.5px; color:var(--text); line-height:1.65; margin-bottom:10px; }
+.storm-outlook-timing{ font-size:11.5px; font-weight:700; letter-spacing:0.5px; }
+.storm-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+@media (max-width:900px){ .storm-grid{ grid-template-columns:1fr 1fr; } }
+.stat-card{ background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:18px; }
+.stat-card .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
+.stat-card .val{ font-family:'Orbitron',sans-serif; font-size:30px; font-weight:800; }
+.stat-card .unit{ font-size:11px; color:var(--dim); margin-left:4px; }
+.stat-card .verdict{ margin-top:10px; font-size:10px; letter-spacing:1px; padding:3px 8px; border-radius:4px; display:inline-block; font-weight:700; }
+.tip-wrap{ position:relative; cursor:help; outline:none; }
+.info-dot{
+display:inline-flex; align-items:center; justify-content:center;
+width:13px; height:13px; border-radius:50%; border:1px solid var(--dim);
+color:var(--dim); font-size:9px; margin-left:4px; vertical-align:middle;
+}
+.tip{
+position:absolute; bottom:calc(100% + 10px); left:50%;
+transform:translateX(-50%) translateY(6px);
+width:230px; max-width:70vw;
+background:#04070a; border:1px solid var(--line); border-radius:10px; padding:14px;
+opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+z-index:30; box-shadow:0 12px 30px rgba(0,0,0,0.55); text-align:left;
+}
+.tip-wrap:hover .tip, .tip-wrap:focus .tip, .tip-wrap:focus-within .tip{
+opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);
+}
+.tip-title{ font-family:'Orbitron',sans-serif; font-size:10.5px; letter-spacing:1px; color:var(--cyan); margin-bottom:8px; line-height:1.4; }
+.tip-text{ font-size:10.5px; color:var(--text); line-height:1.55; margin-bottom:11px; }
+.tip-bar{ position:relative; height:8px; border-radius:4px; }
+.tip-marker{ position:absolute; top:-3px; width:2px; height:14px; background:#fff; box-shadow:0 0 6px #fff; left:0%; }
+.tip-scale{ display:flex; justify-content:space-between; font-size:8px; color:var(--dim); margin-top:5px; letter-spacing:0.5px; }
+.cape-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 22%, #ffb020 55%, #ff4b5c 80%, #ff4b5c 100%); }
+.li-bar{ background:linear-gradient(90deg, #ff4b5c 0%, #ffb020 40%, #2de1a0 100%); }
+.dp-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 48%, #ffb020 72%, #ffb020 100%); }
+.cin-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 25%, #ffb020 75%, #ff4b5c 95%, #ff4b5c 100%); }
+.skewt-card{ background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:14px; grid-row:span 1; display:flex; flex-direction:column; }
+.skewt-card .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
+.skewt-img-wrap{ flex:1; display:flex; align-items:center; justify-content:center; background:#04070a; border-radius:6px; min-height:220px; overflow:hidden; position:relative; }
+.skewt-img-wrap img{ max-width:100%; max-height:320px; display:block; filter:brightness(0.95) contrast(1.05); }
+.skewt-fallback{ text-align:center; padding:20px; font-size:11px; color:var(--dim); line-height:1.6; }
+.skewt-fallback a{ color:var(--cyan); text-decoration:none; border:1px solid var(--cyan); padding:6px 12px; border-radius:6px; display:inline-block; margin-top:10px; font-size:10px; letter-spacing:1px; }
+/* IMAGERY */
+.imagery-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
+@media (max-width:960px){ .imagery-grid{ grid-template-columns:1fr; } }
+.panel{
+border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg-panel); position:relative;
+}
+.panel-head{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
+.panel-head span{ font-size:11px; letter-spacing:2px; color:var(--cyan); font-weight:700; }
+.panel-head .dot{ width:6px;height:6px;border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 1.6s infinite; }
+.anim-bar{ display:flex; justify-content:space-between; align-items:center; padding:8px 14px; border-top:1px solid var(--line); }
+.anim-btn{
+font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; font-weight:700;
+color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:5px;
+padding:5px 10px; cursor:pointer; transition:all .15s ease;
+}
+.anim-btn:hover{ border-color:var(--cyan); }
+.anim-btn.playing{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
+.anim-time{ font-size:10px; letter-spacing:1px; color:var(--dim); }
+/* STORM WATCH (NOAA forecast loop) */
+.sw-controls{ display:flex; flex-wrap:wrap; gap:14px 26px; padding:14px 16px 6px; }
+.sw-group{ display:flex; flex-direction:column; gap:6px; }
+.sw-lbl{ font-size:9px; letter-spacing:2px; color:var(--dim); }
+.sw-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.sw-chip{
+font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; font-weight:700;
+color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:5px;
+padding:6px 10px; cursor:pointer; transition:all .15s ease;
+}
+.sw-chip:hover{ border-color:var(--cyan); }
+.sw-chip.active{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
+.sw-stage{ position:relative; margin:10px 16px 0; min-height:240px; border:1px solid var(--line); border-radius:8px; background:var(--bg-panel-2); overflow:hidden; }
+.sw-stage a{ display:block; width:100%; }
+.sw-stage canvas{ width:100%; height:auto; display:block; transition:opacity .2s ease; }
+.sw-stage.loading canvas{ opacity:0.45; }
+.sw-msg{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; padding:0 20px; font-size:11px; letter-spacing:1px; color:var(--dim); line-height:1.7; pointer-events:none; }
+.sw-msg a{ color:var(--cyan); pointer-events:auto; }
+.sw-msg.err{ color:var(--amber); }
+.sw-readout{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:6px 14px; padding:12px 16px 2px; }
+.sw-valid{ font-family:'Orbitron',sans-serif; font-size:19px; letter-spacing:1px; color:var(--text); }
+.sw-valid small{ display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--dim); margin-top:4px; font-weight:400; }
+.sw-run{ font-size:10px; letter-spacing:1px; color:var(--dim); text-align:right; }
+.sw-slider{ padding:12px 22px 0; }
+.sw-slider input[type=range]{ width:100%; accent-color:var(--cyan); cursor:pointer; }
+.sw-ticks{ position:relative; height:16px; margin:0 8px; }
+.sw-ticks span{ position:absolute; top:0; transform:translateX(-50%); font-size:9px; letter-spacing:1px; color:var(--dim2); white-space:nowrap; }
+.sw-note{ padding:8px 16px 14px; font-size:10px; line-height:1.75; letter-spacing:0.4px; color:var(--dim); }
+.sw-note b{ color:var(--text); font-weight:700; }
+.sw-note a{ color:var(--cyan); }
+.sw-fell{ color:var(--amber); }
+.sw-sign{ display:none; }
+/* HUD NIGHT LOOK — dark-teal chart with tick border, scanlines and amber labels.
+   Pure CSS on top of NOAA's flat picture (colours are inverted so the white
+   chart background goes dark); the ORIGINAL chip switches it all off. */
+#stormWatch.hud .sw-stage{
+isolation:isolate; border-color:rgba(76,211,255,0.38);
+background:radial-gradient(ellipse at 50% 38%, #0e3d48 0%, #08272f 58%, #051a22 100%);
+box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08);
+}
+#stormWatch.hud .sw-stage canvas{
+filter:invert(1) hue-rotate(180deg) saturate(1.3) contrast(1.08) brightness(1.08);
+mix-blend-mode:screen;
+}
+#stormWatch.hud .sw-stage::after{
+content:""; position:absolute; inset:0; pointer-events:none;
+background:
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) top/100% 7px no-repeat,
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) bottom/100% 7px no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) left/7px 100% no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) right/7px 100% no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.05) 0 1px, transparent 1px 3px),
+radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,0.5) 100%);
+}
+#stormWatch.hud .sw-msg{ z-index:2; }
+#stormWatch.hud .sw-valid{ color:var(--amber); text-shadow:0 0 14px rgba(255,176,32,0.35); }
+#stormWatch.hud .sw-readout{ align-items:center; }
+#stormWatch.hud .sw-sign{
+display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+width:50px; height:50px; margin:14px 20px 14px 14px; transform:rotate(45deg);
+background:var(--amber); border:2px solid #05080d; outline:2px solid var(--amber);
+}
+#stormWatch.hud .sw-sign span{
+transform:rotate(-45deg); text-align:center; font-family:'Orbitron',sans-serif;
+font-size:8px; font-weight:800; line-height:1.2; letter-spacing:0.5px; color:#05080d;
+}
+#stormWatch.hud .sw-readout-main{ display:flex; align-items:center; flex:1 1 auto; min-width:0; }
+/* STORM TRACKS — forecast storm centres drawn from data/storm-tracks.json */
+#stPanel{ margin-top:18px; }
+.st-mapwrap{
+position:relative; margin:10px 16px 0; border:1px solid rgba(76,211,255,0.38); border-radius:8px; overflow:hidden;
+background:#06222b; box-shadow:inset 0 0 60px rgba(0,0,0,0.6), 0 0 24px rgba(76,211,255,0.08); isolation:isolate;
+}
+#st-map{ width:100%; height:auto; aspect-ratio:1.25; min-height:420px; max-height:88vh; background:#06222b; }
+.st-hours{ display:flex; flex-wrap:wrap; gap:4px; padding:8px 16px 0; }
+.st-hours button{
+font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:0.5px; line-height:1;
+min-width:34px; padding:7px 4px; color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:4px; cursor:pointer;
+}
+.st-hours button.day{ border-left:2px solid var(--dim); }
+.st-hours button:hover{ border-color:var(--cyan); }
+.st-hours button.active{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
+.st-hours small{ display:block; font-size:8px; font-weight:400; color:var(--dim); margin-top:3px; letter-spacing:0; }
+.st-hours button.active small{ color:#05080d; }
+@media (max-width:640px){ #st-map{ min-height:380px; } }
+#st-map .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
+#st-map .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
+#st-map .leaflet-control-attribution a{ color:var(--dim); }
+#st-map .leaflet-bar a{ background:var(--bg-panel); color:var(--cyan); border-color:var(--line); }
+.st-mapwrap::after{
+content:""; position:absolute; inset:0; pointer-events:none; z-index:700;
+background:
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) top/100% 7px no-repeat,
+repeating-linear-gradient(90deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) bottom/100% 7px no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) left/7px 100% no-repeat,
+repeating-linear-gradient(0deg, rgba(76,211,255,0.6) 0 1px, transparent 1px 22px) right/7px 100% no-repeat,
+radial-gradient(ellipse at center, transparent 62%, rgba(0,0,0,0.45) 100%);
+}
+.st-msg{
+position:absolute; inset:0; z-index:650; display:flex; align-items:center; justify-content:center; text-align:center;
+padding:24px; background:rgba(5,26,34,0.78); color:var(--dim); font-size:11px; letter-spacing:1px; line-height:1.9;
+}
+.st-msg.hide{ display:none; }
+.st-lbl{
+font-family:'JetBrains Mono',monospace; font-weight:700; font-size:10px; line-height:1.15; white-space:nowrap; pointer-events:none;
+text-shadow:0 0 3px #02141a, 0 0 3px #02141a, 0 0 6px #02141a;
+}
+.st-lbl i{ display:block; font-style:normal; font-weight:400; font-size:8.5px; letter-spacing:0.5px; color:#b9dde6; }
+.st-badge{
+display:flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:4px;
+font-family:'Orbitron',sans-serif; font-weight:800; font-size:9px; color:#05080d; border:1px solid rgba(5,8,13,0.7);
+box-shadow:0 0 8px currentColor;
+}
+.st-jersey{ font-family:'JetBrains Mono',monospace; font-weight:800; font-size:9px; letter-spacing:1.5px; color:var(--amber); text-shadow:0 0 3px #02141a,0 0 3px #02141a; white-space:nowrap; pointer-events:none; }
+.leaflet-tooltip.st-tip{
+background:rgba(5,14,20,0.94); border:1px solid rgba(76,211,255,0.5); color:var(--text);
+font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; box-shadow:0 0 12px rgba(76,211,255,0.2);
+}
+.leaflet-tooltip.st-tip::before{ border-top-color:rgba(76,211,255,0.5); }
+.st-legend{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; padding:12px 16px 0; font-size:10px; letter-spacing:1px; color:var(--dim); }
+.st-legend .st-key{ display:inline-flex; align-items:center; gap:6px; }
+.st-legend .st-key b{ display:inline-block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 8px currentColor; }
+.st-reach{ min-height:112px; margin:14px 16px 0; padding:12px 14px; border:1px solid var(--line); border-left:3px solid var(--amber); background:rgba(255,176,32,0.05); font-size:11px; line-height:1.7; letter-spacing:0.5px; color:var(--text); }
+.st-reach b{ color:var(--amber); }
+.st-jbeacon{ position:relative; width:0; height:0; pointer-events:none; }
+.st-jbeacon i{ position:absolute; border-radius:50%; box-sizing:border-box; }
+.st-jbeacon .r1{ left:-15px; top:-15px; width:30px; height:30px; border:3px solid #ffffff; box-shadow:0 0 0 2px #05080d, inset 0 0 0 2px #05080d, 0 0 14px 3px rgba(255,255,255,0.75); }
+.st-jbeacon .r2{ left:-15px; top:-15px; width:30px; height:30px; border:2px solid #ffb020; animation:stJpulse 2.2s ease-out infinite; }
+.st-jbeacon .dot{ left:-6px; top:-6px; width:12px; height:12px; background:#ffb020; border:2px solid #05080d; box-shadow:0 0 0 2px #ffffff; }
+.st-jbeacon span{ position:absolute; left:23px; top:-12px; padding:3px 8px; font:800 12px 'JetBrains Mono',monospace; letter-spacing:2px; color:#ffffff; background:rgba(5,8,13,0.92); border:1px solid #ffb020; border-left:4px solid #ffb020; border-radius:3px; box-shadow:0 0 10px rgba(0,0,0,0.85); white-space:nowrap; }
+@keyframes stJpulse{ 0%{ transform:scale(0.7); opacity:0.95; } 100%{ transform:scale(2.6); opacity:0; } }
+@media (prefers-reduced-motion:reduce){ .st-jbeacon .r2{ animation:none; opacity:0; } }
+#st-map .leaflet-popup-content-wrapper{ background:rgba(5,14,20,0.96); color:var(--text); border:1px solid rgba(76,211,255,0.55); border-radius:8px; box-shadow:0 0 18px rgba(0,0,0,0.7); }
+#st-map .leaflet-popup-tip{ background:rgba(5,14,20,0.96); border:1px solid rgba(76,211,255,0.55); }
+#st-map .leaflet-popup-content{ margin:10px 14px; font:11px/1.75 'JetBrains Mono',monospace; letter-spacing:0.4px; }
+#st-map a.leaflet-popup-close-button{ color:var(--cyan); }
+.st-pop b{ color:var(--text); }
+.st-pop .hd{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:1px; color:var(--cyan); }
+.st-pop .dm{ color:var(--dim); font-size:10px; letter-spacing:0.8px; }
+.st-pop .rw{ display:flex; justify-content:space-between; gap:14px; }
+.st-more{ margin:12px 16px 0; border:1px solid var(--line); border-radius:8px; background:var(--bg-panel-2); }
+.st-more > summary{ cursor:pointer; padding:10px 14px; font-size:10px; letter-spacing:2px; font-weight:700; color:var(--cyan); list-style:none; }
+.st-more > summary::-webkit-details-marker{ display:none; }
+.st-more > summary::before{ content:'+ '; color:var(--amber); }
+.st-more[open] > summary::before{ content:'\2013 '; }
+.st-more[open] > summary{ border-bottom:1px solid var(--line); }
+.st-more .st-list{ margin:12px 14px 14px; }
+.st-more .sw-note{ padding:10px 14px 14px; }
+.st-grad{ display:inline-block; width:230px; max-width:60vw; height:10px; border-radius:5px; vertical-align:middle; border:1px solid rgba(233,246,245,0.25); background:linear-gradient(90deg, rgba(76,211,255,0.12) 0%, #4cd3ff 11%, #2de1a0 21%, #ffb020 36%, #ff7a28 50%, #ff4b5c 64%, #ff5fd2 79%, #ffeaff 100%); }
+.st-gradlbl{ display:inline-flex; justify-content:space-between; width:230px; max-width:60vw; font-size:9px; letter-spacing:0; color:var(--dim); }
+.st-iso{ transform:translate(-50%,-50%); font:700 9px 'JetBrains Mono',monospace; color:#e9f6f5; text-shadow:0 0 3px #05080d,0 0 3px #05080d,0 0 5px #05080d; white-space:nowrap; pointer-events:none; }
+.st-reach a{ color:var(--cyan); text-decoration:none; font-weight:700; white-space:nowrap; }
+.st-reach small{ display:block; margin-top:4px; color:var(--dim); font-size:9.5px; letter-spacing:1px; }
+.st-status{ padding:10px 16px 0; font-size:11px; line-height:1.7; letter-spacing:0.5px; color:var(--text); }
+.st-status small{ display:block; font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:2px; }
+.st-status.warn small{ color:var(--amber); }
+.st-list{ margin:12px 16px 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:8px; }
+.st-item{
+display:flex; gap:11px; align-items:flex-start; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+background:var(--bg-panel-2); cursor:pointer; transition:border-color .15s ease;
+}
+.st-item:hover{ border-color:var(--cyan); }
+.st-item .st-dot{ width:11px; height:11px; border-radius:50%; margin-top:3px; flex:0 0 auto; box-shadow:0 0 8px currentColor; }
+.st-item b{ display:block; font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px; color:var(--text); }
+.st-item b em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--amber); margin-left:6px; }
+.st-item small{ display:block; font-size:10px; line-height:1.65; letter-spacing:0.3px; color:var(--dim); margin-top:2px; }
+.st-hit{ cursor:pointer; }
+.st-badge.named{ width:auto; min-width:16px; padding:0 7px; letter-spacing:1px; white-space:nowrap; }
+.st-subhead{ margin:16px 16px 0; font-size:10px; letter-spacing:2px; color:var(--amber); font-weight:700; }
+.st-near{ margin:8px 16px 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,430px),1fr)); gap:10px; }
+.st-card{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:12px 14px; border:1px solid rgba(255,176,32,0.4); border-radius:10px; background:var(--bg-panel-2); box-shadow:inset 0 0 30px rgba(255,176,32,0.04); }
+.st-card.out{ border-color:var(--line); box-shadow:none; }
+.st-card-rose{ flex:0 0 auto; width:190px; max-width:100%; margin:0 auto; }
+.st-norose{ width:190px; height:190px; display:flex; align-items:center; justify-content:center; text-align:center; border:1px dashed var(--line); border-radius:50%; font-size:10px; letter-spacing:1.5px; color:var(--dim2); line-height:1.8; }
+.st-card-txt{ flex:1 1 170px; min-width:0; }
+.st-card h4{ margin:0; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:1px; color:var(--text); }
+.st-card h4 em{ font-style:normal; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--amber); }
+.st-card small{ display:block; font-size:9px; letter-spacing:0.8px; line-height:1.7; color:var(--dim); margin-top:3px; }
+.st-card p{ margin:8px 0 0; font-size:11px; line-height:1.7; letter-spacing:0.2px; color:var(--text); }
+.st-rename{ font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; font-weight:700; color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:4px; padding:3px 7px; cursor:pointer; }
+.st-rename:hover{ border-color:var(--cyan); }
+.st-strip{ display:flex; gap:2px; margin-top:10px; height:16px; }
+.st-strip span{ flex:1 1 0; min-width:3px; border-radius:2px; opacity:0.55; cursor:pointer; }
+.st-strip span.ring{ border-top:3px solid var(--amber); opacity:0.8; }
+.st-strip span.cur{ opacity:1; outline:2px solid #e9f6f5; outline-offset:1px; }
+.st-strip-cap{ margin-top:5px; font-size:8.5px; letter-spacing:0.8px; line-height:1.6; color:var(--dim2); }
+
+.panel iframe{ width:100%; height:340px; border:0; display:block; filter:saturate(1.05); }
+.corner{ position:absolute; width:14px; height:14px; border:2px solid var(--cyan); opacity:0.6; }
+.corner.tl{ top:6px; left:6px; border-right:0; border-bottom:0; }
+.corner.tr{ top:6px; right:6px; border-left:0; border-bottom:0; }
+.corner.bl{ bottom:6px; left:6px; border-right:0; border-top:0; }
+.corner.br{ bottom:6px; right:6px; border-left:0; border-top:0; }
+footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
+.news-panel{ grid-column:1 / -1; }
+.globe-spin{ display:inline-block; animation: spin 6s linear infinite; margin-right:7px; }
+.news-panel-body{ padding:26px 26px; min-height:70px; display:flex; align-items:center; }
+.news-panel-headline{
+font-size:19px; line-height:1.5; color:var(--text); text-decoration:none;
+animation: tickerFade 0.6s ease; font-weight:600;
+}
+.news-panel-headline:hover{ color:var(--cyan); text-decoration:underline; }
+@media (max-width:640px){
+.news-panel-headline{ font-size:15.5px; line-height:1.5; }
+.news-panel-body{ padding:18px 18px; min-height:auto; }
+}
+@keyframes tickerFade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+footer b{ color:var(--dim); }
+@keyframes blipfade{ 0%,100%{opacity:0.2;} 50%{opacity:1;} }
+/* ================= STORM SCENARIOS PAGE ================= */
+.sc-intro{ font-size:11.5px; line-height:1.75; color:var(--dim); margin:0 0 16px; }
+.sc-intro b{ color:var(--text); }
+.sc-status{ font-size:9.5px; letter-spacing:1.2px; color:var(--dim); margin:0 0 18px; }
+.sc-status b{ color:var(--cyan); }
+/* day picker */
+.sc-days{ display:grid; grid-template-columns:repeat(7, 1fr); gap:8px; margin-bottom:22px; }
+.sc-day{
+font-family:'JetBrains Mono',monospace; cursor:pointer; text-align:center; color:var(--text);
+background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:10px 6px 8px;
+}
+.sc-day:hover{ border-color:var(--cyan); }
+.sc-day.active{ border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan) inset, 0 0 18px rgba(76,211,255,0.25); }
+.sc-day .dn{ font-size:11px; font-weight:800; letter-spacing:1.5px; color:var(--cyan); }
+.sc-day .dd{ font-size:9px; color:var(--dim); letter-spacing:1px; }
+.sc-day .bar{ height:48px; margin:8px auto 6px; width:26px; display:flex; align-items:flex-end; border-bottom:1px solid var(--dim2); }
+.sc-day .bar i{ display:block; width:100%; border-radius:3px 3px 0 0; min-height:2px; }
+.sc-day .pc{ font-size:13px; font-weight:800; font-family:'Orbitron',sans-serif; }
+.sc-day .pl{ font-size:8px; color:var(--dim); letter-spacing:1px; }
+.sc-day.off{ opacity:0.4; cursor:default; }
+/* headline */
+.sc-headline{ position:relative; padding:20px 22px; border-radius:14px; margin-bottom:22px; background:var(--bg-panel); border:1px solid var(--line); }
+.sc-headline h2{ margin:0 0 8px; font-family:'Orbitron',sans-serif; font-size:21px; line-height:1.35; letter-spacing:1.5px; }
+.sc-headline p{ margin:0; font-size:12px; line-height:1.7; color:var(--text); }
+.sc-headline .when{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:6px; }
+/* scenario cards */
+.sc-cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:22px; }
+.sc-card{ position:relative; padding:16px 16px 14px; border-radius:14px; background:var(--bg-panel); border:1px solid var(--line); }
+.sc-card.best{ border-color:rgba(45,225,160,0.55); box-shadow:0 0 22px rgba(45,225,160,0.12); }
+.sc-card.likely{ border-color:rgba(255,176,32,0.6); box-shadow:0 0 22px rgba(255,176,32,0.14); }
+.sc-card.worst{ border-color:rgba(255,75,92,0.65); box-shadow:0 0 22px rgba(255,75,92,0.16); }
+.sc-card .lab{ font-size:12px; font-weight:800; letter-spacing:2px; }
+.sc-card.best .lab, .sc-card.best .big{ color:var(--green); }
+.sc-card.likely .lab, .sc-card.likely .big{ color:var(--amber); }
+.sc-card.worst .lab, .sc-card.worst .big{ color:var(--red); }
+.sc-card .sub{ font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:2px; }
+.sc-card .big{ font-family:'Orbitron',sans-serif; font-weight:900; font-size:40px; line-height:1; margin:14px 0 2px; }
+.sc-card .unit{ font-size:10px; letter-spacing:2px; color:var(--dim); }
+.sc-card .row{ display:flex; justify-content:space-between; gap:8px; font-size:10.5px; padding:7px 0; border-top:1px solid var(--line); color:var(--dim); margin-top:10px; }
+.sc-card .row .v{ color:var(--text); font-weight:700; text-align:right; }
+.sc-card .tl{ margin:10px 0 2px; }
+.sc-card .imp{ margin-top:10px; padding:8px 10px; border-radius:7px; font-size:9.5px; line-height:1.5; letter-spacing:0.5px; }
+.sc-card .imp b{ display:block; letter-spacing:1.2px; margin-bottom:2px; }
+.sc-card .lean{ margin-top:8px; font-size:9px; letter-spacing:1px; color:var(--dim); }
+/* gauges */
+.sc-gauges{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:22px; }
+.sc-gauge{ text-align:center; padding:14px 10px 12px; border-radius:14px; background:var(--bg-panel); border:1px solid var(--line); }
+.sc-gauge .t{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-top:4px; }
+.sc-gauge .n{ font-size:9.5px; color:var(--dim); letter-spacing:0.8px; margin-top:2px; }
+/* chart panels */
+.sc-chart{ padding:16px 16px 12px; border-radius:14px; background:var(--bg-panel); border:1px solid var(--line); margin-bottom:22px; }
+.sc-chart h4{ margin:0 0 4px; font-size:11px; letter-spacing:2px; color:var(--cyan); }
+.sc-chart .cap{ font-size:10px; color:var(--dim); line-height:1.6; margin:0 0 10px; }
+.sc-svg{ width:100%; height:auto; display:block; }
+.sc-legend{ display:flex; flex-wrap:wrap; gap:14px; font-size:9.5px; letter-spacing:1px; color:var(--dim); margin-top:8px; }
+.sc-legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+/* facebook post */
+.sc-postbar{ text-align:center; margin:6px 0 22px; }
+.sc-bigbtn{
+font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:800; letter-spacing:2px; cursor:pointer;
+color:#fff; background:#1877f2; border:0; border-radius:10px; padding:14px 26px; box-shadow:0 0 22px rgba(24,119,242,0.35);
+}
+.sc-bigbtn:hover{ filter:brightness(1.1); }
+.sc-post{ display:none; padding:16px; border-radius:14px; background:var(--bg-panel); border:1px solid rgba(24,119,242,0.5); margin-bottom:22px; }
+.sc-post.show{ display:block; }
+.sc-post .inputs{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:10px; letter-spacing:1px; color:var(--dim); align-items:center; }
+.sc-post input{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
+.sc-post textarea{
+width:100%; box-sizing:border-box; min-height:340px; resize:vertical; padding:14px; border-radius:10px;
+font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#e4e6eb; background:#242526; border:1px solid #3a3b3c;
+}
+.sc-post .acts{ display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+.sc-copy{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:800; letter-spacing:2px; cursor:pointer; color:#05080d; background:var(--green); border:0; border-radius:8px; padding:11px 20px; }
+.sc-copy.done{ background:var(--cyan); }
+.sc-post .hint{ font-size:9.5px; color:var(--dim); letter-spacing:0.5px; }
+.sc-method{ margin-bottom:22px; }
+.sc-lad{ display:grid; grid-template-columns:repeat(7, 1fr); gap:10px; }
+.sc-rung{ text-align:center; }
+.sc-rung .lv{ font-size:10px; font-weight:800; letter-spacing:1px; }
+.sc-rung .tr{ height:10px; margin:6px 0 4px; border-radius:5px; background:rgba(95,124,136,0.22); overflow:hidden; }
+.sc-rung .tr i{ display:block; height:100%; border-radius:5px; }
+.sc-rung .pc{ font-family:'Orbitron',sans-serif; font-size:15px; font-weight:800; }
+.sc-rung.zero{ opacity:0.45; }
+@media (max-width:820px){ .sc-lad{ grid-template-columns:repeat(4, 1fr); row-gap:14px; } }
+.sc-loading{ padding:40px 10px; text-align:center; color:var(--dim); font-size:11px; letter-spacing:2px; }
+@media (max-width:820px){
+.sc-cards{ grid-template-columns:1fr; }
+.sc-gauges{ gap:6px; }
+.sc-gauge{ padding:8px 4px 8px; }
+.sc-gauge .t{ font-size:7.5px; letter-spacing:0.5px; }
+.sc-gauge .n{ font-size:7.5px; }
+.sc-days{ grid-template-columns:repeat(4, 1fr); }
+.sc-headline h2{ font-size:17px; }
+.sc-card .big{ font-size:34px; }
+}
+
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+<header>
+<div class="brand">
+<div class="brand-mark"></div>
+<div>
+<h1>JERSEY WEATHER CHAT LIVE OPS</h1>
+<span>CHANNEL ISLANDS</span>
+</div>
+</div>
+<div class="status">
+<div class="live-pill"><span class="live-dot"></span>LIVE</div>
+<div id="clock">--:--:--</div>
+</div>
+</header>
+<div class="fb-banner">
+<span class="fb-icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
+</span>
+<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings &middot; <a href="#" class="fb-about-link" id="aboutOpen">About this site &amp; disclaimer &#9656;</a></span>
+</div>
+<details class="about-box" id="aboutBox">
+<summary>ABOUT THIS SITE &amp; DISCLAIMER</summary>
+<div class="about-body">
+<p><b>About this site.</b> Jersey Weather Chat is a community run by volunteers who love weather. This site pulls together public data and computer forecast models so islanders can see what&rsquo;s coming and make their own decisions. It&rsquo;s free, it always will be, and nobody&rsquo;s paid to do it.</p>
+<p><b>A few things to know before relying on it</b></p>
+<ul>
+<li><b>Forecasts are predictions, not facts.</b> They change with every update and are often wrong about timing and strength several days out. That&rsquo;s why we show several models side by side &mdash; so you can see how much they agree before you decide.</li>
+<li><b>This is not the official forecast or warning service.</b> The authority for Jersey is <a href="https://www.gov.je/weather" target="_blank" rel="noopener">Jersey Met (gov.je)</a>. Always check their warnings and follow official advice; if we and they disagree, trust Jersey Met.</li>
+<li><b>We post about storms because the models show one &mdash; not to alarm anyone.</b> We know Ciar&aacute;n and Goretti left a mark. A storm that fizzles is good news, and we&rsquo;ll say so. Please don&rsquo;t shoot the messenger.</li>
+<li><b>Use at your own risk.</b> The site, its data and the Facebook group are provided &ldquo;as is&rdquo;. We can&rsquo;t accept responsibility for decisions you make or any loss or damage arising from using them &mdash; boats, travel, outdoor work, events, property or anything else.</li>
+<li><b>The data isn&rsquo;t ours.</b> It comes from NOAA, Open-Meteo, Jersey Met, USGS, EMSC, Weather Underground and others, and can be late, incomplete or wrong. The site itself may go down, usually at the worst moment.</li>
+<li><b>Storm reports are from members</b> and are not verified.</li>
+<li><b>In an emergency call 999.</b></li>
+</ul>
+</div>
+</details>
+<div style="height:16px;"></div>
+<nav class="tabs">
+<a href="index.html">LIVE OPS</a>
+<a href="jersey-storm-scenarios.html" class="active">STORM SCENARIOS</a>
+<a href="jersey-storm-reports.html">STORM REPORTS</a>
+<a href="jersey-space-weather.html">SPACE WEATHER</a>
+<a href="jersey-sea-tides.html">SEA &amp; TIDES</a>
+<a href="microclimate-grid.html">MICROCLIMATE</a>
+</nav>
+
+<section>
+<div class="sec-head storm">
+<h3>STORM SCENARIOS</h3>
+<div class="bar"></div>
+<div class="tag">BEST &middot; LIKELY &middot; WORST</div>
+</div>
+<div class="sc-status" style="color:var(--amber);">&#9888; PRIVATE PREVIEW &middot; NOT LINKED FROM THE REST OF THE SITE &middot; NOT INDEXED BY SEARCH ENGINES</div>
+<p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and shows the range: the <b>best case</b> (only 1 in 10 runs are calmer), the <b>most likely</b> (the middle run) and the <b>worst case</b> (only 1 in 10 runs are wilder). The percentages are simply how many runs show it. Pick a day below.</p>
+<div class="sc-status" id="scStatus">LOADING THE MODEL RUNS&hellip;</div>
+<div class="sc-days" id="scDays"></div>
+<div id="scMain"><div class="sc-loading">LOADING THE MODEL RUNS&hellip;</div></div>
+</section>
+
+<footer>
+<div>DATA: OPEN-METEO ENSEMBLE API &mdash; ECMWF ENS, NOAA GEFS, DWD ICON-EPS, MET OFFICE MOGREPS-G &middot; MAIN MODEL RUNS: OPEN-METEO FORECAST API</div>
+<div>GUSTS AND WINDS ARE FOR A POINT NEAR THE MIDDLE OF THE ISLAND &middot; NOT AN OFFICIAL WARNING &mdash; SEE <a href="https://www.gov.je/weather" target="_blank" rel="noopener" style="color:var(--cyan);">GOV.JE/WEATHER</a></div>
+</footer>
+</div>
+
+<script>
+// ---------- CLOCK ----------
+function tickClock(){
+const d = new Date();
+const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
+document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-GB', opts).format(d) + ' GMT/BST';
+}
+tickClock(); setInterval(tickClock, 1000);
+(function(){
+const a = document.getElementById('aboutOpen'), box = document.getElementById('aboutBox');
+if(a && box) a.addEventListener('click', function(e){ e.preventDefault(); box.open = !box.open; if(box.open) box.scrollIntoView({ behavior:'smooth', block:'nearest' }); });
+})();
+
+/* ================= STORM SCENARIOS =================
+   Ensembles: each model run many times (members). For a chosen day we take each run's
+   peak gust and peak average wind at Jersey, then:
+     best case   = 10th percentile of the peaks (only 1 in 10 runs calmer)
+     most likely = 50th percentile (the middle run)
+     worst case  = 90th percentile (only 1 in 10 runs wilder)
+   The 60+ mph window for each scenario comes from the runs whose peak is closest to that
+   scenario (not from all runs at once, because runs time the peak differently). */
+const LAT = 49.21, LON = -2.13;
+const ENS = [
+{ id:'ecmwf_ifs025',              lbl:'ECMWF',          col:'#4cd3ff' },
+{ id:'gfs_seamless',              lbl:'GFS',            col:'#b48cff' },
+{ id:'icon_seamless',             lbl:'ICON',           col:'#ffd166' },
+{ id:'ukmo_global_ensemble_20km', lbl:'UK MET OFFICE',  col:'#ff8fab', nm:'UK Met Office' }
+];
+const DET = [
+{ id:'gfs_seamless',         lbl:'GFS' },
+{ id:'ecmwf_ifs025',         lbl:'ECMWF' },
+{ id:'icon_seamless',        lbl:'ICON' },
+{ id:'ukmo_seamless',        lbl:'UK MET OFFICE' },
+{ id:'meteofrance_seamless', lbl:'M\u00c9T\u00c9O-FRANCE' }
+];
+/* gust levels, strongest first. hex = the colour used in the charts */
+const TIERS = [
+{ min:100, hex:'#ffffff', col:'#ffffff',      bg:'rgba(255,255,255,0.14)', head:'EXCEPTIONAL GUSTS &middot; 100+ MPH', body:'Hurricane strength. Danger to life; buildings badly damaged, roofs and power lines down, island-wide disruption. Shelter indoors away from windows and follow official advice.' },
+{ min:90,  hex:'#c04dff', col:'#c04dff',      bg:'rgba(192,77,255,0.14)',  head:'SEVERE, DANGEROUS GUSTS', body:'Danger to life from flying debris and falling trees. Serious damage to buildings and long power cuts. Stay indoors and do not travel.' },
+{ min:80,  hex:'#ff2fa8', col:'#ff2fa8',      bg:'rgba(255,47,168,0.12)',  head:'VERY DAMAGING GUSTS',     body:'Widespread damage to roofs, trees and power lines; flying debris. Avoid all travel and keep well away from the coast.' },
+{ min:70,  hex:'#ff4b5c', col:'var(--red)',   bg:'rgba(255,75,92,0.16)',   head:'DAMAGING GUSTS LIKELY',   body:'Structural damage and power cuts possible. Stay away from the coast and avoid travel if you can.' },
+{ min:58,  hex:'#ff4b5c', col:'var(--red)',   bg:'rgba(255,75,92,0.08)',   head:'DAMAGING GUSTS POSSIBLE', body:'Roof tiles, fences and trees at risk. Secure loose items; take care near the coast.' },
+{ min:47,  hex:'#ffb020', col:'var(--amber)', bg:'rgba(255,176,32,0.12)',  head:'STRONG GUSTS',            body:'Branches down and debris likely; difficult driving, especially for high-sided vehicles.' },
+{ min:39,  hex:'#ffb020', col:'var(--amber)', bg:'rgba(255,176,32,0.06)',  head:'GALE-FORCE GUSTS',        body:'Loose items blow about; hard going on bikes and for high-sided vehicles.' }
+];
+/* the shaded zones on the charts, and their labels */
+const BANDS = [
+[39, 47,  'rgba(255,176,32,0.06)',  'GALE'],
+[47, 58,  'rgba(255,176,32,0.12)',  'STRONG'],
+[58, 70,  'rgba(255,75,92,0.10)',   'DAMAGING'],
+[70, 80,  'rgba(255,75,92,0.20)',   '70+'],
+[80, 90,  'rgba(255,47,168,0.20)',  '80+'],
+[90, 100, 'rgba(192,77,255,0.22)',  '90+'],
+[100, 400,'rgba(255,255,255,0.14)', '100+']
+];
+/* the speeds the chance figures are given for */
+const THRESH = [39, 50, 60, 70, 80, 90, 100];
+const THCOL = { 39:'#ffb020', 50:'#ffb020', 60:'#ff6a3d', 70:'#ff4b5c', 80:'#ff2fa8', 90:'#c04dff', 100:'#ffffff' };
+function tierOf(mph){ for(const t of TIERS) if(mph >= t.min) return t; return null; }
+const SC = { ens:[], det:null, days:[], stats:{}, day:null, fetched:null, userPicked:false, W:1000, F:1 };
+/* charts are drawn narrower with bigger text on phones, so the writing stays readable */
+function scSize(){ const mob = window.innerWidth < 700; SC.W = mob ? 560 : 1000; SC.F = mob ? 1.45 : 1; return mob; }
+function fsz(n){ return (n * SC.F).toFixed(1); }
+const DAYF = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', weekday:'short', day:'numeric', month:'short' });
+const DAYS = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', weekday:'short' });
+const FETCHF = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+function nc(s){ return String(s).replace(/,/g, ''); }
+function dayDate(d){ const p = d.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2], 12)); }
+function pct(a, p){ if(!a.length) return null; const s = a.slice().sort((x, y) => x - y); const i = (s.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); }
+function med(a){ return pct(a, 0.5); }
+function hh(h){ return String(h).padStart(2, '0') + ':00'; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
+
+async function getJson(url, ms){
+const ctl = new AbortController();
+const t = setTimeout(() => ctl.abort(), ms || 25000);
+try{ const r = await fetch(url, { signal:ctl.signal }); if(!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+finally{ clearTimeout(t); }
+}
+async function loadEnsemble(m){
+const url = 'https://ensemble-api.open-meteo.com/v1/ensemble?latitude=' + LAT + '&longitude=' + LON +
+'&hourly=wind_gusts_10m,wind_speed_10m&models=' + m.id + '&wind_speed_unit=mph&timezone=Europe%2FLondon&forecast_days=7';
+try{
+const j = await getJson(url);
+const h = j.hourly, runs = [];
+Object.keys(h).forEach(function(k){
+if(k.indexOf('wind_gusts_10m') !== 0 || !h[k].some(v => v != null)) return;
+runs.push({ g:h[k], w:h['wind_speed_10m' + k.slice(14)] || [] });
+});
+if(!runs.length) return null;
+const byDay = {};
+h.time.forEach(function(t, i){ (byDay[t.slice(0, 10)] = byDay[t.slice(0, 10)] || []).push(i); });
+return { m:m, time:h.time, runs:runs, byDay:byDay };
+}catch(e){ console.warn('ensemble ' + m.id + ' not loaded', e); return null; }
+}
+async function loadDet(){
+try{
+const j = await getJson('https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
+'&hourly=wind_gusts_10m&models=' + DET.map(d => d.id).join(',') + '&wind_speed_unit=mph&timezone=Europe%2FLondon&forecast_days=7');
+return j.hourly;
+}catch(e){ console.warn('main models not loaded', e); return null; }
+}
+
+/* one record per run for the day: its peak gust, peak average wind, first/last hour at 60+, and its 24 hourly gusts */
+function dayStats(day){
+const recs = [];
+SC.ens.forEach(function(md){
+const idx = md.byDay[day];
+if(!idx) return;
+md.runs.forEach(function(r){
+let pk = -1, wpk = -1, n = 0, f60 = -1, l60 = -1;
+const h24 = new Array(24).fill(null);
+idx.forEach(function(i){
+const v = r.g[i];
+if(v == null) return;
+n++;
+const hr = Number(md.time[i].slice(11, 13));
+h24[hr] = v;
+if(v > pk) pk = v;
+if(r.w[i] != null && r.w[i] > wpk) wpk = r.w[i];
+if(v >= 60){ if(f60 < 0) f60 = hr; l60 = hr; }
+});
+if(n >= 18) recs.push({ model:md.m, pk:pk, wpk:wpk, f60:f60, l60:l60, h24:h24 });
+});
+});
+if(recs.length < 10) return null;
+const peaks = recs.map(r => r.pk);
+const share = function(x){ return Math.round(100 * peaks.filter(v => v >= x).length / peaks.length); };
+const st = { day:day, n:recs.length, recs:recs, c50:share(50), c60:share(60), c70:share(70), ch:{}, models:{} };
+THRESH.forEach(function(t){ st.ch[t] = share(t); });
+recs.forEach(function(r){ st.models[r.model.lbl] = (st.models[r.model.lbl] || 0) + 1; });
+const sorted = recs.slice().sort((a, b) => a.pk - b.pk);
+const k = Math.max(5, Math.round(recs.length * 0.1));
+st.sc = [
+{ key:'best',   lbl:'BEST CASE',   emo:'\ud83d\udfe2', sub:'ONLY 1 IN 10 RUNS ARE CALMER', q:0.1 },
+{ key:'likely', lbl:'MOST LIKELY', emo:'\ud83d\udfe0', sub:'THE MIDDLE RUN',               q:0.5 },
+{ key:'worst',  lbl:'WORST CASE',  emo:'\ud83d\udd34', sub:'ONLY 1 IN 10 RUNS ARE WILDER',  q:0.9 }
+].map(function(s){
+s.v = pct(peaks, s.q);
+const c = Math.round(s.q * (sorted.length - 1));
+const a = Math.max(0, Math.min(sorted.length - k, c - Math.floor(k / 2)));
+const near = sorted.slice(a, a + k);
+s.wind = med(near.map(r => r.wpk));
+const hit = near.filter(r => r.f60 >= 0);
+s.win = hit.length >= near.length / 2 ? [Math.round(med(hit.map(r => r.f60))), Math.max(Math.round(med(hit.map(r => r.f60))) + 1, Math.round(med(hit.map(r => r.l60))) + 1)] : null;   // [start hour, hour it ends]
+/* which models are over-represented among the runs like this scenario */
+const cnt = {}, nmOf = {};
+near.forEach(r => { cnt[r.model.lbl] = (cnt[r.model.lbl] || 0) + 1; nmOf[r.model.lbl] = r.model.nm || r.model.lbl; });
+s.lean = Object.keys(cnt).filter(m => cnt[m] >= 2 && cnt[m] / near.length >= 1.4 * st.models[m] / st.n).sort((x, y) => cnt[y] - cnt[x]);
+s.leanNm = s.lean.map(m => nmOf[m]);
+return s;
+});
+/* hour by hour spread for the fan chart */
+st.fan = [];
+for(let h = 0; h < 24; h++){
+const v = recs.map(r => r.h24[h]).filter(x => x != null);
+st.fan.push(v.length >= 5 ? { h:h, p10:pct(v, 0.1), p25:pct(v, 0.25), p50:pct(v, 0.5), p75:pct(v, 0.75), p90:pct(v, 0.9) } : null);
+}
+return st;
+}
+function detPeaks(day){
+const h = SC.det;
+if(!h) return [];
+const idx = [];
+h.time.forEach((t, i) => { if(t.slice(0, 10) === day) idx.push(i); });
+return DET.map(function(d){
+const s = h['wind_gusts_10m_' + d.id];
+if(!s) return null;
+const v = idx.map(i => s[i]).filter(x => x != null);
+return v.length >= 18 ? { lbl:d.lbl, pk:Math.max.apply(null, v) } : null;
+}).filter(Boolean);
+}
+
+/* ---------- graphics ---------- */
+function rng(v){ const a = Math.round(v) - 2, b = Math.round(v) + 2; return a + '&ndash;' + b; }
+function rngTxt(v){ return (Math.round(v) - 2) + '\u2013' + (Math.round(v) + 2); }
+function tierBands(x, y0, y1, horiz, lo, hi){
+/* shaded strips for the gust levels; horiz = bands run across (y is mph) */
+return BANDS.map(function(b){
+const a = Math.max(b[0], lo), c = Math.min(b[1], hi);
+if(c <= a) return '';
+return horiz ? '<rect x="' + y0 + '" width="' + (y1 - y0) + '" y="' + x(c) + '" height="' + (x(a) - x(c)) + '" fill="' + b[2] + '"/>'
+: '<rect y="' + y0 + '" height="' + (y1 - y0) + '" x="' + x(a) + '" width="' + (x(c) - x(a)) + '" fill="' + b[2] + '"/>';
+}).join('');
+}
+function timeline(win, col){
+const W = 300, x = h => 6 + h * (W - 12) / 24;
+let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' 34" aria-hidden="true"><rect x="6" y="8" width="' + (W - 12) + '" height="10" rx="5" fill="rgba(95,124,136,0.25)"/>';
+if(win) s += '<rect x="' + x(win[0]) + '" y="8" width="' + Math.max(6, x(Math.min(24, win[1])) - x(win[0])) + '" height="10" rx="5" fill="' + col + '"/>';
+[0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + x(h) + '" y="31" fill="#5f7c88" font-size="8.5" text-anchor="middle" font-family="JetBrains Mono, monospace">' + String(h).padStart(2, '0') + '</text>'; });
+return s + '</svg>';
+}
+function gauge(p, col, label, sub){
+const R = 70, cx = 90, cy = 86, a = Math.PI * (1 - p / 100);
+const ex = cx + R * Math.cos(a), ey = cy - R * Math.sin(a);
+let s = '<svg class="sc-svg" viewBox="0 0 180 100" style="max-width:220px;margin:0 auto;"><path d="M20 86 A70 70 0 0 1 160 86" fill="none" stroke="rgba(95,124,136,0.25)" stroke-width="13" stroke-linecap="round"/>';
+if(p > 0) s += '<path d="M20 86 A70 70 0 0 1 ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="13" stroke-linecap="round"/>';
+s += '<text x="90" y="80" fill="' + col + '" font-size="30" font-weight="900" text-anchor="middle" font-family="Orbitron, sans-serif">' + p + '%</text></svg>';
+return '<div class="sc-gauge">' + s + '<div class="t">' + label + '</div><div class="n">' + sub + '</div></div>';
+}
+function dotPlot(st){
+const peaks = st.recs.map(r => r.pk);
+const lo = 20, hi = Math.max(90, Math.ceil((Math.max.apply(null, peaks) + 5) / 10) * 10);
+const W = SC.W, L = 40, R = 20, step = SC.W < 1000 ? 8 : 9, rad = SC.W < 1000 ? 3.4 : 3.8;
+const x = v => L + (Math.max(lo, Math.min(hi, v)) - lo) * (W - L - R) / (hi - lo);
+const bins = {};
+st.recs.slice().sort((a, b) => a.model.lbl.localeCompare(b.model.lbl)).forEach(r => { const b = Math.round(r.pk); (bins[b] = bins[b] || []).push(r); });
+const maxStack = Math.max.apply(null, Object.values(bins).map(a => a.length));
+const top = SC.W < 1000 ? 96 : 48, base = top + maxStack * step + 8, H = base + 34;
+let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Each model run\'s peak gust">';
+s += tierBands(x, top - 26, base, false, lo, hi);   // bands start just below the scenario labels
+BANDS.forEach(b => { if(b[0] < hi) s += '<text x="' + (x(b[0]) + 4) + '" y="' + (top - 12) + '" fill="#5f7c88" font-size="' + fsz(10) + '" font-family="JetBrains Mono, monospace">' + b[3] + '</text>'; });
+Object.keys(bins).forEach(function(b){
+bins[b].forEach(function(r, i){ s += '<circle cx="' + x(+b).toFixed(1) + '" cy="' + (base - 6 - i * step) + '" r="' + rad + '" fill="' + r.model.col + '" fill-opacity="0.9"/>'; });
+});
+st.sc.forEach(function(sc, si){
+const mob = SC.W < 1000, ly = mob ? 18 + si * 22 : top - 34;   // on phones each label gets its own line
+const col = sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c';
+s += '<line x1="' + x(sc.v) + '" x2="' + x(sc.v) + '" y1="' + (ly + 5) + '" y2="' + base + '" stroke="' + col + '" stroke-width="2" stroke-dasharray="5 4"/>';
+s += '<text x="' + x(sc.v) + '" y="' + ly + '" fill="' + col + '" font-size="' + fsz(10.5) + '" font-weight="700" text-anchor="middle" font-family="JetBrains Mono, monospace">' + (mob ? sc.lbl.replace('MOST ', '').replace(' CASE', '') : sc.lbl) + ' ' + Math.round(sc.v) + '</text>';
+});
+s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + base + '" y2="' + base + '" stroke="#3a4e58"/>';
+for(let v = lo; v <= hi; v += 10) s += '<text x="' + x(v) + '" y="' + (base + 16) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="middle" font-family="JetBrains Mono, monospace">' + v + '</text>';
+s += '<text x="' + (W - R) + '" y="' + (base + 30) + '" fill="#5f7c88" font-size="' + fsz(9.5) + '" text-anchor="end" font-family="JetBrains Mono, monospace">PEAK GUST IN MPH</text>';
+return s + '</svg>';
+}
+function fanChart(st){
+const f = st.fan.filter(Boolean);
+if(!f.length) return '';
+const top = Math.max(70, Math.ceil((Math.max.apply(null, f.map(p => p.p90)) + 5) / 10) * 10);
+const W = SC.W, H = SC.W < 1000 ? 380 : 300, L = SC.W < 1000 ? 52 : 44, R = SC.W < 1000 ? 96 : 70, T = 14, B = 34;
+const X = h => L + h * (W - L - R) / 23, Y = v => T + (top - Math.max(0, Math.min(top, v))) * (H - T - B) / top;
+const path = (k1, k2) => { const a = f.map(p => X(p.h).toFixed(1) + ',' + Y(p[k1]).toFixed(1)); const b = f.slice().reverse().map(p => X(p.h).toFixed(1) + ',' + Y(p[k2]).toFixed(1)); return 'M' + a.join('L') + 'L' + b.join('L') + 'Z'; };
+let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gusts through the day">';
+s += tierBands(Y, L, W - R, true, 0, top);
+BANDS.forEach(b => { if(b[0] < top) s += '<text x="' + (W - R + 6) + '" y="' + (Y(b[0]) - 3) + '" fill="#5f7c88" font-size="' + fsz(9.5) + '" font-family="JetBrains Mono, monospace">' + b[3] + '</text>'; });
+for(let v = 0; v <= top; v += 10) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="rgba(95,124,136,0.15)"/><text x="' + (L - 6) + '" y="' + (Y(v) + 3) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + v + '</text>';
+s += '<path d="' + path('p90', 'p10') + '" fill="rgba(255,176,32,0.16)"/>';
+s += '<path d="' + path('p75', 'p25') + '" fill="rgba(255,176,32,0.30)"/>';
+s += '<path d="M' + f.map(p => X(p.h).toFixed(1) + ',' + Y(p.p50).toFixed(1)).join('L') + '" fill="none" stroke="#ffb020" stroke-width="3"/>';
+s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(60) + '" y2="' + Y(60) + '" stroke="#ff4b5c" stroke-width="1.5" stroke-dasharray="6 5"/><text x="' + (L + 6) + '" y="' + (Y(60) - 5) + '" fill="#ff4b5c" font-size="' + fsz(10) + '" font-family="JetBrains Mono, monospace">60 MPH</text>';
+for(let h = 0; h <= 21; h += 3) s += '<text x="' + X(h) + '" y="' + (H - 10) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="middle" font-family="JetBrains Mono, monospace">' + hh(h) + '</text>';
+return s + '</svg>';
+}
+function detChart(st, dp){
+if(!dp.length) return '<div class="cap">The main model runs are not available right now.</div>';
+const p10 = st.sc[0].v, p50 = st.sc[1].v, p90 = st.sc[2].v;
+const hi = Math.max(90, Math.ceil((Math.max(p90, Math.max.apply(null, dp.map(d => d.pk))) + 5) / 10) * 10), lo = 20;
+const W = SC.W, L = SC.W < 1000 ? 170 : 150, R = 60, rowH = SC.W < 1000 ? 38 : 30, T = 10, H = T + dp.length * rowH + 30;
+const x = v => L + (Math.max(lo, Math.min(hi, v)) - lo) * (W - L - R) / (hi - lo);
+let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Main model runs compared">';
+s += '<rect x="' + x(p10) + '" y="' + T + '" width="' + (x(p90) - x(p10)) + '" height="' + (dp.length * rowH) + '" fill="rgba(255,176,32,0.12)"/>';
+s += '<line x1="' + x(p50) + '" x2="' + x(p50) + '" y1="' + T + '" y2="' + (T + dp.length * rowH) + '" stroke="#ffb020" stroke-dasharray="5 4" stroke-width="2"/>';
+dp.forEach(function(d, i){
+const y = T + i * rowH + 8, t = tierOf(d.pk);
+const col = t ? t.hex : '#4cd3ff';
+s += '<text x="' + (L - 10) + '" y="' + (y + 11) + '" fill="#e9f6f5" font-size="' + fsz(11) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + d.lbl + '</text>';
+s += '<rect x="' + x(lo) + '" y="' + y + '" width="' + (x(d.pk) - x(lo)) + '" height="14" rx="4" fill="' + col + '" fill-opacity="0.85"/>';
+s += '<text x="' + (x(d.pk) + 6) + '" y="' + (y + 11) + '" fill="' + col + '" font-size="' + fsz(11) + '" font-weight="700" font-family="JetBrains Mono, monospace">' + Math.round(d.pk) + '</text>';
+});
+for(let v = lo; v <= hi; v += 10) s += '<text x="' + x(v) + '" y="' + (H - 8) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="middle" font-family="JetBrains Mono, monospace">' + v + '</text>';
+return s + '</svg>';
+}
+
+/* ---------- page ---------- */
+function renderDays(){
+const box = document.getElementById('scDays');
+box.innerHTML = SC.days.map(function(d){
+const st = SC.stats[d];
+if(!st) return '<div class="sc-day off"><div class="dn">' + DAYS.format(dayDate(d)).toUpperCase() + '</div><div class="dd">' + nc(DAYF.format(dayDate(d))).split(' ').slice(1).join(' ') + '</div><div class="bar"></div><div class="pl">NOT ENOUGH RUNS</div></div>';
+const t = tierOf(st.sc[1].v);
+const col = t ? t.hex : 'var(--cyan)';
+return '<button type="button" class="sc-day' + (d === SC.day ? ' active' : '') + '" data-day="' + d + '"><div class="dn">' + DAYS.format(dayDate(d)).toUpperCase() + '</div><div class="dd">' + nc(DAYF.format(dayDate(d))).split(' ').slice(1).join(' ') + '</div>' +
+'<div class="bar"><i style="height:' + Math.max(2, st.c60) + '%;background:' + col + ';"></i></div><div class="pc" style="color:' + col + ';">' + st.c60 + '%</div><div class="pl">CHANCE OF 60+</div></button>';
+}).join('');
+box.querySelectorAll('button[data-day]').forEach(b => b.addEventListener('click', function(){ SC.day = b.dataset.day; SC.userPicked = true; renderDays(); renderMain(); }));
+}
+function headline(st){
+const L = st.sc[1], W = st.sc[2];
+/* lead with the highest level that most runs reach (60+ on an ordinary stormy day) */
+const base = [100, 90, 80, 70].find(t => st.ch[t] >= 50) || 60;
+const cb = st.ch[base], n10 = Math.round(cb / 10);
+let h;
+if(W.v < 39) h = 'NO GALES EXPECTED &mdash; EVEN THE WILDEST RUNS KEEP GUSTS BELOW 39 MPH';
+else if(cb < 5) h = '60+ MPH GUSTS VERY UNLIKELY &mdash; MOST LIKELY PEAK ABOUT ' + Math.round(L.v) + ' MPH';
+else if(cb < 10) h = 'FEWER THAN 1 IN 10 RUNS GIVE JERSEY GUSTS OF 60+ MPH';
+else if(cb >= 95) h = 'ALMOST EVERY RUN GIVES JERSEY GUSTS OF ' + base + '+ MPH';
+else h = 'ABOUT ' + n10 + ' IN 10 RUNS GIVE JERSEY GUSTS OF ' + base + '+ MPH';
+/* and if a still higher level has at least a 1 in 10 chance, say so too */
+const hiT = [100, 90, 80, 70].find(t => t > base && st.ch[t] >= 10);
+if(hiT && cb >= 10) h += ' &middot; ABOUT ' + Math.round(st.ch[hiT] / 10) + ' IN 10 GIVE ' + hiT + '+ MPH';
+const t = tierOf(L.v);
+const col = t ? t.hex : 'var(--green)';
+return '<div class="sc-headline" style="border-color:' + col + ';"><div class="when">' + nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' &middot; ' + st.n + ' MODEL RUNS</div>' +
+'<h2 style="color:' + col + ';">' + h + '</h2><p>Most likely peak gusts <b>' + rng(L.v) + ' mph</b>' + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
+'. Best case ' + rng(st.sc[0].v) + ' mph; worst case ' + rng(W.v) + ' mph, higher on exposed coasts.</p></div>';
+}
+function card(sc){
+const t = tierOf(sc.v);
+const col = sc.key === 'best' ? 'var(--green)' : sc.key === 'likely' ? 'var(--amber)' : 'var(--red)';
+return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + sc.lbl + '</div><div class="sub">' + sc.sub + '</div>' +
+'<div class="big">' + rng(sc.v) + '</div><div class="unit">MPH PEAK GUSTS</div>' +
+'<div class="row"><span>AVERAGE WIND UP TO</span><span class="v">' + Math.round(sc.wind) + ' MPH</span></div>' +
+'<div class="row" style="margin-top:0;"><span>60+ MPH GUSTS</span><span class="v">' + (sc.win ? hh(sc.win[0]) + '&ndash;' + hh(sc.win[1]) : 'NONE') + '</span></div>' +
+'<div class="tl">' + timeline(sc.win, col) + '</div>' +
+(t ? '<div class="imp" style="color:' + t.col + ';background:' + t.bg + ';"><b>' + t.head + '</b>' + t.body + '</div>' : '<div class="imp" style="color:var(--green);background:rgba(45,225,160,0.07);"><b>BELOW GALE FORCE</b>Breezy at most; no wind impacts expected.</div>') +
+'<div class="lean">' + (sc.lean.length ? 'RUNS LIKE THIS: MOSTLY ' + sc.lean.join(' &amp; ') : 'RUNS LIKE THIS: A MIX OF ALL MODELS') + '</div></div>';
+}
+/* three dials: normally 50+, 60+, 70+; moves up when a higher level has at least a 1 in 20 chance */
+function dialSet(st){
+const top = [100, 90, 80].find(t => st.ch[t] >= 5) || 70;
+return [top - 20, top - 10, top];
+}
+/* every level in one strip: gale, 50, 60 ... 100+ */
+function ladder(st){
+const names = { 39:'GALE 39+', 50:'50+', 60:'60+', 70:'70+', 80:'80+', 90:'90+', 100:'100+' };
+return '<div class="sc-chart sc-ladder"><h4>CHANCE OF GUSTS OF AT LEAST&hellip;</h4><div class="sc-lad">' + THRESH.map(function(t){
+const p = st.ch[t], col = THCOL[t];
+return '<div class="sc-rung' + (p ? '' : ' zero') + '"><div class="lv" style="color:' + col + ';">' + names[t] + '</div><div class="tr"><i style="width:' + p + '%;background:' + col + ';"></i></div><div class="pc" style="color:' + (p ? col : 'var(--dim2)') + ';">' + p + '%</div></div>';
+}).join('') + '</div><p class="cap" style="margin:8px 0 0;">Share of all ' + st.n + ' runs reaching each speed at some point in the day. Most of these stay at 0% on most days &mdash; that is good news.</p></div>';
+}
+function renderMain(){
+const st = SC.stats[SC.day];
+scSize();
+const main = document.getElementById('scMain');
+if(!st){ main.innerHTML = '<div class="sc-loading">NOT ENOUGH MODEL RUNS FOR THIS DAY.</div>'; return; }
+const dp = detPeaks(st.day);
+const legend = ENS.filter(m => st.models[m.lbl]).map(m => '<span><i style="background:' + m.col + ';"></i>' + m.lbl + ' (' + st.models[m.lbl] + ')</span>').join('');
+main.innerHTML = headline(st) +
+'<div class="sc-cards">' + st.sc.map(card).join('') + '</div>' +
+'<div class="sc-gauges">' +
+dialSet(st).map(t => gauge(st.ch[t], THCOL[t], 'CHANCE OF ' + t + '+ MPH GUSTS', Math.round(st.n * st.ch[t] / 100) + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
+ladder(st) +
+'<div class="sc-chart"><h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree; the dashed lines are the three scenarios.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + '</div></div>' +
+'<div class="sc-chart"><h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + '</div>' +
+'<div class="sc-chart"><h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band is best to worst case, the dashed line the most likely. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
+'<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' +
+'<div class="sc-post" id="scPost"><div class="inputs"><label>STORM NAME (OPTIONAL) <input id="scName" placeholder="e.g. Austen" size="14"></label><label>UPDATE NO. <input id="scNum" type="number" min="1" placeholder="1" style="width:64px;"></label><span>Changing these rebuilds the text below. You can also edit the text itself before copying.</span></div>' +
+'<textarea id="scText" spellcheck="true"></textarea><div class="acts"><button type="button" class="sc-copy" id="scCopy">COPY POST</button><span class="hint">Then paste it straight into Facebook.</span></div></div>' +
+'<details class="st-more sc-method"><summary>HOW THIS IS WORKED OUT</summary><div class="sw-note"><b>Ensembles:</b> each model is run many times from slightly different starting points &mdash; ECMWF 51 times, GFS 31, ICON 40 (about 5 days ahead only) and the UK Met Office 18. For the chosen day the page takes the strongest gust and strongest average wind each run gives a point near the middle of Jersey. Best case is the speed only 1 in 10 runs fall below, most likely is the middle run, worst case is the speed only 1 in 10 runs go above. The 60+ mph times for each scenario come from the runs closest to that scenario, because different runs time the peak differently. <b>Chance</b> is simply the share of all runs that reach that speed at some point in the day. The levels go from gale force (39 mph) up to 100+ mph; the three dials show the levels that matter most for the day, moving up automatically if a run shows 80, 90 or 100+ mph. Ensembles are run at lower detail than the main runs, so they can be a little low on the very strongest gusts &mdash; which is why the main runs are shown alongside. Exposed coasts and high ground can be stronger than the figures here. Updated about every 6 hours as new runs arrive; this page refreshes itself every 30 minutes.</div></details>';
+const save = function(){ try{ localStorage.setItem('jwcScen:' + st.day, JSON.stringify({ name:document.getElementById('scName').value, num:document.getElementById('scNum').value })); }catch(e){} };
+const rebuild = function(){ save(); document.getElementById('scText').value = buildPost(st, document.getElementById('scName').value.trim(), document.getElementById('scNum').value.trim()); };
+document.getElementById('scMake').addEventListener('click', function(){
+const p = document.getElementById('scPost');
+try{ const v = JSON.parse(localStorage.getItem('jwcScen:' + st.day) || '{}'); document.getElementById('scName').value = v.name || ''; document.getElementById('scNum').value = v.num || ''; }catch(e){}
+rebuild();
+p.classList.add('show');
+p.scrollIntoView({ behavior:'smooth', block:'start' });
+});
+document.getElementById('scName').addEventListener('input', rebuild);
+document.getElementById('scNum').addEventListener('input', rebuild);
+document.getElementById('scCopy').addEventListener('click', function(){
+const ta = document.getElementById('scText'), b = this;
+const ok = function(){ b.textContent = 'COPIED \u2713'; b.classList.add('done'); setTimeout(function(){ b.textContent = 'COPY POST'; b.classList.remove('done'); }, 2500); };
+if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(ta.value).then(ok, function(){ ta.select(); document.execCommand('copy'); ok(); });
+else { ta.select(); document.execCommand('copy'); ok(); }
+});
+}
+function buildPost(st, name, num){
+const day = nc(DAYF.format(dayDate(st.day)));
+const title = (num ? 'SCENARIO DRIFT #' + num : 'STORM SCENARIOS') + (name ? ' \u2013 Storm ' + name.replace(/^storm\s+/i, '') : '') + ' \u2013 ' + day;
+const line = function(sc){
+const short = DAYS.format(dayDate(st.day));
+let t = sc.emo + ' ' + sc.lbl + ': gusts ' + rngTxt(sc.v) + ' mph' + (sc.key === 'worst' ? ', higher on exposed coasts' : '') + ', average winds up to about ' + Math.round(sc.wind) + ' mph';
+t += sc.win ? ', 60+ mph gusts about ' + hh(sc.win[0]) + '\u2013' + hh(sc.win[1]) + ' ' + short + '.' : '. No 60+ mph gusts.';
+t += ' (' + sc.sub.charAt(0) + sc.sub.slice(1).toLowerCase() + (sc.leanNm.length ? ' \u2013 mostly ' + sc.leanNm.join(' & ') : '') + ')';
+return t;
+};
+return '\ud83c\udf00 ' + title + ' (model data, ' + nc(FETCHF.format(SC.fetched)) + ')\n\n' +
+st.sc.map(line).join('\n\n') + '\n\n' +
+'\ud83d\udcca HOW SURE? ' + st.c60 + '% of ' + st.n + ' computer runs give Jersey 60+ mph gusts' + [70, 80, 90, 100].filter(t => st.ch[t] >= 5).map(t => '; ' + st.ch[t] + '% give ' + t + '+').join('') + '.\n\n' +
+'Gust figures are for a point near the middle of the island, so exposed coasts can be stronger. We\u2019ll post the next update after the next model runs. For official warnings, check gov.je/weather.';
+}
+async function loadAll(){
+const res = await Promise.all(ENS.map(loadEnsemble).concat([loadDet()]));
+const det = res.pop();
+const ens = res.filter(Boolean);
+if(!ens.length){
+document.getElementById('scStatus').innerHTML = 'THE MODEL RUNS ARE NOT AVAILABLE RIGHT NOW &mdash; PLEASE TRY AGAIN SHORTLY.';
+if(!SC.ens.length) document.getElementById('scMain').innerHTML = '<div class="sc-loading">THE MODEL RUNS ARE NOT AVAILABLE RIGHT NOW.</div>';
+return;
+}
+SC.ens = ens; SC.det = det; SC.fetched = new Date();
+const days = {};
+ens.forEach(md => Object.keys(md.byDay).forEach(d => { days[d] = 1; }));
+SC.days = Object.keys(days).sort().slice(0, 7);
+SC.stats = {};
+SC.days.forEach(d => { SC.stats[d] = dayStats(d); });
+if(!SC.userPicked || !SC.stats[SC.day]){
+/* start on the stormiest day: highest chance of 60+, then highest most-likely peak */
+let best = null;
+SC.days.forEach(d => { const s = SC.stats[d]; if(s && (!best || s.c60 > best.c60 || (s.c60 === best.c60 && s.sc[1].v > best.sc[1].v))) best = s; });
+SC.day = best ? best.day : SC.days[0];
+}
+const runs = ens.reduce((a, m) => a + m.runs.length, 0);
+document.getElementById('scStatus').innerHTML = '<b>' + runs + ' MODEL RUNS</b> FROM ' + ens.length + ' MODELS (' + ens.map(m => m.m.lbl).join(', ') + ') &middot; FETCHED ' + nc(FETCHF.format(SC.fetched)).toUpperCase() + ' &middot; REFRESHES EVERY 30 MIN';
+renderDays();
+const postOpen = document.getElementById('scPost') && document.getElementById('scPost').classList.contains('show');
+if(!postOpen) renderMain();                         // do not wipe a post being edited
+}
+loadAll();
+setInterval(loadAll, 30 * 60 * 1000);
+let scMob = window.innerWidth < 700;
+window.addEventListener('resize', function(){
+const m = window.innerWidth < 700;
+if(m === scMob) return;
+scMob = m;
+const p = document.getElementById('scPost');
+if(SC.stats[SC.day] && !(p && p.classList.contains('show'))) renderMain();
+});
+</script>
+</body>
+</html>
