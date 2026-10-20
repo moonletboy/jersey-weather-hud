@@ -1,0 +1,55 @@
+# Warnings feed hunt (one-off, run by hand)
+#
+# Fetches the gov.je warnings page WITHOUT JavaScript (no ZenRows, no credits),
+# follows every script it loads, and prints any web addresses that look like a
+# data feed (json, api, ajax, warnings ...). If gov.je's page gets its warnings
+# from such a feed, the Apps Script could read it directly for 1 ZenRows credit
+# (or none) instead of 5. Read the result in the job's log and paste the
+# "CANDIDATES" section into chat.
+#
+# GitHub > Actions > "Warnings feed hunt" > Run workflow.
+
+name: Warnings feed hunt
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Look for a feed
+        run: |
+          python3 - <<'PYEOF'
+          import re, urllib.request, urllib.parse
+          UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36"}
+          def get(url):
+              try:
+                  r = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30)
+                  return r.status, r.read().decode("utf-8", "replace")
+              except Exception as e:
+                  return 0, str(e)
+          page = "https://www.gov.je/weather/jerseywarnings"
+          st, html = get(page)
+          print("PAGE status", st, "length", len(html))
+          print("'no weather warnings' text present without JS:", "no weather warnings" in html.lower())
+          urls = set(re.findall(r'(?:src|href|url|data-\w+)\s*=\s*["\']([^"\']{6,})', html))
+          urls |= set(re.findall(r'https?://[^\s"\'<>)]+', html))
+          scripts = [urllib.parse.urljoin(page, u) for u in urls if u.split("?")[0].endswith(".js")]
+          found = set()
+          for s in scripts:
+              s2, js = get(s)
+              for u in re.findall(r'["\']((?:https?:)?/[^"\']*(?:api|json|ajax|warn|feed|rss|weather|met)[^"\']*)["\']', js, re.I):
+                  found.add((u, s.rsplit("/",1)[-1][:50]))
+          inline = re.findall(r'["\']((?:https?:)?/[^"\']*(?:api|json|ajax|warn|feed|rss)[^"\']*)["\']', html, re.I)
+          print("\n===== CANDIDATES (in the page itself) =====")
+          for u in sorted(set(inline)): print(" ", u)
+          print("\n===== CANDIDATES (inside scripts) =====")
+          for u, src in sorted(found): print(" ", u, "   <- from", src)
+          print("\n===== scripts looked at =====")
+          for s in scripts: print(" ", s)
+          PYEOF
