@@ -15,7 +15,7 @@
 <title>JWC STORM SCENARIOS — Jersey Weather Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-<meta name="description" content="Best case, most likely and worst case winds for Jersey from every run of four weather models.">
+<meta name="description" content="Best case, middle and worst case winds for Jersey from every run of four weather models.">
 <meta name="robots" content="noindex, nofollow">
 <style>
 :root{
@@ -923,10 +923,10 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 <div class="sec-head storm">
 <h3>STORM SCENARIOS</h3>
 <div class="bar"></div>
-<div class="tag">BEST &middot; LIKELY &middot; WORST</div>
+<div class="tag">BEST &middot; MIDDLE &middot; WORST</div>
 </div>
 <div class="sc-status" style="color:var(--amber);">&#9888; PRIVATE PREVIEW &middot; NOT LINKED FROM THE REST OF THE SITE &middot; NOT INDEXED BY SEARCH ENGINES</div>
-<p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and splits them into three scenarios &mdash; <b>best case</b>, <b>most likely</b> and <b>worst case</b> &mdash; each a range of gust speeds. A scenario&rsquo;s chance is simply the share of runs that fall in it, so the three always add up to 100%. Pick a day below.</p>
+<p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and splits them into three scenarios &mdash; <b>best case</b>, <b>middle</b> and <b>worst case</b> &mdash; each a range of gust speeds. A scenario&rsquo;s chance is simply the share of runs that fall in it, so the three always add up to 100%. Pick a day below.</p>
 <div class="sc-status" id="scStatus">LOADING THE MODEL RUNS&hellip;</div>
 <div class="sc-news" id="scNews"></div>
 <div class="sc-runs" id="scRuns"></div>
@@ -1077,18 +1077,46 @@ st.q10 = pct(peaks, 0.1); st.q50 = pct(peaks, 0.5); st.q90 = pct(peaks, 0.9);
    The two dividing lines are impact levels (39, 47, 58, 70, 80, 90, 100 mph), picked for each day
    so the split reads like a forecast: about a quarter / half / quarter where possible, with at
    least 8% in each outer range, and the middle range spanning no more than two impact levels.
-   If no pair of levels works (all runs bunched together), the lines fall half-way between the
-   10th, 50th and 90th percentiles instead. */
+   The MIDDLE range must always be the biggest share (strictly more runs than either outer range),
+   so the middle card is always the most common outcome. If no pair of levels gives that (for
+   example all runs bunched together), the lines fall on the 25th and 75th percentiles instead,
+   rounded to the nearest 5 mph where that keeps the middle the biggest. */
 const LV = [39, 47, 58, 70, 80, 90, 100];
 const below = function(b){ return peaks.filter(v => v < b).length / peaks.length; };
 let cut = null;
 for(let i = 0; i < LV.length; i++) for(let j = i + 1; j < LV.length && j <= i + 2; j++){
 const lo = below(LV[i]), hi = 1 - below(LV[j]), mid = 1 - lo - hi;
 if(lo < 0.08 || hi < 0.08) continue;
+const p0 = Math.round(100 * lo), p2 = Math.round(100 * hi), p1 = 100 - p0 - p2;      // the same rounded figures the cards show
+if(!(p1 > p0 && p1 > p2)) continue;                                                // the middle range must be the biggest share
 const score = Math.abs(lo - 0.25) + Math.abs(mid - 0.5) + Math.abs(hi - 0.25);
 if(!cut || score < cut.score) cut = { b1:LV[i], b2:LV[j], score:score, levels:true };
 }
-if(!cut) cut = { b1:Math.round((st.q10 + st.q50) / 2), b2:Math.max(Math.round((st.q10 + st.q50) / 2) + 1, Math.round((st.q50 + st.q90) / 2)), levels:false };
+if(!cut){
+const mk = function(a, b){ return { b1:a, b2:Math.max(a + 1, b), levels:false }; };
+const midBig = function(c){
+const n = peaks.length, l = peaks.filter(v => v < c.b1).length, h = peaks.filter(v => v >= c.b2).length;
+const p0 = Math.round(100 * l / n), p2 = Math.round(100 * h / n);
+return (100 - p0 - p2) > p0 && (100 - p0 - p2) > p2;
+};
+const tries = [];
+[[0.25, 0.75], [0.30, 0.70], [0.35, 0.65], [0.40, 0.60]].forEach(function(q){
+const a = pct(peaks, q[0]), b = pct(peaks, q[1]);
+tries.push(mk(Math.round(a / 5) * 5, Math.round(b / 5) * 5), mk(Math.round(a), Math.round(b)));
+});
+cut = tries.find(midBig) || null;
+if(!cut){                                                          // last resort: try every whole-mph pair and keep the one closest to a quarter / half / quarter
+const mn = Math.floor(Math.min.apply(null, peaks)), mx = Math.ceil(Math.max.apply(null, peaks)) + 1;
+let bestS = 9;
+for(let a = mn; a <= mx; a++) for(let b = a + 1; b <= mx + 1; b++){
+const c = { b1:a, b2:b, levels:false };
+if(!midBig(c)) continue;
+const l = below(a), h = 1 - below(b), sc = Math.abs(l - 0.25) + Math.abs(1 - l - h - 0.5) + Math.abs(h - 0.25);
+if(sc < bestS){ bestS = sc; cut = c; }
+}
+if(!cut) cut = tries[1];                                           // runs so identical that no split can work: the page falls back to "in between" and a star
+}
+}
 st.b1 = cut.b1; st.b2 = cut.b2; st.levelCut = cut.levels;
 const groups = [recs.filter(r => r.pk < cut.b1), recs.filter(r => r.pk >= cut.b1 && r.pk < cut.b2), recs.filter(r => r.pk >= cut.b2)];
 const pcs = groups.map(g => Math.round(100 * g.length / recs.length));
@@ -1096,7 +1124,7 @@ pcs[1] = 100 - pcs[0] - pcs[2];                                   // so the thre
 const biggest = pcs.indexOf(Math.max.apply(null, pcs));
 st.sc = [
 { key:'best',   lbl:'BEST CASE',   emo:'\ud83d\udfe2', range:'UNDER ' + cut.b1, rangeTxt:'under ' + cut.b1 },
-{ key:'likely', lbl:biggest === 1 ? 'MOST LIKELY' : 'IN BETWEEN', emo:'\ud83d\udfe0', range:cut.b1 + '&ndash;' + (cut.b2 - 1), rangeTxt:cut.b1 + '\u2013' + (cut.b2 - 1) },
+{ key:'likely', lbl:biggest === 1 ? 'MOST COMMON' : 'IN BETWEEN', emo:'\ud83d\udfe0', range:cut.b1 + '&ndash;' + (cut.b2 - 1), rangeTxt:cut.b1 + '\u2013' + (cut.b2 - 1) },
 { key:'worst',  lbl:'WORST CASE',  emo:'\ud83d\udd34', range:cut.b2 + '+', rangeTxt:cut.b2 + '+' }
 ].map(function(s, i){
 const g = groups[i];
@@ -1245,8 +1273,8 @@ function headline(st){
 const L = st.sc[1], W = st.sc[2], B = st.sc[0];
 const hp = headText(st), h = hp.h, col = hp.col;
 return '<div class="sc-headline" style="border-color:' + col + ';"><div class="when">' + nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' &middot; ' + st.n + ' MODEL RUNS</div>' +
-'<h2 style="color:' + col + ';">' + h + '</h2><p>' + (L.top ? 'Most likely' : 'In between') + ' (<b>' + L.p + '% chance</b>): gusts of <b>' + L.range + ' mph</b>, typically about ' + Math.round(L.v) + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
-'. Best case (' + B.p + '%): ' + B.range.toLowerCase() + ' mph. Worst case (' + W.p + '%): ' + W.range + ' mph, typically about ' + Math.round(W.v) + ', higher on exposed coasts.' + (st.levelCut ? '' : ' <b>The runs agree closely today, so the three ranges are narrow.</b>') + '</p></div>';
+'<h2 style="color:' + col + ';">' + h + '</h2><p>' + (L.top ? 'Most common' : 'In between') + ' (<b>' + L.p + '% chance</b>): gusts of <b>' + L.range + ' mph</b>, typically about ' + Math.round(L.v) + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
+'. Best case (' + B.p + '%): ' + B.range.toLowerCase() + ' mph. Worst case (' + W.p + '%): ' + W.range + ' mph, typically about ' + Math.round(W.v) + ', higher on exposed coasts.' + (B.top && B.p < 50 ? ' <b>The star marks the biggest single range, not a majority:</b> the other two ranges together make ' + (100 - B.p) + '% of runs.' : '') + (st.levelCut ? '' : ' <b>The runs agree closely today, so the three ranges are narrow.</b>') + '</p></div>';
 }
 /* the big headline sentence and its colour (used on the page and in the Facebook picture) */
 function headText(st){
@@ -1269,7 +1297,7 @@ function card(sc){
 const t = tierOf(sc.v);
 const col = sc.key === 'best' ? 'var(--green)' : sc.key === 'likely' ? 'var(--amber)' : 'var(--red)';
 const st = SC.stats[SC.day];
-return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' <span class="star">&#9733; MOST LIKELY</span>' : '') + '</div><div class="sub">' + sc.n + ' OF ' + st.n + ' RUNS</div>' +
+return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' <span class="star">&#9733; MOST COMMON</span>' : '') + '</div><div class="sub">' + sc.n + ' OF ' + st.n + ' RUNS</div>' +
 '<div class="chance">' + sc.p + '<small>% CHANCE</small></div>' +
 '<div class="big">' + sc.range + '</div><div class="unit">MPH PEAK GUSTS</div>' +
 '<div class="row"><span>TYPICAL PEAK GUST</span><span class="v">' + (sc.n ? 'ABOUT ' + Math.round(sc.v) + ' MPH' : '&ndash;') + '</span></div>' +
@@ -1281,7 +1309,7 @@ return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + 
 }
 /* three dials: normally 50+, 60+, 70+; moves up when a higher level has at least a 1 in 20 chance */
 /* colour a speed by the scenario that reaches it, to match the three cards:
-   green = even the best case reaches it, amber = the most likely case does,
+   green = even the best case reaches it, amber = the middle case does,
    red = only the worst case does, grey = beyond even the worst case */
 function scenCol(st, t){
 if(!st.ch[t]) return '#5f7c88';
@@ -1289,7 +1317,7 @@ if(t < st.b1) return '#2de1a0';
 if(t < st.b2) return '#ffb020';
 return '#ff4b5c';
 }
-const SCEN_KEY = 'COLOURED BY THE SCENARIO EACH SPEED FALLS IN: <span style="color:#2de1a0;">BEST CASE</span> &middot; <span style="color:#ffb020;">MOST LIKELY</span> &middot; <span style="color:#ff4b5c;">WORST CASE</span> &middot; <span style="color:#5f7c88;">GREY</span> = NO RUNS';
+const SCEN_KEY = 'COLOURED BY THE SCENARIO EACH SPEED FALLS IN: <span style="color:#2de1a0;">BEST CASE</span> &middot; <span style="color:#ffb020;">MIDDLE</span> &middot; <span style="color:#ff4b5c;">WORST CASE</span> &middot; <span style="color:#5f7c88;">GREY</span> = NO RUNS';
 function dialSet(st){
 const top = [100, 90, 80].find(t => st.ch[t] >= 5) || 70;
 return [top - 20, top - 10, top];
@@ -1322,7 +1350,7 @@ ladder(st) +
 '<textarea id="scText" spellcheck="true"></textarea><div class="acts"><button type="button" class="sc-copy" id="scCopy">COPY POST</button><span class="hint">Then paste it straight into Facebook.</span></div>' +
 '<div class="sc-sum"><h4>&#128247; PICTURE FOR THE POST &mdash; THE WHOLE PAGE IN ONE</h4><p class="cap">The three scenarios, the dot chart, the day&rsquo;s timeline, the chances and the main model runs in one picture. <b>On a computer:</b> copy the post and paste it into Facebook, then COPY PICTURE and paste that in too. <b>On a phone:</b> copy the post first, then SHARE PICTURE to the Facebook app and paste the text in.</p>' +
 '<img id="scSumImg" alt="Summary picture for Facebook"><div class="acts"><button type="button" class="sc-copy" id="scSumCopy">COPY PICTURE</button><button type="button" class="sc-copy" id="scSumSave" style="background:var(--cyan);">SAVE PICTURE</button><button type="button" class="sc-copy" id="scSumShare" style="background:#1877f2;color:#fff;display:none;">SHARE PICTURE&hellip;</button><span class="hint" id="scSumMsg"></span></div></div></div>' +
-'<details class="st-more sc-method"><summary>HOW THIS IS WORKED OUT</summary><div class="sw-note"><b>Ensembles:</b> each model is run many times from slightly different starting points &mdash; ECMWF 51 times, GFS 31, ICON 40 (about 5 days ahead only) and the UK Met Office 18. For the chosen day the page takes the strongest gust and strongest average wind each run gives a point near the middle of Jersey. The runs are split into three ranges of peak gust at two of the impact levels (39, 47, 58, 70, 80, 90 and 100 mph), chosen for each day so the split is roughly a quarter, a half and a quarter &mdash; for example under 58, 58&ndash;69 and 70+ mph. Each scenario&rsquo;s chance is the share of runs in its range; &ldquo;typically&rdquo; is the middle of the runs in that range. If the biggest share is not the middle range, the middle card is called &ldquo;in between&rdquo; and the biggest is starred as most likely. The 60+ mph times for each scenario come from the runs in that range, because different runs time the peak differently. <b>Chance</b> is simply the share of all runs that reach that speed at some point in the day. The levels go from gale force (39 mph) up to 100+ mph; the three dials show the levels that matter most for the day, moving up automatically if a run shows 80, 90 or 100+ mph. Ensembles are run at lower detail than the main runs, so they can be a little low on the very strongest gusts &mdash; which is why the main runs are shown alongside. Exposed coasts and high ground can be stronger than the figures here. Updated about every 6 hours as new runs arrive; this page checks for new runs every 15 minutes while it is open and tells you when they arrive. The run-times box at the top shows when each model&rsquo;s latest run started (in UTC, &ldquo;Z&rdquo;), when it reached Open-Meteo and roughly when the next is due; ECMWF&rsquo;s runs usually arrive last, many hours after they start.</div></details>';
+'<details class="st-more sc-method"><summary>HOW THIS IS WORKED OUT</summary><div class="sw-note"><b>Ensembles:</b> each model is run many times from slightly different starting points &mdash; ECMWF 51 times, GFS 31, ICON 40 (about 5 days ahead only) and the UK Met Office 18. For the chosen day the page takes the strongest gust and strongest average wind each run gives a point near the middle of Jersey. The runs are split into three ranges of peak gust at two of the impact levels (39, 47, 58, 70, 80, 90 and 100 mph), chosen for each day so the split is roughly a quarter, a half and a quarter &mdash; for example under 58, 58&ndash;69 and 70+ mph &mdash; and always so that the middle range holds the most runs. Each scenario&rsquo;s chance is the share of runs in its range; &ldquo;typically&rdquo; is the middle of the runs in that range. The middle range is always the most common one &mdash; the single biggest share, which can still be under half of all runs. (Only if the runs are so bunched that no split can do that, the middle card is called &ldquo;in between&rdquo; and the biggest range is starred instead.) The 60+ mph times for each scenario come from the runs in that range, because different runs time the peak differently. <b>Chance</b> is simply the share of all runs that reach that speed at some point in the day. The levels go from gale force (39 mph) up to 100+ mph; the three dials show the levels that matter most for the day, moving up automatically if a run shows 80, 90 or 100+ mph. Ensembles are run at lower detail than the main runs, so they can be a little low on the very strongest gusts &mdash; which is why the main runs are shown alongside. Exposed coasts and high ground can be stronger than the figures here. Updated about every 6 hours as new runs arrive; this page checks for new runs every 15 minutes while it is open and tells you when they arrive. The run-times box at the top shows when each model&rsquo;s latest run started (in UTC, &ldquo;Z&rdquo;), when it reached Open-Meteo and roughly when the next is due; ECMWF&rsquo;s runs usually arrive last, many hours after they start.</div></details>';
 const save = function(){ try{ localStorage.setItem('jwcScen:' + st.day, JSON.stringify({ name:document.getElementById('scName').value, num:document.getElementById('scNum').value })); }catch(e){} };
 let sumTimer = 0;
 const rebuild = function(){
@@ -1384,7 +1412,7 @@ c.fillText(nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' \u00b7 ' + TITLE[k
 /* the three scenarios in their colours */
 c.font = '700 24px "JetBrains Mono", Consolas, monospace';
 let x = PAD;
-[['BEST ', st.sc[0], '#2de1a0'], [st.sc[1].top ? 'LIKELY ' : 'BETWEEN ', st.sc[1], '#ffb020'], ['WORST ', st.sc[2], '#ff4b5c']].forEach(function(p){
+[['BEST ', st.sc[0], '#2de1a0'], [st.sc[1].top ? 'COMMON ' : 'BETWEEN ', st.sc[1], '#ffb020'], ['WORST ', st.sc[2], '#ff4b5c']].forEach(function(p){
 c.fillStyle = '#5f7c88'; c.fillText(p[0], x, 154); x += c.measureText(p[0]).width;
 c.fillStyle = p[2]; const v = p[1].rangeTxt.replace('under ', '<') + ' MPH \u00b7 ' + p[1].p + '%'; c.fillText(v, x, 154); x += c.measureText(v).width + 30;
 });
@@ -1497,7 +1525,7 @@ rrect(c, x, y, bw, bh, 14);
 c.fillStyle = col === '#2de1a0' ? 'rgba(45,225,160,0.07)' : col === '#ffb020' ? 'rgba(255,176,32,0.08)' : 'rgba(255,75,92,0.08)'; c.fill();
 c.lineWidth = 2.5; c.strokeStyle = col; c.stroke();
 const ix = x + 18;
-c.fillStyle = col; c.font = '800 21px ' + MONO; c.fillText(sc.lbl + (sc.top && sc.key !== 'likely' ? ' \u2605' : ''), ix, y + 36);
+c.fillStyle = col; c.font = '800 21px ' + MONO; c.fillText(sc.lbl + (sc.top && sc.key !== 'likely' ? ' \u2605 MOST COMMON' : ''), ix, y + 36);
 c.font = '900 62px ' + ORB; c.fillText(sc.p + '%', ix, y + 104);
 c.fillStyle = '#5f7c88'; c.font = '700 16px ' + MONO; c.fillText('CHANCE \u00b7 ' + sc.n + ' OF ' + st.n + ' RUNS', ix, y + 130);
 c.fillStyle = '#e9f6f5'; c.font = '800 28px ' + MONO; c.fillText(decodeEnt(sc.range) + ' MPH', ix, y + 172);
@@ -1508,7 +1536,12 @@ const t = tierOf(sc.v);
 c.fillStyle = t ? t.hex : '#2de1a0'; c.font = '800 15px ' + MONO;
 c.fillText(sc.n ? decodeEnt(t ? t.head : 'BELOW GALE FORCE') : '', ix, y + 249);
 });
-y += bh + 46;
+y += bh + 30;
+if(st.sc[0].top && st.sc[0].p < 50){
+c.fillStyle = '#9db4bd'; c.font = '400 17px ' + MONO;
+y = wrapText(c, '\u2605 = the biggest single range, not a majority \u2014 the other two ranges together make ' + (100 - st.sc[0].p) + '% of runs.', PAD, y + 6, IW, 24) - 24 + 14;
+}
+y += 16;
 /* the dot chart */
 c.fillStyle = '#4cd3ff'; c.font = '800 20px ' + MONO; c.fillText('EVERY RUN, ONE DOT', PAD, y);
 const hw = c.measureText('EVERY RUN, ONE DOT').width;
@@ -1586,7 +1619,7 @@ const day = nc(DAYF.format(dayDate(st.day)));
 const title = (num ? 'SCENARIO DRIFT #' + num : 'STORM SCENARIOS') + (name ? ' \u2013 Storm ' + name.replace(/^storm\s+/i, '') : '') + ' \u2013 ' + day;
 const line = function(sc){
 const short = DAYS.format(dayDate(st.day));
-let t = sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' (most likely)' : '') + ' \u2013 ' + sc.p + '% chance: gusts ' + sc.rangeTxt + ' mph';
+let t = sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' (most common single range)' : '') + ' \u2013 ' + sc.p + '% chance: gusts ' + sc.rangeTxt + ' mph';
 if(!sc.n) return t + '. No model runs show this today.';
 t += ' (typically about ' + Math.round(sc.v) + ')' + (sc.key === 'worst' ? ', higher on exposed coasts' : '') + ', average winds up to about ' + Math.round(sc.wind) + ' mph';
 t += sc.win ? ', 60+ mph gusts about ' + hh(sc.win[0]) + '\u2013' + hh(sc.win[1]) + ' ' + short + '.' : '. No 60+ mph gusts.';
