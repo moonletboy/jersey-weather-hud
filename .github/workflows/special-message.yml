@@ -1,0 +1,95 @@
+# Special weather message for the Jersey Weather Chat HUD
+#
+# Shows, changes or clears the red SPECIAL WEATHER MESSAGE panel at the top of
+# the LIVE OPS page - without editing index.html.
+#
+# GitHub > Actions > "Special weather message" > "Run workflow", then:
+#   What to do   - show:  put up the message typed below (replaces any old one)
+#                  clear: take the panel down
+#   Message      - the text to show (leave empty when clearing)
+#   Signed by    - the name shown under the message
+#
+# It saves data/special-message.json, which the page reads. Open pages pick up
+# the change by themselves within about 5-10 minutes; it does not have to wait
+# for the site to republish.
+
+name: Special weather message
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to do"
+        required: true
+        default: "show"
+        type: choice
+        options:
+          - show
+          - clear
+      message:
+        description: "Message to show (leave empty when clearing)"
+        required: false
+        default: ""
+      signed:
+        description: "Signed by (shown under the message)"
+        required: false
+        default: "Ops system"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: special-message
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Get the repository
+        uses: actions/checkout@v4
+
+      - name: Write the message file
+        env:
+          MSG_ACTION: ${{ inputs.action }}
+          MSG_TEXT: ${{ inputs.message }}
+          MSG_SIGNED: ${{ inputs.signed }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, datetime
+          action = os.environ.get("MSG_ACTION", "show")
+          text = " ".join(os.environ.get("MSG_TEXT", "").split())
+          signed = " ".join(os.environ.get("MSG_SIGNED", "").split())[:60] or "Ops system"
+          if action == "show" and not text:
+              raise SystemExit('No message was typed, so nothing was changed. Type a message, or choose "clear".')
+          data = {
+              "active": action == "show",
+              "text": text if action == "show" else "",
+              "signed": signed,
+              "updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+          }
+          os.makedirs("data", exist_ok=True)
+          with open("data/special-message.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=1)
+          print("Saved:", json.dumps(data, ensure_ascii=False))
+          PYEOF
+
+      - name: Save it
+        env:
+          MSG_ACTION: ${{ inputs.action }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/special-message.json
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Special weather message: $MSG_ACTION"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "Push failed (another job may have saved at the same moment) - trying again."
+            sleep 5
+          done
+          exit 1
