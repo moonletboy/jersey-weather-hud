@@ -3419,24 +3419,49 @@ wfLegend('gust');
 function stRender(){
 const d = ST.data;
 if(!ST.map || !d) return;
-if(ST.layer) ST.layer.remove();
-ST.layer = L.layerGroup().addTo(ST.map);
 if(ST.live){ ST.live.clearLayers(); ST.liveM = {}; }
 ST.boxes = {};
 const tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
 ST.tracks = tracks;
 const allPts = [ST_JERSEY];
-tracks.forEach(function(t){
+tracks.forEach(function(t){ if(t.path && t.path.length >= 2) ST.boxes[t.id] = L.latLngBounds(t.path); });
+stDrawTracks();
+if(ST.firstFit){
+ST.firstFit = false;
+ST.map.fitBounds(ST_WINDOW, { padding:[0, 0] });
+stLockWindow();
+}
+stStatus(tracks);
+stList(tracks);
+stRenderLive();
+stRenderCards();
+}
+/* the storm tracks, drawn for the time chosen on the hour buttons: the path still ahead of each
+   storm in full, a faint dashed trail for the last day behind it, nothing older, and nothing at all
+   once its track has ended. Redrawn whenever the chosen time changes. */
+function stDrawTracks(){
+if(!ST.map) return;
+if(ST.layer) ST.layer.remove();
+ST.layer = L.layerGroup().addTo(ST.map);
+const h = ST.hour;
+(ST.tracks || []).forEach(function(t){
 const col = stColor(t.min_hpa);
 const lab = stLabel(t);
 const path = t.path || [];
 if(path.length < 2) return;
 const pts = t.points || [];
-path.forEach(p => allPts.push(p));
+const hEnd = t.path_start_hour + 6 * (path.length - 1);
+if(h > hEnd) return;                                       // the storm has gone: nothing left to draw
 for(let i=0; i<path.length-1; i++){
 const hMid = t.path_start_hour + 6 * (i + 0.5);
+const hB = t.path_start_hour + 6 * (i + 1);                 // the time at the end of this piece
+if(hB <= h - 24) continue;                                   // more than a day behind the storm: not drawn
 const c = stColor(stPressureAt(pts, hMid));
 const seg = [path[i], path[i+1]];
+if(hB <= h){                                                 // the last day behind it: a faint dashed trail
+L.polyline(seg, { color:c, weight:2, opacity:0.35, dashArray:'3 6', lineCap:'round', interactive:false }).addTo(ST.layer);
+continue;
+}
 L.polyline(seg, { color:c, weight:9, opacity:0.16, lineCap:'round', interactive:false }).addTo(ST.layer);
 L.polyline(seg, { color:c, weight:2.4, opacity:0.95, lineCap:'round', interactive:false }).addTo(ST.layer);
 const hit = L.polyline(seg, { color:'#000', weight:22, opacity:0, lineCap:'round', className:'st-hit' });
@@ -3444,7 +3469,7 @@ hit.on('click', function(ev){ stPickTrack(t, ev.latlng); });
 hit.addTo(ST.layer);
 }
 pts.forEach(function(p){
-if(p.h % ST.every !== 0) return;
+if(p.h % ST.every !== 0 || p.h < h) return;                 // only the dots still ahead
 const c = stColor(p.p);
 const when = new Date(p.t);
 const halo = Math.max(7, Math.min(26, 7 + (1010 - p.p) * 0.45));
@@ -3457,7 +3482,7 @@ const showTime = p.h % 24 === 0;
 L.marker([p.lat, p.lon], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:' + c + ';">' + Math.round(p.p) + (showTime ? '<i>' + stTime(when) + '</i>' : '') + '</div>', iconSize:[0,0], iconAnchor:[-9,10] }), interactive:false, keyboard:false }).addTo(ST.layer);
 });
 const bomb = stBomb(t);
-if(bomb){
+if(bomb && h <= bomb.h1){                                    // only until its explosive deepening is over
 const bp = stPosAt(t, (bomb.h0 + bomb.h1) / 2);
 if(bp){
 const bm = L.marker(bp, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-bomb">&#128163; &minus;' + Math.round(bomb.fall) + ' hPa / 24 H</div>', iconSize:[0,0], iconAnchor:[-10, 26] }), keyboard:false, zIndexOffset:650 });
@@ -3468,22 +3493,13 @@ bm.addTo(ST.layer);
 }
 const first = pts.length ? pts[0].p : t.min_hpa;
 const named = !!stNameOf(t);
-L.marker(path[0], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-badge' + (named ? ' named' : '') + '" style="background:' + stColor(first) + ';box-shadow:0 0 8px ' + stColor(first) + ';">' + stEsc(lab) + '</div>', iconSize:named ? [0,0] : [16,16], iconAnchor:named ? [-4,8] : [8,8] }), interactive:false, keyboard:false, zIndexOffset:500 }).addTo(ST.layer);
+if(h <= t.path_start_hour) L.marker(path[0], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-badge' + (named ? ' named' : '') + '" style="background:' + stColor(first) + ';box-shadow:0 0 8px ' + stColor(first) + ';">' + stEsc(lab) + '</div>', iconSize:named ? [0,0] : [16,16], iconAnchor:named ? [-4,8] : [8,8] }), interactive:false, keyboard:false, zIndexOffset:500 }).addTo(ST.layer);
 const last = path[path.length-1];
 const ang = stBearing(path[path.length-2], last);
 const endCol = stColor(stPressureAt(pts, t.path_start_hour + 6 * (path.length - 1)));
 L.marker(last, { icon:L.divIcon({ className:'st-icon', html:'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:13px solid ' + endCol + ';transform:rotate(' + ang.toFixed(0) + 'deg);filter:drop-shadow(0 0 4px ' + endCol + ');"></div>', iconSize:[12,13], iconAnchor:[6,7] }), interactive:false, keyboard:false, zIndexOffset:400 }).addTo(ST.layer);
-ST.boxes[t.id] = L.latLngBounds(path);
 });
-if(ST.firstFit){
-ST.firstFit = false;
-ST.map.fitBounds(ST_WINDOW, { padding:[0, 0] });
-stLockWindow();
-}
-stStatus(tracks);
-stList(tracks);
-stRenderLive();
-stRenderCards();
+ST.drawnHour = h;
 }
 /* storms at the time chosen on the slider, with their wind roses */
 /* click anywhere on a track: jump the slider to the time the storm is nearest that spot */
@@ -3606,6 +3622,7 @@ function stSetHour(h, stopPlay){
 h = Math.max(0, Math.min(240, Math.round(h / 6) * 6));
 ST.hour = h;
 if(stopPlay) stPause();
+if(ST.drawnHour !== h) stDrawTracks();
 stRenderLive();
 stRenderCards();
 }
