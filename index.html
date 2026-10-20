@@ -664,6 +664,8 @@ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:10px; line-he
 text-shadow:0 0 3px #02141a, 0 0 3px #02141a, 0 0 6px #02141a;
 }
 .st-lbl i{ display:block; font-style:normal; font-weight:400; font-size:8.5px; letter-spacing:0.5px; color:#b9dde6; }
+.st-lbl i.b{ color:#ff5fd2; font-weight:800; }
+.st-bomb{ display:inline-block; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:800; letter-spacing:0.5px; white-space:nowrap; color:#fff; background:rgba(255,95,210,0.88); border:1px solid #ffd0f1; border-radius:5px; padding:2px 6px; box-shadow:0 0 10px rgba(255,95,210,0.7); cursor:pointer; }
 .st-badge{
 display:flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:4px;
 font-family:'Orbitron',sans-serif; font-weight:800; font-size:9px; color:#05080d; border:1px solid rgba(5,8,13,0.7);
@@ -1225,6 +1227,7 @@ The further ahead you look, the less certain it is. This is a US model showing t
 <b>WHERE THE DATA COMES FROM:</b> the box in the top-left corner of the map shows the model (NOAA&rsquo;s American GFS), which run it is &mdash; runs start at 00, 06, 12 and 18 UTC (&ldquo;Z&rdquo;) and take a few hours to compute &mdash; and roughly when the next one will reach this map. Each new run can shift a storm&rsquo;s track and strength, so it is worth checking back after an update.<br>
 <b>HOW TO READ THIS MAP:</b> the map is fixed on the area that matters to Jersey &mdash; Ireland and the Western Approaches across to the Low Countries, Biscay up to Scotland. The colours are NOAA's forecast wind at 10 metres above the ground at the chosen time (gusts or average wind, key below the map), and the thin white lines are isobars &mdash; equal sea-level pressure every 2 hPa, bolder every 10 &mdash; the closer together they are, the stronger the wind. Each glowing line is the forecast path of a storm centre (a low) over the next 10 days: the dots are every 12 hours, the number beside each is its pressure in hPa (the lower, the stronger), and the larger marker is where the centre is at the chosen time. <b>Tap a number in the row of hours</b> to jump to that time &mdash; it is the same NOAA GFS run as the big charts on Wetterzentrale and elsewhere, so the hours match. <b>Tap or click anywhere on the map</b> for the gust, average wind, direction and pressure at that spot. The map is NOAA's 15-mile grid, so it shows the broad pattern; gusts on exposed headlands can be stronger.<br>
 <b>THE BOX BELOW THE MAP:</b> Jersey's own wind forecast from several models at once, shown as a range &mdash; when the models agree the range is narrow, and when they are more than 15 mph apart the box says so. &ldquo;Strongest spell&rdquo; is the best 3-hour spell in each model, not a single hour, so one freak hour in one model cannot become the headline.<br>
+<b>&#128163; WEATHER BOMBS:</b> a storm is marked when its centre deepens explosively &mdash; the lowest pressure falling by at least 24 hPa in 24 hours, adjusted for latitude (about 21 hPa at Jersey&rsquo;s latitude). That is the meteorological definition of a &ldquo;weather bomb&rdquo;. It tells you how fast a storm is strengthening, wherever it is, often a day or two before it arrives; it does not mean it will hit Jersey. Tap the &#128163; badge to jump to that time.<br>
 <b>NAMES:</b> every storm gets a number. When the UK Met Office, Met &Eacute;ireann, KNMI (Netherlands), M&eacute;t&eacute;o-France and partners, or the German weather service give a storm an official name, the page picks it up automatically from the news and the name replaces the number. A storm keeps the same number from one update to the next. If an automatic name is wrong or late, tap RENAME on its card (changes only your own view) &mdash; or ask Matt to set it for everyone.<br>
 Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The further ahead, the less certain the position and depth &mdash; always check Jersey Met warnings for what is actually expected here.
 </div>
@@ -1519,7 +1522,7 @@ const abs = Math.abs(diffPerHour);
 const rising = diffPerHour > 0;
 const falling = diffPerHour < 0;
 if(falling && diffPerHour <= -3){
-return { text:'BOMB CYCLOGENESIS \u2014 POSSIBLE ATLANTIC STORM INBOUND. WEATHER WARNINGS MAY HAVE BEEN ISSUED OR ARE IMMINENT.', color:RED, severe:true };
+return { text:'PRESSURE FALLING VERY RAPIDLY \u2014 DEEP LOW OR SEVERE WEATHER APPROACHING. CHECK JERSEY MET WARNINGS.', color:RED, severe:true };   // 3+ hPa in an hour at Jersey (the shipping forecast's "very rapidly" is 6+ hPa in 3 hours)
 }
 if(abs < 1){
 if(!rising && !falling) return { text:'STEADY', color:GREEN, severe:false };
@@ -3232,6 +3235,30 @@ const a = stPosAt(t, Math.max(t.path_start_hour, h - 6)), b = stPosAt(t, Math.mi
 if(!a || !b || (a[0] === b[0] && a[1] === b[1])) return null;
 return (stBearing(a, b) + 360) % 360;
 }
+/* ---- "weather bomb": explosive deepening of a storm's centre ----
+   The meteorological definition (Sanders & Gyakum, 1980): the lowest pressure at the centre falls
+   by at least 24 hPa in 24 hours at 60 degrees latitude, scaled by sin(latitude) / sin(60) - about
+   21 hPa at Jersey's latitude. The actual fall divided by that threshold is the deepening rate in
+   "bergerons" (1.0 = just qualifies). Worked out from each track's 12-hourly central pressures;
+   the strongest qualifying 24-hour spell is kept. Returns null if the storm never qualifies. */
+const ST_BOMB_S60 = Math.sin(Math.PI / 3);
+function stBomb(t){
+if(t._bomb !== undefined) return t._bomb;
+const pts = t.points || [], byH = {};
+pts.forEach(function(p){ byH[p.h] = p; });
+let best = null;
+pts.forEach(function(p){
+const q = byH[p.h + 24];
+if(!q) return;
+const lat = (p.lat + q.lat) / 2;
+const need = 24 * Math.sin(Math.abs(lat) * Math.PI / 180) / ST_BOMB_S60;
+const fall = p.p - q.p;
+const berg = fall / need;
+if(berg >= 1 && (!best || berg > best.berg)) best = { berg:berg, fall:fall, need:need, h0:p.h, h1:q.h, lat:lat };
+});
+t._bomb = best;
+return best;
+}
 function stWindAt(t, h){
 const w = t.winds || [];
 for(let i=0; i<w.length; i++) if(w[i].h === h) return w[i];
@@ -3429,6 +3456,16 @@ dot.addTo(ST.layer);
 const showTime = p.h % 24 === 0;
 L.marker([p.lat, p.lon], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-lbl" style="color:' + c + ';">' + Math.round(p.p) + (showTime ? '<i>' + stTime(when) + '</i>' : '') + '</div>', iconSize:[0,0], iconAnchor:[-9,10] }), interactive:false, keyboard:false }).addTo(ST.layer);
 });
+const bomb = stBomb(t);
+if(bomb){
+const bp = stPosAt(t, (bomb.h0 + bomb.h1) / 2);
+if(bp){
+const bm = L.marker(bp, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-bomb">&#128163; &minus;' + Math.round(bomb.fall) + ' hPa / 24 H</div>', iconSize:[0,0], iconAnchor:[-10, 26] }), keyboard:false, zIndexOffset:650 });
+bm.bindTooltip('<b>STORM ' + stEsc(lab) + ' &middot; EXPLOSIVE DEEPENING</b><br>Centre deepens ' + bomb.fall.toFixed(1) + ' hPa in 24 hours<br>' + stTimeD(stHourDate(bomb.h0)) + ' to ' + stTime(stHourDate(bomb.h1)) + ' (Jersey time)<br>&ldquo;Bomb&rdquo; threshold at this latitude: ' + bomb.need.toFixed(1) + ' hPa &middot; ' + bomb.berg.toFixed(1) + ' bergerons', { className:'st-tip', direction:'top' });
+bm.on('click', function(){ stSetHour(bomb.h1, true); });
+bm.addTo(ST.layer);
+}
+}
 const first = pts.length ? pts[0].p : t.min_hpa;
 const named = !!stNameOf(t);
 L.marker(path[0], { icon:L.divIcon({ className:'st-icon', html:'<div class="st-badge' + (named ? ' named' : '') + '" style="background:' + stColor(first) + ';box-shadow:0 0 8px ' + stColor(first) + ';">' + stEsc(lab) + '</div>', iconSize:named ? [0,0] : [16,16], iconAnchor:named ? [-4,8] : [8,8] }), interactive:false, keyboard:false, zIndexOffset:500 }).addTo(ST.layer);
@@ -3476,6 +3513,8 @@ let b = 0;
 for(let k=1; k<8; k++) if(w.g[k] > w.g[b]) b = k;
 txt += '<i>PEAK GUST ' + w.g[b] + ' MPH ' + ST_SECT[b] + '</i>';
 }
+const bb = stBomb(t);
+if(bb && h >= bb.h0 && h <= bb.h1) txt += '<i class="b">&#128163; DEEPENING EXPLOSIVELY</i>';
 let m = ST.liveM[t.id];
 if(!m){
 m = ST.liveM[t.id] = {
@@ -3601,6 +3640,17 @@ if(w) head += ', inside the 500-mile ring ' + stTime(stHourDate(w.from_h)) + ' t
 head += '. <a href="#" id="stJumpNear" style="color:var(--cyan);">SHOW ME &rarr;</a>';
 const others = tracks.length - 1;
 if(others > 0) head += '<br><span style="color:var(--dim);">' + others + ' other low' + (others === 1 ? '' : 's') + ' tracked across the North Atlantic &mdash; those that cross the map area appear on it.</span>';
+/* storms that deepen explosively from now on, strongest first */
+const nowH = (Date.now() - cycle.getTime()) / 3600000;
+const bombs = tracks.map(t => ({ t:t, b:stBomb(t) })).filter(x => x.b && x.b.h1 >= nowH).sort((a, b) => b.b.berg - a.b.berg).slice(0, 3);
+if(bombs.length){
+head += '<br><span style="color:#ff5fd2;">&#128163; EXPLOSIVE DEEPENING (A &ldquo;WEATHER BOMB&rdquo;): ' + bombs.map(function(x){
+const mid = stPosAt(x.t, (x.b.h0 + x.b.h1) / 2);
+const onMap = mid && stInWindow(mid);
+return '<b>STORM ' + stEsc(stLabel(x.t)) + '</b> deepens ' + Math.round(x.b.fall) + ' hPa in 24 hours, ' + stTimeD(stHourDate(x.b.h0)) + ' to ' + stTime(stHourDate(x.b.h1)) +
+(onMap ? ' <a href="#" class="st-bombjump" data-h="' + x.b.h1 + '" style="color:var(--cyan);">SHOW ME &rarr;</a>' : ' (off the map)');
+}).join(' &middot; ') + '</span>';
+}
 }
 /* maintainer note, shown only when the page is opened with #admin on the end of the address:
    which official storm name has not been matched to a track, and which track is nearest */
@@ -3618,6 +3668,7 @@ head += '<br><span style="color:var(--amber);">ADMIN &middot; NAME NOT YET MATCH
 }
 el.className = 'st-status' + (stale ? ' warn' : '');
 el.innerHTML = head + '<small>' + run + (stale ? ' &middot; THIS DATA IS ' + Math.round(ageH) + ' HOURS OLD &mdash; THE AUTOMATIC UPDATE MAY HAVE STOPPED' : ' &middot; UPDATES EVERY 6 HOURS') + '</small>';
+el.querySelectorAll('.st-bombjump').forEach(function(a){ a.addEventListener('click', function(e){ e.preventDefault(); stSetHour(Number(a.dataset.h), true); document.getElementById('st-map').scrollIntoView({ behavior:'smooth', block:'center' }); }); });
 const jn = document.getElementById('stJumpNear');
 if(jn) jn.addEventListener('click', function(e){ e.preventDefault(); stJumpClosest(); document.getElementById('st-map').scrollIntoView({ behavior:'smooth', block:'center' }); });
 }
