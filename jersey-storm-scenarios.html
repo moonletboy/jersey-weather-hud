@@ -12,11 +12,14 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JWC STORM SCENARIOS — Jersey Weather Chat</title>
+<title>Storm Scenarios — Jersey Weather Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <meta name="description" content="Best case, middle and worst case winds for Jersey from every run of four weather models.">
-<meta name="robots" content="noindex, nofollow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Storm Scenarios for Jersey — Jersey Weather Chat">
+<meta property="og:description" content="Best case, most common and worst case gusts for Jersey, with the chance of each, from every run of four weather models. Computer forecasts, not official warnings.">
+<meta property="og:url" content="https://jerseyweatherchat.com/jersey-storm-scenarios.html">
 <style>
 :root{
 --bg:#05080d;
@@ -740,6 +743,12 @@ footer b{ color:var(--dim); }
 @keyframes blipfade{ 0%,100%{opacity:0.2;} 50%{opacity:1;} }
 /* ================= STORM SCENARIOS PAGE ================= */
 .sc-intro{ font-size:11.5px; line-height:1.75; color:var(--dim); margin:0 0 16px; }
+.sc-official{ margin:0 0 12px; padding:11px 14px; border:1px solid rgba(255,176,32,0.55); border-radius:10px; background:rgba(255,176,32,0.06); font-size:11px; line-height:1.7; color:var(--text); }
+.sc-official b{ color:var(--amber); }
+.sc-official a{ color:var(--cyan); }
+.sc-howto{ display:flex; flex-wrap:wrap; gap:6px 22px; margin:0 0 16px; font-size:10.5px; line-height:1.6; color:var(--dim); }
+.sc-howto b{ flex-basis:100%; color:var(--cyan); font-size:10px; letter-spacing:2px; }
+.sc-runs-note{ font-size:8.5px; letter-spacing:1px; color:var(--dim2); margin:-10px 0 16px; }
 .sc-intro b{ color:var(--text); }
 .sc-status{ font-size:9.5px; letter-spacing:1.2px; color:var(--dim); margin:0 0 18px; }
 .sc-status b{ color:var(--cyan); }
@@ -925,17 +934,20 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 <div class="bar"></div>
 <div class="tag">BEST &middot; MIDDLE &middot; WORST</div>
 </div>
-<div class="sc-status" style="color:var(--amber);">&#9888; PRIVATE PREVIEW &middot; NOT LINKED FROM THE REST OF THE SITE &middot; NOT INDEXED BY SEARCH ENGINES</div>
 <p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and splits them into three scenarios &mdash; <b>best case</b>, <b>middle</b> and <b>worst case</b> &mdash; each a range of gust speeds. A scenario&rsquo;s chance is simply the share of runs that fall in it, so the three always add up to 100%. Pick a day below.</p>
+<div class="sc-official"><b>&#9888; Computer model runs, not an official forecast.</b> This page shows what the weather models are calculating, before any forecaster has looked at it. <b>For warnings and advice, Jersey Met is the authority</b> &mdash; <a href="https://www.gov.je/weather" target="_blank" rel="noopener">gov.je/weather</a>. In an emergency call 999.</div>
+<div class="sc-howto"><b>HOW TO USE THIS PAGE</b><span>&#9312; Look at all three cards and their chances, not just the worst case.</span><span>&#9313; A storm four or five days away often changes &mdash; watch how the chances move over a few updates.</span><span>&#9314; If the dots drift right, into the red and purple zones, the storm is trending stronger; if they drift left, it is easing.</span></div>
 <div class="sc-status" id="scStatus">LOADING THE MODEL RUNS&hellip;</div>
 <div class="sc-news" id="scNews"></div>
 <div class="sc-runs" id="scRuns"></div>
+<div class="sc-runs-note" id="scRunsNote" style="display:none;">RUN TIMES ARE IN UTC (&ldquo;Z&rdquo;); ARRIVAL AND NEXT-EXPECTED TIMES ARE JERSEY TIME.</div>
 <div class="sc-days" id="scDays"></div>
 <div id="scMain"><div class="sc-loading">LOADING THE MODEL RUNS&hellip;</div></div>
 </section>
 
 <footer>
-<div>DATA: OPEN-METEO ENSEMBLE API &mdash; ECMWF ENS, NOAA GEFS, DWD ICON-EPS, MET OFFICE MOGREPS-G &middot; MAIN MODEL RUNS: OPEN-METEO FORECAST API</div>
+<div>WEATHER DATA BY <a href="https://open-meteo.com/" target="_blank" rel="noopener" style="color:var(--cyan);">OPEN-METEO.COM</a> (CC BY 4.0) &mdash; ENSEMBLES FROM ECMWF, NOAA (GEFS), DWD (ICON-EPS) AND THE MET OFFICE (MOGREPS-G), PLUS THEIR MAIN MODEL RUNS</div>
+<div>RUN BY VOLUNTEERS FOR THE JERSEY WEATHER CHAT FACEBOOK COMMUNITY</div>
 <div>GUSTS AND WINDS ARE FOR A POINT NEAR THE MIDDLE OF THE ISLAND &middot; NOT AN OFFICIAL WARNING &mdash; SEE <a href="https://www.gov.je/weather" target="_blank" rel="noopener" style="color:var(--cyan);">GOV.JE/WEATHER</a></div>
 </footer>
 </div>
@@ -1000,6 +1012,8 @@ const THRESH = [39, 50, 60, 70, 80, 90, 100];
 const THCOL = { 39:'#ffb020', 50:'#ffb020', 60:'#ff6a3d', 70:'#ff4b5c', 80:'#ff2fa8', 90:'#c04dff', 100:'#ffffff' };
 function tierOf(mph){ for(const t of TIERS) if(mph >= t.min) return t; return null; }
 const SC = { ens:[], det:null, days:[], stats:{}, day:null, fetched:null, userPicked:false, W:1000, F:1 };
+/* the Facebook post maker is for the page owner only: open the page with #admin on the end of the address */
+SC.admin = location.hash === '#admin';
 /* charts are drawn narrower with bigger text on phones, so the writing stays readable */
 function scSize(){ const mob = window.innerWidth < 700; SC.W = mob ? 560 : 1000; SC.F = mob ? 1.45 : 1; return mob; }
 function fsz(n){ return (n * SC.F).toFixed(1); }
@@ -1342,14 +1356,15 @@ main.innerHTML = headline(st) +
 '<div class="sc-gauges">' +
 st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c', 'CHANCE OF ' + sc.lbl, 'GUSTS ' + sc.range + ' MPH &middot; ' + sc.n + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
 ladder(st) +
-'<div class="sc-chart"><button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button><h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + '</div></div>' +
-'<div class="sc-chart"><button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button><h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + '</div>' +
-'<div class="sc-chart"><button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button><h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
-'<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + '</div></div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + '</div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
+(SC.admin ? '<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' : '') +
+(SC.admin ? 
 '<div class="sc-post" id="scPost"><div class="inputs"><label>STORM NAME (OPTIONAL) <input id="scName" placeholder="e.g. Austen" size="14"></label><label>UPDATE NO. <input id="scNum" type="number" min="1" placeholder="1" style="width:64px;"></label><span>Changing these rebuilds the text below. You can also edit the text itself before copying.</span></div>' +
 '<textarea id="scText" spellcheck="true"></textarea><div class="acts"><button type="button" class="sc-copy" id="scCopy">COPY POST</button><span class="hint">Then paste it straight into Facebook.</span></div>' +
 '<div class="sc-sum"><h4>&#128247; PICTURE FOR THE POST &mdash; THE WHOLE PAGE IN ONE</h4><p class="cap">The three scenarios, the dot chart, the day&rsquo;s timeline, the chances and the main model runs in one picture. <b>On a computer:</b> copy the post and paste it into Facebook, then COPY PICTURE and paste that in too. <b>On a phone:</b> copy the post first, then SHARE PICTURE to the Facebook app and paste the text in.</p>' +
-'<img id="scSumImg" alt="Summary picture for Facebook"><div class="acts"><button type="button" class="sc-copy" id="scSumCopy">COPY PICTURE</button><button type="button" class="sc-copy" id="scSumSave" style="background:var(--cyan);">SAVE PICTURE</button><button type="button" class="sc-copy" id="scSumShare" style="background:#1877f2;color:#fff;display:none;">SHARE PICTURE&hellip;</button><span class="hint" id="scSumMsg"></span></div></div></div>' +
+'<img id="scSumImg" alt="Summary picture for Facebook"><div class="acts"><button type="button" class="sc-copy" id="scSumCopy">COPY PICTURE</button><button type="button" class="sc-copy" id="scSumSave" style="background:var(--cyan);">SAVE PICTURE</button><button type="button" class="sc-copy" id="scSumShare" style="background:#1877f2;color:#fff;display:none;">SHARE PICTURE&hellip;</button><span class="hint" id="scSumMsg"></span></div></div></div>' : '') +
 '<details class="st-more sc-method"><summary>HOW THIS IS WORKED OUT</summary><div class="sw-note"><b>Ensembles:</b> each model is run many times from slightly different starting points &mdash; ECMWF 51 times, GFS 31, ICON 40 (about 5 days ahead only) and the UK Met Office 18. For the chosen day the page takes the strongest gust and strongest average wind each run gives a point near the middle of Jersey. The runs are split into three ranges of peak gust at two of the impact levels (39, 47, 58, 70, 80, 90 and 100 mph), chosen for each day so the split is roughly a quarter, a half and a quarter &mdash; for example under 58, 58&ndash;69 and 70+ mph &mdash; and always so that the middle range holds the most runs. Each scenario&rsquo;s chance is the share of runs in its range; &ldquo;typically&rdquo; is the middle of the runs in that range. The middle range is always the most common one &mdash; the single biggest share, which can still be under half of all runs. (Only if the runs are so bunched that no split can do that, the middle card is called &ldquo;in between&rdquo; and the biggest range is starred instead.) The 60+ mph times for each scenario come from the runs in that range, because different runs time the peak differently. <b>Chance</b> is simply the share of all runs that reach that speed at some point in the day. The levels go from gale force (39 mph) up to 100+ mph; the three dials show the levels that matter most for the day, moving up automatically if a run shows 80, 90 or 100+ mph. Ensembles are run at lower detail than the main runs, so they can be a little low on the very strongest gusts &mdash; which is why the main runs are shown alongside. Exposed coasts and high ground can be stronger than the figures here. Updated about every 6 hours as new runs arrive; this page checks for new runs every 15 minutes while it is open and tells you when they arrive. The run-times box at the top shows when each model&rsquo;s latest run started (in UTC, &ldquo;Z&rdquo;), when it reached Open-Meteo and roughly when the next is due; ECMWF&rsquo;s runs usually arrive last, many hours after they start.</div></details>';
 const save = function(){ try{ localStorage.setItem('jwcScen:' + st.day, JSON.stringify({ name:document.getElementById('scName').value, num:document.getElementById('scNum').value })); }catch(e){} };
 let sumTimer = 0;
@@ -1360,6 +1375,8 @@ document.getElementById('scText').value = buildPost(st, nm, no);
 clearTimeout(sumTimer);
 sumTimer = setTimeout(function(){ showSummary(st, nm, no); }, 500);      // redraw the picture once typing pauses
 };
+main.querySelectorAll('.sc-imgbtn').forEach(b => b.addEventListener('click', function(){ showImage(b.dataset.img); }));
+if(!SC.admin) return;                                    // the rest of this is the owner's post maker
 document.getElementById('scMake').addEventListener('click', function(){
 const p = document.getElementById('scPost');
 try{ const v = JSON.parse(localStorage.getItem('jwcScen:' + st.day) || '{}'); document.getElementById('scName').value = v.name || ''; document.getElementById('scNum').value = v.num || ''; }catch(e){}
@@ -1367,7 +1384,6 @@ rebuild();
 p.classList.add('show');
 p.scrollIntoView({ behavior:'smooth', block:'start' });
 });
-main.querySelectorAll('.sc-imgbtn').forEach(b => b.addEventListener('click', function(){ showImage(b.dataset.img); }));
 document.getElementById('scName').addEventListener('input', rebuild);
 document.getElementById('scNum').addEventListener('input', rebuild);
 document.getElementById('scCopy').addEventListener('click', function(){
@@ -1447,10 +1463,10 @@ const msg = document.getElementById('scImgMsg');
 msg.textContent = 'Drawing\u2026';
 box.classList.add('show');
 let cv;
-try{ cv = await makeImage(kind); }catch(e){ console.warn(e); msg.textContent = 'Sorry \u2014 the picture could not be drawn in this browser.'; return; }
+try{ cv = kind === 'sum' ? await makeSummary(SC.stats[SC.day], '', '') : await makeImage(kind); }catch(e){ console.warn(e); msg.textContent = 'Sorry \u2014 the picture could not be drawn in this browser.'; return; }
 document.getElementById('scImgCap').textContent = 'Copy it and paste into your Facebook post (on a computer), or save it and add it as a photo. On a phone, SHARE sends it straight to the Facebook app.';
 msg.textContent = '';
-await wireImage(cv, 'jersey-storm-' + SC.day + '-' + kind + '.png', { img:'scImg', copy:'scImgCopy', save:'scImgSave', share:'scImgShare', msg:'scImgMsg' });
+await wireImage(cv, 'jersey-storm-' + SC.day + '-' + (kind === 'sum' ? 'summary' : kind) + '.png', { img:'scImg', copy:'scImgCopy', save:'scImgSave', share:'scImgShare', msg:'scImgMsg' });
 }
 /* put a finished picture on the page and make its COPY / SAVE / SHARE buttons work */
 async function wireImage(cv, fname, ids){
@@ -1629,7 +1645,7 @@ return t;
 return '\ud83c\udf00 ' + title + ' (model data, ' + nc(FETCHF.format(SC.fetched)) + ')\n\n' +
 st.sc.map(line).join('\n\n') + '\n\n' +
 '\ud83d\udcca Chances are the share of ' + st.n + ' computer runs from 4 weather models. Overall, ' + st.c60 + '% give Jersey 60+ mph gusts' + [70, 80, 90, 100].filter(t => st.ch[t] >= 5).map(t => '; ' + st.ch[t] + '% give ' + t + '+').join('') + '.\n\n' +
-'Gust figures are for a point near the middle of the island, so exposed coasts can be stronger. We\u2019ll post the next update after the next model runs. For official warnings, check gov.je/weather.';
+'Gust figures are for a point near the middle of the island, so exposed coasts can be stronger. We\u2019ll post the next update after the next model runs. For official warnings, check gov.je/weather.\n\nFull charts and how this works: https://jerseyweatherchat.com/jersey-storm-scenarios.html';
 }
 /* ---------- model run times ----------
    Open-Meteo publishes, for each model, when its latest run started, when it reached the
@@ -1669,6 +1685,7 @@ else nx = '<span class="late">LATE</span>';
 h += '<span class="m" style="color:' + m.col + ';">' + m.lbl + '</span><span>' + String(run.getUTCHours()).padStart(2, '0') + 'Z ' + nc(RUNF.format(run)).toUpperCase() + '</span><span class="d">' + HM.format(new Date(r.avail)) + '</span>' + nx;
 });
 el.innerHTML = h;
+const rn = document.getElementById('scRunsNote'); if(rn) rn.style.display = '';
 SC.nextTxt = dueNow.length ? 'NEW ' + dueNow.join(' &amp; ') + ' RUN' + (dueNow.length > 1 ? 'S' : '') + ' DUE NOW &mdash; THIS PAGE WILL PICK ' + (dueNow.length > 1 ? 'THEM' : 'IT') + ' UP BY ITSELF.'
 : next ? 'NEXT NEW RUN EXPECTED ABOUT <b>' + HM.format(new Date(next.due)) + '</b> (' + next.lbl + ').' : '';
 }
@@ -1769,6 +1786,7 @@ const postOpen = document.getElementById('scPost') && document.getElementById('s
 if(!postOpen) renderMain();                         // do not wipe a post being edited
 }
 loadAll();
+window.addEventListener('hashchange', function(){ SC.admin = location.hash === '#admin'; if(SC.stats[SC.day]) renderMain(); });
 setInterval(loadAll, 15 * 60 * 1000);
 setInterval(function(){ if(SC.lastMetas) renderRuns(SC.lastMetas); }, 60 * 1000);
 let scMob = window.innerWidth < 700;
