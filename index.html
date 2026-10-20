@@ -365,6 +365,18 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
 .warning-title{ font-family:'Orbitron',sans-serif; font-size:14px; letter-spacing:2px; color:var(--green); margin-bottom:6px; }
 .warning-text{ font-size:12px; color:var(--text); line-height:1.6; margin-bottom:8px; }
 .warning-disclaimer{ font-size:10px; color:var(--dim); line-height:1.6; }
+/* several warnings at once: one collapsible row each, in its own colour */
+.warn-count{ font-size:10.5px; letter-spacing:1.2px; color:var(--dim); margin-bottom:8px; }
+.warn-list{ display:flex; flex-direction:column; gap:8px; margin:0 0 10px; }
+.warn-item{ border:1px solid var(--line); border-left:4px solid var(--wc); border-radius:8px; background:rgba(0,0,0,0.18); }
+.warn-item > summary{ list-style:none; cursor:pointer; padding:10px 12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.warn-item > summary::-webkit-details-marker{ display:none; }
+.warn-item > summary::after{ content:"+"; margin-left:auto; color:var(--dim); font-weight:800; font-size:14px; }
+.warn-item[open] > summary::after{ content:"\2212"; }
+.warn-chip{ font-size:9.5px; font-weight:800; letter-spacing:1.5px; padding:3px 7px; border-radius:4px; color:#05080d; background:var(--wc); }
+.warn-ttl{ font-size:12px; font-weight:700; color:var(--text); }
+.warn-iss{ font-size:9.5px; color:var(--dim); letter-spacing:0.5px; }
+.warn-desc{ padding:0 12px 12px; font-size:12px; line-height:1.6; color:var(--text); }
 .warning-disclaimer a{ color:var(--cyan); }
 /* 5-DAY FORECAST */
 .forecast-scroll{ display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch; }
@@ -1695,6 +1707,32 @@ yellow: { color:YELLOW, bg:'rgba(224,211,65,0.08)', icon:'\u26a0', label:'BE AWA
 orange: { color:ORANGE, bg:'rgba(255,140,48,0.08)', icon:'\u26a0', label:'TAKE PRECAUTIONS' },
 red: { color:RED, bg:'rgba(255,75,92,0.10)', icon:'\u26d4', label:'STAY INDOORS' }
 };
+/* The warnings text arrives as one block in which each warning starts with its colour,
+   e.g. "2 warnings in force. ORANGE \u2014 Channel Islands Shipping Area Wind Warning (issued ...): ...
+   YELLOW \u2014 Jersey Tide/Coastal Flood Warning (issued ...): ...". With two or more, split it into
+   separate warnings (most severe first); otherwise return null and show the text as it is. */
+const WARN_RANK = { red:3, orange:2, yellow:1 };
+function splitWarnings(text){
+const t = String(text || '');
+const re = /\b(RED|ORANGE|AMBER|YELLOW)\s*[\u2014\u2013]\s*/g;
+const marks = [];
+let m;
+while((m = re.exec(t))) marks.push({ at:m.index, end:re.lastIndex, sev:m[1] });
+if(marks.length < 2) return null;
+const items = marks.map(function(mk, k){
+const body = t.slice(mk.end, k + 1 < marks.length ? marks[k + 1].at : t.length).trim();
+let title = body, desc = '';
+const c = body.indexOf('):') >= 0 ? body.indexOf('):') + 1 : body.indexOf(':');
+if(c > 0){ title = body.slice(0, c).trim(); desc = body.slice(c + 1).trim(); }
+const iss = title.match(/\(issued ([^)]*)\)/i);
+return {
+sev:mk.sev === 'AMBER' ? 'orange' : mk.sev.toLowerCase(), word:mk.sev,
+title:title.replace(/\s*\(issued [^)]*\)/i, '').trim(), issued:iss ? iss[1] : '', desc:desc
+};
+});
+items.sort(function(a, b){ return (WARN_RANK[b.sev] || 0) - (WARN_RANK[a.sev] || 0); });
+return items;
+}
 function renderWarningBanner(severity, text){
 const s = SEVERITY_STYLES[severity] || SEVERITY_STYLES.none;
 const banner = document.getElementById('warningBanner');
@@ -1704,7 +1742,33 @@ const icon = document.getElementById('warningIcon');
 icon.textContent = s.icon; icon.style.color = s.color;
 const title = document.getElementById('warningTitle');
 title.textContent = s.label; title.style.color = s.color;
-document.getElementById('warningText').textContent = text || '';
+const box = document.getElementById('warningText');
+box.textContent = '';
+const items = severity !== 'none' ? splitWarnings(text) : null;
+if(!items){ box.textContent = text || ''; return; }
+/* several warnings: a count, then one collapsible row each in its own colour (tap to open) */
+const count = document.createElement('div');
+count.className = 'warn-count';
+count.textContent = items.length + ' WARNINGS IN FORCE \u2014 TAP EACH ONE FOR DETAILS';
+box.appendChild(count);
+const list = document.createElement('div');
+list.className = 'warn-list';
+items.forEach(function(w){
+const st = SEVERITY_STYLES[w.sev] || s;
+const d = document.createElement('details');
+d.className = 'warn-item';
+d.style.setProperty('--wc', st.color);
+const sum = document.createElement('summary');
+const chip = document.createElement('span'); chip.className = 'warn-chip'; chip.textContent = w.word;
+const ttl = document.createElement('span'); ttl.className = 'warn-ttl'; ttl.textContent = w.title;
+sum.appendChild(chip); sum.appendChild(ttl);
+if(w.issued){ const iss = document.createElement('span'); iss.className = 'warn-iss'; iss.textContent = 'ISSUED ' + w.issued.toUpperCase(); sum.appendChild(iss); }
+d.appendChild(sum);
+const desc = document.createElement('div'); desc.className = 'warn-desc'; desc.textContent = w.desc || 'See gov.je for the full warning.';
+d.appendChild(desc);
+list.appendChild(d);
+});
+box.appendChild(list);
 }
 async function loadWarnings(){
 if(MANUAL_OVERRIDE_ACTIVE){
