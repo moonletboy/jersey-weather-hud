@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#05080d">
+<title>Offline — Jersey Weather Chat</title>
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<style>
+:root{ --bg:#05080d; --panel:#0b131c; --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --text:#e9f6f5; --dim:#5f7c88; --line:rgba(76,211,255,0.18); }
+*{ box-sizing:border-box; }
+html, body{ margin:0; min-height:100%; background:var(--bg); color:var(--text); font-family:'JetBrains Mono', Consolas, 'Courier New', monospace; }
+body{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+.card{ max-width:440px; width:100%; text-align:center; padding:34px 26px 28px; background:var(--panel); border:1px solid var(--line); border-radius:16px; }
+.mark-img{ display:block; margin:0 auto 22px; border-radius:22px; box-shadow:0 0 26px rgba(76,211,255,0.45); }
+.mark{ width:76px; height:76px; margin:0 auto 22px; border-radius:16px; background:conic-gradient(from 0deg, var(--cyan), var(--green), var(--cyan)); display:flex; align-items:center; justify-content:center; box-shadow:0 0 26px rgba(76,211,255,0.45); animation:spin 8s linear infinite; }
+.mark::after{ content:""; width:26px; height:26px; border-radius:50%; border:5px solid var(--bg); box-shadow:inset 0 0 0 5px var(--cyan); background:var(--bg); }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+h1{ margin:0 0 6px; font-size:15px; letter-spacing:3px; color:var(--amber); font-weight:800; }
+.sub{ font-size:10px; letter-spacing:3px; color:var(--dim); margin-bottom:20px; }
+p{ font-size:13px; line-height:1.7; color:var(--text); margin:0 0 22px; }
+button{ font-family:inherit; font-size:12px; font-weight:800; letter-spacing:2px; color:var(--bg); background:var(--cyan); border:0; border-radius:10px; padding:13px 22px; cursor:pointer; }
+.small{ margin-top:18px; font-size:10px; line-height:1.7; color:var(--dim); }
+.small b{ color:var(--text); }
+</style>
+</head>
+<body>
+<div class="card">
+<img class="mark-img" src="icons/icon-192.png" alt="" width="96" height="96">
+<h1>NO CONNECTION</h1>
+<div class="sub">JERSEY WEATHER CHAT</div>
+<p>The weather here is always live, so it needs an internet connection. As soon as you're back online this page will reload by itself.</p>
+<button type="button" onclick="location.reload()">TRY AGAIN</button>
+<div class="small">In a storm, check <b>gov.je/weather</b> and Jersey Met for warnings when you can &mdash; and in an emergency call <b>999</b>.</div>
+</div>
+<script>window.addEventListener('online', function(){ location.reload(); });</script>
+</body>
+</html>

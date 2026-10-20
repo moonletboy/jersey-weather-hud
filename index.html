@@ -12,6 +12,16 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#05080d">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="JWC Weather">
+<script>if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }</script>
 <title>JWC LIVE OPS — Jersey Weather Command</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -110,6 +120,15 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 }
 .fb-text{ font-size:11.5px; color:var(--text); letter-spacing:0.3px; line-height:1.5; }
 .fb-text b{ color:var(--cyan); }
+/* "install as an app" strip (home page; only shown where the phone or browser can install it) */
+.app-strip{ display:flex; align-items:center; gap:12px; margin:8px 0 0; padding:9px 12px; border:1px solid rgba(76,211,255,0.45); border-radius:10px; background:rgba(76,211,255,0.06); font-size:11.5px; line-height:1.5; }
+.app-strip[hidden]{ display:none; }
+.app-ic img{ display:block; border-radius:7px; }
+.app-txt{ flex:1; min-width:0; color:var(--text); }
+.app-txt b{ color:var(--cyan); }
+.app-btn{ font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:var(--cyan); border:0; border-radius:7px; padding:8px 12px; cursor:pointer; flex-shrink:0; }
+.app-btn[hidden]{ display:none; }
+.app-x{ background:transparent; border:0; color:var(--dim); font-size:20px; cursor:pointer; line-height:1; padding:0 4px; flex-shrink:0; }
 .fb-about-link{ color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); white-space:nowrap; }
 .fb-about-link:hover{ color:var(--text); border-bottom-color:var(--text); }
 /* the About & disclaimer panel under the banner */
@@ -904,6 +923,47 @@ footer b{ color:var(--dim); }
 </ul>
 </div>
 </details>
+<div class="app-strip" id="appStrip" hidden>
+<span class="app-ic"><img src="icons/icon-192.png" alt="" width="30" height="30"></span>
+<span class="app-txt" id="appStripText"><b>Get the Jersey Weather Chat app</b> &mdash; opens full-screen from your home screen, no app store needed.</span>
+<button type="button" class="app-btn" id="appInstall">INSTALL</button>
+<button type="button" class="app-x" id="appDismiss" aria-label="Not now">&times;</button>
+</div>
+<script>
+/* ---------- "install as an app" strip ----------
+   Shown only where the site can be installed: Android / desktop Chrome and Edge offer an install
+   prompt (the INSTALL button opens it); on iPhone and iPad it explains Share > Add to Home Screen.
+   Hidden inside the installed app itself, and for 30 days after someone taps the cross. */
+(function(){
+const strip = document.getElementById('appStrip');
+if(!strip) return;
+const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+let dismissed = false;
+try{ dismissed = (Date.now() - Number(localStorage.getItem('jwcAppDismissed') || 0)) < 30 * 86400000; }catch(e){}
+if(standalone || dismissed) return;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const btn = document.getElementById('appInstall'), txt = document.getElementById('appStripText');
+let deferred = null;
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; strip.hidden = false; });
+if(isIOS){ strip.hidden = false; btn.textContent = 'HOW?'; }
+btn.addEventListener('click', function(){
+if(deferred){
+deferred.prompt();
+deferred.userChoice.then(function(){ deferred = null; strip.hidden = true; }, function(){ deferred = null; });
+return;
+}
+if(isIOS){
+txt.innerHTML = 'Tap the <b>Share</b> button (the square with an arrow, \u2191) at the bottom of the screen, then <b>Add to Home Screen</b>.';
+btn.hidden = true;
+}
+});
+document.getElementById('appDismiss').addEventListener('click', function(){
+strip.hidden = true;
+try{ localStorage.setItem('jwcAppDismissed', String(Date.now())); }catch(e){}
+});
+window.addEventListener('appinstalled', function(){ strip.hidden = true; });
+})();
+</script>
 <div class="special-msg-panel" id="specialMsgPanel">
 <div class="special-msg-title">&#9888; SPECIAL WEATHER MESSAGE</div>
 <div class="special-msg-text" id="specialMsgText"></div>
