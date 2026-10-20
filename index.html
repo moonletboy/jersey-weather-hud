@@ -211,6 +211,38 @@ border:1px solid var(--line); border-radius:12px; padding:18px 20px;
 .uv-legend{ display:flex; gap:4px; margin-top:13px; border-radius:6px; overflow:hidden; }
 .uv-seg{ flex:1; text-align:center; font-size:8px; letter-spacing:0.5px; padding:6px 2px; color:#05080d; font-weight:800; opacity:0.32; transition:opacity .3s ease; }
 .uv-seg.active{ opacity:1; box-shadow:0 0 12px rgba(0,0,0,0.25) inset; }
+/* the column around the dial: sun, dial, face chips, tide, sea and moon */
+.hero-left{ width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px; }
+.glance{
+display:block; text-decoration:none; color:var(--text);
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:11px 13px 10px;
+}
+a.glance[href$=".html"]:hover{ border-color:var(--cyan); }
+.glance-lbl{ font-size:9px; letter-spacing:2.5px; color:var(--dim); margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.glance svg{ display:block; width:100%; height:auto; }
+.glance-foot{ font-size:10px; letter-spacing:0.8px; color:var(--dim); margin-top:4px; line-height:1.45; }
+.glance-foot b{ color:var(--text); }
+.glance-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.tide-badge{ font-size:8px; letter-spacing:1px; font-weight:800; padding:2px 6px; border-radius:4px; }
+.tide-badge.spring{ color:#05080d; background:var(--amber); }
+.tide-badge.neap{ color:var(--dim); border:1px solid var(--line); }
+.face-chips{ display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; }
+.face-chip{
+font-family:'JetBrains Mono',monospace; cursor:pointer; text-align:center; color:var(--dim);
+background:var(--bg-panel); border:1px solid var(--line); border-radius:9px; padding:6px 2px 5px; line-height:1.1;
+transition:border-color .3s ease, box-shadow .3s ease, color .3s ease;
+}
+.face-chip .ic{ display:block; font-size:17px; margin-bottom:3px; filter:grayscale(0.6); opacity:0.7; transition:all .3s ease; }
+.face-chip .tx{ font-size:7.5px; letter-spacing:0.8px; font-weight:700; }
+.face-chip.on{ color:var(--cyan); border-color:var(--cyan); box-shadow:0 0 12px rgba(76,211,255,0.28); }
+.face-chip.on .ic{ filter:none; opacity:1; }
+.face-chip.held{ color:#05080d; background:var(--cyan); }
+@media (min-width:860px){
+.hero{ align-items:stretch !important; }
+.hero-left{ justify-content:space-between; flex:0 0 340px; }
+.hero-stack{ grid-template-rows:1fr 1fr auto; }
+}
 @media (min-width:860px){
 .hero{ flex-direction:row; align-items:center; justify-content:center; gap:44px; }
 .hero-stack{ display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:680px; }
@@ -821,6 +853,8 @@ footer b{ color:var(--dim); }
 <a href="microclimate-grid.html">MICROCLIMATE</a>
 </nav>
 <div class="hero">
+<div class="hero-left">
+<a class="glance sun-panel" id="sunPanel" href="#" onclick="return false;" aria-label="Sunrise and sunset"><div class="glance-lbl">SUN &middot; DAYLIGHT</div><svg id="sunSvg" viewBox="0 0 320 96" aria-hidden="true"></svg><div class="glance-foot" id="sunFoot">&mdash;</div></a>
 <div class="radar-hero" id="radarHero">
 <div class="ring"></div>
 <div class="sweep"></div>
@@ -831,6 +865,13 @@ footer b{ color:var(--dim); }
 <div class="dial-value" id="heroValue">--<span class="unit">&deg;C</span></div>
 <div class="cond" id="heroCond">ACQUIRING SIGNAL&hellip;</div>
 <div class="loc-mini">49.18&deg;N &middot; 2.11&deg;W &middot; JERSEY, CI</div>
+</div>
+</div>
+<div class="face-chips" id="faceChips" role="group" aria-label="Choose what the dial shows"></div>
+<a class="glance tide-panel" id="tidePanel" href="jersey-sea-tides.html" aria-label="Tides"><div class="glance-lbl">TIDE &middot; ST HELIER <span id="tideBadge"></span></div><svg id="tideSvg" viewBox="0 0 320 82" aria-hidden="true"></svg><div class="glance-foot" id="tideFoot">LOADING TIDES&hellip;</div></a>
+<div class="glance-row">
+<a class="glance sea-panel" id="seaPanel" href="jersey-sea-tides.html" aria-label="Sea temperature and waves"><div class="glance-lbl">SEA</div><svg id="seaSvg" viewBox="0 0 150 84" aria-hidden="true"></svg><div class="glance-foot" id="seaFoot">&mdash;</div></a>
+<a class="glance moon-panel" id="moonPanel" href="jersey-space-weather.html" aria-label="Moon phase"><div class="glance-lbl">MOON</div><svg id="moonSvg" viewBox="0 0 150 84" aria-hidden="true"></svg><div class="glance-foot" id="moonFoot">&mdash;</div></a>
 </div>
 </div>
 <div class="hero-stack">
@@ -1863,7 +1904,39 @@ return metarConditionIcon(metarData, isDay);
 }
 return liveConditionIcon(fallbackCode, fallbackCloudCover, isDay);
 }
+/* ---------- the six things the dial cycles through, as chips under it ---------- */
+const HERO_FACES = [
+{ ic:'\ud83c\udf21\ufe0f', tx:'TEMP' }, { ic:'\ud83d\udca8', tx:'WIND' }, { ic:'\u2600\ufe0f', tx:'UV' },
+{ ic:'\u26c5', tx:'SKY' }, { ic:'\ud83c\udf43', tx:'AIR' }, { ic:'\u23f2\ufe0f', tx:'PRESSURE' }
+];
+let heroHold = false;                      // true while someone has tapped a chip to keep the dial on it
+function buildFaceChips(){
+const box = document.getElementById('faceChips');
+if(!box || box.childElementCount) return;
+HERO_FACES.forEach(function(f, i){
+const b = document.createElement('button');
+b.type = 'button'; b.className = 'face-chip'; b.dataset.i = i;
+b.title = 'Tap to keep the dial on ' + f.tx.toLowerCase() + '; tap again to let it cycle';
+b.innerHTML = '<span class="ic">' + f.ic + '</span><span class="tx">' + f.tx + '</span>';
+b.addEventListener('click', function(){
+const cur = heroFaceIndex % 6;
+if(heroHold && cur === i){ heroHold = false; }
+else { heroHold = true; heroFaceIndex = i; }
+renderHeroFace();
+});
+box.appendChild(b);
+});
+}
+function markFaceChips(){
+const face = heroFaceIndex % 6;
+document.querySelectorAll('#faceChips .face-chip').forEach(function(b, i){
+b.classList.toggle('on', i === face);
+b.classList.toggle('held', heroHold && i === face);
+});
+}
 function renderHeroFace(){
+buildFaceChips();
+markFaceChips();
 if(liveData.temp === null) return;
 const valEl = document.getElementById('heroValue');
 const condEl = document.getElementById('heroCond');
@@ -1901,6 +1974,183 @@ valEl.innerHTML = (liveData.pressure !== null ? Math.round(liveData.pressure) : 
 condEl.textContent = 'PRESSURE';
 }
 }
+// ---------- AT A GLANCE: sun, tide, sea and moon (the column around the dial) ----------
+const GL = { sun:null, tides:null, sea:null };
+const GL_HM = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const GL_DAY = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'numeric', month:'short' });
+function glMins(ms){ const m = Math.round(Math.abs(ms) / 60000); return Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm'; }
+/* sunrise and sunset for yesterday, today and tomorrow (UTC, from Open-Meteo) */
+async function loadSun(){
+try{
+const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON + '&daily=sunrise,sunset&timezone=GMT&past_days=1&forecast_days=2');
+const j = await r.json();
+if(!j.daily || !j.daily.sunrise) throw new Error('no sun data');
+GL.sun = j.daily.time.map(function(d, i){ return { day:d, rise:new Date(j.daily.sunrise[i] + 'Z'), set:new Date(j.daily.sunset[i] + 'Z') }; });
+}catch(e){ console.warn('sun times not loaded', e); }
+drawSun();
+}
+function drawSun(){
+const svg = document.getElementById('sunSvg'), foot = document.getElementById('sunFoot');
+if(!svg) return;
+if(!GL.sun || GL.sun.length < 2){ foot.textContent = 'SUN TIMES UNAVAILABLE'; return; }
+const now = new Date();
+const today = GL.sun.find(d => d.rise.toDateString() === now.toDateString()) || GL.sun[1];
+const yday = GL.sun[GL.sun.indexOf(today) - 1];
+const tmrw = GL.sun[GL.sun.indexOf(today) + 1];
+const x0 = 28, x1 = 292, yH = 72, Hh = 58;
+const pt = f => [x0 + f * (x1 - x0), yH - Hh * Math.sin(Math.PI * f)];
+const arc = function(f0, f1){ let d = ''; for(let k = 0; k <= 40; k++){ const p = pt(f0 + (f1 - f0) * k / 40); d += (k ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1); } return d; };
+const isDay = now >= today.rise && now <= today.set;
+const f = Math.max(0, Math.min(1, (now - today.rise) / (today.set - today.rise)));
+let g = '<defs><radialGradient id="sunGlow"><stop offset="0" stop-color="#ffd166" stop-opacity="0.95"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></radialGradient>' +
+'<linearGradient id="sunSky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffb020" stop-opacity="0.18"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></linearGradient></defs>';
+g += '<path d="' + arc(0, 1) + '" fill="none" stroke="#3a4e58" stroke-width="2" stroke-dasharray="3 5"/>';
+if(isDay){
+g += '<path d="' + arc(0, f) + 'L' + pt(f)[0].toFixed(1) + ',' + yH + 'L' + x0 + ',' + yH + 'Z" fill="url(#sunSky)"/>';
+g += '<path d="' + arc(0, f) + '" fill="none" stroke="#ffb020" stroke-width="2.5"/>';
+}
+g += '<line x1="8" x2="312" y1="' + yH + '" y2="' + yH + '" stroke="#5f7c88" stroke-width="1"/>';
+if(isDay){
+const p = pt(f);
+g += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="17" fill="url(#sunGlow)"/><circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="7" fill="#ffd166"/>';
+} else {
+g += '<text x="160" y="52" text-anchor="middle" font-size="24">\ud83c\udf19</text>';
+}
+g += '<text x="' + x0 + '" y="91" text-anchor="middle" fill="#ffb020" font-size="12" font-weight="700" font-family="JetBrains Mono, monospace">\u2191 ' + GL_HM.format(today.rise) + '</text>';
+g += '<text x="' + x1 + '" y="91" text-anchor="middle" fill="#ff8c30" font-size="12" font-weight="700" font-family="JetBrains Mono, monospace">\u2193 ' + GL_HM.format(today.set) + '</text>';
+svg.innerHTML = g;
+const len = today.set - today.rise, dlen = yday ? len - (yday.set - yday.rise) : 0;
+let txt = '<b>' + glMins(len) + '</b> DAYLIGHT' + (yday ? ' (' + (dlen < 0 ? '\u2212' : '+') + Math.round(Math.abs(dlen) / 60000) + ' MIN)' : '');
+if(!isDay && now > today.set && tmrw) txt += ' &middot; RISES <b>' + GL_HM.format(tmrw.rise) + '</b>';
+else if(isDay) txt += ' &middot; SETS IN <b>' + glMins(today.set - now) + '</b>';
+else txt += ' &middot; RISES IN <b>' + glMins(today.rise - now) + '</b>';
+foot.innerHTML = txt;
+}
+/* the tide feed from the backend (the same one the Sea & Tides page uses; cached there for 6 hours) */
+function glTideDate(dateText, timeStr){
+const parts = dateText.trim().split(' ');
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const day = parseInt(parts[1], 10), month = months.indexOf(parts[2]);
+const hm = timeStr.split(':').map(Number);
+const now = new Date();
+let d = new Date(now.getFullYear(), month, day, hm[0], hm[1], 0);
+if(d.getTime() < now.getTime() - 200 * 86400000) d = new Date(now.getFullYear() + 1, month, day, hm[0], hm[1], 0);
+return d;
+}
+async function loadGlanceTides(){
+try{
+const r = await fetch(WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=tides');
+const j = await r.json();
+if(j.status !== 'ok' || !j.events || !j.events.length) throw new Error('no tides');
+GL.tides = j.events.map(e => ({ type:e.type, h:Number(e.heightM), dt:glTideDate(e.dateText, e.time) })).filter(e => !isNaN(e.h)).sort((a, b) => a.dt - b.dt);
+}catch(e){ console.warn('tides not loaded', e); }
+drawTide();
+}
+function drawTide(){
+const svg = document.getElementById('tideSvg'), foot = document.getElementById('tideFoot'), badge = document.getElementById('tideBadge');
+if(!svg) return;
+const ev = GL.tides;
+if(!ev || ev.length < 3){ foot.textContent = 'TIDE TIMES UNAVAILABLE'; return; }
+const now = new Date();
+const t0 = now.getTime() - 3 * 3600000, t1 = now.getTime() + 21 * 3600000;
+const level = function(t){
+for(let i = 0; i < ev.length - 1; i++){
+const a = ev[i], b = ev[i + 1];
+if(t >= a.dt && t <= b.dt){ const fr = (t - a.dt) / (b.dt - a.dt); return a.h + (b.h - a.h) * (1 - Math.cos(Math.PI * fr)) / 2; }
+}
+return null;
+};
+const X = t => 6 + (t - t0) / (t1 - t0) * 308;
+const hs = ev.map(e => e.h), lo = Math.min.apply(null, hs) - 0.5, hi = Math.max.apply(null, hs) + 0.5;
+const Y = v => 66 - (v - lo) / (hi - lo) * 52;
+let d = '', area = '';
+for(let k = 0; k <= 96; k++){
+const t = t0 + (t1 - t0) * k / 96, v = level(t);
+if(v === null) continue;
+d += (d ? 'L' : 'M') + X(t).toFixed(1) + ',' + Y(v).toFixed(1);
+}
+let g = '<defs><linearGradient id="tideFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4cd3ff" stop-opacity="0.45"/><stop offset="1" stop-color="#4cd3ff" stop-opacity="0.04"/></linearGradient></defs>';
+if(d) g += '<path d="' + d + 'L314,72L6,72Z" fill="url(#tideFill)"/><path d="' + d + '" fill="none" stroke="#4cd3ff" stroke-width="2"/>';
+const nv = level(now.getTime());
+g += '<line x1="' + X(now.getTime()).toFixed(1) + '" x2="' + X(now.getTime()).toFixed(1) + '" y1="4" y2="72" stroke="#e9f6f5" stroke-width="1.2" stroke-dasharray="3 3"/>';
+if(nv !== null) g += '<circle cx="' + X(now.getTime()).toFixed(1) + '" cy="' + Y(nv).toFixed(1) + '" r="4.5" fill="#e9f6f5"/><text x="' + X(now.getTime()).toFixed(1) + '" y="81" text-anchor="middle" fill="#e9f6f5" font-size="9" font-weight="700" font-family="JetBrains Mono, monospace">NOW</text>';
+ev.filter(e => e.dt >= t0 && e.dt <= t1).forEach(function(e){
+const x = X(e.dt.getTime()), y = Y(e.h), hiW = e.type === 'high';
+g += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5" fill="' + (hiW ? '#4cd3ff' : '#5f7c88') + '"/>';
+g += '<text x="' + x.toFixed(1) + '" y="' + (hiW ? y - 7 : y + 14).toFixed(1) + '" text-anchor="middle" fill="' + (hiW ? '#4cd3ff' : '#9db4bd') + '" font-size="10" font-weight="700" font-family="JetBrains Mono, monospace">' + GL_HM.format(e.dt) + '</text>';
+});
+svg.innerHTML = g;
+const nextHW = ev.find(e => e.type === 'high' && e.dt > now);
+const nextAny = ev.find(e => e.dt > now);
+let txt = nextHW ? 'NEXT HIGH WATER <b>' + GL_HM.format(nextHW.dt) + '</b> &middot; <b>' + nextHW.h.toFixed(1) + ' M</b> &middot; IN ' + glMins(nextHW.dt - now) : '';
+if(nextAny && nextAny !== nextHW && nextAny.type === 'low') txt += '<br>LOW WATER ' + GL_HM.format(nextAny.dt) + ' &middot; ' + nextAny.h.toFixed(1) + ' M';
+foot.innerHTML = txt || 'TIDE TIMES UNAVAILABLE';
+/* spring / neap, by today's range (the same rule as the Sea & Tides page) */
+const todays = ev.filter(e => e.dt.toDateString() === now.toDateString()).map(e => e.h);
+badge.innerHTML = '';
+if(todays.length >= 2){
+const range = Math.max.apply(null, todays) - Math.min.apply(null, todays);
+if(range >= 8.5) badge.innerHTML = '<span class="tide-badge spring">BIG SPRING TIDES</span>';
+else if(range <= 5) badge.innerHTML = '<span class="tide-badge neap">NEAPS</span>';
+}
+}
+/* sea temperature and wave height (the same marine source as the Sea & Tides page) */
+async function loadGlanceSea(){
+try{
+const r = await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=' + LAT + '&longitude=' + LON + '&current=wave_height,sea_surface_temperature&timezone=auto');
+const j = await r.json();
+if(!j.current) throw new Error('no marine data');
+GL.sea = { sst:j.current.sea_surface_temperature, wave:j.current.wave_height };
+}catch(e){ console.warn('sea not loaded', e); }
+drawSea();
+}
+function drawSea(){
+const svg = document.getElementById('seaSvg'), foot = document.getElementById('seaFoot');
+if(!svg) return;
+const s = GL.sea;
+if(!s || s.sst == null){ foot.textContent = 'SEA DATA UNAVAILABLE'; return; }
+const col = tempScaleColor(s.sst);
+const wv = s.wave == null ? null : s.wave;
+const amp = wv == null ? 4 : Math.max(2.5, Math.min(13, wv * 5));
+let wave = '';
+for(let x = 0; x <= 150; x += 3) wave += (x ? 'L' : 'M') + x + ',' + (64 + amp * Math.sin(x / 11)).toFixed(1);
+let g = '<path d="' + wave + 'L150,84L0,84Z" fill="rgba(76,211,255,0.22)"/><path d="' + wave + '" fill="none" stroke="#4cd3ff" stroke-width="2"/>';
+g += '<text x="75" y="38" text-anchor="middle" fill="' + col + '" font-size="34" font-weight="900" font-family="Orbitron, sans-serif">' + s.sst.toFixed(1) + '<tspan font-size="14" fill="#4cd3ff">\u00b0C</tspan></text>';
+svg.innerHTML = g;
+const air = liveData.temp;
+foot.innerHTML = (wv != null ? 'WAVES <b>' + wv.toFixed(1) + ' M</b>' : '') + (air != null ? (wv != null ? '<br>' : '') + 'AIR ' + Math.round(air) + '\u00b0 &middot; SEA IS ' + (s.sst >= air ? '<b>' + (s.sst - air).toFixed(0) + '\u00b0 WARMER</b>' : '<b>' + (air - s.sst).toFixed(0) + '\u00b0 COOLER</b>') : '');
+}
+/* moon phase, worked out here (no data source): synodic month from a known new moon */
+const MOON_P = 29.530588853, MOON_EPOCH = Date.UTC(2000, 0, 6, 18, 14);
+function moonAge(t){ const a = ((t - MOON_EPOCH) / 86400000) % MOON_P; return a < 0 ? a + MOON_P : a; }
+function drawMoon(){
+const svg = document.getElementById('moonSvg'), foot = document.getElementById('moonFoot');
+if(!svg) return;
+const now = Date.now(), age = moonAge(now), ph = age / MOON_P;
+const illum = (1 - Math.cos(2 * Math.PI * ph)) / 2;
+const names = [[1.0, 'NEW MOON'], [6.4, 'WAXING CRESCENT'], [8.4, 'FIRST QUARTER'], [13.8, 'WAXING GIBBOUS'], [15.8, 'FULL MOON'], [21.1, 'WANING GIBBOUS'], [23.1, 'LAST QUARTER'], [28.5, 'WANING CRESCENT'], [99, 'NEW MOON']];
+const name = names.find(n => age < n[0])[1];
+const cx = 75, cy = 36, r = 27, c = Math.cos(2 * Math.PI * ph), rx = Math.abs(c) * r;
+const waxing = ph < 0.5, so = waxing ? 1 : 0, st = c > 0 ? 1 - so : so;
+let g = '<defs><radialGradient id="moonLit" cx="0.4" cy="0.35"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#d9d2b0"/></radialGradient></defs>';
+g += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 6) + '" fill="rgba(255,251,232,' + (0.05 + 0.12 * illum).toFixed(2) + ')"/>';
+g += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#1a2630" stroke="#3a4e58" stroke-width="1"/>';
+if(illum > 0.01) g += '<path d="M' + cx + ',' + (cy - r) + ' A' + r + ',' + r + ' 0 0 ' + so + ' ' + cx + ',' + (cy + r) + ' A' + rx.toFixed(2) + ',' + r + ' 0 0 ' + st + ' ' + cx + ',' + (cy - r) + ' Z" fill="url(#moonLit)"/>';
+g += '<text x="' + cx + '" y="80" text-anchor="middle" fill="#e9f6f5" font-size="10.5" font-weight="700" font-family="JetBrains Mono, monospace">' + Math.round(illum * 100) + '% LIT</text>';
+svg.innerHTML = g;
+const toFull = ((MOON_P / 2 - age) + MOON_P) % MOON_P, toNew = MOON_P - age;
+const nextName = toFull < toNew ? 'FULL' : 'NEW', nextDays = Math.min(toFull, toNew);
+const nextDate = new Date(now + nextDays * 86400000);
+foot.innerHTML = '<b>' + name + '</b><br>' + nextName + ' MOON ' + (nextDays < 1 ? 'TONIGHT' : GL_DAY.format(nextDate).replace(/,/g, '').toUpperCase());
+}
+function initGlance(){
+loadSun(); loadGlanceTides(); loadGlanceSea(); drawMoon(); buildFaceChips(); markFaceChips();
+setInterval(function(){ drawSun(); drawTide(); drawMoon(); drawSea(); }, 60 * 1000);     // move the sun and the "now" marker along
+setInterval(loadSun, 6 * 3600000);
+setInterval(loadGlanceSea, 30 * 60000);
+setInterval(loadGlanceTides, 3 * 3600000);
+}
+initGlance();
 // ---------- LIVE IMAGERY (radar / satellite / lightning) ----------
 function initImagery(){
 const map = L.map('radar-map', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true})
@@ -4484,7 +4734,7 @@ initStormWatch();
 initStormTracker();
 initImagery();
 setInterval(refreshAll, 10*60*1000);
-setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000);
+setInterval(()=>{ if(!heroHold){ heroFaceIndex++; } renderHeroFace(); }, 4000);
 loadNews();
 loadElninoNews();
 setInterval(showNextHeadline, 6000);
