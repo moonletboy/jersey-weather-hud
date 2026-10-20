@@ -211,6 +211,71 @@ border:1px solid var(--line); border-radius:12px; padding:18px 20px;
 .uv-legend{ display:flex; gap:4px; margin-top:13px; border-radius:6px; overflow:hidden; }
 .uv-seg{ flex:1; text-align:center; font-size:8px; letter-spacing:0.5px; padding:6px 2px; color:#05080d; font-weight:800; opacity:0.32; transition:opacity .3s ease; }
 .uv-seg.active{ opacity:1; box-shadow:0 0 12px rgba(0,0,0,0.25) inset; }
+/* ===== NOW: headline strip, reading tiles, Jersey at a glance ===== */
+.now{ margin-bottom:36px; padding-top:20px; }
+.now-head{
+display:flex; align-items:center; gap:20px; padding:16px 22px; margin-bottom:16px;
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); border:1px solid var(--line); border-radius:14px;
+}
+.now-icon{ font-size:52px; line-height:1; flex-shrink:0; }
+.now-temp{ font-family:'Orbitron',sans-serif; font-size:56px; font-weight:900; line-height:1; flex-shrink:0; text-shadow:0 0 22px rgba(76,211,255,0.25); }
+.now-temp .unit{ font-size:20px; color:var(--cyan); vertical-align:top; margin-left:2px; }
+.now-text{ flex:1; min-width:0; }
+.now-cond{ font-size:15px; letter-spacing:2px; font-weight:800; color:var(--green); }
+.now-ticker{ display:flex; align-items:center; gap:10px; margin-top:8px; font-size:13px; letter-spacing:1px; color:var(--text); min-height:24px; }
+.now-ticker #heroValue{ cursor:pointer; }
+.now-ticker .tk-in{ animation:tkIn .5s ease; }
+@keyframes tkIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+.now-pause{ flex-shrink:0; width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:transparent; color:var(--cyan); font-size:9px; cursor:pointer; line-height:1; }
+.now-pause:hover{ border-color:var(--cyan); }
+.now-loc{ font-size:9px; letter-spacing:1.5px; color:var(--dim); text-align:right; line-height:1.7; flex-shrink:0; }
+.now-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; margin-bottom:14px; }
+.nt{
+background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
+border:1px solid var(--line); border-radius:12px; padding:14px 16px 10px; display:flex; flex-direction:column; min-width:0;
+}
+.nt-lbl{ font-size:10px; letter-spacing:3px; color:var(--dim); margin-bottom:10px; }
+.nt-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.nt-main{ min-width:0; }
+.nt-thermo{ flex-shrink:0; width:24px; }
+.nt-thermo .thermo-wrap{ height:56px; }
+.nt-thermo .thermo-tube{ height:56px; }
+.nt-thermo .thermo-bulb{ margin-bottom:0; }
+.nt .wind-gauge{ margin:0; flex-shrink:0; }
+.nt .arc-wrap{ margin:0; flex-shrink:0; }
+.nt .arc-wrap svg{ width:84px; height:48px; }
+.nt-val b{ font-weight:inherit; }
+.nt .stat-block-trend{ margin-top:8px; }
+.nt-spark{ width:100%; height:30px; margin-top:auto; padding-top:10px; }
+.nt-spark-lg{ height:40px; }
+.nt-spark polyline{ vector-effect:non-scaling-stroke; }
+.nt-spark circle{ display:none; }
+.nt-foot{ font-size:8px; letter-spacing:1.5px; color:var(--dim2); margin-top:3px; }
+.nt .uv-legend{ margin-top:10px; }
+.nt-rain{ grid-column:span 2; }
+.nt-rainwrap{ display:grid; grid-template-columns:auto minmax(0, 1fr); gap:20px; align-items:end; }
+.nt-rain .rain-week{ margin-top:0; padding-top:0; border-top:0; }
+.nt-rain .rain-row{ gap:20px; }
+.bf-bars{ display:flex; align-items:flex-end; gap:2px; height:26px; margin-top:12px; }
+.bf-bars i{ flex:1; border-radius:2px 2px 0 0; background:rgba(255,255,255,0.08); }
+.bf-bars span{ font-family:'Orbitron',sans-serif; font-size:11px; font-weight:800; color:var(--text); margin-left:6px; align-self:center; }
+.glance-strip{ display:grid; grid-template-columns:1.3fr 1.3fr 0.8fr 0.8fr; gap:14px; }
+@media (max-width:1000px){
+.now-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.glance-strip{ grid-template-columns:1fr 1fr; }
+}
+@media (max-width:640px){
+.now-head{ flex-wrap:wrap; gap:12px 16px; padding:14px 16px; }
+.now-icon{ font-size:40px; }
+.now-temp{ font-size:44px; }
+.now-text{ flex-basis:100%; order:3; }
+.now-loc{ margin-left:auto; }
+.nt-rainwrap{ grid-template-columns:1fr; }
+.glance-strip .sun-panel, .glance-strip .tide-panel{ grid-column:span 2; }
+.nt-wind{ grid-column:span 2; }
+.now-grid{ grid-auto-flow:row dense; }
+.now-grid > .nt:last-child{ grid-column:span 2; }
+}
 /* the column around the dial: sun, dial, face chips, tide, sea and moon */
 .hero-left{ width:100%; max-width:360px; display:flex; flex-direction:column; gap:14px; }
 .glance{
@@ -852,73 +917,76 @@ footer b{ color:var(--dim); }
 <a href="jersey-sea-tides.html">SEA &amp; TIDES</a>
 <a href="microclimate-grid.html">MICROCLIMATE</a>
 </nav>
-<div class="hero">
-<div class="hero-left">
-<a class="glance sun-panel" id="sunPanel" href="#" onclick="return false;" aria-label="Sunrise and sunset"><div class="glance-lbl">SUN &middot; DAYLIGHT</div><svg id="sunSvg" viewBox="0 0 320 96" aria-hidden="true"></svg><div class="glance-foot" id="sunFoot">&mdash;</div></a>
-<div class="radar-hero" id="radarHero">
-<div class="ring"></div>
-<div class="sweep"></div>
-<div class="blip" style="top:30%; left:62%; animation-delay:0.3s;"></div>
-<div class="blip" style="top:65%; left:38%; animation-delay:1.3s;"></div>
-<div class="blip" style="top:48%; left:78%; animation-delay:2.1s;"></div>
-<div class="center">
-<div class="dial-value" id="heroValue">--<span class="unit">&deg;C</span></div>
-<div class="cond" id="heroCond">ACQUIRING SIGNAL&hellip;</div>
-<div class="loc-mini">49.18&deg;N &middot; 2.11&deg;W &middot; JERSEY, CI</div>
+<!-- NOW: a headline strip, one tile per reading (each with its last 12 hours), and Jersey at a glance -->
+<section class="now">
+<div class="now-head">
+<div class="now-icon" id="nowIcon">&#9729;&#65039;</div>
+<div class="now-temp" id="nowTemp">--<span class="unit">&deg;C</span></div>
+<div class="now-text">
+<div class="now-cond" id="heroCond">ACQUIRING SIGNAL&hellip;</div>
+<div class="now-ticker"><button type="button" class="now-pause" id="nowPause" aria-label="Pause the cycling line">&#10073;&#10073;</button><span id="heroValue">&mdash;</span></div>
 </div>
+<div class="now-loc">JERSEY, CI<br>49.18&deg;N &middot; 2.11&deg;W</div>
 </div>
-<div class="face-chips" id="faceChips" role="group" aria-label="Choose what the dial shows"></div>
-<a class="glance tide-panel" id="tidePanel" href="jersey-sea-tides.html" aria-label="Tides"><div class="glance-lbl">TIDE &middot; ST HELIER <span id="tideBadge"></span></div><svg id="tideSvg" viewBox="0 0 320 82" aria-hidden="true"></svg><div class="glance-foot" id="tideFoot">LOADING TIDES&hellip;</div></a>
-<div class="glance-row">
-<a class="glance sea-panel" id="seaPanel" href="jersey-sea-tides.html" aria-label="Sea temperature and waves"><div class="glance-lbl">SEA</div><svg id="seaSvg" viewBox="0 0 150 84" aria-hidden="true"></svg><div class="glance-foot" id="seaFoot">&mdash;</div></a>
-<a class="glance moon-panel" id="moonPanel" href="jersey-space-weather.html" aria-label="Moon phase"><div class="glance-lbl">MOON</div><svg id="moonSvg" viewBox="0 0 150 84" aria-hidden="true"></svg><div class="glance-foot" id="moonFoot">&mdash;</div></a>
-</div>
-</div>
-<div class="hero-stack">
-<div class="stat-block">
-<div class="stat-block-label">CURRENT AIR TEMPERATURE</div>
-<div class="stat-block-main">
+<div class="now-grid">
+<div class="nt">
+<div class="nt-lbl">TEMPERATURE</div>
+<div class="nt-row">
+<div class="nt-thermo"><div class="thermo-wrap"><div class="thermo-tube"><div class="thermo-fill" id="thermoFill"></div></div></div><div class="thermo-bulb" id="thermoBulb"></div></div>
+<div class="nt-main">
 <div class="stat-block-value" id="tempBlockValue">--<span class="unit">&deg;C</span></div>
-</div>
 <div class="stat-block-sub" id="tempBlockSub">FEELS LIKE --&deg; &middot; &mdash;</div>
+</div>
+</div>
 <div class="stat-block-trend" id="tempBlockTrend">&mdash;</div>
+<svg class="mini-spark nt-spark" id="tempSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS</div>
 </div>
-<div class="stat-block">
-<div class="stat-block-label">AVERAGE WIND SPEED</div>
-<div class="stat-block-main">
+<div class="nt nt-wind">
+<div class="nt-lbl">WIND &amp; GUSTS</div>
+<div class="nt-row">
+<div class="wind-gauge" id="g-wind">
+<div class="ring outer"></div>
+<div class="ring inner"></div>
+<svg class="wind-dir-arrow" id="windDirArrow" viewBox="0 0 84 84" width="84" height="84">
+<line x1="42" y1="42" x2="42" y2="16" stroke="#fff" stroke-width="2"/>
+<polygon points="42,10 37,20 47,20" fill="#fff"/>
+</svg>
+<b id="wind-center">--<small id="wind-gust-label">G--</small></b>
+</div>
+<div class="nt-main">
 <div class="stat-block-value" id="windBlockValue">-- <span class="unit">MPH</span></div>
-<span class="wind-arrow wind-arrow-big" id="windBlockArrow">&uarr;</span>
-<span class="stat-block-gust" id="windBlockGust">GUST -- MPH</span>
-</div>
+<div class="stat-block-gust" id="windBlockGust">GUST -- MPH</div>
 <div class="stat-block-sub" id="windBlockDir">DIRECTION &mdash;</div>
+</div>
+</div>
+<div class="bf-bars" id="bfBars"></div>
 <div class="stat-block-trend" id="windBlockBeaufort">&mdash;</div>
 <div class="stat-block-sub" id="windBlockEffect">&mdash;</div>
+<svg class="mini-spark nt-spark" id="windSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS &middot; <span style="color:var(--cyan);">SPEED</span> &middot; <span style="color:var(--red);">GUST</span></div>
 </div>
-<div class="stat-block">
-<div class="stat-block-label">AIR PRESSURE</div>
+<div class="nt">
+<div class="nt-lbl">PRESSURE</div>
 <div class="stat-block-main">
 <div class="stat-block-value" id="pressureBlockValue">-- <span class="unit">MB</span></div>
 <span id="pressureIcon">&rarr;</span>
 </div>
 <div class="stat-block-trend" id="pressureBlockTrend">&mdash;</div>
-<svg class="mini-spark mini-spark-lg" id="pressureSpark" viewBox="0 0 100 28" style="width:100%; margin-top:12px;"></svg>
+<svg class="mini-spark nt-spark nt-spark-lg" id="pressureSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS</div>
 </div>
-<div class="stat-block">
-<div class="stat-block-label">UV INDEX</div>
-<div class="stat-block-main">
-<div class="stat-block-value" id="uvBlockValue">--</div>
+<div class="nt">
+<div class="nt-lbl">HUMIDITY</div>
+<div class="stat-block-value nt-val" id="g-hum"><b>--%</b></div>
+<div class="bar-track"><div class="bar-fill" id="humBarFill"></div></div>
+<div class="stat-block-sub" id="s-hum">&mdash;</div>
+<svg class="mini-spark nt-spark nt-spark-lg" id="humSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS</div>
 </div>
-<div class="stat-block-sub" id="uvBlockAdvice">&mdash;</div>
-<div class="uv-legend">
-<div class="uv-seg" id="uvSeg0" style="background:#2de1a0">LOW</div>
-<div class="uv-seg" id="uvSeg1" style="background:#e0d341">MODERATE</div>
-<div class="uv-seg" id="uvSeg2" style="background:#ff8c30">HIGH</div>
-<div class="uv-seg" id="uvSeg3" style="background:#ff4b5c">VERY HIGH</div>
-<div class="uv-seg" id="uvSeg4" style="background:#b98aff">EXTREME</div>
-</div>
-</div>
-<div class="stat-block rainfall-block" id="rainfallBlock">
-<div class="stat-block-label">RAINFALL</div>
+<div class="nt nt-rain" id="rainfallBlock">
+<div class="nt-lbl">RAIN</div>
+<div class="nt-rainwrap">
 <div class="rain-visual-row">
 <div class="rain-bucket" id="rainBucket">
 <div class="rain-bucket-fill" id="rainBucketFill"><div class="rain-bucket-wave"></div></div>
@@ -932,66 +1000,33 @@ footer b{ color:var(--dim); }
 <div class="stat-block-value" id="rainTodayValue">--<span class="unit">MM</span></div>
 </div>
 <div class="rain-item">
-<div class="rain-item-label">YESTERDAY TOTAL</div>
+<div class="rain-item-label">YESTERDAY</div>
 <div class="stat-block-value" id="rainYesterdayValue">--<span class="unit">MM</span></div>
 </div>
 </div>
 </div>
 <div class="rain-week">
 <div class="rain-week-head">
-<div class="rain-item-label" style="margin-bottom:0;">LAST 7 DAYS (INCLUDING TODAY SO FAR)</div>
+<div class="rain-item-label" style="margin-bottom:0;">LAST 7 DAYS</div>
 <div class="rain-week-total" id="rainWeekTotal">--<span class="unit">MM TOTAL</span></div>
 </div>
 <div class="rain-week-bars" id="rainWeekBars"></div>
-<div class="rain-note">Rainfall is estimated by the Open-Meteo weather model for Jersey, not read from a rain gauge, so it can differ from what a gauge records.</div>
+</div>
 </div>
 <div class="stat-block-sub" id="rainDaysSub">&mdash;</div>
 <div class="radar-read" id="radarReadText">
 <span class="radar-read-dot" id="radarReadDot"></span>
 <span id="radarReadLabel">Checking radar&hellip;</span>
 </div>
+<div class="rain-note">Rainfall is estimated by the Open-Meteo weather model for Jersey, not read from a rain gauge, so it can differ from what a gauge records.</div>
 <div class="drought-banner" id="droughtBanner" style="display:none;">
 <div class="drought-title">&#9888; DROUGHT CONDITIONS &mdash; 15+ DAYS WITHOUT RAIN</div>
 <div class="drought-advice">Ground conditions are tinder-dry. Avoid open flames, discarded cigarettes and garden fires &mdash; grass and gorse fires spread fast in this state. Report smoke or fires to the Fire and Rescue Service.</div>
 </div>
 </div>
-</div>
-</div>
-<!-- CURRENT CONDITIONS -->
-<section>
-<div class="sec-head">
-<h3>CURRENT CONDITIONS</h3>
-<div class="bar"></div>
-<div class="tag">UPDATED LIVE</div>
-</div>
-<div class="grid5" id="grid5">
-<div class="tile">
-<div class="lbl">TEMPERATURE</div>
-<div class="thermo-wrap"><div class="thermo-tube"><div class="thermo-fill" id="thermoFill"></div></div></div>
-<div class="thermo-bulb" id="thermoBulb"></div>
-<div class="val-lg" id="g-temp"><b>--&deg;</b></div>
-<div class="sub" id="s-temp">&mdash;</div>
-</div>
-<div class="tile">
-<div class="lbl">HUMIDITY</div>
-<div class="val-lg" id="g-hum"><b>--%</b></div>
-<div class="bar-track"><div class="bar-fill" id="humBarFill"></div></div>
-<div class="sub" id="s-hum">&mdash;</div>
-</div>
-<div class="tile">
-<div class="lbl">HEAT INDEX</div>
-<div class="ladder" id="heatLadder"></div>
-<div class="val-lg" id="g-heat"><b>--&deg;</b></div>
-<div class="sub" id="s-heat">&mdash;</div>
-</div>
-<div class="tile">
-<div class="lbl">AIR QUALITY</div>
-<div class="val-lg" id="g-aqi"><b>--</b></div>
-<div class="bar-track bar-zoned"><div class="bar-marker" id="aqiMarker"></div></div>
-<div class="sub" id="s-aqi">&mdash;</div>
-</div>
-<div class="tile">
-<div class="lbl">UV INDEX</div>
+<div class="nt">
+<div class="nt-lbl">UV INDEX</div>
+<div class="nt-row">
 <div class="arc-wrap">
 <svg viewBox="0 0 120 68" width="72" height="41">
 <path d="M 10 60 A 50 50 0 0 1 24.65 24.65" fill="none" stroke="#2de1a0" stroke-width="9" stroke-linecap="round"/>
@@ -1003,59 +1038,40 @@ footer b{ color:var(--dim); }
 <circle cx="60" cy="60" r="4" fill="#fff"/>
 </svg>
 </div>
-<div class="val-lg" id="g-uv"><b>--</b></div>
-<div class="sub" id="s-uv">&mdash;</div>
+<div class="nt-main"><div class="stat-block-value" id="uvBlockValue">--</div></div>
 </div>
-<div class="tile">
-<div class="lbl">WIND / GUST</div>
-<div class="wind-gauge" id="g-wind">
-<div class="ring outer"></div>
-<div class="ring inner"></div>
-<svg class="wind-dir-arrow" id="windDirArrow" viewBox="0 0 84 84" width="84" height="84">
-<line x1="42" y1="42" x2="42" y2="16" stroke="#fff" stroke-width="2"/>
-<polygon points="42,10 37,20 47,20" fill="#fff"/>
-</svg>
-<b id="wind-center">--<small id="wind-gust-label">G--</small></b>
+<div class="stat-block-sub" id="uvBlockAdvice">&mdash;</div>
+<div class="uv-legend">
+<div class="uv-seg" id="uvSeg0" style="background:#2de1a0">LOW</div>
+<div class="uv-seg" id="uvSeg1" style="background:#e0d341">MOD</div>
+<div class="uv-seg" id="uvSeg2" style="background:#ff8c30">HIGH</div>
+<div class="uv-seg" id="uvSeg3" style="background:#ff4b5c">V HIGH</div>
+<div class="uv-seg" id="uvSeg4" style="background:#b98aff">EXTR</div>
 </div>
-<div class="wind-legend">
-<span><i style="background:var(--cyan)"></i>SPEED</span>
-<span><i style="background:var(--red)"></i>GUST</span>
+<svg class="mini-spark nt-spark" id="uvSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS</div>
 </div>
-<div class="sub" id="s-wind">MPH</div>
-</div>
-</div>
-<div class="history-panel">
-<div class="history-head">
-<span>LAST 12 HOURS HISTORY</span>
-</div>
-<div class="history-grid">
-<div class="history-item">
-<div class="history-lbl">TEMPERATURE</div>
-<svg class="mini-spark mini-spark-lg" id="tempSpark" viewBox="0 0 100 28"></svg>
-</div>
-<div class="history-item">
-<div class="history-lbl">HUMIDITY</div>
-<svg class="mini-spark mini-spark-lg" id="humSpark" viewBox="0 0 100 28"></svg>
-</div>
-<div class="history-item">
-<div class="history-lbl">HEAT INDEX</div>
-<svg class="mini-spark mini-spark-lg" id="heatSpark" viewBox="0 0 100 28"></svg>
-</div>
-<div class="history-item">
-<div class="history-lbl">AIR QUALITY</div>
-<svg class="mini-spark mini-spark-lg" id="aqiSpark" viewBox="0 0 100 28"></svg>
-</div>
-<div class="history-item">
-<div class="history-lbl">UV INDEX</div>
-<svg class="mini-spark mini-spark-lg" id="uvSpark" viewBox="0 0 100 28"></svg>
-</div>
-<div class="history-item">
-<div class="history-lbl">WIND / GUST</div>
-<svg class="mini-spark mini-spark-lg" id="windSpark" viewBox="0 0 100 28"></svg>
+<div class="nt">
+<div class="nt-lbl">AIR QUALITY</div>
+<div class="stat-block-value nt-val" id="g-aqi"><b>--</b></div>
+<div class="bar-track bar-zoned"><div class="bar-marker" id="aqiMarker"></div></div>
+<div class="stat-block-sub" id="s-aqi">&mdash;</div>
+<svg class="mini-spark nt-spark nt-spark-lg" id="aqiSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS</div>
 </div>
 </div>
+<div class="glance-strip">
+<a class="glance sun-panel" id="sunPanel" href="#" onclick="return false;" aria-label="Sunrise and sunset"><div class="glance-lbl">SUN &middot; DAYLIGHT</div><svg id="sunSvg" viewBox="0 0 320 96" aria-hidden="true"></svg><div class="glance-foot" id="sunFoot">&mdash;</div></a>
+<a class="glance tide-panel" id="tidePanel" href="jersey-sea-tides.html" aria-label="Tides"><div class="glance-lbl">TIDE &middot; ST HELIER <span id="tideBadge"></span></div><svg id="tideSvg" viewBox="0 0 320 82" aria-hidden="true"></svg><div class="glance-foot" id="tideFoot">LOADING TIDES&hellip;</div></a>
+<a class="glance sea-panel" id="seaPanel" href="jersey-sea-tides.html" aria-label="Sea temperature and waves"><div class="glance-lbl">SEA</div><svg id="seaSvg" viewBox="0 0 150 84" aria-hidden="true"></svg><div class="glance-foot" id="seaFoot">&mdash;</div></a>
+<a class="glance moon-panel" id="moonPanel" href="jersey-space-weather.html" aria-label="Moon phase"><div class="glance-lbl">MOON</div><svg id="moonSvg" viewBox="0 0 150 84" aria-hidden="true"></svg><div class="glance-foot" id="moonFoot">&mdash;</div></a>
 </div>
 </section>
+<!-- readings the page still works out but no longer shows (kept so nothing that fills them breaks) -->
+<div id="legacyNow" hidden>
+<div id="g-temp"><b></b></div><div id="s-temp"></div><div id="g-uv"><b></b></div><div id="s-uv"></div><div id="s-wind"></div>
+<div id="heatLadder"></div><div id="g-heat"><b></b></div><div id="s-heat"></div><svg id="heatSpark"></svg><span id="windBlockArrow"></span>
+</div>
 <!-- 5-DAY FORECAST -->
 <section>
 <div class="sec-head">
@@ -1904,75 +1920,63 @@ return metarConditionIcon(metarData, isDay);
 }
 return liveConditionIcon(fallbackCode, fallbackCloudCover, isDay);
 }
-/* ---------- the six things the dial cycles through, as chips under it ---------- */
-const HERO_FACES = [
-{ ic:'\ud83c\udf21\ufe0f', tx:'TEMP' }, { ic:'\ud83d\udca8', tx:'WIND' }, { ic:'\u2600\ufe0f', tx:'UV' },
-{ ic:'\u26c5', tx:'SKY' }, { ic:'\ud83c\udf43', tx:'AIR' }, { ic:'\u23f2\ufe0f', tx:'PRESSURE' }
-];
-let heroHold = false;                      // true while someone has tapped a chip to keep the dial on it
-function buildFaceChips(){
-const box = document.getElementById('faceChips');
-if(!box || box.childElementCount) return;
-HERO_FACES.forEach(function(f, i){
-const b = document.createElement('button');
-b.type = 'button'; b.className = 'face-chip'; b.dataset.i = i;
-b.title = 'Tap to keep the dial on ' + f.tx.toLowerCase() + '; tap again to let it cycle';
-b.innerHTML = '<span class="ic">' + f.ic + '</span><span class="tx">' + f.tx + '</span>';
-b.addEventListener('click', function(){
-const cur = heroFaceIndex % 6;
-if(heroHold && cur === i){ heroHold = false; }
-else { heroHold = true; heroFaceIndex = i; }
-renderHeroFace();
-});
-box.appendChild(b);
-});
-}
-function markFaceChips(){
-const face = heroFaceIndex % 6;
-document.querySelectorAll('#faceChips .face-chip').forEach(function(b, i){
-b.classList.toggle('on', i === face);
-b.classList.toggle('held', heroHold && i === face);
-});
+/* ---------- the headline strip: sky, temperature, and one line that cycles through the other readings ----------
+   The line moves on every 4 seconds; the pause button (or tapping the line) keeps it still. */
+let heroHold = false;
+const HERO_COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function heroTickerItems(){
+const items = [];
+const txt = function(id){ const e = document.getElementById(id); return e ? e.textContent.replace(/\s+/g, ' ').trim() : ''; };
+const ok = function(t){ return t && t.indexOf('--') < 0 && t !== '\u2014'; };
+if(liveData.wind != null) items.push('\ud83d\udca8 WIND ' + Math.round(liveData.wind) + ' MPH' + (liveData.windDir != null ? ' ' + HERO_COMPASS[Math.round(liveData.windDir / 22.5) % 16] : '') + ' \u00b7 GUSTS ' + Math.round(liveData.gust) + ' MPH');
+const fl = txt('tempBlockSub'); if(ok(fl)) items.push('\ud83c\udf21\ufe0f ' + fl);
+if(liveData.pressure != null) items.push('\u23f2\ufe0f PRESSURE ' + Math.round(liveData.pressure) + ' MB \u00b7 ' + txt('pressureBlockTrend'));
+const hum = txt('g-hum'); if(ok(hum)) items.push('\ud83d\udca7 HUMIDITY ' + hum);
+if(liveData.uv != null) items.push('\u2600\ufe0f UV ' + liveData.uv.toFixed(1) + ' \u00b7 ' + uvCategory(liveData.uv).label);
+if(liveData.aqi != null) items.push('\ud83c\udf43 AIR QUALITY ' + liveData.aqi + ' \u00b7 ' + txt('s-aqi'));
+const rain = txt('rainTodayValue'); if(ok(rain)) items.push('\ud83c\udf27\ufe0f RAIN SINCE MIDNIGHT ' + rain);
+return items;
 }
 function renderHeroFace(){
-buildFaceChips();
-markFaceChips();
+const iconEl = document.getElementById('nowIcon'), tEl = document.getElementById('nowTemp');
+const condEl = document.getElementById('heroCond'), tick = document.getElementById('heroValue');
+if(!tEl) return;
+const pb = document.getElementById('nowPause');
+if(pb){ pb.innerHTML = heroHold ? '&#9654;' : '&#10073;&#10073;'; pb.setAttribute('aria-label', heroHold ? 'Let the line cycle again' : 'Pause the cycling line'); }
 if(liveData.temp === null) return;
-const valEl = document.getElementById('heroValue');
-const condEl = document.getElementById('heroCond');
-const face = heroFaceIndex % 6;
-const isWindy = liveData.wind >= 25;
-valEl.style.color = '';
-if(face === 0){
+tEl.innerHTML = Math.round(liveData.temp) + '<span class="unit">\u00b0C</span>';
+tEl.style.color = tempScaleColor(liveData.temp);
+const windy = liveData.wind >= 25;
 if(liveData.ice){
-valEl.innerHTML = '<span class="ice-icon">\u2744\ufe0f</span>';
-condEl.innerHTML = '<span class="ice-warn">\u26a0 ICE RISK</span>';
+iconEl.innerHTML = '<span class="ice-icon">\u2744\ufe0f</span>';
+condEl.innerHTML = '<span class="ice-warn">\u26a0 ICE RISK</span> \u00b7 ' + liveData.condLabel;
 } else {
-valEl.innerHTML = Math.round(liveData.temp) + '<span class="unit">&deg;C</span>';
-valEl.style.color = tempScaleColor(liveData.temp);
-condEl.textContent = liveData.trend;
+iconEl.textContent = windy ? '\ud83d\udca8' : liveData.condIcon;
+condEl.textContent = liveData.condLabel + (windy ? ' \u00b7 WINDY' : '');
 }
-} else if(face === 1){
-valEl.innerHTML = Math.round(liveData.wind) + '<span class="unit"> MPH</span>';
-condEl.textContent = 'WIND \u00b7 GUST ' + Math.round(liveData.gust) + ' MPH';
-} else if(face === 2){
-valEl.innerHTML = liveData.uv.toFixed(1);
-condEl.textContent = 'UV INDEX';
-} else if(face === 3){
-if(isWindy){
-valEl.textContent = '\ud83d\udca8';
-condEl.textContent = 'WINDY';
-} else {
-valEl.textContent = liveData.condIcon;
-condEl.textContent = liveData.condLabel;
+const items = heroTickerItems();
+if(!items.length){ tick.textContent = '\u2014'; return; }
+const line = items[heroFaceIndex % items.length];
+if(tick.textContent !== line){
+tick.textContent = line;
+tick.classList.remove('tk-in'); void tick.offsetWidth; tick.classList.add('tk-in');
 }
-} else if(face === 4){
-valEl.innerHTML = liveData.aqi !== null ? liveData.aqi : '--';
-condEl.textContent = 'AIR QUALITY (AQI)';
-} else {
-valEl.innerHTML = (liveData.pressure !== null ? Math.round(liveData.pressure) : '--') + '<span class="unit"> MB</span>';
-condEl.textContent = 'PRESSURE';
 }
+(function(){
+const pb = document.getElementById('nowPause'), tick = document.getElementById('heroValue');
+if(pb) pb.addEventListener('click', function(){ heroHold = !heroHold; renderHeroFace(); });
+if(tick) tick.addEventListener('click', function(){ heroFaceIndex++; renderHeroFace(); });
+})();
+/* the Beaufort scale as 13 bars, filled up to the current force */
+const BF_MPH = [0, 2, 5, 10, 16, 22, 28, 35, 43, 51, 60, 68, 76];
+function drawBeaufortBars(force){
+const box = document.getElementById('bfBars');
+if(!box) return;
+let h = '';
+for(let f = 0; f <= 12; f++){
+h += '<i title="Force ' + f + '" style="height:' + (5 + f * 1.6).toFixed(1) + 'px;' + (f <= force ? 'background:' + windColor(BF_MPH[f]) + ';' : '') + '"></i>';
+}
+box.innerHTML = h + '<span>F' + force + '</span>';
 }
 // ---------- AT A GLANCE: sun, tide, sea and moon (the column around the dial) ----------
 const GL = { sun:null, tides:null, sea:null };
@@ -2144,7 +2148,7 @@ const nextDate = new Date(now + nextDays * 86400000);
 foot.innerHTML = '<b>' + name + '</b><br>' + nextName + ' MOON ' + (nextDays < 1 ? 'TONIGHT' : GL_DAY.format(nextDate).replace(/,/g, '').toUpperCase());
 }
 function initGlance(){
-loadSun(); loadGlanceTides(); loadGlanceSea(); drawMoon(); buildFaceChips(); markFaceChips();
+loadSun(); loadGlanceTides(); loadGlanceSea(); drawMoon();
 setInterval(function(){ drawSun(); drawTide(); drawMoon(); drawSea(); }, 60 * 1000);     // move the sun and the "now" marker along
 setInterval(loadSun, 6 * 3600000);
 setInterval(loadGlanceSea, 30 * 60000);
@@ -2325,6 +2329,7 @@ const windTrendEl = document.getElementById('windBlockBeaufort');
 windTrendEl.textContent = 'FORCE ' + beaufort.force + ' \u2014 ' + beaufort.label;
 windTrendEl.style.color = windColor(cur.wind_speed_10m);
 document.getElementById('windBlockEffect').textContent = beaufort.effect;
+drawBeaufortBars(beaufort.force);
 const pDiff = cur.pressure_msl - data.hourly.pressure_msl[pastIdxTrend];
 document.getElementById('pressureBlockValue').innerHTML = Math.round(cur.pressure_msl) + ' <span class="unit">MB</span>';
 const pIcon = document.getElementById('pressureIcon');
