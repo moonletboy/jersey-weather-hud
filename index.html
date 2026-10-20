@@ -941,21 +941,36 @@ const standalone = (window.matchMedia && window.matchMedia('(display-mode: stand
 let dismissed = false;
 try{ dismissed = (Date.now() - Number(localStorage.getItem('jwcAppDismissed') || 0)) < 30 * 86400000; }catch(e){}
 if(standalone || dismissed) return;
-const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(ua);
+const inFacebook = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(ua);      // Facebook's built-in browser can't install apps
 const btn = document.getElementById('appInstall'), txt = document.getElementById('appStripText');
-let deferred = null;
-window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; strip.hidden = false; });
-if(isIOS){ strip.hidden = false; btn.textContent = 'HOW?'; }
+let deferred = null, mode = '';
+/* Chrome offers installation only after a visitor has tapped the page and stayed about 30 seconds;
+   when it does, the button becomes a one-tap INSTALL */
+window.addEventListener('beforeinstallprompt', function(e){
+e.preventDefault(); deferred = e; mode = 'prompt';
+btn.hidden = false; btn.textContent = 'INSTALL'; strip.hidden = false;
+});
+if(inFacebook && (isIOS || isAndroid)){ mode = 'facebook'; strip.hidden = false; btn.textContent = 'HOW?'; }
+else if(isIOS){ mode = 'ios'; strip.hidden = false; btn.textContent = 'HOW?'; }
+else if(isAndroid){ setTimeout(function(){ if(!deferred){ mode = 'android'; strip.hidden = false; btn.textContent = 'HOW?'; } }, 3000); }
 btn.addEventListener('click', function(){
 if(deferred){
 deferred.prompt();
 deferred.userChoice.then(function(){ deferred = null; strip.hidden = true; }, function(){ deferred = null; });
 return;
 }
-if(isIOS){
+if(mode === 'facebook'){
+txt.innerHTML = isIOS ? 'Facebook can\u2019t install apps. Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then in Safari tap <b>Share</b> \u2192 <b>Add to Home Screen</b>.'
+: 'Facebook can\u2019t install apps. Tap <b>\u22ee</b> (top right), choose <b>Open in Chrome</b>, then tap <b>\u22ee</b> \u2192 <b>Add to Home screen</b> \u2192 <b>Install</b>.';
+} else if(mode === 'ios'){
 txt.innerHTML = 'Tap the <b>Share</b> button (the square with an arrow, \u2191) at the bottom of the screen, then <b>Add to Home Screen</b>.';
-btn.hidden = true;
+} else if(mode === 'android'){
+txt.innerHTML = 'Tap Chrome\u2019s <b>\u22ee</b> menu (top right), then <b>Add to Home screen</b> (or <b>Install app</b>) and choose <b>Install</b> \u2014 not \u201cCreate shortcut\u201d.';
 }
+btn.hidden = true;
 });
 document.getElementById('appDismiss').addEventListener('click', function(){
 strip.hidden = true;
