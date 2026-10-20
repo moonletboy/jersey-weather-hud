@@ -3589,6 +3589,18 @@ if(berg >= 1 && (!best || berg > best.berg)) best = { berg:berg, fall:fall, need
 t._bomb = best;
 return best;
 }
+/* when a deepening storm is on the map: the first time during its spell, else the first time afterwards */
+function stBombWhere(t, b){
+let during = -1, after = -1;
+const end = t.path_start_hour + 6 * ((t.path || []).length - 1);
+for(let h = b.h0; h <= end; h += 6){
+const p = stPosAt(t, h);
+if(!p || !stInWindow(p)) continue;
+if(h <= b.h1){ during = h; break; }
+after = h; break;
+}
+return { during:during, after:after };
+}
 function stWindAt(t, h){
 const w = t.winds || [];
 for(let i=0; i<w.length; i++) if(w[i].h === h) return w[i];
@@ -3813,7 +3825,8 @@ L.marker([p.lat, p.lon], { icon:L.divIcon({ className:'st-icon', html:'<div clas
 });
 const bomb = stBomb(t);
 if(bomb && h <= bomb.h1){                                    // only until its explosive deepening is over
-const bp = stPosAt(t, (bomb.h0 + bomb.h1) / 2);
+const bw = stBombWhere(t, bomb);
+const bp = stPosAt(t, bw.during >= 0 ? bw.during : (bomb.h0 + bomb.h1) / 2);
 if(bp){
 const bm = L.marker(bp, { icon:L.divIcon({ className:'st-icon', html:'<div class="st-bomb">&#128163; &minus;' + Math.round(bomb.fall) + ' hPa / 24 H</div>', iconSize:[0,0], iconAnchor:[-10, 26] }), keyboard:false, zIndexOffset:650 });
 bm.bindTooltip('<b>STORM ' + stEsc(lab) + ' &middot; EXPLOSIVE DEEPENING</b><br>Centre deepens ' + bomb.fall.toFixed(1) + ' hPa in 24 hours<br>' + stTimeD(stHourDate(bomb.h0)) + ' to ' + stTime(stHourDate(bomb.h1)) + ' (Jersey time)<br>&ldquo;Bomb&rdquo; threshold at this latitude: ' + bomb.need.toFixed(1) + ' hPa &middot; ' + bomb.berg.toFixed(1) + ' bergerons', { className:'st-tip', direction:'top' });
@@ -3992,10 +4005,13 @@ const nowH = (Date.now() - cycle.getTime()) / 3600000;
 const bombs = tracks.map(t => ({ t:t, b:stBomb(t) })).filter(x => x.b && x.b.h1 >= nowH).sort((a, b) => b.b.berg - a.b.berg).slice(0, 3);
 if(bombs.length){
 head += '<br><span style="color:#ff5fd2;">&#128163; EXPLOSIVE DEEPENING (A &ldquo;WEATHER BOMB&rdquo;): ' + bombs.map(function(x){
-const mid = stPosAt(x.t, (x.b.h0 + x.b.h1) / 2);
-const onMap = mid && stInWindow(mid);
-return '<b>STORM ' + stEsc(stLabel(x.t)) + '</b> deepens ' + Math.round(x.b.fall) + ' hPa in 24 hours, ' + stTimeD(stHourDate(x.b.h0)) + ' to ' + stTime(stHourDate(x.b.h1)) +
-(onMap ? ' <a href="#" class="st-bombjump" data-h="' + x.b.h1 + '" style="color:var(--cyan);">SHOW ME &rarr;</a>' : ' (off the map)');
+const w = stBombWhere(x.t, x.b);
+const jump = function(h){ return ' <a href="#" class="st-bombjump" data-h="' + h + '" style="color:var(--cyan);">SHOW ME &rarr;</a>'; };
+let where;
+if(w.during >= 0) where = jump(w.during);                                                    // on the map for at least part of it
+else if(w.after >= 0) where = ' &mdash; out in the Atlantic, reaching the map ' + stTimeD(stHourDate(w.after)) + jump(w.after);
+else where = ' &mdash; stays out in the Atlantic';
+return '<b>STORM ' + stEsc(stLabel(x.t)) + '</b> deepens ' + Math.round(x.b.fall) + ' hPa in 24 hours, ' + stTimeD(stHourDate(x.b.h0)) + ' to ' + stTime(stHourDate(x.b.h1)) + where;
 }).join(' &middot; ') + '</span>';
 }
 }
