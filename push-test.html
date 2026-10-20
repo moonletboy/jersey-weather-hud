@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JWC push test</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body{ background:#05080d; color:#e9f6f5; font-family:'JetBrains Mono', ui-monospace, Menlo, monospace; font-size:13px; line-height:1.6; margin:0; padding:16px; max-width:760px; }
+h1{ font-size:16px; letter-spacing:2px; color:#4cd3ff; margin:0 0 12px; }
+h2{ font-size:12px; letter-spacing:2px; color:#5f7c88; margin:22px 0 6px; }
+.row{ display:flex; gap:8px; align-items:center; margin:6px 0; flex-wrap:wrap; }
+.k{ color:#5f7c88; min-width:230px; }
+.pass{ color:#2de1a0; font-weight:700; } .fail{ color:#ff4b5c; font-weight:700; } .warn{ color:#ffb020; font-weight:700; } .info{ color:#4cd3ff; }
+button{ font-family:inherit; font-size:11px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:#4cd3ff; border:0; border-radius:7px; padding:9px 13px; cursor:pointer; }
+button.sec{ background:transparent; color:#5f7c88; border:1px solid #3a4e58; }
+button:disabled{ opacity:0.5; cursor:default; }
+textarea{ width:100%; box-sizing:border-box; background:#0b131c; color:#e9f6f5; border:1px solid #3a4e58; border-radius:7px; padding:8px; font-family:inherit; font-size:11px; min-height:52px; }
+.box{ border:1px solid #1a2a36; border-radius:10px; padding:12px; margin:8px 0; background:#0b131c; }
+.note{ color:#5f7c88; font-size:11.5px; }
+#log{ white-space:pre-wrap; font-size:11px; color:#9fb8c2; background:#0b131c; border:1px solid #1a2a36; border-radius:10px; padding:10px; min-height:60px; }
+</style>
+</head>
+<body>
+<h1>JERSEY WEATHER CHAT &middot; PUSH TEST</h1>
+<p class="note">Open this page at <b>www.jerseyweatherchat.com/push-test.html</b> in a real browser tab (not inside Facebook). On iPhone it must be opened from the home-screen app. Work down the page in order.</p>
+
+<h2>1 &middot; CAN THIS DEVICE DO PUSH?</h2>
+<div class="box" id="checks"></div>
+
+<h2>2 &middot; VAPID KEYS (do this ONCE, on your PC)</h2>
+<div class="box">
+<p class="note">These two keys are what lets the GitHub Action prove it&rsquo;s allowed to message your subscribers. They&rsquo;re made here in your own browser and never leave it until you copy them. The <b>public</b> key goes on the website; the <b>private</b> key goes ONLY into a GitHub secret. Never paste the private key into chat, Facebook or a file in the repo.</p>
+<div class="row"><button id="gen">GENERATE KEYS</button><span id="genStatus"></span></div>
+<div class="row"><span class="k">Public key (VAPID_PUBLIC_KEY)</span><button class="sec" data-copy="pub">COPY</button></div>
+<textarea id="pub" placeholder="(or paste an existing public key here to test with it)"></textarea>
+<div class="row"><span class="k">Private key (VAPID_PRIVATE_KEY)</span><button class="sec" data-copy="priv">COPY</button></div>
+<textarea id="priv" placeholder=""></textarea>
+<p class="note">Also needed later: <b>VAPID_SUBJECT</b> = <code>mailto:</code> followed by an email address you own (push services use it to contact you if something goes wrong).</p>
+</div>
+
+<h2>3 &middot; SUBSCRIBE THIS DEVICE WITH THE PUBLIC KEY</h2>
+<div class="box">
+<div class="row"><button id="sub">SUBSCRIBE</button><button id="local" class="sec">SHOW A LOCAL NOTIFICATION</button><button id="unsub" class="sec">UNSUBSCRIBE</button></div>
+<div id="subResult"></div>
+<p class="note">PASS here means: permission granted, the service worker (sw.js, jwc-v3) is installed, and the browser issued a push address for this device. The local notification tests that notifications actually appear on this device. The real end-to-end test (a push from GitHub) comes with the Action.</p>
+</div>
+
+<h2>LOG</h2>
+<div id="log"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const logEl = $('log');
+function log(m, cls){ const d = document.createElement('div'); if(cls) d.className = cls; d.textContent = new Date().toTimeString().slice(0,8) + '  ' + m; logEl.appendChild(d); }
+function line(k, v, cls){ const r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span class="k">' + k + '</span><span class="' + (cls || '') + '">' + v + '</span>'; $('checks').appendChild(r); }
+function b64url(bytes){ let s = ''; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function fromB64url(b64){ const pad = '='.repeat((4 - b64.length % 4) % 4); const raw = atob((b64 + pad).replace(/-/g,'+').replace(/_/g,'/')); const out = new Uint8Array(raw.length); for(let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i); return out; }
+
+/* ---- 1. checks ---- */
+const ua = navigator.userAgent;
+const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const inFacebook = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(ua);
+line('Secure page (https)', location.protocol === 'https:' ? 'PASS' : 'FAIL - push needs https', location.protocol === 'https:' ? 'pass' : 'fail');
+line('Service worker support', 'serviceWorker' in navigator ? 'PASS' : 'FAIL', 'serviceWorker' in navigator ? 'pass' : 'fail');
+line('Push support (PushManager)', 'PushManager' in window ? 'PASS' : 'FAIL', 'PushManager' in window ? 'pass' : 'fail');
+line('Notification support', 'Notification' in window ? 'PASS' : 'FAIL', 'Notification' in window ? 'pass' : 'fail');
+line('Current permission', 'Notification' in window ? Notification.permission : 'n/a', 'info');
+line('Opened as installed app', standalone ? 'yes' : 'no (browser tab)', 'info');
+line('iPhone / iPad', isIOS ? ('yes' + (standalone ? '' : ' - subscribe will only work from the home-screen app')) : 'no', isIOS && !standalone ? 'warn' : 'info');
+line('Facebook in-app browser', inFacebook ? 'YES - open in your real browser instead' : 'no', inFacebook ? 'fail' : 'info');
+line('WebCrypto (for key generation)', (window.crypto && crypto.subtle) ? 'PASS' : 'FAIL', (window.crypto && crypto.subtle) ? 'pass' : 'fail');
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    log('service worker registered, scope ' + reg.scope);
+    return navigator.serviceWorker.ready;
+  }).then(() => log('service worker ready')).catch(e => log('service worker FAILED: ' + e.message, 'fail'));
+}
+
+/* ---- 2. keys ---- */
+$('gen').addEventListener('click', async () => {
+  try{
+    const kp = await crypto.subtle.generateKey({ name:'ECDSA', namedCurve:'P-256' }, true, ['sign','verify']);
+    const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));   // 65 bytes, starts 0x04
+    const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);                  // d = 32-byte scalar, already base64url
+    $('pub').value = b64url(pubRaw);
+    $('priv').value = privJwk.d;
+    $('genStatus').textContent = 'Generated. Public key ' + pubRaw.length + ' bytes (' + (pubRaw.length === 65 ? 'PASS' : 'FAIL') + ').';
+    $('genStatus').className = pubRaw.length === 65 ? 'pass' : 'fail';
+    log('keys generated in browser (web-push compatible: raw P-256 public, base64url private scalar)');
+  }catch(e){ $('genStatus').textContent = 'FAIL: ' + e.message; $('genStatus').className = 'fail'; }
+});
+document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+  const v = $(b.dataset.copy).value.trim(); if(!v) return;
+  try{ await navigator.clipboard.writeText(v); b.textContent = 'COPIED'; setTimeout(() => b.textContent = 'COPY', 1500); }
+  catch(e){ $(b.dataset.copy).select(); log('clipboard blocked - text selected, press Ctrl+C', 'warn'); }
+}));
+
+/* ---- 3. subscribe ---- */
+$('sub').addEventListener('click', async () => {
+  const out = $('subResult'); out.innerHTML = '';
+  const key = $('pub').value.trim();
+  if(!key){ out.innerHTML = '<span class="fail">FAIL - generate or paste a public key first</span>'; return; }
+  try{
+    const perm = await Notification.requestPermission();
+    log('permission: ' + perm);
+    if(perm !== 'granted'){ out.innerHTML = '<span class="fail">FAIL - permission ' + perm + '</span>'; return; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(sub){ log('existing subscription found - replacing it'); await sub.unsubscribe(); }
+    sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: fromB64url(key) });
+    const j = sub.toJSON();
+    const host = new URL(j.endpoint).host;
+    out.innerHTML = '<div class="pass">PASS - this device now has a push address</div>'
+      + '<div class="row"><span class="k">Push service</span><span class="info">' + host + '</span></div>'
+      + '<div class="row"><span class="k">Keys present (p256dh / auth)</span><span class="' + (j.keys && j.keys.p256dh && j.keys.auth ? 'pass">PASS' : 'fail">FAIL') + '</span></div>'
+      + '<div class="row"><span class="k">Endpoint starts</span><span class="info">' + j.endpoint.slice(0, 60) + '&hellip;</span></div>';
+    log('subscribed via ' + host);
+  }catch(e){ out.innerHTML = '<span class="fail">FAIL - ' + e.name + ': ' + e.message + '</span>'; log('subscribe error: ' + e.message, 'fail'); }
+});
+$('local').addEventListener('click', async () => {
+  try{
+    if(Notification.permission !== 'granted'){ const p = await Notification.requestPermission(); if(p !== 'granted'){ log('permission ' + p, 'fail'); return; } }
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Jersey Weather Chat - test', { body:'If you can read this, notifications display on this device. (Local test, not a push.)', icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag:'jwc-test' });
+    log('local notification shown - PASS if you saw it', 'pass');
+  }catch(e){ log('local notification FAILED: ' + e.message, 'fail'); }
+});
+$('unsub').addEventListener('click', async () => {
+  try{
+    const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+    if(!sub){ log('nothing to unsubscribe'); return; }
+    await sub.unsubscribe(); $('subResult').innerHTML = '<span class="info">Unsubscribed.</span>'; log('unsubscribed');
+  }catch(e){ log('unsubscribe FAILED: ' + e.message, 'fail'); }
+});
+</script>
+</body>
+</html>
