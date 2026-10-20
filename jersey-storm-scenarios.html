@@ -1146,8 +1146,13 @@ const groups = [recs.filter(r => r.pk < cut.b1), recs.filter(r => r.pk >= cut.b1
 const pcs = groups.map(g => Math.round(100 * g.length / recs.length));
 pcs[1] = 100 - pcs[0] - pcs[2];                                   // so the three always add up to 100%
 const biggest = pcs.indexOf(Math.max.apply(null, pcs));
+/* The best case is shown as a real range, from the calmest run in it (rounded down to 5 mph) up to just
+   under the first dividing line, so "60-69" is never mistaken for "calm": gusts in the high 60s can
+   still bring down tiles and branches, and the impact box underneath says so. */
+const bestLo = groups[0].length ? Math.floor(Math.min.apply(null, groups[0].map(r => r.pk)) / 5) * 5 : null;
+const bestRange = (bestLo !== null && bestLo < cut.b1 - 1) ? bestLo + '\u2013' + (cut.b1 - 1) : 'UNDER ' + cut.b1;
 st.sc = [
-{ key:'best',   lbl:'BEST CASE',   emo:'\ud83d\udfe2', range:'UNDER ' + cut.b1, rangeTxt:'under ' + cut.b1 },
+{ key:'best',   lbl:'BEST CASE',   emo:'\ud83d\udfe2', range:bestRange.replace('\u2013', '&ndash;'), rangeTxt:bestRange.toLowerCase() },
 { key:'likely', lbl:biggest === 1 ? 'MOST COMMON' : 'IN BETWEEN', emo:'\ud83d\udfe0', range:cut.b1 + '&ndash;' + (cut.b2 - 1), rangeTxt:cut.b1 + '\u2013' + (cut.b2 - 1) },
 { key:'worst',  lbl:'WORST CASE',  emo:'\ud83d\udd34', range:cut.b2 + '+', rangeTxt:cut.b2 + '+' }
 ].map(function(s, i){
