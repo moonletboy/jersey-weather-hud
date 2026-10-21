@@ -3,7 +3,8 @@
 Storm Watch - Jersey Weather Chat HUD
 
 Run by .github/workflows/storm-watch.yml every ~10 minutes. It checks live readings
-against the thresholds below. When one is met it does NOT send anything to the
+(airports, forecast, pressure, weather stations, and high tide + waves + onshore wind
+for coastal overtopping) against the thresholds below. When one is met it does NOT send anything to the
 public: it asks the Apps Script to EMAIL Matthew a suggested special alert, which he
 approves (sends), tests, or dismisses from the email. Every suggestion and every
 decision is recorded in the AlertLog tab of the Google Sheet.
@@ -41,12 +42,24 @@ ESCALATE_HPA = 3                 # ... or the pressure fall deepens by this much
 BREWING_MPH = 50                 # weather stations are only checked when something is brewing:
                                  #   a land warning in force, or gusts this strong observed/forecast
 PWS_EVERY_MINUTES = 30           # and then at most this often (Weather Underground daily call limit)
+# --- coastal overtopping: big waves + strong onshore wind around a high tide ---
+COASTAL_MIN_TIDE_M = 9.0         # only high tides at least this high (St Helier, metres above chart datum)
+COASTAL_WAVE_M = 4.0             # waves off the south-west coast at least this high near high water
+COASTAL_GUST_MPH = 50            # and forecast gusts at least this strong ...
+COASTAL_ONSHORE = (160, 320)     # ... blowing from between these directions (S through W to NW = onto south & west coasts)
+COASTAL_HOURS_AHEAD = 3          # suggest up to this many hours before high water
+COASTAL_HOURS_AFTER = 1          # and up to this long after it
+COASTAL_WINDOW_H = 2             # waves/wind looked at from this long before to this long after high water
+ESCALATE_WAVE_M = 1.0            # a coastal suggestion repeats inside the cooldown only if waves are this much bigger
 # ====================================================================================
 
 API_URL = "https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec"
 STATE_FILE = "data/storm-watch-state.json"
 WARNINGS_STATE = "data/warnings-state.json"
 JERSEY = (49.21, -2.13)
+SEA_SW = (49.12, -2.30)          # open sea off the south-west corner (La Corbiere), where storm waves arrive from
+SEA_HARBOUR = (49.1805, -2.1058) # the point the Sea & Tides page uses - fallback if the open-sea point has no data
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 AIRPORTS = {"EGJJ": "Jersey Airport", "EGJB": "Guernsey Airport", "EGJA": "Alderney Airport"}
 MODELS = {"gfs_seamless": "GFS", "ecmwf_ifs025": "ECMWF", "icon_seamless": "ICON",
           "ukmo_seamless": "UK Met Office", "meteofrance_seamless": "Meteo-France"}
@@ -197,6 +210,86 @@ def fetch_pws(key):
             continue
     return out
 
+def fetch_tides():
+    """St Helier high/low waters from the Apps Script (gov.je / National Oceanography Centre, cached there for 24 h)."""
+    r = requests.get(API_URL, params={"action": "tides"}, timeout=60)
+    r.raise_for_status()
+    d = r.json()
+    if d.get("status") != "ok":
+        raise ValueError(d.get("message", "tides not available"))
+    now_l = now_utc().astimezone(LOCAL)
+    out = []
+    for e in d.get("events", []):
+        try:
+            parts = e["dateText"].split()               # e.g. "Friday 23 October"
+            day, month = int(parts[1]), MONTHS.index(parts[2]) + 1
+            hh, mm = (int(x) for x in e["time"].split(":"))
+            year = now_l.year + (1 if (month < now_l.month - 6) else 0)
+            t = datetime.datetime(year, month, day, hh, mm, tzinfo=LOCAL).astimezone(datetime.timezone.utc)
+            out.append({"t": t, "type": e["type"], "h": float(e["heightM"])})
+        except Exception:
+            continue
+    return sorted(out, key=lambda x: x["t"])
+
+def fetch_marine():
+    """Hourly wave height off the south-west coast (falls back to the harbour point)."""
+    for name, (lat, lon) in (("off La Corbiere", SEA_SW), ("St Helier", SEA_HARBOUR)):
+        r = requests.get("https://marine-api.open-meteo.com/v1/marine", params={
+            "latitude": lat, "longitude": lon, "hourly": "wave_height,wave_direction", "timezone": "GMT", "forecast_days": 2}, timeout=40)
+        r.raise_for_status()
+        h = r.json().get("hourly", {})
+        times = [datetime.datetime.fromisoformat(t).replace(tzinfo=datetime.timezone.utc) for t in h.get("time", [])]
+        waves = list(zip(times, h.get("wave_height") or [], h.get("wave_direction") or []))
+        if any(w is not None for _, w, _ in waves):
+            return name, [(t, w, dr) for t, w, dr in waves if w is not None]
+    return "", []
+
+def fetch_wind_hourly():
+    """Hourly gust and direction at Jersey (Open-Meteo's best blend), for the coastal rule."""
+    r = requests.get("https://api.open-meteo.com/v1/forecast", params={
+        "latitude": JERSEY[0], "longitude": JERSEY[1], "hourly": "wind_gusts_10m,wind_direction_10m",
+        "wind_speed_unit": "mph", "timezone": "GMT", "forecast_days": 2}, timeout=40)
+    r.raise_for_status()
+    h = r.json().get("hourly", {})
+    times = [datetime.datetime.fromisoformat(t).replace(tzinfo=datetime.timezone.utc) for t in h.get("time", [])]
+    return [(t, g, dr) for t, g, dr in zip(times, h.get("wind_gusts_10m") or [], h.get("wind_direction_10m") or []) if g is not None]
+
+def compass(deg):
+    return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][int(((deg or 0) + 22.5) % 360 // 45)]
+
+def coastal_check(tides, marine, wind, qnh):
+    """Returns (trigger or None, readings line)."""
+    now = now_utc()
+    hws = [e for e in tides if e["type"] == "high"
+           and now - datetime.timedelta(hours=COASTAL_HOURS_AFTER) <= e["t"] <= now + datetime.timedelta(hours=COASTAL_HOURS_AHEAD)]
+    nxt = next((e for e in tides if e["type"] == "high" and e["t"] >= now - datetime.timedelta(hours=COASTAL_HOURS_AFTER)), None)
+    if not hws:
+        return None, (f"Next high water: {nxt['t'].astimezone(LOCAL).strftime('%a %H:%M')} ({nxt['h']} m)" if nxt else "Next high water: not known")
+    hw = hws[0]
+    lo, hi = hw["t"] - datetime.timedelta(hours=COASTAL_WINDOW_H), hw["t"] + datetime.timedelta(hours=COASTAL_WINDOW_H)
+    wv = [(t, w, d) for t, w, d in marine[1] if lo <= t <= hi]
+    wn = [(t, g, d) for t, g, d in wind if lo <= t <= hi]
+    wave = max((w for _, w, _ in wv), default=None)
+    gust_t, gust, gdir = max(wn, key=lambda x: x[1]) if wn else (None, None, None)
+    onshore = gdir is not None and COASTAL_ONSHORE[0] <= gdir <= COASTAL_ONSHORE[1]
+    surge = round((1013 - qnh) / 100, 1) if qnh and qnh < 1013 else 0
+    line = (f"High water {local_hm(hw['t'])} ({hw['h']} m): waves {marine[0]} up to "
+            f"{'?' if wave is None else round(wave, 1)} m, gusts up to {'?' if gust is None else round(gust)} mph from "
+            f"{'?' if gdir is None else compass(gdir) + ' (' + str(round(gdir)) + '\u00b0)'}"
+            + (f", low pressure adds roughly {surge} m" if surge else ""))
+    if (hw["h"] >= COASTAL_MIN_TIDE_M and wave is not None and wave >= COASTAL_WAVE_M
+            and gust is not None and gust >= COASTAL_GUST_MPH and onshore):
+        d = compass(gdir)
+        return ({"rule": "coastal-overtopping", "value": round(wave, 1), "unit": "m",
+                 "text": f"Coastal: high water {local_hm(hw['t'])} ({hw['h']} m) with waves up to {round(wave, 1)} m {marine[0]} "
+                         f"and {d} gusts up to {round(gust)} mph (thresholds: tide {COASTAL_MIN_TIDE_M} m, waves {COASTAL_WAVE_M} m, "
+                         f"onshore gusts {COASTAL_GUST_MPH} mph)" + (f"; low pressure adds roughly {surge} m" if surge else ""),
+                 "title": "Jersey Weather Chat: waves over sea walls likely at high tide",
+                 "body": f"High tide at {local_hm(hw['t'])} ({hw['h']} m) comes with large waves (up to about {round(wave, 1)} m offshore) and "
+                         f"strong {d} winds. Expect spray and waves over sea walls on exposed south and west coasts - take care on "
+                         f"coast roads and promenades. {FOOTER}"}, line)
+    return None, line
+
 # ---------------- rules ----------------
 def evaluate(metars, fc, pws, fall):
     trig = []
@@ -242,7 +335,7 @@ def evaluate(metars, fc, pws, fall):
                      "body": f"Pressure at Jersey Airport has fallen {fall} hPa in 3 hours, a sign of a deepening storm nearby. {FOOTER}"})
     return trig
 
-def readings_text(metars, fc, pws, fall, pws_note):
+def readings_text(metars, fc, pws, fall, pws_note, coastal_line=""):
     lines = []
     for icao, name in AIRPORTS.items():
         o = (metars.get(icao) or [None])[-1]
@@ -262,6 +355,8 @@ def readings_text(metars, fc, pws, fall, pws_note):
         lines.append(f"Weather stations ({len(pws)} reporting, {pws_note}): " + ", ".join(f"{s['name']} ({s['id']}) {s['gust']}" for s in top) + " mph")
     else:
         lines.append(f"Weather stations: {pws_note}")
+    if coastal_line:
+        lines.append(coastal_line)
     return "\n".join(lines)
 
 def post(payload):
@@ -320,10 +415,19 @@ def main():
         state["pws"] = {"at": iso(now), "readings": pws}
         pws_note = "checked now"
 
-    readings = readings_text(metars, fc, pws, fall, pws_note)
+    coastal_trigger, coastal_line = None, ""
+    try:
+        tides = fetch_tides()
+        marine = fetch_marine()
+        wind = fetch_wind_hourly()
+        coastal_trigger, coastal_line = coastal_check(tides, marine, wind, jj["qnh"] if jj else None)
+    except Exception as ex:
+        coastal_line = "Coastal check skipped: " + str(ex)[:120]
+
+    readings = readings_text(metars, fc, pws, fall, pws_note, coastal_line)
     print("---- readings ----\n" + readings + "\n------------------")
 
-    triggers = evaluate(metars, fc, pws, fall)
+    triggers = evaluate(metars, fc, pws, fall) + ([coastal_trigger] if coastal_trigger else [])
     for t in triggers:
         print("  RULE MET:", t["text"])
     # cooldown / escalation
@@ -332,7 +436,7 @@ def main():
         last = (state.get("lastFired") or {}).get(t["rule"])
         if last:
             age = now - datetime.datetime.fromisoformat(last["at"].replace("Z", "+00:00"))
-            step = ESCALATE_HPA if t["unit"] == "hPa" else ESCALATE_MPH
+            step = {"hPa": ESCALATE_HPA, "m": ESCALATE_WAVE_M}.get(t["unit"], ESCALATE_MPH)
             if age < datetime.timedelta(hours=COOLDOWN_HOURS) and t["value"] < last["value"] + step:
                 print(f"  {t['rule']}: already suggested {int(age.total_seconds() // 60)} min ago - cooling down")
                 cooling.append(t["text"] + f" [already suggested {local_hm(datetime.datetime.fromisoformat(last['at'].replace('Z', '+00:00')))}]")
