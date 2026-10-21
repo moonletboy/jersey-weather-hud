@@ -129,6 +129,19 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .app-btn{ font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:var(--cyan); border:0; border-radius:7px; padding:8px 12px; cursor:pointer; flex-shrink:0; }
 .app-btn[hidden]{ display:none; }
 .app-x{ background:transparent; border:0; color:var(--dim); font-size:20px; cursor:pointer; line-height:1; padding:0 4px; flex-shrink:0; }
+/* "ALERT ME" bar for Jersey Met warning push notifications (shown in the browser and inside the installed app) */
+.alert-strip{ display:flex; align-items:center; gap:12px; margin:8px 0 0; padding:9px 12px; border:1px solid rgba(255,176,32,0.5); border-radius:10px; background:rgba(255,176,32,0.06); font-size:11.5px; line-height:1.5; }
+.alert-strip[hidden]{ display:none; }
+.alert-strip.is-on{ border-color:rgba(45,225,160,0.45); background:rgba(45,225,160,0.05); }
+.alert-ic{ font-size:20px; line-height:1; flex-shrink:0; }
+.alert-txt{ flex:1; min-width:0; color:var(--text); }
+.alert-txt b{ color:var(--amber); }
+.alert-strip.is-on .alert-txt b{ color:var(--green); }
+.alert-txt .new-tag{ display:inline-block; font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:2px; color:#05080d; background:var(--amber); border-radius:4px; padding:1px 6px; margin-right:6px; vertical-align:1px; }
+.alert-btn{ font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:var(--amber); border:0; border-radius:7px; padding:8px 12px; cursor:pointer; flex-shrink:0; }
+.alert-btn[hidden]{ display:none; }
+.alert-btn:disabled{ opacity:0.6; cursor:wait; }
+.alert-strip.is-on .alert-btn{ background:transparent; color:var(--dim); border:1px solid var(--dim2); }
 .fb-about-link{ color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); white-space:nowrap; }
 .fb-about-link:hover{ color:var(--text); border-bottom-color:var(--text); }
 /* the About & disclaimer panel under the banner */
@@ -919,6 +932,7 @@ footer b{ color:var(--dim); }
 <li><b>Use at your own risk.</b> The site, its data and the Facebook group are provided &ldquo;as is&rdquo;. We can&rsquo;t accept responsibility for decisions you make or any loss or damage arising from using them &mdash; boats, travel, outdoor work, events, property or anything else.</li>
 <li><b>The data isn&rsquo;t ours.</b> It comes from NOAA, Open-Meteo, Jersey Met, USGS, EMSC, Weather Underground and others, and can be late, incomplete or wrong. The site itself may go down, usually at the worst moment.</li>
 <li><b>Storm reports are from members</b> and are not verified.</li>
+<li><b>Warning alerts are automated.</b> If you tap ALERT ME, this device gets a notification when our checker spots a new or upgraded Jersey Met warning on gov.je. It can lag behind or miss one, and it never replaces the official warning. We store only the anonymous push address your phone gives us &mdash; no name, email or location &mdash; and TURN OFF removes it.</li>
 <li><b>In an emergency call 999.</b></li>
 </ul>
 </div>
@@ -977,6 +991,140 @@ strip.hidden = true;
 try{ localStorage.setItem('jwcAppDismissed', String(Date.now())); }catch(e){}
 });
 window.addEventListener('appinstalled', function(){ strip.hidden = true; });
+})();
+</script>
+<div class="alert-strip" id="alertStrip" hidden>
+<span class="alert-ic" aria-hidden="true">&#9889;</span>
+<span class="alert-txt" id="alertText"></span>
+<button type="button" class="alert-btn" id="alertBtn">ALERT ME</button>
+<button type="button" class="app-x" id="alertDismiss" aria-label="Not now" hidden>&times;</button>
+</div>
+<script>
+/* ---------- "ALERT ME" bar: push notifications for new Jersey Met warnings ----------
+   How it works: tapping ALERT ME asks the browser for notification permission, creates a push
+   subscription for this device and saves it to the Google Sheet via the Apps Script. A GitHub
+   Action checks gov.je every few minutes and pushes an alert to every saved device when a warning
+   is NEW or UPGRADED. Nothing is sent until the Action has published data/push-config.json (which
+   holds the public VAPID key) - until then this bar stays hidden, so it can be built in stages.
+   Awkward cases handled here: iPhone/iPad only allow web push from the home-screen app (iOS 16.4+);
+   Facebook's in-app browser can't subscribe at all; blocked permission needs re-enabling by hand. */
+(function(){
+const strip = document.getElementById('alertStrip');
+if(!strip) return;
+const txt = document.getElementById('alertText'), btn = document.getElementById('alertBtn'), xbtn = document.getElementById('alertDismiss');
+const API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(ua);
+const inFacebook = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(ua);
+const supported = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+let publicKey = '', state = '', dismissed = false;
+try{ dismissed = (Date.now() - Number(localStorage.getItem('jwcAlertDismissed') || 0)) < 30 * 86400000; }catch(e){}
+
+function b64ToBytes(b64){
+const pad = '='.repeat((4 - b64.length % 4) % 4);
+const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+const out = new Uint8Array(raw.length);
+for(let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+return out;
+}
+function show(html, button, cls){
+txt.innerHTML = html;
+btn.hidden = !button; btn.disabled = false;
+if(button) btn.textContent = button;
+strip.classList.toggle('is-on', cls === 'on');
+xbtn.hidden = !(state === 'off' && !dismissed);
+strip.hidden = false;
+}
+function render(){
+const tag = dismissed ? '' : '<span class="new-tag">NEW</span>';
+if(state === 'on'){
+show('Warning alerts <b>ON</b> for this device &mdash; you&rsquo;ll get a notification when a new or upgraded Jersey Met warning is issued. Automated, not official: always check gov.je.', 'TURN OFF', 'on');
+} else if(state === 'off'){
+show(dismissed ? '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued.'
+: tag + '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued. Automated and unofficial: always check gov.je.', 'ALERT ME');
+} else if(state === 'facebook'){
+show(tag + '<b>Warning alerts</b> can&rsquo;t be switched on inside Facebook&rsquo;s browser. ' + (isIOS
+? 'Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then tap ALERT ME there.'
+: 'Tap <b>\u22ee</b> (top right), choose <b>Open in Chrome</b>, then tap ALERT ME there.'), '');
+} else if(state === 'ios-install'){
+show(tag + '<b>Warning alerts</b> on iPhone and iPad only work from the home-screen app: tap <b>Share</b> (\u2191), then <b>Add to Home Screen</b>, open the app and tap ALERT ME there (needs iOS 16.4 or newer).', '');
+} else if(state === 'denied'){
+show('<b>Notifications are blocked</b> for this site, so alerts can&rsquo;t be sent. To allow them: ' + (standalone && isIOS
+? 'open iPhone <b>Settings</b> \u2192 <b>Notifications</b> \u2192 <b>JWC Weather</b> and switch them on, then come back and tap ALERT ME.'
+: isAndroid
+? 'tap the <b>lock</b> (or tune) icon next to the address, then <b>Permissions</b> \u2192 <b>Notifications</b> \u2192 Allow, then tap ALERT ME.'
+: 'click the <b>lock</b> (or tune) icon next to the address, set <b>Notifications</b> to Allow, then tap ALERT ME.'), 'ALERT ME');
+} else if(state === 'unsupported'){
+show('This browser can&rsquo;t receive notifications, so warning alerts aren&rsquo;t available here. Chrome, Edge or Firefox on a phone or PC can.', '');
+}
+}
+async function currentSub(){
+const reg = await navigator.serviceWorker.ready;
+return reg.pushManager.getSubscription();
+}
+async function init(){
+try{
+const r = await fetch('data/push-config.json?t=' + Math.floor(Date.now() / 600000), { cache:'no-store' });
+if(!r.ok) return;
+const cfg = await r.json();
+publicKey = (cfg && cfg.publicKey) || '';
+}catch(e){ return; }                              /* alerts not switched on yet - keep the bar hidden */
+if(!publicKey) return;
+if(inFacebook && (isIOS || isAndroid)) state = 'facebook';
+else if(!supported) state = (isIOS && !standalone) ? 'ios-install' : 'unsupported';
+else if(Notification.permission === 'denied') state = 'denied';
+else{
+try{ state = (await currentSub()) ? 'on' : 'off'; }catch(e){ state = 'off'; }
+}
+render();
+}
+async function subscribe(){
+btn.disabled = true; btn.textContent = 'WORKING\u2026';
+try{
+const perm = await Notification.requestPermission();
+if(perm !== 'granted'){ state = (perm === 'denied') ? 'denied' : 'off'; render(); return; }
+const reg = await navigator.serviceWorker.ready;
+const keyBytes = b64ToBytes(publicKey);
+let sub = await reg.pushManager.getSubscription();
+/* a subscription made with a different key (e.g. from the test page) is useless to the sender - replace it */
+if(sub && sub.options && sub.options.applicationServerKey){
+const have = new Uint8Array(sub.options.applicationServerKey);
+let same = have.length === keyBytes.length;
+for(let i = 0; same && i < have.length; i++) same = have[i] === keyBytes[i];
+if(!same){ await sub.unsubscribe(); sub = null; }
+}
+if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:keyBytes });
+const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:ua, standalone:standalone, page:location.pathname, owner:(location.hash === '#admin') }) });
+const out = await res.json();
+if(out.status !== 'ok') throw new Error(out.message || 'server said no');
+state = 'on'; render();
+}catch(e){
+console.error('alert subscribe failed', e);
+state = 'off'; render();
+txt.innerHTML = '<b>Sorry, that didn&rsquo;t work</b> (' + (e && e.message ? e.message : 'unknown error') + '). Please try again in a moment.';
+}
+}
+async function unsubscribe(){
+btn.disabled = true; btn.textContent = 'WORKING\u2026';
+try{
+const sub = await currentSub();
+if(sub){
+try{ await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'unsubscribe', endpoint:sub.endpoint }) }); }catch(e){}
+await sub.unsubscribe();
+}
+}catch(e){ console.error('alert unsubscribe failed', e); }
+state = 'off'; dismissed = true; render();
+txt.innerHTML = 'Warning alerts are <b>off</b> for this device. Tap ALERT ME any time to switch them back on.';
+}
+btn.addEventListener('click', function(){ if(state === 'on') unsubscribe(); else subscribe(); });
+xbtn.addEventListener('click', function(){
+dismissed = true;
+try{ localStorage.setItem('jwcAlertDismissed', String(Date.now())); }catch(e){}
+render();
+});
+init();
 })();
 </script>
 <div class="special-msg-panel" id="specialMsgPanel">
