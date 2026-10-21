@@ -4,9 +4,10 @@ Jersey Met warning alerts - push notification sender for the Jersey Weather Chat
 
 MODE=check (default) - run by .github/workflows/warning-alerts.yml every ~10 minutes:
   1. publishes data/push-config.json (the public VAPID key the ALERT ME bar needs);
-  2. fetches ?action=warnings from the Apps Script (cached there, so this costs no
-     ZenRows credits however often it runs);
-  3. reads EACH warning on the gov.je page separately (colour, area, type, issue time)
+  2. reads gov.je's own warning data feed (JerseyWarningStatusXML.json - the file the
+     gov.je warnings page itself loads; free, no ZenRows). If that feed can't be read,
+     it falls back to ?action=warnings from the Apps Script (the old page-reading method);
+  3. takes EACH warning separately (colour, area, type, issue time, message)
      and compares with data/warnings-state.json;
   4. sends a push to every subscribed device ONLY for a warning that is NEW or UPGRADED
      (a land warning and a shipping-area warning are tracked separately, so a new
@@ -32,6 +33,12 @@ import json, os, re, sys, datetime, hashlib
 import requests
 from pywebpush import webpush, WebPushException
 
+FEED_URL = "https://prodgojweatherstorage.blob.core.windows.net/data/JerseyWarningStatusXML.json"
+# (flag, data, hazard word) for each warning type in the feed. ThunderstormWarningALD is left out:
+# it appears to be Alderney's thunderstorm warning, not Jersey's (it is still printed in the log).
+FEED_TYPES = [("WindWarning", "WindWarningData", "wind"), ("ThunderWarning", "ThunderWarningData", "thunderstorm"),
+              ("TideWarning", "TideWarningData", "tide"), ("SnowWarning", "SnowWarningData", "snow"),
+              ("SnowAlert", "SnowAlertData", "snow"), ("IceWarning", "IceWarningData", "ice")]
 API_URL = "https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec"
 SITE_URL = "https://www.jerseyweatherchat.com/index.html?source=push"
 STATE_FILE = "data/warnings-state.json"
@@ -75,7 +82,7 @@ WARN_RE = re.compile(
     r"([A-Z][^.]{1,80}?)\s+[Ww]arning\s+"                          # name, e.g. "Channel Islands Shipping Area Wind"
     r"[Ii]ssued\s+(?:at\s+)?(\d{1,2}[:.]\d{2})\s*(UTC|GMT|BST)?"   # issue time
     r"\s*(?:on\s+)?((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\s+\d{1,2}\s+[A-Z][a-z]+)?")
-HAZARD_RE = re.compile(r"(snow and ice|coastal flooding|thunderstorms?|wind|rain|snow|ice|fog|heat|cold|lightning|hail|gale|flood(?:ing)?|storm|weather)$", re.I)
+HAZARD_RE = re.compile(r"(snow and ice|coastal flooding|thunderstorms?|wind|rain|snow|ice|fog|heat|cold|lightning|hail|gale|flood(?:ing)?|tidal|tide|coastal|storm|weather)$", re.I)
 SEA_RE = re.compile(r"shipping|sea area|marine|coastal waters|at sea", re.I)
 
 def parse_warnings(text):
@@ -102,7 +109,10 @@ def build_message(w, kind):
     colour = COLOUR_WORD.get(w["colour"], w["colour"].upper())
     title = f"Jersey Met: {colour} {w['hazard']} warning" + (" (at sea)" if w["sea"] else "") + (" UPGRADED" if kind == "upgraded" else "")
     where = (w["area"] + " - at sea, not a land warning") if w["sea"] else ("For " + w["area"])
-    body = where + "." + (f" Issued {w['issued']}." if w["issued"] else "") + " " + FOOTER
+    msg = w.get("message", "").strip()
+    if len(msg) > 140:
+        msg = msg[:137].rsplit(" ", 1)[0] + "..."
+    body = where + "." + (" " + msg if msg else "") + (f" Issued {w['issued']}." if w["issued"] else "") + " " + FOOTER
     tag = "jwc-w-" + hashlib.md5(w["key"].encode()).hexdigest()[:8]   # an upgrade replaces that warning's earlier alert
     return {"title": title, "body": body, "url": SITE_URL, "tag": tag}
 
@@ -112,6 +122,45 @@ def build_generic_message(severity, kind):
             "body": "A Jersey Met weather warning has been issued. " + FOOTER, "url": SITE_URL, "tag": "jwc-w-generic"}
 
 # ---------- talking to the Apps Script ----------
+def fetch_feed():
+    """gov.je's own warning data. Returns the same shape as the Apps Script result plus a ready-made
+    'parsed' list, or raises if the feed can't be used (the caller then falls back)."""
+    r = requests.get(FEED_URL, params={"t": int(datetime.datetime.now().timestamp() // 60)}, timeout=30)
+    r.raise_for_status()
+    d = r.json()
+    if d.get("warningEnabled") is False:
+        raise ValueError("feed says warningEnabled=false")
+    if "WindWarning" not in d or "lastChecked" not in d:
+        raise ValueError("feed layout not recognised")
+    if d.get("ThunderstormWarningALD"):
+        print("  (feed also has an Alderney thunderstorm warning - not alerted:",
+              json.dumps(d.get("ThunderstormWarningALDData"), ensure_ascii=False)[:200], ")")
+    parsed, seen = [], set()
+    for flag, data_key, hazard_word in FEED_TYPES:
+        w = d.get(data_key) if d.get(flag) else None
+        if not w:
+            continue
+        colour = str(w.get("Colour", "")).strip().lower()
+        colour = "orange" if colour in ("amber", "") or colour not in LEVEL else colour
+        name = " ".join(str(w.get("WarningType") or (hazard_word.title())).split())
+        key = re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
+        if key in seen:
+            key += " " + flag.lower()
+        seen.add(key)
+        hm = HAZARD_RE.search(name)
+        hazard = hm.group(1).lower() if hm else hazard_word
+        area = name[:hm.start()].strip(" -\u2013") if hm else name
+        issued = re.sub(r"^\s*issued\s+(at\s+)?", "", str(w.get("Issued", "")), flags=re.I)
+        issued = re.sub(r"\s+\d{4}\s*$", "", issued).strip()
+        parsed.append({"key": key, "colour": colour, "level": LEVEL[colour], "name": name,
+                       "area": area or "Jersey", "hazard": hazard, "sea": bool(SEA_RE.search(name)),
+                       "issued": issued, "message": " ".join(str(w.get("WarningMessage") or "").split())})
+    top = max([p["level"] for p in parsed] + [0])
+    text = " ".join(f"{p['colour'].title()} - {p['name']} Warning Issued at {p['issued']} {p['message']}" for p in parsed)
+    return {"ok": True, "source": "gov.je data feed", "severity": next(k for k, v in LEVEL.items() if v == top),
+            "text": text, "hash": hashlib.md5(text.encode()).hexdigest()[:12],
+            "checkedAt": d.get("lastChecked", ""), "parsed": parsed}
+
 def fetch_warnings():
     r = requests.get(API_URL, params={"action": "warnings"}, timeout=60)
     r.raise_for_status()
@@ -171,10 +220,15 @@ def send_all(subs, message, vapid_private, vapid_subject, admin_key):
 # ---------- the warning check ----------
 def check(vapid_private, vapid_subject, admin_key):
     try:
-        cur = fetch_warnings()
+        cur = fetch_feed()
     except Exception as ex:
-        print("Could not fetch warnings this run (leaving state unchanged):", ex)
-        return
+        print("gov.je data feed not usable this run (" + str(ex)[:120] + ") - falling back to the Apps Script page check.")
+        try:
+            cur = fetch_warnings()
+            cur["source"] = "Apps Script page check"
+        except Exception as ex2:
+            print("Could not fetch warnings this run either (leaving state unchanged):", ex2)
+            return
     if not cur.get("ok") or cur.get("severity") == "unknown":
         print("Warnings check reported a problem (leaving state unchanged):", cur.get("error"))
         return
@@ -186,14 +240,19 @@ def check(vapid_private, vapid_subject, admin_key):
     migrating = "warnings" not in prev      # first run since per-warning tracking was added
     prev_level = LEVEL.get(prev.get("severity", "none"), 0)
     warnings = {k: dict(v) for k, v in (prev.get("warnings") or {}).items()}
-    parsed = parse_warnings(cur.get("text", "")) if sev != "none" else []
+    parsed = cur["parsed"] if "parsed" in cur else (parse_warnings(cur.get("text", "")) if sev != "none" else [])
     alerts = []   # (kind, message, description)
     fallback = 0
     # warnings at or below this level are recorded without an alert: on the first run of this version
     # (they were already in force), and on the first readable fetch after an "unreadable layout" alert
     quiet_level = prev_level if migrating else prev.get("fallback", 0)
+    # when the data source changes (page check <-> gov.je feed) the same warning may carry a slightly
+    # different name: match it to a recorded warning of the same type, sea/land and colour instead of re-alerting
+    source = cur.get("source", "Apps Script page check")
+    source_changed = source != prev.get("source", "Apps Script page check")
 
-    print(f"Fetch {fetch_id} ({'new' if new_fetch else 'same cached copy as last run'}), page severity {sev}, "
+    print(f"Source: {cur.get('source', '?')}")
+    print(f"Fetch {fetch_id} ({'new' if new_fetch else 'same copy as last run'}), overall {sev}, "
           f"{len(parsed)} warning(s) read: " + "; ".join(f"{w['colour']} {w['name']}" for w in parsed))
 
     if sev != "none" and not parsed:
@@ -211,8 +270,12 @@ def check(vapid_private, vapid_subject, admin_key):
             seen.add(w["key"])
             old = warnings.get(w["key"])
             if old is None:
+                twin = source_changed and any(o.get("hazard") == w["hazard"] and bool(o.get("sea")) == w["sea"]
+                                              and o.get("level", 0) >= w["level"] for o in warnings.values())
                 if w["level"] <= quiet_level:
                     print(f"  {w['name']}: already alerted/in force before - recorded, no alert")
+                elif twin:
+                    print(f"  {w['name']}: same warning as one already recorded (new data source) - recorded, no alert")
                 else:
                     alerts.append(("new", build_message(w, "new"), f"{w['colour']} {w['name']}"))
                 warnings[w["key"]] = dict(w, missing=0, lower=0)
@@ -255,6 +318,7 @@ def check(vapid_private, vapid_subject, admin_key):
         "severity": next((k for k, v in LEVEL.items() if v == overall and k != "amber"), "none"),
         "hash": cur.get("hash", ""),
         "warnings": warnings,
+        "source": source,
         "fallback": fallback,
         "lastFetch": fetch_id,
         "snippet": " ".join((cur.get("text") or "").split())[:160],
