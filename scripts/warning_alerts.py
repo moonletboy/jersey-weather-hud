@@ -154,7 +154,9 @@ def main():
         if not subs:
             print("No device is marked as the owner's. Open the site with #admin on the end and tap ALERT ME first.")
             sys.exit(1)
-        msg = {"title": "Jersey Weather Chat: TEST", "body": text + " " + FOOTER, "url": SITE_URL, "tag": "jwc-test"}
+        # each test gets its own tag, so every test pops up fresh instead of quietly replacing the previous one
+        msg = {"title": "Jersey Weather Chat: TEST", "body": text + " " + FOOTER, "url": SITE_URL,
+               "tag": "jwc-test-" + datetime.datetime.now(datetime.timezone.utc).strftime("%H%M%S")}
         send_all(subs, msg, vapid_private, vapid_subject, admin_key)
         return
 
