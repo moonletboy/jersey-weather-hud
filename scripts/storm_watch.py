@@ -41,7 +41,8 @@ ESCALATE_MPH = 10                # ... unless the gust climbs this much higher
 ESCALATE_HPA = 3                 # ... or the pressure fall deepens by this much
 BREWING_MPH = 50                 # weather stations are only checked when something is brewing:
                                  #   a land warning in force, or gusts this strong observed/forecast
-PWS_EVERY_MINUTES = 30           # and then at most this often (Weather Underground daily call limit)
+PWS_EVERY_MINUTES = 60           # and then at most this often (Weather Underground allows ~1,500 calls/day,
+                                 #   shared with the microclimate page - 41 stations hourly = ~1,000/day)
 # --- coastal overtopping: big waves + strong onshore wind around a high tide ---
 COASTAL_MIN_TIDE_M = 9.0         # only high tides at least this high (St Helier, metres above chart datum)
 COASTAL_WAVE_M = 4.0             # waves off the south-west coast at least this high near high water
