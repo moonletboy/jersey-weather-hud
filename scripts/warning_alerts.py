@@ -82,7 +82,21 @@ WARN_RE = re.compile(
     r"([A-Z][^.]{1,80}?)\s+[Ww]arning\s+"                          # name, e.g. "Channel Islands Shipping Area Wind"
     r"[Ii]ssued\s+(?:at\s+)?(\d{1,2}[:.]\d{2})\s*(UTC|GMT|BST)?"   # issue time
     r"\s*(?:on\s+)?((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\s+\d{1,2}\s+[A-Z][a-z]+)?")
-HAZARD_RE = re.compile(r"(snow and ice|coastal flooding|thunderstorms?|wind|rain|snow|ice|fog|heat|cold|lightning|hail|gale|flood(?:ing)?|tidal|tide|coastal|storm|weather)$", re.I)
+HAZARD_RE = re.compile(r"(snow and ice|coastal flooding|thunderstorms?|thunder|wind|rain|snow|ice|fog|heat|cold|lightning|hail|gale|flood(?:ing)?|tidal|tide|coastal|storm|weather)$", re.I)
+# different words for the same kind of warning, so a renamed warning is still recognised as the same one
+HAZARD_SAME = {"thunder": "thunderstorm", "thunderstorms": "thunderstorm", "gale": "wind", "tidal": "tide",
+               "coastal": "tide", "coastal flooding": "tide", "flooding": "flood", "snow and ice": "snow"}
+
+def hazard_of(name, default="weather"):
+    m = HAZARD_RE.search(name)
+    h = m.group(1).lower() if m else default
+    return HAZARD_SAME.get(h, h), m
+
+def clean_issued(text):
+    t = re.sub(r"^\s*issued\s+(?:at\s+)?", "", str(text or ""), flags=re.I)
+    t = re.sub(r"[\s.]+$", "", t)            # trailing full stop
+    t = re.sub(r"\s+\d{4}$", "", t)          # trailing year
+    return t.strip()
 SEA_RE = re.compile(r"shipping|sea area|marine|coastal waters|at sea", re.I)
 
 def parse_warnings(text):
@@ -97,8 +111,7 @@ def parse_warnings(text):
         if not key or key in seen:
             continue
         seen.add(key)
-        hm = HAZARD_RE.search(name)
-        hazard = hm.group(1).lower() if hm else "weather"
+        hazard, hm = hazard_of(name)
         area = name[:hm.start()].strip(" -\u2013") if hm else name
         issued = " ".join(x for x in (m.group(3).replace(".", ":"), m.group(4) or "", m.group(5) or "") if x)
         out.append({"key": key, "colour": colour, "level": LEVEL[colour], "name": name,
@@ -147,11 +160,9 @@ def fetch_feed():
         if key in seen:
             key += " " + flag.lower()
         seen.add(key)
-        hm = HAZARD_RE.search(name)
-        hazard = hm.group(1).lower() if hm else hazard_word
+        hazard, hm = hazard_of(name, hazard_word)
         area = name[:hm.start()].strip(" -\u2013") if hm else name
-        issued = re.sub(r"^\s*issued\s+(at\s+)?", "", str(w.get("Issued", "")), flags=re.I)
-        issued = re.sub(r"\s+\d{4}\s*$", "", issued).strip()
+        issued = clean_issued(w.get("Issued", ""))
         parsed.append({"key": key, "colour": colour, "level": LEVEL[colour], "name": name,
                        "area": area or "Jersey", "hazard": hazard, "sea": bool(SEA_RE.search(name)),
                        "issued": issued, "message": " ".join(str(w.get("WarningMessage") or "").split())})
@@ -270,12 +281,22 @@ def check(vapid_private, vapid_subject, admin_key):
             seen.add(w["key"])
             old = warnings.get(w["key"])
             if old is None:
-                twin = source_changed and any(o.get("hazard") == w["hazard"] and bool(o.get("sea")) == w["sea"]
-                                              and o.get("level", 0) >= w["level"] for o in warnings.values())
+                def same_kind(o):
+                    oh = HAZARD_SAME.get(o.get("hazard", ""), o.get("hazard", ""))
+                    if oh == "weather":     # an older record whose type wasn't recognised: judge it by its name
+                        oh = hazard_of(o.get("name", ""), "weather")[0]
+                    return oh == w["hazard"] and bool(o.get("sea")) == w["sea"]
+                def time_of(o):
+                    t = re.search(r"\d{1,2}[:.]\d{2}", o.get("issued", ""))
+                    return t.group(0).replace(".", ":") if t else None
+                twin = any(same_kind(o) and (
+                               (source_changed and o.get("level", 0) >= w["level"])
+                               or (o.get("level") == w["level"] and time_of(o) and time_of(o) == time_of(w)))
+                           for o in warnings.values())
                 if w["level"] <= quiet_level:
                     print(f"  {w['name']}: already alerted/in force before - recorded, no alert")
                 elif twin:
-                    print(f"  {w['name']}: same warning as one already recorded (new data source) - recorded, no alert")
+                    print(f"  {w['name']}: same warning as one already recorded (renamed or new data source) - recorded, no alert")
                 else:
                     alerts.append(("new", build_message(w, "new"), f"{w['colour']} {w['name']}"))
                 warnings[w["key"]] = dict(w, missing=0, lower=0)
@@ -326,9 +347,17 @@ def check(vapid_private, vapid_subject, admin_key):
         "lastAlertAt": now_iso() if alerts else prev.get("lastAlertAt", ""),
         "lastAlertKind": alerts[-1][0] if alerts else prev.get("lastAlertKind", ""),
     }
-    if state != prev or not os.path.exists(STATE_FILE):
+    # Only save when something about the warnings changed. Saving makes GitHub rebuild the website, so
+    # saving just because gov.je refreshed its feed (new timestamp, same warnings) would rebuild it every
+    # few minutes. The fetch timestamp is still saved whenever a real change is saved, which is all the
+    # "two fetches must agree" safeguard needs.
+    volatile = ("lastFetch", "checkedAt", "snippet", "hash")
+    core = lambda x: {k: v for k, v in x.items() if k not in volatile}
+    if core(state) != core(prev) or not os.path.exists(STATE_FILE):
         save_json(STATE_FILE, state)
         print("State updated.")
+    else:
+        print("Nothing changed - not saving (avoids rebuilding the website).")
 
 def main():
     mode = os.environ.get("MODE", "check").strip() or "check"
