@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "8f10895802d3",
+ "hash": "f9a8f7fdbee7",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -23,7 +23,7 @@
    "area": "Jersey",
    "hazard": "thunderstorm",
    "sea": false,
-   "issued": "2:06 p.m. Wednesday 21 October 2026.",
+   "issued": "2:06 p.m. Wednesday 21 October",
    "message": "",
    "missing": 0,
    "lower": 0
