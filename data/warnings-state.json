@@ -1,18 +1,19 @@
 {
- "severity": "orange",
+ "severity": "yellow",
  "hash": "8f10895802d3",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
-   "colour": "orange",
-   "level": 2,
+   "colour": "yellow",
+   "level": 1,
    "name": "Channel Islands Shipping Area Wind",
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "08:50 UTC Wednesday 21 October",
+   "issued": "14:45 UTC Wednesday 21 October",
+   "message": "Gale now moderated but warning of W to NW wind F7 remains in force backing SW soon.",
    "missing": 0,
-   "lower": 1
+   "lower": 0
   },
   "thunderstorm": {
    "key": "thunderstorm",
@@ -30,9 +31,9 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-21T14:46:39.859856Z",
+ "lastFetch": "2026-10-21T15:00:00.0467833Z",
  "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 14:45 UTC Wednesday 21 October Gale now moderated but warning of W to NW wind F7 remains in force ",
- "checkedAt": "2026-10-21T14:46:39.859856Z",
+ "checkedAt": "2026-10-21T15:00:00.0467833Z",
  "lastAlertAt": "2026-10-21T14:13:33Z",
  "lastAlertKind": "new"
 }
