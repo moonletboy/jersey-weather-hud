@@ -1076,7 +1076,12 @@ if(inFacebook && (isIOS || isAndroid)) state = 'facebook';
 else if(!supported) state = (isIOS && !standalone) ? 'ios-install' : 'unsupported';
 else if(Notification.permission === 'denied') state = 'denied';
 else{
-try{ state = (await currentSub()) ? 'on' : 'off'; }catch(e){ state = 'off'; }
+let sub = null;
+try{ sub = await currentSub(); }catch(e){}
+state = sub ? 'on' : 'off';
+/* an existing subscription (e.g. made before the sheet was ready, or marked as the owner's with #admin) is
+   quietly re-saved so the sheet always has it and its "last seen" time stays fresh */
+if(sub){ fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:ua, standalone:standalone, page:location.pathname, owner:(location.hash === '#admin') }) }).catch(function(){}); }
 }
 render();
 }
