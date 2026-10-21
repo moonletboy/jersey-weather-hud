@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "36afddc28603",
+ "hash": "634a07fcd25c",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -23,14 +23,26 @@
    "hazard": "thunderstorm",
    "sea": false,
    "issued": "2:06",
+   "missing": 1,
+   "lower": 0
+  },
+  "thunder": {
+   "key": "thunder",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Thunder",
+   "area": "Thunder",
+   "hazard": "weather",
+   "sea": false,
+   "issued": "2:06",
    "missing": 0,
    "lower": 0
   }
  },
  "fallback": 0,
- "lastFetch": "2026-10-21T13:28:13.732Z",
- "snippet": "Jersey warnings There are currently 2 warnings in force Yellow - Jersey Thunderstorm Warning Issued at 2:06 p.m. Wednesday 21 October 2026. Valid from 3:00 p.m.",
- "checkedAt": "2026-10-21T13:28:13.732Z",
- "lastAlertAt": "2026-10-21T13:43:10Z",
+ "lastFetch": "2026-10-21T14:12:21.024Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 08:50 UTC Wednesday 21 October 2026 W to NW gale F8 backing SW strong F7 later. Yellow - Thunder W",
+ "checkedAt": "2026-10-21T14:12:21.024Z",
+ "lastAlertAt": "2026-10-21T14:13:33Z",
  "lastAlertKind": "new"
 }
