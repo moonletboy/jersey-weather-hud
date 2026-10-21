@@ -29,7 +29,8 @@ if that isn't set up yet the report is simply ignored and nothing else is affect
 Settings come from environment variables (GitHub secrets):
   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, JWC_ADMIN_KEY
 """
-import json, os, re, sys, datetime, hashlib
+import json, os, re, sys, datetime, hashlib, time
+from concurrent.futures import ThreadPoolExecutor
 import requests
 from pywebpush import webpush, WebPushException
 
@@ -205,28 +206,37 @@ def log_event(admin_key, event):
         print("Log skipped:", str(ex)[:120])
 
 # ---------- sending ----------
+SEND_AT_ONCE = 20   # phones contacted at the same time (697 subscribers then take seconds, not minutes)
+
 def send_all(subs, message, vapid_private, vapid_subject, admin_key):
-    sent, dead, failed = 0, [], 0
     payload = json.dumps(message)
-    for s in subs:
+    def one(s):
         info = {"endpoint": s["endpoint"], "keys": s["keys"]}
         try:
             webpush(subscription_info=info, data=payload, vapid_private_key=vapid_private,
                     vapid_claims={"sub": vapid_subject}, ttl=PUSH_TTL, headers=dict(PUSH_HEADERS))
-            sent += 1
+            return ("sent", None)
         except WebPushException as ex:
             status = getattr(ex.response, "status_code", None)
             if status in (404, 410):
-                dead.append(s["endpoint"])
-            else:
-                failed += 1
-                print(f"  push failed ({status}): {str(ex)[:120]}")
+                return ("dead", s["endpoint"])
+            return ("failed", f"push failed ({status}): {str(ex)[:120]}")
         except Exception as ex:
-            failed += 1
-            print("  push error:", str(ex)[:120])
-    print(f"Sent {sent}, failed {failed}, dead {len(dead)} of {len(subs)} subscriptions.")
+            return ("failed", "push error: " + str(ex)[:120])
+    started = time.time()
+    with ThreadPoolExecutor(max_workers=SEND_AT_ONCE) as pool:
+        results = list(pool.map(one, subs))
+    sent = sum(1 for kind, _ in results if kind == "sent")
+    dead = [x for kind, x in results if kind == "dead"]
+    failures = [x for kind, x in results if kind == "failed"]
+    for f in failures[:10]:
+        print("  " + f)
+    if len(failures) > 10:
+        print(f"  ...and {len(failures) - 10} more failures")
+    print(f"Sent {sent}, failed {len(failures)}, dead {len(dead)} of {len(subs)} subscriptions "
+          f"(in {time.time() - started:.1f} s).")
     prune(admin_key, dead)
-    return {"sent": sent, "failed": failed, "dead": len(dead), "of": len(subs)}
+    return {"sent": sent, "failed": len(failures), "dead": len(dead), "of": len(subs)}
 
 # ---------- the warning check ----------
 def check(vapid_private, vapid_subject, admin_key):
