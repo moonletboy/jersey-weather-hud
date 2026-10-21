@@ -143,6 +143,9 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .alert-btn[hidden]{ display:none; }
 .alert-btn:disabled{ opacity:0.6; cursor:wait; }
 .alert-strip.is-on .alert-btn{ background:transparent; color:var(--dim); border:1px solid var(--dim2); }
+.alert-strip.is-on .alert-btn.alert-test{ background:var(--cyan); color:#05080d; border:0; }
+.alert-strip{ flex-wrap:wrap; }
+.alert-txt .fix{ display:block; margin-top:6px; color:var(--dim); }
 .fb-about-link{ color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); white-space:nowrap; }
 .fb-about-link:hover{ color:var(--text); border-bottom-color:var(--text); }
 /* the About & disclaimer panel under the banner */
@@ -997,6 +1000,7 @@ window.addEventListener('appinstalled', function(){ strip.hidden = true; });
 <div class="alert-strip" id="alertStrip" hidden>
 <span class="alert-ic" aria-hidden="true">&#9889;</span>
 <span class="alert-txt" id="alertText"></span>
+<button type="button" class="alert-btn alert-test" id="alertTest" hidden>TEST</button>
 <button type="button" class="alert-btn" id="alertBtn">ALERT ME</button>
 <button type="button" class="app-x" id="alertDismiss" aria-label="Not now" hidden>&times;</button>
 </div>
@@ -1012,7 +1016,7 @@ window.addEventListener('appinstalled', function(){ strip.hidden = true; });
 (function(){
 const strip = document.getElementById('alertStrip');
 if(!strip) return;
-const txt = document.getElementById('alertText'), btn = document.getElementById('alertBtn'), xbtn = document.getElementById('alertDismiss');
+const txt = document.getElementById('alertText'), btn = document.getElementById('alertBtn'), xbtn = document.getElementById('alertDismiss'), tbtn = document.getElementById('alertTest');
 const API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
 const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
 const ua = navigator.userAgent;
@@ -1035,13 +1039,14 @@ txt.innerHTML = html;
 btn.hidden = !button; btn.disabled = false;
 if(button) btn.textContent = button;
 strip.classList.toggle('is-on', cls === 'on');
+tbtn.hidden = (cls !== 'on');
 xbtn.hidden = !(state === 'off' && !dismissed);
 strip.hidden = false;
 }
 function render(){
 const tag = dismissed ? '' : '<span class="new-tag">NEW</span>';
 if(state === 'on'){
-show('Warning alerts <b>ON</b> for this device &mdash; you&rsquo;ll get a notification when a new or upgraded warning is issued. The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">official Jersey Met warnings page</a>.', 'TURN OFF', 'on');
+show('Warning alerts <b>ON</b> for this device &mdash; you&rsquo;ll get a notification when a <b>new</b> warning is issued or one is <b>upgraded</b> (not for warnings already in force). Tap TEST to check notifications show on this device. The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">official Jersey Met warnings page</a>.', 'TURN OFF', 'on');
 } else if(state === 'off'){
 show(dismissed ? '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued.'
 : tag + '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued. The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the " + GOV + ".', 'ALERT ME');
@@ -1060,6 +1065,26 @@ show('<b>Notifications are blocked</b> for this site, so alerts can&rsquo;t be s
 } else if(state === 'unsupported'){
 show('This browser can&rsquo;t receive notifications, so warning alerts aren&rsquo;t available here. Chrome, Edge or Firefox on a phone or PC can.', '');
 }
+}
+function fixTips(){
+if(isIOS) return 'iPhone/iPad: <b>Settings</b> \u2192 <b>Notifications</b> \u2192 <b>JWC Weather</b> \u2192 Allow Notifications, and check Focus / Do Not Disturb is off.';
+if(isAndroid) return 'Android: phone <b>Settings</b> \u2192 <b>Apps</b> \u2192 <b>Chrome</b> \u2192 <b>Notifications</b> must be on, and <b>Battery</b> \u2192 Chrome \u2192 <b>Unrestricted</b>. Some phones also have a power saver (e.g. &ldquo;DuraSpeed&rdquo; or &ldquo;background app management&rdquo;) that must allow Chrome.';
+if(/Mac/.test(ua)) return 'Mac: <b>System Settings</b> \u2192 <b>Notifications</b> \u2192 your browser \u2192 Allow, and check Focus is off.';
+return 'Windows: <b>Settings</b> \u2192 <b>System</b> \u2192 <b>Notifications</b>: Do not disturb off and your browser switched on. Notifications only arrive while the browser is running.';
+}
+async function localNote(title, body, tag){
+const reg = await navigator.serviceWorker.ready;
+await reg.showNotification(title, { body: body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag: tag });
+}
+async function testNote(){
+tbtn.disabled = true;
+try{
+await localNote('Jersey Weather Chat: TEST', 'If you can see this, warning alerts will show on this device.', 'jwc-local-test-' + Date.now());
+txt.innerHTML = 'Test sent. <b>Did a notification appear?</b> If yes, you&rsquo;re all set. If not, check: <span class="fix">' + fixTips() + '</span>';
+}catch(e){
+txt.innerHTML = '<b>This device blocked the test notification</b> (' + (e && e.message ? e.message : 'unknown') + '). Check: <span class="fix">' + fixTips() + '</span>';
+}
+tbtn.disabled = false;
 }
 async function currentSub(){
 const reg = await navigator.serviceWorker.ready;
@@ -1106,6 +1131,8 @@ const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:
 const out = await res.json();
 if(out.status !== 'ok') throw new Error(out.message || 'server said no');
 state = 'on'; render();
+try{ await localNote('Jersey Weather Chat', 'Warning alerts are ON for this device. You\u2019ll get a notification like this when Jersey Met issues a new or upgraded warning.', 'jwc-welcome'); }
+catch(e){ txt.innerHTML = 'Alerts are <b>ON</b>, but this device blocked a test notification. Check: <span class="fix">' + fixTips() + '</span>'; }
 }catch(e){
 console.error('alert subscribe failed', e);
 state = 'off'; render();
@@ -1125,6 +1152,7 @@ state = 'off'; dismissed = true; render();
 txt.innerHTML = 'Warning alerts are <b>off</b> for this device. Tap ALERT ME any time to switch them back on.';
 }
 btn.addEventListener('click', function(){ if(state === 'on') unsubscribe(); else subscribe(); });
+tbtn.addEventListener('click', testNote);
 xbtn.addEventListener('click', function(){
 dismissed = true;
 try{ localStorage.setItem('jwcAlertDismissed', String(Date.now())); }catch(e){}
