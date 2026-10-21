@@ -161,6 +161,7 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .alert-txt .fix{ display:block; margin-top:6px; color:var(--dim); }
 .alert-acts{ display:flex; gap:8px; margin-top:8px; }
 .alert-acts:empty{ display:none; }
+.alert-help{ display:inline-block; margin-top:9px; color:var(--cyan); font-size:11px; text-decoration:none; }
 .fb-about-link{ color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); white-space:nowrap; }
 .fb-about-link:hover{ color:var(--text); border-bottom-color:var(--text); }
 /* the About & disclaimer panel under the banner */
@@ -525,6 +526,9 @@ border-radius:10px; padding:18px 20px; transition: border-color .3s ease;
 .warn-ttl{ font-size:12px; font-weight:700; color:var(--text); }
 .warn-iss{ font-size:9.5px; color:var(--dim); letter-spacing:0.5px; }
 .warn-desc{ padding:0 12px 12px; font-size:12px; line-height:1.6; color:var(--text); }
+.warn-impacts{ margin:8px 0 0; padding-left:18px; color:var(--dim); font-size:11.5px; }
+.warn-impacts li{ margin:2px 0; }
+.warn-note{ font-size:10.5px; color:var(--dim); margin-top:6px; }
 .warning-disclaimer a{ color:var(--cyan); }
 /* 5-DAY FORECAST */
 .forecast-scroll{ display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; -webkit-overflow-scrolling:touch; }
@@ -1028,6 +1032,7 @@ window.addEventListener('appinstalled', function(){ strip.hidden = true; });
 <button type="button" class="alert-btn alert-test" id="alertTest" hidden>TEST</button>
 <button type="button" class="alert-btn alert-off" id="alertOff" hidden>TURN OFF</button>
 </div>
+<a class="alert-help" id="alertHelp" href="alerts-help.html">Step-by-step help for your device &rsaquo;</a>
 </div>
 </div>
 <script>
@@ -1055,6 +1060,7 @@ const isAndroid = /Android/i.test(ua);
 const inFacebook = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(ua);
 const supported = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
 let publicKey = '', state = '';
+document.getElementById('alertHelp').href = 'alerts-help.html#' + (isIOS ? 'iphone' : isAndroid ? 'android' : /Mac/.test(ua) ? 'mac' : /Windows/i.test(ua) ? 'windows' : '');
 
 function b64ToBytes(b64){
 const pad = '='.repeat((4 - b64.length % 4) % 4);
@@ -1093,6 +1099,8 @@ denied:      ['bad',  '<b>ALERTS BLOCKED</b><span class="alert-dim"> &middot; ta
                 : isAndroid
                 ? 'tap the <b>lock</b> (or tune) icon next to the address, then <b>Permissions</b> \u2192 <b>Notifications</b> \u2192 Allow, then tap ALERT ME.'
                 : 'click the <b>lock</b> (or tune) icon next to the address, set <b>Notifications</b> to Allow, then tap ALERT ME.')],
+unconfirmed: ['off',  '<b>ALERTS ON?</b><span class="alert-dim"> &middot; not confirmed &middot; tap RETRY</span>', 'RETRY',
+              'This device has alerts switched on, but it couldn&rsquo;t reach our server to add itself to the alert list, so alerts may not arrive yet. Check your internet connection, turn off any VPN or ad-blocker for a moment, then tap RETRY.'],
 unsupported: ['off',  '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; not available in this browser</span>', '',
               'This browser can&rsquo;t receive notifications. Chrome, Edge or Firefox on a phone or computer can.']
 }[state];
@@ -1101,13 +1109,52 @@ strip.classList.remove('is-on', 'is-off', 'is-bad');
 strip.classList.add('is-' + s[0]);
 sum.innerHTML = s[1];
 btn.hidden = !s[2]; btn.disabled = false; btn.textContent = s[2] || '';
-tbtn.hidden = obtn.hidden = (state !== 'on'); tbtn.disabled = obtn.disabled = false;
+tbtn.hidden = obtn.hidden = (state !== 'on' && state !== 'unconfirmed'); tbtn.disabled = obtn.disabled = false;
 txt.innerHTML = note || s[3];
 strip.hidden = false;
 }
 async function localNote(title, body, tag){
 const reg = await navigator.serviceWorker.ready;
 await reg.showNotification(title, { body: body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag: tag });
+}
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+function failText(e){
+return '<b>Sorry, that didn&rsquo;t work</b> &mdash; this device couldn&rsquo;t reach our server (' + (e && e.message ? e.message : 'unknown error') +
+'). Check your internet connection, turn off any VPN or ad-blocker for a moment, then try again.';
+}
+/* Saves this device's subscription to the alert list. Tries twice normally; then once more without following
+   Google's redirect - the script has already saved the subscription by the time it redirects, and the redirect
+   is the step most often blocked (VPNs, ad-blockers, Safari privacy settings). */
+async function saveSub(sub){
+const body = JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:ua, standalone:standalone, page:location.pathname, owner:(location.hash === '#admin') });
+let lastErr = null;
+for(let i = 0; i < 2; i++){
+try{
+const res = await fetch(API_URL, { method:'POST', body: body });
+const out = await res.json();
+if(out.status === 'ok') return true;
+const err = new Error(out.message || 'server said no'); err.server = true; throw err;
+}catch(e){
+if(e.server) throw e;                       /* the server answered and refused - retrying won't help */
+lastErr = e; await sleep(1500);
+}
+}
+try{
+const r = await fetch(API_URL, { method:'POST', body: body, redirect:'manual' });
+if(r.type === 'opaqueredirect' || r.ok) return true;
+}catch(e){ lastErr = e; }
+throw lastErr || new Error('could not reach the server');
+}
+async function retrySave(){
+btn.disabled = true; btn.textContent = 'WORKING\u2026';
+try{
+const sub = await currentSub();
+if(!sub){ state = 'off'; render(); return; }
+await saveSub(sub);
+state = 'on'; render('Done &mdash; this device is on the alert list. Tap TEST to check notifications show.'); setOpen(true);
+}catch(e){
+state = 'unconfirmed'; render(failText(e)); setOpen(true);
+}
 }
 async function currentSub(){
 const reg = await navigator.serviceWorker.ready;
@@ -1128,9 +1175,11 @@ else{
 let sub = null;
 try{ sub = await currentSub(); }catch(e){}
 state = sub ? 'on' : 'off';
-/* an existing subscription is quietly re-saved so the sheet always has it and its "last seen" stays fresh
-   (and it is marked as the owner's when the page is opened with #admin) */
-if(sub){ fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:ua, standalone:standalone, page:location.pathname, owner:(location.hash === '#admin') }) }).catch(function(){}); }
+render();
+/* an existing subscription is re-saved so the sheet always has it and its "last seen" stays fresh (and it is
+   marked as the owner's when the page is opened with #admin). If that fails, say so honestly. */
+if(sub){ saveSub(sub).catch(function(e){ console.warn('alert re-save failed', e); state = 'unconfirmed'; render(); }); }
+return;
 }
 render();
 }
@@ -1151,16 +1200,16 @@ for(let i = 0; same && i < have.length; i++) same = have[i] === keyBytes[i];
 if(!same){ await sub.unsubscribe(); sub = null; }
 }
 if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:keyBytes });
-const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:ua, standalone:standalone, page:location.pathname, owner:(location.hash === '#admin') }) });
-const out = await res.json();
-if(out.status !== 'ok') throw new Error(out.message || 'server said no');
+await saveSub(sub);
 state = 'on'; render(); setOpen(false);
 try{ await localNote('Jersey Weather Chat', 'Warning alerts are ON for this device. You\u2019ll get a notification like this when Jersey Met issues a new or upgraded warning.', 'jwc-welcome'); }
 catch(e){ render('Alerts are <b>ON</b>, but this device blocked a test notification. Check: <span class="fix">' + fixTips() + '</span>'); setOpen(true); }
 }catch(e){
 console.error('alert subscribe failed', e);
-state = 'off';
-render('<b>Sorry, that didn&rsquo;t work</b> (' + (e && e.message ? e.message : 'unknown error') + '). Please try again in a moment.');
+let sub = null;
+try{ sub = await currentSub(); }catch(x){}
+state = sub ? 'unconfirmed' : 'off';          /* the phone may have a push address that just didn't reach the list */
+render(failText(e));
 setOpen(true);
 }
 }
@@ -1189,7 +1238,7 @@ render('<b>This device blocked the test notification</b> (' + (e && e.message ? 
 setOpen(true);
 }
 head.addEventListener('click', function(){ setOpen(more.hidden); });
-btn.addEventListener('click', subscribe);
+btn.addEventListener('click', function(){ if(state === 'unconfirmed') retrySave(); else subscribe(); });
 obtn.addEventListener('click', unsubscribe);
 tbtn.addEventListener('click', testNote);
 init();
@@ -2049,6 +2098,8 @@ let liveData = { temp:null, trend:'TEMP STEADY', ice:false, wind:null, windDir:n
 let heroFaceIndex = 0;
 let fcData = null;
 const WARNINGS_API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+/* MANUAL OVERRIDE - only used if MANUAL_OVERRIDE_ACTIVE is set to true by hand (e.g. if gov.je's feed broke for a
+   long time). It is never shown automatically: if live warnings can't be loaded the panel says so honestly. */
 let MANUAL_OVERRIDE_ACTIVE = false;
 let MANUAL_WARNING_SEVERITY = 'orange'; // none | yellow | orange | red
 let MANUAL_WARNING_TEXT = '2 warnings in force. ORANGE \u2014 Channel Islands Shipping Area Wind Warning (issued 08:45 UTC Sat 29 Aug): SW wind F7, gusts to 45kt, imminent. Travel disruption likely; possible damage to moored boats in exposed locations. YELLOW \u2014 Jersey Tide/Coastal Flood Warning (issued 10:18 Sat 29 Aug): minor disruption possible along the south coast around high tide this evening (8:19pm, 11.0m). Coastal routes, promenades and cycle paths may be affected by spray/waves, mainly 1\u20132 hrs either side of high tide.';
@@ -2056,7 +2107,8 @@ const SEVERITY_STYLES = {
 none: { color:GREEN, bg:'rgba(45,225,160,0.06)', icon:'\u2713', label:'NO WARNINGS IN FORCE' },
 yellow: { color:YELLOW, bg:'rgba(224,211,65,0.08)', icon:'\u26a0', label:'BE AWARE' },
 orange: { color:ORANGE, bg:'rgba(255,140,48,0.08)', icon:'\u26a0', label:'TAKE PRECAUTIONS' },
-red: { color:RED, bg:'rgba(255,75,92,0.10)', icon:'\u26d4', label:'STAY INDOORS' }
+red: { color:RED, bg:'rgba(255,75,92,0.10)', icon:'\u26d4', label:'STAY INDOORS' },
+unknown: { color:'#9fb8c2', bg:'rgba(159,184,194,0.06)', icon:'?', label:'COULDN\u2019T CHECK WARNINGS' }
 };
 /* The warnings text arrives as one block in which each warning starts with its colour,
    e.g. "2 warnings in force. ORANGE \u2014 Channel Islands Shipping Area Wind Warning (issued ...): ...
@@ -2121,21 +2173,85 @@ list.appendChild(d);
 });
 box.appendChild(list);
 }
+/* Live warnings from gov.je's own data feed (via the Apps Script): one row per warning with its colour, title,
+   issue time, Jersey Met's message and listed impacts. */
+function bannerStyle(s){
+const banner = document.getElementById('warningBanner');
+banner.style.borderColor = s.color; banner.style.background = s.bg;
+const icon = document.getElementById('warningIcon');
+icon.textContent = s.icon; icon.style.color = s.color;
+const title = document.getElementById('warningTitle');
+title.textContent = s.label; title.style.color = s.color;
+const box = document.getElementById('warningText');
+box.textContent = '';
+return box;
+}
+function renderWarningList(severity, list){
+const box = bannerStyle(SEVERITY_STYLES[severity] || SEVERITY_STYLES.none);
+if(!list.length) return;
+const count = document.createElement('div');
+count.className = 'warn-count';
+count.textContent = list.length === 1 ? '1 WARNING IN FORCE' : list.length + ' WARNINGS IN FORCE \u2014 TAP EACH ONE FOR DETAILS';
+box.appendChild(count);
+const wrap = document.createElement('div');
+wrap.className = 'warn-list';
+list.slice().sort(function(a, b){ return (WARN_RANK[b.colour] || 0) - (WARN_RANK[a.colour] || 0); }).forEach(function(w){
+const st = SEVERITY_STYLES[w.colour] || SEVERITY_STYLES.orange;
+const d = document.createElement('details');
+d.className = 'warn-item';
+d.style.setProperty('--wc', st.color);
+if(list.length === 1) d.open = true;
+const sum = document.createElement('summary');
+const chip = document.createElement('span'); chip.className = 'warn-chip'; chip.textContent = String(w.colour || '').toUpperCase();
+const ttl = document.createElement('span'); ttl.className = 'warn-ttl';
+ttl.textContent = w.type + ' Warning' + (/shipping|sea area/i.test(w.type) ? ' (at sea)' : '');
+sum.appendChild(chip); sum.appendChild(ttl);
+const issued = String(w.issued || '').replace(/^\s*issued\s+(at\s+)?/i, '').replace(/[\s.]+$/, '').replace(/\s+\d{4}$/, '');
+if(issued){ const iss = document.createElement('span'); iss.className = 'warn-iss'; iss.textContent = 'ISSUED ' + issued.toUpperCase(); sum.appendChild(iss); }
+d.appendChild(sum);
+const desc = document.createElement('div'); desc.className = 'warn-desc';
+desc.appendChild(document.createTextNode(w.message || 'See gov.je for the full warning.'));
+if(w.impacts && w.impacts.length){
+const ul = document.createElement('ul'); ul.className = 'warn-impacts';
+w.impacts.forEach(function(t){ const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+desc.appendChild(ul);
+}
+d.appendChild(desc);
+wrap.appendChild(d);
+});
+box.appendChild(wrap);
+}
+function renderWarningUnavailable(){
+const box = bannerStyle(SEVERITY_STYLES.unknown);
+box.textContent = 'We couldn\u2019t load Jersey Met\u2019s warnings just now, so please check the official warnings page below. We\u2019ll keep trying automatically.';
+}
+const WARN_REFRESH_MS = 5 * 60 * 1000;
+let warnLastOk = 0;
 async function loadWarnings(){
 if(MANUAL_OVERRIDE_ACTIVE){
 renderWarningBanner(MANUAL_WARNING_SEVERITY, MANUAL_WARNING_TEXT);
 return;
 }
 try{
-const res = await fetch(WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=warnings');
+const res = await fetch(WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=warnings&t=' + Date.now());
 const data = await res.json();
-if(data.ok === false || data.severity === 'unknown') throw new Error('proxy reported failure');
-renderWarningBanner(data.severity, data.text);
+if(data.ok === false || data.severity === 'unknown') throw new Error(data.error || 'warnings check reported a problem');
+if(Array.isArray(data.warnings)) renderWarningList(data.severity, data.warnings);
+else renderWarningBanner(data.severity, data.text);
+warnLastOk = Date.now();
 }catch(e){
-console.error('warnings fetch failed, using manual fallback', e);
-renderWarningBanner(MANUAL_WARNING_SEVERITY, MANUAL_WARNING_TEXT);
+console.error('warnings fetch failed', e);
+if(warnLastOk && Date.now() - warnLastOk < 30 * 60 * 1000){
+/* keep the last good result on screen for a short blip, but say it couldn't be refreshed */
+const box = document.getElementById('warningText');
+if(box && !box.querySelector('.warn-note')){ const n = document.createElement('div'); n.className = 'warn-note'; n.textContent = 'Couldn\u2019t refresh just now \u2014 trying again shortly.'; box.appendChild(n); }
+}else{
+renderWarningUnavailable();
 }
 }
+}
+setInterval(loadWarnings, WARN_REFRESH_MS);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && Date.now() - warnLastOk > 60 * 1000) loadWarnings(); });
 function wmoIcon(code){
 if([95,96,99].includes(code)) return {icon:'\u26c8\ufe0f', label:'THUNDERSTORM'};
 if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return {icon:'\ud83c\udf27\ufe0f', label:'RAIN'};
