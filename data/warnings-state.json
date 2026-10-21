@@ -1,8 +1,8 @@
 {
  "severity": "orange",
- "hash": "2c6a37ca1568",
- "snippet": "Jersey warnings There is currently 1 warning in force Orange - Channel Islands Shipping Area Wind Warning Issued at 20:36 UTC Tuesday 20 October 2026 S wind F6 ",
- "checkedAt": "2026-10-21T00:20:46.116Z",
+ "hash": "d98904c92002",
+ "snippet": "Jersey warnings There is currently 1 warning in force Orange - Channel Islands Shipping Area Wind Warning Issued at 03:07 UTC Wednesday 21 October 2026 W to NW ",
+ "checkedAt": "2026-10-21T07:25:30.812Z",
  "lastAlertAt": "2026-10-21T00:46:43Z",
  "lastAlertKind": "new"
 }
