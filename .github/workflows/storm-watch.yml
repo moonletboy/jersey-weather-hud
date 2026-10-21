@@ -18,8 +18,10 @@
 name: Storm Watch
 
 on:
+  # The Apps Script heartbeat starts this every 10 minutes (reliable). GitHub's own
+  # timer below is only a backup, so it runs every 30 minutes.
   schedule:
-    - cron: "3-59/10 * * * *"
+    - cron: "15,45 * * * *"
   workflow_dispatch:
     inputs:
       test_email:
