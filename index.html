@@ -137,6 +137,7 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .alert-txt{ flex:1; min-width:0; color:var(--text); }
 .alert-txt b{ color:var(--amber); }
 .alert-strip.is-on .alert-txt b{ color:var(--green); }
+.alert-txt a{ color:var(--cyan); }
 .alert-txt .new-tag{ display:inline-block; font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:2px; color:#05080d; background:var(--amber); border-radius:4px; padding:1px 6px; margin-right:6px; vertical-align:1px; }
 .alert-btn{ font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:var(--amber); border:0; border-radius:7px; padding:8px 12px; cursor:pointer; flex-shrink:0; }
 .alert-btn[hidden]{ display:none; }
@@ -1040,10 +1041,10 @@ strip.hidden = false;
 function render(){
 const tag = dismissed ? '' : '<span class="new-tag">NEW</span>';
 if(state === 'on'){
-show('Warning alerts <b>ON</b> for this device &mdash; you&rsquo;ll get a notification when a new or upgraded Jersey Met warning is issued. Automated, not official: always check gov.je.', 'TURN OFF', 'on');
+show('Warning alerts <b>ON</b> for this device &mdash; you&rsquo;ll get a notification when a new or upgraded warning is issued. The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">official Jersey Met warnings page</a>.', 'TURN OFF', 'on');
 } else if(state === 'off'){
 show(dismissed ? '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued.'
-: tag + '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued. Automated and unofficial: always check gov.je.', 'ALERT ME');
+: tag + '<b>Jersey Met warning alerts</b> &mdash; get a notification on this device when a new or upgraded weather warning is issued. The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the " + GOV + ".', 'ALERT ME');
 } else if(state === 'facebook'){
 show(tag + '<b>Warning alerts</b> can&rsquo;t be switched on inside Facebook&rsquo;s browser. ' + (isIOS
 ? 'Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then tap ALERT ME there.'
