@@ -1,7 +1,7 @@
 # Jersey Met warning alerts for the Jersey Weather Chat HUD
 #
-# Every 10 minutes this asks the Apps Script for the current gov.je warnings
-# (the script caches them, so this costs no ZenRows credits), compares with
+# Every 5 minutes (started by the Apps Script heartbeat) this reads gov.je's own
+# warning data feed (free - no ZenRows credits), compares with
 # data/warnings-state.json and sends a push notification to every device that
 # tapped ALERT ME - but only when a warning is NEW or UPGRADED. Nothing is sent
 # when a warning is reworded at the same colour, lowered or cleared.
@@ -19,8 +19,10 @@
 name: Warning alerts
 
 on:
+  # The Apps Script heartbeat starts this every 5 minutes (reliable). GitHub's own
+  # timer below is only a backup, so it runs every 30 minutes.
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 permissions:
