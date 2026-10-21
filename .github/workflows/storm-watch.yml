@@ -1,0 +1,77 @@
+# Storm Watch - suggests special alerts to Matthew by email
+#
+# Every 10 minutes: checks Jersey/Guernsey/Alderney airport observations, the
+# five-model gust forecast, the pressure trend and (when something is brewing)
+# the Weather Underground stations, against the thresholds at the top of
+# scripts/storm_watch.py. When a rule is met it emails a suggested special
+# alert, which you send, test or dismiss from the email. Nothing ever goes to
+# subscribers without your decision. Everything is recorded in the AlertLog
+# tab of the Google Sheet.
+#
+# On / off / dry run: GitHub > Settings > Secrets and variables > Actions >
+# Variables tab > STORM_WATCH = live, dry or off (dry if not set).
+#
+# Run it by hand: Actions > "Storm Watch" > Run workflow. Tick "Send me a test
+# email" to get a TEST suggestion built from the current readings (its Send
+# button only reaches your own devices).
+
+name: Storm Watch
+
+on:
+  schedule:
+    - cron: "3-59/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_email:
+        description: "Send me a test email"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: storm-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Get the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python packages
+        run: pip install requests
+
+      - name: Check the readings
+        env:
+          STORM_WATCH: ${{ vars.STORM_WATCH }}
+          TEST_EMAIL: ${{ format('{0}', inputs.test_email) }}
+          JWC_ADMIN_KEY: ${{ secrets.JWC_ADMIN_KEY }}
+          WU_API_KEY: ${{ secrets.WU_API_KEY }}
+        run: python scripts/storm_watch.py
+
+      - name: Save state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/storm-watch-state.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Storm Watch: state $(date -u +'%Y-%m-%d %H:%MZ')"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "Push failed (another job may have saved at the same moment) - trying again."
+            sleep 5
+          done
+          exit 1

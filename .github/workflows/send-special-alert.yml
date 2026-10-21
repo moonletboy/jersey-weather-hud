@@ -86,7 +86,7 @@ jobs:
         run: python scripts/warning_alerts.py
 
       - name: Also put it up as the site banner
-        if: ${{ inputs.also_banner && startsWith(inputs.audience, 'EVERYONE') }}
+        if: ${{ format('{0}', inputs.also_banner) == 'true' && startsWith(inputs.audience, 'EVERYONE') }}
         env:
           MSG_TEXT: ${{ inputs.message }}
           MSG_SIGNED: ${{ inputs.signed }}
