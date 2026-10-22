@@ -258,6 +258,13 @@
     padding:12px 22px; border-radius:8px; opacity:0; transition:all .3s ease; z-index:50; pointer-events:none;
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .submit-status{
+    display:none; margin-top:12px; padding:12px 16px; border-radius:8px; font-size:12px; letter-spacing:0.8px; font-weight:700;
+    border:1px solid var(--dim2); color:var(--dim);
+  }
+  .submit-status.sending{ display:block; color:var(--amber); border-color:rgba(255,176,32,0.5); background:rgba(255,176,32,0.08); }
+  .submit-status.sent{ display:block; color:var(--green); border-color:rgba(45,225,160,0.6); background:rgba(45,225,160,0.1); }
+  .submit-status.failed{ display:block; color:var(--red); border-color:rgba(255,75,92,0.6); background:rgba(255,75,92,0.1); }
 
   /* FILTER BAR */
   .filter-bar{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
@@ -444,8 +451,9 @@
         </div>
         <div class="submit-row">
           <div class="form-note">Reports are public: your report, the name you give and, if you share it, your exact location appear on this page and the Live Ops map. Use a first name or nickname if you prefer, and skip sharing your location if you&rsquo;re reporting from home. Your email is only used to send you a copy. Ask us any time to remove a report. <a href="alerts-help.html#privacy" style="color:var(--cyan)">Privacy note &rarr;</a></div>
-          <button type="submit" class="submit-btn">TRANSMIT REPORT</button>
+          <button type="submit" class="submit-btn" id="submitBtn">TRANSMIT REPORT</button>
         </div>
+        <div class="submit-status" id="submitStatus" aria-live="polite"></div>
       </form>
     </div>
   </section>
@@ -703,7 +711,12 @@
       const res = await fetch(REPORTS_API_URL);
       const data = await res.json();
       if(Array.isArray(data) && data.length){
-        cachedReports = data;
+        // The server feed is cached for a few minutes, so a report this device has just
+        // filed may not be in it yet. Keep any local report whose id the server hasn't
+        // returned, so it doesn't vanish from the map and feed until the cache rolls over.
+        const serverIds = new Set(data.map(r => String(r.id)));
+        const pending = cachedReports.filter(r => r.pendingLocal && !serverIds.has(String(r.id)));
+        cachedReports = [...pending, ...data];
         renderFeed();
         renderStats();
         renderMap();
@@ -723,7 +736,7 @@ async function submitReport(report){
         alert(result.message || 'Report could not be submitted \u2014 please check the PIN and try again.');
         return false;
       }
-      cachedReports.unshift(report); // add locally now that it's confirmed by the server
+      cachedReports.unshift(Object.assign({ pendingLocal: true }, report)); // add locally now that it's confirmed by the server
       syncReports(); // re-sync so this device also sees the canonical server copy
       return true;
     }catch(err){
@@ -823,8 +836,10 @@ async function submitReport(report){
       lat: loc.lat, lon: loc.lon,
       timestamp: new Date().toISOString()
     };
+    setSubmitStatus('sending', 'SENDING YOUR REPORT\u2026 this can take a few seconds');
     const ok = await submitReport(report);
-    if(!ok) return;
+    if(!ok){ setSubmitStatus('failed', 'REPORT NOT SENT \u2014 see the message above and try again'); return; }
+    setSubmitStatus('sent', 'REPORT RECEIVED \u2714 \u2014 thank you. It is on the map and in the feed below now, and may take a few minutes to appear for everyone else.');
     this.reset();
     renderSevButtons('default');
     document.getElementById('damageField').style.display = 'none';
@@ -838,7 +853,21 @@ async function submitReport(report){
   function showToast(){
     const t = document.getElementById('toast');
     t.classList.add('show');
-    setTimeout(()=> t.classList.remove('show'), 2200);
+    setTimeout(()=> t.classList.remove('show'), 6000);
+  }
+
+  let submitStatusTimer = null;
+  function setSubmitStatus(state, text){
+    const el = document.getElementById('submitStatus');
+    const btn = document.getElementById('submitBtn');
+    if(!el) return;
+    clearTimeout(submitStatusTimer);
+    el.className = 'submit-status ' + state;
+    el.textContent = text;
+    if(btn) btn.disabled = (state === 'sending');
+    if(state === 'sent' || state === 'failed'){
+      submitStatusTimer = setTimeout(()=>{ el.className = 'submit-status'; el.textContent = ''; }, 15000);
+    }
   }
 
   // ---------- FEED RENDER ----------
