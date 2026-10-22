@@ -1587,10 +1587,10 @@ const RANKS = { LOW:1, ELEVATED:2, HIGH:3 };
 if(RANKS[otRating] > RANKS[rating]) rating = otRating;
 
 const drivers = [];
-if(otRating !== 'LOW') drivers.push('big waves + strong onshore wind near high tide (waves over sea walls on the ' + coast + ')');
+if(otRating !== 'LOW') drivers.push('big waves + strong onshore ' + (windDir !== null && windDir !== undefined ? compass16(windDir) + ' ' : '') + 'wind near high tide (waves over sea walls on the ' + coast + ')');
 if(tidePts >= 2) drivers.push('high spring tide');
 if(surge >= 0.15) drivers.push('low pressure');
-if(windPts > 0 && otRating === 'LOW') drivers.push('onshore wind');
+if(windPts > 0 && otRating === 'LOW') drivers.push('onshore ' + (windDir !== null && windDir !== undefined ? compass16(windDir) + ' ' : '') + 'wind');
 if(wavePts > 0 && otRating === 'LOW') drivers.push('heavy seas');
 
 return {
@@ -1634,7 +1634,7 @@ const pressCls = a.pressure !== null && a.pressure < 990 ? 'warn' : '';
 let windTxt = '&mdash;';
 let windCls = '';
 if(a.windKn !== null){
-windTxt = (a.windDir !== null && a.windDir !== undefined ? compass16(a.windDir) + ' ' : '') + Math.round(a.windKn) + 'kn' + (a.gustKn ? ' &middot; gusts ' + Math.round(a.gustKn) : '') + (a.onshore ? ' &middot; ONSHORE' : '');
+windTxt = (a.windDir !== null && a.windDir !== undefined ? 'FROM ' + compass16(a.windDir) + ' (' + Math.round(a.windDir) + '&deg;) &middot; ' : '') + Math.round(a.windKn) + 'kn' + (a.gustKn ? ' &middot; gusts ' + Math.round(a.gustKn) : '') + (a.onshore ? ' &middot; ONSHORE' : ' &middot; offshore');
 windCls = a.windPts >= 2 ? 'bad' : a.windPts === 1 ? 'warn' : '';
 }
 const waveTxt = a.waveOff !== null
