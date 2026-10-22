@@ -1,11 +1,12 @@
-// Jersey Weather Chat - snapshot logger (Stages 1 and 3)
+// Jersey Weather Chat - snapshot logger (Stages 1, 2 and 3)
 // ------------------------------------------------
 // Every 30 minutes (GitHub Actions: .github/workflows/snapshot-logger.yml) this records what the site was
 // showing, and posts it to the "JWC Snapshots" Google Sheet through its own small receiver script, so that
 // after Storm Austen the forecasts can be compared with what actually happened.
 //
 // "Snapshots" tab (one row per run): Live Ops "now" conditions and storm indices, rain since midnight,
-// the five-model gust forecast, the Jersey Airport report (METAR) and the Jersey Met warnings.
+// the five-model gust forecast, the Jersey Airport report (METAR), the Jersey Met warnings, and the sea state,
+// tides and coastal flood / sea-wall ratings from the Sea & Tides page.
 // "Forecast Snapshots" tab (one row per forecast day): the storm scenarios page's numbers, worked out with
 // the page's own code. The receiver also emails Matthew when new model runs change the scenarios.
 // Each data source is fetched separately with retries; if one fails the row is still written, with blanks
@@ -16,6 +17,7 @@
 //
 // Settings (GitHub secrets / workflow): SNAPSHOT_URL, SNAPSHOT_TOKEN, SOURCE (schedule | manual | heartbeat)
 
+process.env.TZ = 'Europe/London';   // the copied Sea & Tides code works in local time, as it does in a Jersey visitor's browser
 const DRY = process.argv.includes('--dry-run');
 const SOURCE = (process.env.SOURCE || 'manual').trim();
 const LAT = 49.1805, LON = -2.1058;                    // Live Ops point (index.html LAT/LON and ST_JERSEY)
@@ -189,6 +191,247 @@ async function warnings(row){                            // gov.je's own warning
   row.warn_feed_checked_utc = d.lastChecked || '';
 }
 
+
+
+// ================= SEA, TIDES AND COASTAL FLOOD RISK (Stage 2) =================
+// Everything inside SEA is copied WORD FOR WORD from jersey-sea-tides.html (compass16, parseTideDateTime,
+// FLOOD_CFG, the open-sea wave and flood-weather loaders, floodAssess with today's sea-wall scoring...).
+// buildFloodRisk() only draws the page, so here it is an empty stand-in.
+const SEA = (function(){
+const LAT = 49.1805, LON = -2.1058;
+let marineData = null;
+function buildFloodRisk(){}
+const COMPASS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function compass16(deg){ return COMPASS16[Math.round(deg/22.5) % 16]; }
+function parseTideDateTime(dateText, timeStr){
+const parts = dateText.trim().split(' ');
+const day = parseInt(parts[1], 10);
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const month = monthNames.indexOf(parts[2]);
+const [hh, mm] = timeStr.split(':').map(Number);
+const now = new Date();
+let d = new Date(now.getFullYear(), month, day, hh, mm, 0);
+if(d.getTime() < now.getTime() - 200*24*60*60*1000) d = new Date(now.getFullYear()+1, month, day, hh, mm, 0);
+return d;
+}
+
+// ---------- COASTAL FLOOD RISK (indicative) ----------
+// For each upcoming high tide: predicted high water (gov.je / NOC) + pressure lift (inverse barometer,
+// ~1cm per hPa below 1013) + onshore wind + wave height at that hour. All thresholds live in FLOOD_CFG
+// so they are easy to tune. Heights are in the same metres as the gov.je tide feed.
+const FLOOD_CFG = {
+hwModerate: 10.0,   // expected water level (m) that starts to count
+hwHigh: 11.0,       // big spring territory
+hwExtreme: 11.8,    // very top of the range
+onshoreFrom: 140,   // wind direction (deg) from SE ...
+onshoreTo: 250,     // ... to WSW counts as onshore for St Aubin's Bay / St Clement
+windMod: 17,        // knots
+windStrong: 25,     // knots
+waveMod: 1.5,       // metres
+waveHigh: 2.5,      // metres
+refPressure: 1013.25,
+// WAVES OVER SEA WALLS (overtopping): big waves + strong onshore wind around high tide. This is the main
+// storm risk on an ordinary tide, when the sea level itself is nowhere near flooding. Each factor is SCORED
+// (so very strong wind can make up for slightly smaller waves) and the scores are added up. Same scoring as
+// Storm Watch's coastal rule, so the page and the suggestion emails agree.
+otTide: 8.5,        // m (incl. low-pressure lift) - 1 point; a lower tide never counts
+otTideBig: 9.5,     //   2 points
+otWaveMin: 3.0,     // m - waves out at sea off La Corbiere within 2 h of high water: 1 point
+otWave: 4.0,        //   2 points
+otWaveBig: 5.5,     //   3 points  (inshore waves score too: 1.5 m = 1, 2.5 m = 2, 3.5 m = 3; the higher score counts)
+otGustMin: 35,      // knots (about 40 mph) - gusts within 2 h of high water: 1 point
+otGust: 43,         //   about 50 mph: 2 points
+otGustBig: 56,      //   about 65 mph: 3 points
+otElevated: 5,      // total points for POSSIBLE / ELEVATED
+otHigh: 7,          // total points for LIKELY / HIGH
+otFrom: 140,        // wind must blow from SE round to NW, i.e. onto the south or west coasts
+otTo: 320
+};
+const OFF_LAT = 49.12, OFF_LON = -2.30;   // open sea off La Corbiere, where storm waves arrive from
+let offshoreWaves = null;
+async function loadOffshoreWaves(){
+try{
+const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${OFF_LAT}&longitude=${OFF_LON}&hourly=wave_height&timezone=Europe%2FLondon&forecast_days=7`;
+const j = await (await fetch(url)).json();
+if(j && j.hourly && j.hourly.time && (j.hourly.wave_height || []).some(v => v !== null)) offshoreWaves = j.hourly;
+}catch(e){ console.error('offshore wave fetch failed', e); }
+buildFloodRisk();
+}
+function coastOf(dir){
+if(dir === null || dir === undefined) return '';
+return dir < 235 ? 'south coast' : dir < 280 ? 'south & west coasts' : 'west coast';
+}
+let tideEvents = [];
+let floodWx = null;
+
+async function loadFloodWeather(){
+try{
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&timezone=Europe%2FLondon&forecast_days=7`;
+const res = await fetch(url);
+const j = await res.json();
+if(j && j.hourly && j.hourly.time) floodWx = j.hourly;
+}catch(e){ console.error('flood weather fetch failed', e); }
+buildFloodRisk();
+}
+
+function floodHourKey(d){
+const r = new Date(Math.round(d.getTime()/3600000)*3600000);
+const p = n => String(n).padStart(2,'0');
+return r.getFullYear() + '-' + p(r.getMonth()+1) + '-' + p(r.getDate()) + 'T' + p(r.getHours());
+}
+function floodIndex(h, key){
+if(!h || !h.time) return null;
+const i = h.time.findIndex(t => t.slice(0,13) === key);
+return i < 0 ? null : i;
+}
+// min/max of a field over the hour before, the hour of, and the hour after high water
+function floodAgg(h, field, i, mode){
+if(!h || !h[field] || i === null) return null;
+const vals = [i-1, i, i+1].filter(k => k >= 0 && k < h[field].length).map(k => h[field][k]).filter(v => v !== null && v !== undefined && !isNaN(v));
+if(!vals.length) return null;
+return mode === 'min' ? Math.min(...vals) : Math.max(...vals);
+}
+
+// the same, but over a wider window (span hours either side of high water)
+function floodAggSpan(h, field, i, span, mode){
+if(!h || !h[field] || i === null) return null;
+const vals = [];
+for(let k = i - span; k <= i + span; k++) if(k >= 0 && k < h[field].length){ const v = h[field][k]; if(v !== null && v !== undefined && !isNaN(v)) vals.push(v); }
+if(!vals.length) return null;
+return mode === 'min' ? Math.min(...vals) : Math.max(...vals);
+}
+
+function floodAssess(ev){
+const c = FLOOD_CFG;
+const key = floodHourKey(ev.dt);
+const wi = floodIndex(floodWx, key);
+const marineH = marineData && marineData.hourly ? marineData.hourly : null;
+const mi = floodIndex(marineH, key);
+
+const pressure = floodAgg(floodWx, 'pressure_msl', wi, 'min');
+const windKn = floodAgg(floodWx, 'wind_speed_10m', wi, 'max');
+const gustKn = floodAgg(floodWx, 'wind_gusts_10m', wi, 'max');
+const windDir = (wi !== null && floodWx.wind_direction_10m) ? floodWx.wind_direction_10m[wi] : null;
+const waveH = floodAgg(marineH, 'wave_height', mi, 'max');
+
+const surge = pressure !== null ? Math.max(0, (c.refPressure - pressure) / 100) : 0;
+const level = ev.heightM + surge;
+const tidePts = level >= c.hwExtreme ? 3 : level >= c.hwHigh ? 2 : level >= c.hwModerate ? 1 : 0;
+
+const onshore = windDir !== null && windDir !== undefined && windDir >= c.onshoreFrom && windDir <= c.onshoreTo;
+const effWind = windKn !== null ? Math.max(windKn, (gustKn || 0) * 0.75) : null;
+let windPts = 0;
+if(onshore && effWind !== null) windPts = effWind >= c.windStrong ? 2 : effWind >= c.windMod ? 1 : 0;
+
+let wavePts = 0;
+if(waveH !== null) wavePts = waveH >= c.waveHigh ? 2 : waveH >= c.waveMod ? 1 : 0;
+
+const total = tidePts + windPts + wavePts;
+let rating = 'LOW';
+if(tidePts > 0){
+rating = total >= 5 ? 'HIGH' : total >= 3 ? 'ELEVATED' : 'LOW';
+if(rating === 'HIGH' && tidePts < 2) rating = 'ELEVATED';
+}
+
+// --- waves over sea walls (overtopping), judged separately from the sea level itself ---
+const oi = floodIndex(offshoreWaves, key);
+const waveOff = floodAggSpan(offshoreWaves, 'wave_height', oi, 2, 'max');
+const otGust = floodAggSpan(floodWx, 'wind_gusts_10m', wi, 2, 'max');
+const otOnshore = windDir !== null && windDir !== undefined && windDir >= c.otFrom && windDir <= c.otTo;
+const otTideP = level >= c.otTideBig ? 2 : level >= c.otTide ? 1 : 0;
+const offP = waveOff === null ? 0 : waveOff >= c.otWaveBig ? 3 : waveOff >= c.otWave ? 2 : waveOff >= c.otWaveMin ? 1 : 0;
+const inP = waveH === null ? 0 : waveH >= c.waveHigh + 1 ? 3 : waveH >= c.waveHigh ? 2 : waveH >= c.waveMod ? 1 : 0;
+const otWaveP = Math.max(offP, inP);
+const otGustP = otGust === null ? 0 : otGust >= c.otGustBig ? 3 : otGust >= c.otGust ? 2 : otGust >= c.otGustMin ? 1 : 0;
+const otScore = otTideP + otWaveP + otGustP;
+let otRating = 'LOW';
+if(otOnshore && otTideP > 0 && otWaveP > 0 && otGustP > 0){
+otRating = otScore >= c.otHigh ? 'HIGH' : otScore >= c.otElevated ? 'ELEVATED' : 'LOW';
+}
+const coast = coastOf(windDir);
+const RANKS = { LOW:1, ELEVATED:2, HIGH:3 };
+if(RANKS[otRating] > RANKS[rating]) rating = otRating;
+
+const drivers = [];
+if(otRating !== 'LOW') drivers.push('big waves + strong onshore wind near high tide (waves over sea walls on the ' + coast + ')');
+if(tidePts >= 2) drivers.push('high spring tide');
+if(surge >= 0.15) drivers.push('low pressure');
+if(windPts > 0 && otRating === 'LOW') drivers.push('onshore wind');
+if(wavePts > 0 && otRating === 'LOW') drivers.push('heavy seas');
+
+return {
+rating, tidePts, windPts, wavePts, surge, level, pressure, windKn, gustKn, windDir, onshore, waveH, drivers,
+otRating, otScore, waveOff, otGust, coast,
+partial: (pressure === null || windKn === null || waveH === null)
+};
+}
+
+
+return { LAT, LON, compass16, parseTideDateTime, loadOffshoreWaves, loadFloodWeather, floodAssess,
+         setMarine: function(d){ marineData = d; } };
+})();
+const SITE_API = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+
+async function seaTides(row){
+  // sea state - the page's loadMarine() request
+  const marine = await getJson(`https://marine-api.open-meteo.com/v1/marine?latitude=${SEA.LAT}&longitude=${SEA.LON}&current=wave_height,wave_direction,wave_period,swell_wave_height,sea_surface_temperature&hourly=wave_height,wave_direction,wave_period,wind_wave_height,swell_wave_height,swell_wave_period,swell_wave_direction,sea_surface_temperature&daily=wave_height_max,wave_period_max,swell_wave_height_max,swell_wave_period_max&timezone=auto&forecast_days=5`, 'marine');
+  if(marine && marine.current){
+    const c = marine.current, h = marine.hourly || {};
+    let i = (h.time || []).findIndex(t => t.slice(0, 13) === String(c.time).slice(0, 13));
+    if(i < 0) i = 0;
+    Object.assign(row, {
+      sea_time: c.time, sea_wave_m: r1(c.wave_height), sea_wave_dir: r0(c.wave_direction), sea_wave_period_s: r1(c.wave_period),
+      sea_swell_m: r1(c.swell_wave_height), sea_temp_c: r1(c.sea_surface_temperature),
+      sea_wind_wave_m: h.wind_wave_height ? r1(h.wind_wave_height[i]) : '', sea_swell_period_s: h.swell_wave_period ? r1(h.swell_wave_period[i]) : '',
+      sea_swell_dir: h.swell_wave_direction ? r0(h.swell_wave_direction[i]) : ''
+    });
+    SEA.setMarine(marine);
+  }
+  // tides - the page's loadTides() and parseTideDateTime()
+  const td = await getJson(SITE_API + '?action=tides', 'tides');
+  let events = [];
+  if(td && td.status === 'ok' && td.events && td.events.length){
+    events = td.events.map(e => ({ ...e, dt: SEA.parseTideDateTime(e.dateText, e.time) })).sort((a, b) => a.dt - b.dt);
+    const now = new Date();
+    const nextIdx = events.findIndex(e => e.dt > now);
+    const next = events[nextIdx >= 0 ? nextIdx : events.length - 1];
+    const prev = nextIdx > 0 ? events[nextIdx - 1] : null;
+    const todays = events.filter(e => e.dt.toDateString() === now.toDateString());
+    const range = todays.length >= 2 ? Math.max(...todays.map(e => e.heightM)) - Math.min(...todays.map(e => e.heightM)) : null;
+    Object.assign(row, {
+      tide_prev_type: prev ? prev.type : '', tide_prev_time: prev ? prev.dateText + ' ' + prev.time : '', tide_prev_m: prev ? prev.heightM : '',
+      tide_next_type: next.type, tide_next_time: next.dateText + ' ' + next.time, tide_next_m: next.heightM,
+      tide_range_today_m: range === null ? '' : r1(range),
+      tide_range_label: range === null ? '' : range >= 8.5 ? 'BIG SPRING TIDES' : range <= 5 ? 'NEAP TIDES' : 'MODERATE TIDES'
+    });
+  } else {
+    errors.push('tides: not available');
+  }
+  // coastal flood risk - the page's own loaders and floodAssess(), over the next four high tides
+  await Promise.all([SEA.loadFloodWeather(), SEA.loadOffshoreWaves()]);
+  const now = new Date();
+  const highs = events.filter(e => e.type === 'high' && e.dt > now).slice(0, 4);
+  if(highs.length){
+    const RANK = { LOW:1, ELEVATED:2, HIGH:3 };
+    const rows = highs.map(ev => ({ ev: ev, a: SEA.floodAssess(ev) }));
+    let worst = rows[0];
+    rows.forEach(r => { if(RANK[r.a.rating] > RANK[worst.a.rating]) worst = r; });
+    const n = rows[0], a = n.a;
+    Object.assign(row, {
+      flood_worst_rating: worst.a.rating, flood_worst_tide: worst.ev.dateText + ' ' + worst.ev.time,
+      flood_worst_drivers: worst.a.drivers.join('; '),
+      flood_next_tide: n.ev.dateText + ' ' + n.ev.time, flood_next_hw_m: n.ev.heightM, flood_next_rating: a.rating,
+      flood_next_tide_pts: a.tidePts, flood_next_wind_pts: a.windPts, flood_next_wave_pts: a.wavePts,
+      flood_next_surge_m: Math.round(a.surge * 100) / 100,
+      flood_next_level_m: Math.round(a.level * 100) / 100, flood_next_pressure_hpa: r1(a.pressure),
+      flood_next_wind_kn: r1(a.windKn), flood_next_gust_kn: r1(a.gustKn), flood_next_wind_dir: r0(a.windDir),
+      flood_next_onshore: a.onshore ? 'Y' : 'N', flood_next_wave_inshore_m: r1(a.waveH),
+      seawall_next_rating: a.otRating, seawall_next_score: a.otScore, seawall_next_wave_sea_m: r1(a.waveOff),
+      seawall_next_gust_kn: r1(a.otGust), seawall_next_coast: a.coast,
+      flood_partial_data: a.partial ? 'Y' : 'N'
+    });
+  }
+}
 
 // ================= STORM SCENARIOS (Stage 3) =================
 // Everything inside SCN is copied WORD FOR WORD from jersey-storm-scenarios.html (constants, model lists,
@@ -494,9 +737,10 @@ async function scenarios(){
 async function main(){
   const now = new Date();
   // each section fills its own object, then they are joined in a fixed order so the sheet's columns never shuffle
-  const parts = [{}, {}, {}, {}, {}];
+  const parts = [{}, {}, {}, {}, {}, {}];
   let scen = null;
   await Promise.all([liveOps(parts[0]), rainfall(parts[1]), fiveModels(parts[2]), metar(parts[3]), warnings(parts[4]),
+                     seaTides(parts[5]).catch(e => { errors.push('sea/tides: ' + e.message); }),
                      scenarios().then(r => { scen = r; }).catch(e => { errors.push('scenarios: ' + e.message); })]);
   const stamp = { time_utc: now.toISOString(), time_local: localTime(now), source: SOURCE };
   const ordered = Object.assign({}, stamp, { error: errors.join(' ; ') }, ...parts);
