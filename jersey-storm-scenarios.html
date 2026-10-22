@@ -998,7 +998,7 @@ const DET = [
 { id:'ecmwf_ifs025',         lbl:'ECMWF' },
 { id:'icon_seamless',        lbl:'ICON' },
 { id:'ukmo_seamless',        lbl:'UK MET OFFICE' },
-{ id:'meteofrance_seamless', lbl:'M\u00c9T\u00c9O-FRANCE' }
+{ id:'meteofrance_seamless', lbl:'M\u00c9T\u00c9O-FRANCE', sub:'(AROME + ARPEGE)' }
 ];
 /* gust levels, strongest first. hex = the colour used in the charts */
 const TIERS = [
@@ -1190,7 +1190,7 @@ return DET.map(function(d){
 const s = h['wind_gusts_10m_' + d.id];
 if(!s) return null;
 const v = idx.map(i => s[i]).filter(x => x != null);
-return v.length >= 18 ? { lbl:d.lbl, pk:Math.max.apply(null, v) } : null;
+return v.length >= 18 ? { lbl:d.lbl, sub:d.sub || '', pk:Math.max.apply(null, v) } : null;
 }).filter(Boolean);
 }
 
@@ -1280,7 +1280,8 @@ s += '<line x1="' + x(p50) + '" x2="' + x(p50) + '" y1="' + T + '" y2="' + (T + 
 dp.forEach(function(d, i){
 const y = T + i * rowH + 8, t = tierOf(d.pk);
 const col = t ? t.hex : '#4cd3ff';
-s += '<text x="' + (L - 10) + '" y="' + (y + 11) + '" fill="#e9f6f5" font-size="' + fsz(11) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + d.lbl + '</text>';
+s += '<text x="' + (L - 10) + '" y="' + (y + (d.sub ? 7 : 11)) + '" fill="#e9f6f5" font-size="' + fsz(11) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + d.lbl + '</text>';
+if(d.sub) s += '<text x="' + (L - 10) + '" y="' + (y + 7 + Math.round(10.5 * SC.F)) + '" fill="#5f7c88" font-size="' + fsz(8.5) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + d.sub + '</text>';
 s += '<rect x="' + x(lo) + '" y="' + y + '" width="' + (x(d.pk) - x(lo)) + '" height="14" rx="4" fill="' + col + '" fill-opacity="0.85"/>';
 s += '<text x="' + (x(d.pk) + 6) + '" y="' + (y + 11) + '" fill="' + col + '" font-size="' + fsz(11) + '" font-weight="700" font-family="JetBrains Mono, monospace">' + Math.round(d.pk) + '</text>';
 });
@@ -1616,7 +1617,7 @@ y += 36;
 let mx = PAD;
 c.font = '700 21px ' + MONO;
 dp.forEach(function(d, i){
-const t = tierOf(d.pk), part = d.lbl + ' ', val = Math.round(d.pk) + (i < dp.length - 1 ? '   ' : ' MPH');
+const t = tierOf(d.pk), part = d.lbl + (d.sub ? ' ' + d.sub : '') + ' ', val = Math.round(d.pk) + (i < dp.length - 1 ? '   ' : ' MPH');
 if(mx + c.measureText(part + val).width > PAD + IW){ mx = PAD; y += 32; }
 c.fillStyle = '#9db4bd'; c.fillText(part, mx, y); mx += c.measureText(part).width;
 c.fillStyle = t ? t.hex : '#4cd3ff'; c.fillText(val, mx, y); mx += c.measureText(val).width;
