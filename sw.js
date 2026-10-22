@@ -15,7 +15,7 @@
  * If this file is ever changed, change VERSION too (jwc-v3, jwc-v4 ...) so
  * phones replace the old copy.
  */
-const VERSION = 'jwc-v3';   // v3: warning push notifications
+const VERSION = 'jwc-v4';   // v4: tapping a notification opens the LATEST ALERTS panel
 const OFFLINE_URL = 'offline.html';
 const KEEP = ['offline.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
@@ -63,7 +63,7 @@ self.addEventListener('push', function(event){
     badge: 'icons/icon-192.png',
     tag: data.tag || 'jwc-warning',          // same tag = newer alert replaces the older one instead of piling up
     renotify: true,
-    data: { url: data.url || './index.html?source=push' }
+    data: { url: data.url || './index.html?source=push#alerts' }
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
@@ -71,7 +71,7 @@ self.addEventListener('push', function(event){
 /* Tapping the notification opens the site (or brings an already-open tab/app to the front). */
 self.addEventListener('notificationclick', function(event){
   event.notification.close();
-  const target = new URL((event.notification.data && event.notification.data.url) || './index.html', self.location.href).href;
+  const target = new URL((event.notification.data && event.notification.data.url) || './index.html?source=push#alerts', self.location.href).href;
   event.waitUntil(
     self.clients.matchAll({ type:'window', includeUncontrolled:true }).then(function(list){
       for(const c of list){
