@@ -943,6 +943,16 @@ footer b{ color:var(--dim); }
 .say{ font-family:'JetBrains Mono',monospace; color:var(--amber); }
 .stuck{ font-size:13.5px; line-height:1.6; background:var(--bg-panel); border:1px solid var(--dim2); border-radius:10px; padding:12px 14px; margin:18px 0 30px; }
 .stuck b{ color:var(--green); }
+.media-row{ text-align:center; margin:-14px 0 34px; }
+.media-link{ font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:1px; color:var(--dim); background:transparent; border:1px solid var(--dim2); border-radius:8px; padding:8px 14px; cursor:pointer; }
+.media-link:hover, .media-link:focus{ color:var(--cyan); border-color:var(--cyan); }
+.media-body{ font-size:13px; line-height:1.6; color:var(--text); }
+.media-body p{ margin:0 0 12px; }
+.media-body h4{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; color:var(--cyan); margin:18px 0 8px; }
+.media-body ul{ margin:0 0 12px; padding-left:18px; }
+.media-body li{ margin:0 0 6px; }
+.media-body a{ color:var(--cyan); }
+.media-quote{ border-left:3px solid var(--cyan); padding:2px 0 2px 12px; color:var(--text); }
 </style>
 </head>
 <body>
@@ -983,7 +993,47 @@ footer b{ color:var(--dim); }
 <div id="problems"></div>
 </div>
 
+<div class="stuck"><b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener" style="color:var(--cyan)">chat with others in the Jersey Weather Chat group</a>: open its <b>Chats</b> tab and join any chat. In an emergency, call 999.</div>
 <div class="stuck"><b>Still stuck?</b> Message Matthew via Facebook or Messenger with a screenshot of the alert bar and which phone or computer you have, and we&rsquo;ll help. Remember: the alert is automated &mdash; the warning itself is officially issued by <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener" style="color:var(--cyan)">Jersey Met</a>.</div>
+<div class="media-row"><button type="button" class="media-link" id="mediaOpen">&#128240; Media &amp; official enquiries</button></div>
+<div class="fc-modal-backdrop" id="mediaBackdrop">
+<div class="fc-modal" role="dialog" aria-modal="true" aria-labelledby="mediaTitle">
+<button type="button" class="fc-modal-close" id="mediaClose" aria-label="Close">&times;</button>
+<div class="fc-modal-title" id="mediaTitle">MEDIA &amp; OFFICIAL ENQUIRIES</div>
+<div class="fc-modal-sub">JERSEY WEATHER CHAT &middot; WARNING ALERTS</div>
+<div class="media-body">
+<p class="media-quote">Jersey Weather Chat is a volunteer-run community group, founded in 2011, with a free website at jerseyweatherchat.com. Since October 2026 the site has offered optional phone notifications that pass on Jersey Met&rsquo;s published weather warnings when a new warning is issued or an existing one is upgraded. Every alert says it is automated, credits Jersey Met as the issuer and points people to gov.je for the official warning. It is meant to help more people see Jersey Met&rsquo;s warnings, never to replace them.</p>
+<h4>KEY FACTS</h4>
+<ul>
+<li><b>Source:</b> Jersey Met&rsquo;s published warnings on gov.je, passed on unchanged. Warning text &copy; States of Jersey.</li>
+<li><b>Automatic alerts:</b> only when a warning is new or upgraded, usually 5 to 15 minutes after gov.je publishes it.</li>
+<li><b>Our own alerts:</b> rare. Sent only after live readings pass set thresholds and an admin has checked them. Every alert and decision is recorded.</li>
+<li><b>Personal data:</b> an anonymous notification address, the browser type and sign-up time. No names, email addresses, phone numbers or locations. Turning alerts off deletes the entry.</li>
+<li><b>Cost:</b> free, run by unpaid volunteers, no adverts.</li>
+</ul>
+<h4>JERSEY MET &amp; GOVERNMENT OF JERSEY</h4>
+<p>We would genuinely welcome your views, and will change the wording, the way the service works, or stop it altogether if asked.</p>
+<h4>CONTACT</h4>
+<p>Email <a href="mailto:jwcliveops@gmail.com?subject=Jersey%20Weather%20Chat%20enquiry">jwcliveops@gmail.com</a>, or message Matthew through the <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">Jersey Weather Chat Facebook group</a>.</p>
+</div>
+</div>
+</div>
+<script>
+/* Media & official enquiries panel: opens over the page; closes with X, a tap outside it, or Esc.
+   alerts-help.html#media opens it straight away (handy to send to journalists). */
+(function(){
+const bd = document.getElementById('mediaBackdrop'), openBtn = document.getElementById('mediaOpen'), closeBtn = document.getElementById('mediaClose');
+if(!bd || !openBtn) return;
+function open(){ bd.classList.add('open'); document.body.style.overflow = 'hidden'; closeBtn.focus(); }
+function close(){ bd.classList.remove('open'); document.body.style.overflow = ''; openBtn.focus();
+  if(location.hash === '#media'){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} } }
+openBtn.addEventListener('click', open);
+closeBtn.addEventListener('click', close);
+bd.addEventListener('click', function(e){ if(e.target === bd) close(); });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && bd.classList.contains('open')) close(); });
+if(location.hash === '#media') open();
+})();
+</script>
 </div>
 
 <script>
