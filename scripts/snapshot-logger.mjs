@@ -56,7 +56,7 @@ return { tier:4, label:'ISOLATED SUPERCELL POTENTIAL', color:RED };
 
 const errors = [];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function getJson(url, label, tries = 3){
+async function getJson(url, label, tries = 5){
   let last;
   for(let i = 0; i < tries; i++){
     try{
@@ -67,7 +67,7 @@ async function getJson(url, label, tries = 3){
       if(!r.ok) throw new Error('HTTP ' + r.status);
       const txt = (await r.text()).replace(/^\uFEFF/, '');
       return JSON.parse(txt);
-    }catch(e){ last = e; await sleep(2000 * Math.pow(2, i)); }
+    }catch(e){ last = e; if(i < tries - 1) await sleep(5000 * Math.pow(2, i) / 2); }   // waits 2.5, 5, 10, 20 s
   }
   errors.push(label + ': ' + (last && last.message ? last.message : last));
   return null;
@@ -368,7 +368,7 @@ partial: (pressure === null || windKn === null || waveH === null)
 
 
 return { LAT, LON, compass16, parseTideDateTime, loadOffshoreWaves, loadFloodWeather, floodAssess,
-         setMarine: function(d){ marineData = d; } };
+         setMarine: function(d){ marineData = d; }, hasWx: function(){ return !!floodWx; }, hasOff: function(){ return !!offshoreWaves; } };
 })();
 const SITE_API = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
 
@@ -409,6 +409,12 @@ async function seaTides(row){
   }
   // coastal flood risk - the page's own loaders and floodAssess(), over the next four high tides
   await Promise.all([SEA.loadFloodWeather(), SEA.loadOffshoreWaves()]);
+  for(let i = 0; i < 2 && (!SEA.hasWx() || !SEA.hasOff()); i++){           // a busy service: wait and try again
+    await sleep(10000);
+    await Promise.all([SEA.hasWx() ? null : SEA.loadFloodWeather(), SEA.hasOff() ? null : SEA.loadOffshoreWaves()]);
+  }
+  if(!SEA.hasWx()) errors.push('flood weather: not available');
+  if(!SEA.hasOff()) errors.push('open-sea waves: not available');
   const now = new Date();
   const highs = events.filter(e => e.type === 'high' && e.dt > now).slice(0, 4);
   if(highs.length){
@@ -682,6 +688,13 @@ async function scenarios(){
   const res = await Promise.all(S.ENS.map(S.loadEnsemble).concat([S.loadDet()]));
   SC.det = res.pop();
   SC.ens = res.filter(Boolean);
+  for(let i = 0; i < 2 && (!SC.det || SC.ens.length < S.ENS.length); i++){   // a busy service: wait and try again
+    await sleep(10000);
+    const again = await Promise.all(S.ENS.filter(m => !SC.ens.some(md => md.m.id === m.id)).map(S.loadEnsemble));
+    SC.ens = SC.ens.concat(again.filter(Boolean));
+    if(!SC.det) SC.det = await S.loadDet();
+  }
+  SC.ens.sort((a, b) => S.ENS.indexOf(a.m) - S.ENS.indexOf(b.m));            // keep the page's model order
   const missing = S.ENS.filter(m => !SC.ens.some(md => md.m.id === m.id)).map(m => m.lbl);
   if(missing.length) errors.push('scenarios: no data from ' + missing.join(', '));
   if(!SC.det) errors.push('scenarios: main model runs not loaded');
