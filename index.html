@@ -1248,7 +1248,7 @@ tbtn.addEventListener('click', testNote);
 init();
 })();
 </script>
-<div class="talk-line">&#128172; <b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">chat with others in the Jersey Weather Chat group</a> (open its <b>Chats</b> tab and join any chat). Samaritans: <b>116 123</b>, free, 24/7.</div>
+<div class="talk-line">&#128172; <b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">chat with others in the Jersey Weather Chat group</a> (open its <b>Chats</b> tab and join any chat).</div>
 <div class="special-msg-panel" id="specialMsgPanel">
 <div class="special-msg-title">&#9888; SPECIAL WEATHER MESSAGE</div>
 <div class="special-msg-text" id="specialMsgText"></div>
@@ -2230,7 +2230,7 @@ function renderWarningUnavailable(){
 const box = bannerStyle(SEVERITY_STYLES.unknown);
 box.textContent = 'We couldn\u2019t load Jersey Met\u2019s warnings just now, so please check the official warnings page below. We\u2019ll keep trying automatically.';
 }
-const WARN_REFRESH_MS = 5 * 60 * 1000;
+const WARN_REFRESH_MS = 2 * 60 * 1000;          // the Apps Script refreshes gov.je's warnings every 2 minutes too
 let warnLastOk = 0;
 async function loadWarnings(){
 if(MANUAL_OVERRIDE_ACTIVE){
