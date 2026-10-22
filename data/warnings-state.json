@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "39a0dfab1c0b",
+ "hash": "193d0e2fb796",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -23,7 +23,7 @@
    "area": "Jersey",
    "hazard": "thunderstorm",
    "sea": false,
-   "issued": "2:06 p.m. Wednesday 21 October",
+   "issued": "2:28 a.m. Thursday 22 October",
    "message": "",
    "missing": 0,
    "lower": 0
@@ -31,9 +31,9 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-21T20:37:12.0277389Z",
+ "lastFetch": "2026-10-22T01:30:00.0531569Z",
  "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 20:34 UTC Wednesday 21 October W to SW wind F7 backing S gale F8 later. Yellow - Thunderstorm Warn",
- "checkedAt": "2026-10-21T20:37:12.0277389Z",
+ "checkedAt": "2026-10-22T01:30:00.0531569Z",
  "lastAlertAt": "2026-10-21T20:41:17Z",
  "lastAlertKind": "upgraded"
 }
