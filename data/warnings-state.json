@@ -1,6 +1,6 @@
 {
  "severity": "red",
- "hash": "20e9fb2d9742",
+ "hash": "23d864a62c02",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -25,15 +25,15 @@
    "sea": false,
    "issued": "2:28 a.m. Thursday 22 October",
    "message": "",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-22T09:00:00.0455184Z",
+ "lastFetch": "2026-10-22T09:15:00.059115Z",
  "snippet": "Red - Channel Islands Shipping Area Wind Warning Issued at 08:45 UTC Thursday 22 October S severe gale F9 with gusts to 60kt expected later veering W to NW stor",
- "checkedAt": "2026-10-22T09:00:00.0455184Z",
+ "checkedAt": "2026-10-22T09:15:00.059115Z",
  "lastAlertAt": "2026-10-22T02:50:01Z",
  "lastAlertKind": "upgraded"
 }
