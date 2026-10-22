@@ -183,6 +183,27 @@
   .raa-meta{ font-size:10px; color:var(--dim); letter-spacing:0.5px; white-space:nowrap; }
   .raa-body{ display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
   .recap-archive-item.expanded .raa-body{ display:block; }
+  /* recaps as collapsed lines: Latest (newest of each type) + one Archive of both types, newest first */
+  .recap-group-head{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; color:var(--dim); margin:4px 0 10px; }
+  details.recap-line{ border:1px solid var(--line); border-radius:10px; margin-bottom:10px; background:var(--bg-panel); transition:border-color .15s ease; }
+  details.recap-line:hover, details.recap-line[open]{ border-color:var(--cyan); }
+  details.recap-line > summary{ list-style:none; cursor:pointer; padding:12px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  details.recap-line > summary::-webkit-details-marker{ display:none; }
+  .rl-chev{ color:var(--dim); font-size:11px; transition:transform .15s ease; flex-shrink:0; }
+  details[open] > summary > .rl-chev{ transform:rotate(90deg); }
+  .rl-type{ font-size:9px; font-weight:800; letter-spacing:1.5px; padding:3px 7px; border-radius:4px; color:#05080d; flex-shrink:0; }
+  .rl-type.event{ background:var(--red); }
+  .rl-type.monthly{ background:var(--cyan); }
+  .rl-title{ font-weight:800; font-size:12.5px; flex:1; min-width:170px; }
+  .rl-meta{ font-size:10px; color:var(--dim); letter-spacing:0.5px; }
+  .rl-new{ font-size:9px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:#ff6b35; border-radius:4px; padding:3px 7px; }
+  .rl-body{ padding:14px 16px 16px; border-top:1px solid var(--line); }
+  .rl-window{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-bottom:12px; }
+  details.recap-archive{ margin-top:18px; }
+  details.recap-archive > summary{ list-style:none; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; color:var(--dim); padding:10px 14px; border:1px dashed var(--line); border-radius:10px; }
+  details.recap-archive > summary::-webkit-details-marker{ display:none; }
+  details.recap-archive > summary:hover{ color:var(--text); border-color:var(--cyan); }
+  details.recap-archive[open] > summary{ margin-bottom:12px; color:var(--text); }
   .recap-empty{ text-align:center; padding:40px 20px; color:var(--dim); font-size:12px; letter-spacing:0.5px; line-height:1.7; border:1px dashed var(--line); border-radius:10px; }
 
   section{ margin-bottom:50px; }
@@ -269,6 +290,9 @@
   .sev-Moderate .rc-sev-badge{ background:rgba(255,176,32,0.15); color:var(--amber); }
   .sev-Severe .rc-sev-badge{ background:rgba(255,107,53,0.15); color:#ff6b35; }
   .sev-Extreme .rc-sev-badge{ background:rgba(255,75,92,0.18); color:var(--red); }
+  .report-card.sev-Observation{ border-left-color:var(--cyan); }
+  .sev-Observation .rc-sev-badge{ background:rgba(76,211,255,0.14); color:var(--cyan); }
+  .type-hint{ font-size:10.5px; color:var(--dim); margin-top:6px; letter-spacing:0.3px; }
   .rc-desc{ font-size:12.5px; color:var(--text); line-height:1.6; margin-bottom:10px; }
   .rc-bottom{ display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--dim2); letter-spacing:0.5px; }
   .rc-timestamp{ font-size:9px; color:var(--dim2); opacity:0.75; margin-top:2px; }
@@ -277,6 +301,8 @@
 
   footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
   footer b{ color:var(--dim); }
+  footer a{ color:var(--dim); text-decoration:underline; text-underline-offset:2px; }
+  footer a:hover{ color:var(--cyan); }
 </style>
 </head>
 <body>
@@ -325,11 +351,6 @@
     </div>
     <p class="recap-explainer">Written summaries combining submitted storm reports with the actual meteorological data recorded for that period &mdash; pressure, wind and gusts, radar and lightning activity, rainfall &mdash; for either a single severe weather event or a rolling monthly overview. Kept here as a running archive so the record stays available to emergency services and infrastructure planners if it's ever useful.</p>
 
-    <div class="recap-tabs">
-      <button type="button" class="recap-tab" data-type="event">EVENT RECAP</button>
-      <button type="button" class="recap-tab active" data-type="monthly">MONTHLY RECAP</button>
-    </div>
-
     <div id="recapContent"></div>
   </section>
 
@@ -347,6 +368,7 @@
             <label>REPORT TYPE</label>
             <select id="f-type" required>
               <option value="">Select type&hellip;</option>
+              <option value="Observation">🌡️ Weather Observation</option>
               <option value="Hail">🧊 Hail</option>
               <option value="Damaging Wind">💨 Damaging Wind</option>
               <option value="Flooding">🌊 Flooding</option>
@@ -357,6 +379,7 @@
               <option value="Earthquake Report">🌎 Earthquake Report</option>
               <option value="Other">📋 Other</option>
             </select>
+            <div class="type-hint">Not a storm? Choose <b>🌡️ Weather Observation</b> to share what you can see, hear or measure.</div>
           </div>
           <div class="field">
             <label>PARISH</label>
@@ -376,7 +399,7 @@
               <option>St Lawrence</option>
             </select>
           </div>
-          <div class="field full">
+          <div class="field full" id="sevField">
             <label>SEVERITY</label>
             <div class="severity-group" id="sevGroup">
               <div class="sev-btn" data-sev="Minor">MINOR</div>
@@ -386,7 +409,7 @@
             </div>
           </div>
           <div class="field full">
-            <label>WHAT DID YOU EXPERIENCE (FELT/HEARD/SEE)?</label>
+            <label id="descLabel">WHAT DID YOU EXPERIENCE (FELT/HEARD/SEE)?</label>
             <textarea id="f-desc" placeholder="e.g. Golf-ball sized hail for ~5 minutes, minor damage to greenhouse roof&hellip;" required></textarea>
           </div>
           <div class="field full" id="damageField" style="display:none;">
@@ -420,7 +443,7 @@
           </div>
         </div>
         <div class="submit-row">
-          <div class="form-note">Reports are public and will display on this page and the Live Ops dashboard.</div>
+          <div class="form-note">Reports are public: your report, the name you give and, if you share it, your exact location appear on this page and the Live Ops map. Use a first name or nickname if you prefer, and skip sharing your location if you&rsquo;re reporting from home. Your email is only used to send you a copy. Ask us any time to remove a report. <a href="alerts-help.html#privacy" style="color:var(--cyan)">Privacy note &rarr;</a></div>
           <button type="submit" class="submit-btn">TRANSMIT REPORT</button>
         </div>
       </form>
@@ -448,7 +471,7 @@
       <select id="filterParish"><option value="">All Parishes</option></select>
       <select id="filterSev">
         <option value="">All Severities</option>
-        <option>Minor</option><option>Moderate</option><option>Severe</option><option>Extreme</option>
+        <option>Minor</option><option>Moderate</option><option>Severe</option><option>Extreme</option><option value="Observation">Observations</option>
       </select>
       <div class="count" id="feedCount">0 reports</div>
     </div>
@@ -458,6 +481,7 @@
   <footer>
     <div>JERSEY WEATHER CHAT &middot; COMMUNITY STORM REPORT NETWORK</div>
     <div>REPORTS ARE CROWDSOURCED AND UNVERIFIED &middot; FOR EMERGENCIES ALWAYS CALL 999</div>
+    <div><b>DATA PROTECTION:</b> REGISTERED WITH THE JERSEY OFFICE OF THE INFORMATION COMMISSIONER AS A NON-PROFIT DATA CONTROLLER &middot; <a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">REGISTRATION NO. 104194</a> &middot; <a href="alerts-help.html#privacy">PRIVACY NOTE</a></div>
   </footer>
 
 </div>
@@ -475,13 +499,13 @@
   const TYPE_ICONS = {
     'Hail':'🧊','Damaging Wind':'💨','Flooding':'🌊','Lightning Strike':'⚡',
     'Funnel Cloud / Waterspout':'🌪️','Heavy Snow / Ice':'❄️','Storm Damage':'🏚️',
-    'Earthquake Report':'🌎','Other':'📋'
+    'Earthquake Report':'🌎','Observation':'🌡️','Other':'📋'
   };
 
   // Master lists — matches the SUBMIT REPORT form exactly, so the filter
   // dropdowns always show every possible option, not just the ones that
   // happen to have a report filed already.
-  const ALL_TYPES = ['Hail','Damaging Wind','Flooding','Lightning Strike','Funnel Cloud / Waterspout','Heavy Snow / Ice','Storm Damage','Earthquake Report','Other'];
+  const ALL_TYPES = ['Hail','Damaging Wind','Flooding','Lightning Strike','Funnel Cloud / Waterspout','Heavy Snow / Ice','Storm Damage','Earthquake Report','Observation','Other'];
   const ALL_PARISHES = ['St Helier','St Saviour','St Clement','Grouville','St Martin','Trinity','St John','St Mary','St Ouen','St Peter','St Brelade','St Lawrence'];
 
   const PARISH_CENTROIDS = {
@@ -498,7 +522,7 @@
     'St Brelade': [49.1775, -2.1994],
     'St Lawrence': [49.2019, -2.1494]
   };
-  const SEV_COLOR = { Minor:'#2de1a0', Moderate:'#ffb020', Severe:'#ff6b35', Extreme:'#ff4b5c' };
+  const SEV_COLOR = { Minor:'#2de1a0', Moderate:'#ffb020', Severe:'#ff6b35', Extreme:'#ff4b5c', Observation:'#4cd3ff' };
   const SEV_RANK = { Minor:1, Moderate:2, Severe:3, Extreme:4 };
 
   let reportMap = null;
@@ -534,8 +558,8 @@
         radius: hasRealLocation ? 8 : 10, color: color, weight: 2, fillColor: color, fillOpacity: 0.4
       }).addTo(reportMapLayer);
       marker.bindPopup(`
-        <b>${r.type}</b> \u2014 ${r.parish}<br>
-        Severity: <span style="color:${color}">${r.severity}</span><br>
+        <b>${escapeHtml(r.type === 'Observation' ? 'Weather observation' : r.type)}</b> \u2014 ${escapeHtml(r.parish)}<br>
+        ${r.severity === 'Observation' ? '' : `Severity: <span style="color:${color}">${escapeHtml(r.severity)}</span><br>`}
         ${escapeHtml(r.description)}<br>
         <small>${hasRealLocation ? 'Exact reported location' : 'Approximate (parish centre)'}</small>
       `);
@@ -601,102 +625,59 @@
   // freely — e.g. to note nothing severe happened this month.
   const NO_RECAP_MESSAGE = 'No storm recap currently published for this category. Check back after the next notable event or month-end.';
 
-  let activeRecapTab = 'monthly';
-
+  /* Recaps are shown as collapsed lines (tap to open):
+       LATEST MONTHLY RECAP - just the newest monthly recap
+       ARCHIVE              - every storm (event) recap, including the newest, and every older monthly recap,
+                              all together in date order, newest first, behind one line
+     so a storm recap sits between the monthly recaps either side of it. When a newer monthly recap is
+     added, the previous one moves into the archive by itself. Order comes from publishedISO (or the
+     published date). A recap published in the last 7 days is marked NEW, and while a NEW storm recap is in
+     the archive, the archive line says so, so it isn't missed. */
+  const RECAP_NEW_DAYS = 7;
+  function recapDate(r){ return new Date(r.publishedISO ? r.publishedISO + 'T12:00:00' : r.published).getTime() || 0; }
+  function recapIsNew(r){
+    if(!r.publishedISO) return false;
+    const age = (Date.now() - new Date(r.publishedISO + 'T00:00:00').getTime()) / 86400000;
+    return age >= 0 && age <= RECAP_NEW_DAYS;
+  }
+  function recapLineHtml(r){
+    const kind = r.type === 'event' ? 'event' : 'monthly';
+    return `
+      <details class="recap-line">
+        <summary>
+          <span class="rl-chev" aria-hidden="true">&#9654;</span>
+          <span class="rl-type ${kind}">${kind === 'event' ? 'EVENT' : 'MONTHLY'}</span>
+          <span class="rl-title">${escapeHtml(r.title)}</span>
+          ${recapIsNew(r) ? '<span class="rl-new">NEW</span>' : ''}
+          <span class="rl-meta">PUBLISHED ${escapeHtml(r.published)}</span>
+        </summary>
+        <div class="rl-body">
+          <div class="rl-window">ANALYSIS WINDOW: ${escapeHtml(r.period)}</div>
+          ${(r.body || []).map(p => `<p class="rc2-p">${escapeHtml(p)}</p>`).join('')}
+          <div class="rc2-foot">
+            <span>${typeof r.reportCount === 'number' ? `${r.reportCount} STORM REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED &middot; ` : ''}SOURCES: ${escapeHtml(r.sources)}</span>
+            <span>PUBLISHED ${escapeHtml(r.published)}</span>
+          </div>
+        </div>
+      </details>`;
+  }
   function renderRecaps(){
     const container = document.getElementById('recapContent');
-    const list = RECAPS.filter(r => r.type === activeRecapTab)
-      .slice()
-      .sort((a,b) => new Date(b.published) - new Date(a.published));
-
-    if(!list.length){
+    const all = RECAPS.slice().sort((a, b) => recapDate(b) - recapDate(a));
+    if(!all.length){
       container.innerHTML = `<div class="recap-empty">${escapeHtml(NO_RECAP_MESSAGE)}</div>`;
       return;
     }
-
-    const [latest, ...older] = list;
-    let html = recapCardHtml(latest);
-    if(older.length){
-      html += `<div class="recap-archive-head">ARCHIVE &mdash; ${older.length} EARLIER</div>`;
-      html += older.map((r,i) => recapArchiveItemHtml(r,i)).join('');
+    const latestMonthly = all.find(r => r.type !== 'event');
+    const archive = all.filter(r => r !== latestMonthly);
+    let html = latestMonthly ? '<div class="recap-group-head">LATEST MONTHLY RECAP</div>' + recapLineHtml(latestMonthly) : '';
+    if(archive.length){
+      const newStorm = archive.some(r => r.type === 'event' && recapIsNew(r));
+      html += `<details class="recap-archive"><summary>&#9656; ARCHIVE &mdash; ${archive.length} RECAP${archive.length === 1 ? '' : 'S'}, STORM &amp; MONTHLY, NEWEST FIRST` +
+              (newStorm ? ' <span class="rl-new">NEW STORM RECAP</span>' : '') + '</summary>' +
+              archive.map(recapLineHtml).join('') + '</details>';
     }
     container.innerHTML = html;
-
-    container.querySelectorAll('.recap-archive-item').forEach(item => {
-      item.addEventListener('click', () => item.classList.toggle('expanded'));
-    });
-  }
-
-  function recapCardHtml(r){
-    return `
-      <div class="recap-card">
-        <div class="rc2-top">
-          <div>
-            <div class="rc2-title">${escapeHtml(r.title)}</div>
-            <div class="rc2-period">ANALYSIS WINDOW: ${escapeHtml(r.period)}</div>
-          </div>
-          <div class="rc2-meta">
-            ${typeof r.reportCount === 'number' ? `<div>${r.reportCount} STORM REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED</div>` : ''}
-            <div>SOURCES: ${escapeHtml(r.sources)}</div>
-          </div>
-        </div>
-        <div class="rc2-divider"></div>
-        ${r.body.map(p => `<p class="rc2-p">${escapeHtml(p)}</p>`).join('')}
-        <div class="rc2-foot">
-          <span>GENERATED FROM SUBMITTED REPORTS + WEATHER DATA FOR THIS WINDOW</span>
-          <span>PUBLISHED ${escapeHtml(r.published)}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  function recapArchiveItemHtml(r){
-    return `
-      <div class="recap-archive-item">
-        <div class="raa-top">
-          <div class="raa-title">${escapeHtml(r.title)}</div>
-          <div class="raa-meta">${escapeHtml(r.period)} &middot; PUBLISHED ${escapeHtml(r.published)}</div>
-        </div>
-        <div class="raa-body">
-          ${r.body.map(p => `<p class="rc2-p">${escapeHtml(p)}</p>`).join('')}
-          <div class="rc2-foot"><span>${typeof r.reportCount === 'number' ? `${r.reportCount} REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED &middot; ` : ''}SOURCES: ${escapeHtml(r.sources)}</span></div>
-        </div>
-      </div>
-    `;
-  }
-
-  document.querySelectorAll('.recap-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.recap-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeRecapTab = btn.dataset.type;
-      renderRecaps();
-    });
-  });
-
-  // "NEW" badge on a tab when that type's most recent entry was published
-  // within the last 7 days. Purely date-driven — nothing to remove by hand.
-  const RECAP_BADGE_DAYS = 7;
-  function updateRecapTabBadges(){
-    ['event','monthly'].forEach(type => {
-      const btn = document.querySelector(`.recap-tab[data-type="${type}"]`);
-      if(!btn) return;
-      const existing = btn.querySelector('.recap-tab-badge');
-      if(existing) existing.remove();
-
-      const dated = RECAPS.filter(r => r.type === type && r.publishedISO)
-        .sort((a,b) => new Date(b.publishedISO) - new Date(a.publishedISO));
-      if(!dated.length) return;
-
-      const ageMs = Date.now() - new Date(dated[0].publishedISO + 'T00:00:00').getTime();
-      const ageDays = ageMs / 86400000;
-      if(ageDays >= 0 && ageDays <= RECAP_BADGE_DAYS){
-        const badge = document.createElement('span');
-        badge.className = 'recap-tab-badge';
-        badge.textContent = 'NEW';
-        btn.appendChild(badge);
-      }
-    });
   }
 
   /* ============================================================
@@ -778,8 +759,21 @@ async function submitReport(report){
   }
   renderSevButtons('default');
 
+  /* Weather Observation: no severity or damage questions, and the description asks what was seen, heard or
+     measured. Saved with severity "Observation" so it shows in cyan rather than a storm colour. */
+  const DESC_DEFAULT = { label: 'WHAT DID YOU EXPERIENCE (FELT/HEARD/SEE)?',
+    ph: 'e.g. Golf-ball sized hail for ~5 minutes, minor damage to greenhouse roof\u2026' };
+  const DESC_OBS = { label: 'WHAT DID YOU SEE, HEAR OR MEASURE?',
+    ph: 'e.g. Sudden heavy downpour in St Aubin, a big black cloud to the west, a rainbow over the bay, or 14\u00b0C and 30 mph gusts on my weather station\u2026' };
+  function setObservationMode(on){
+    document.getElementById('sevField').style.display = on ? 'none' : '';
+    const d = on ? DESC_OBS : DESC_DEFAULT;
+    document.getElementById('descLabel').textContent = d.label;
+    document.getElementById('f-desc').placeholder = d.ph;
+  }
   document.getElementById('f-type').addEventListener('change', function(){
     const isQuake = this.value === 'Earthquake Report';
+    setObservationMode(this.value === 'Observation');
     renderSevButtons(isQuake ? 'earthquake' : 'default');
     document.getElementById('damageField').style.display = isQuake ? '' : 'none';
     document.getElementById('damageDetailsField').style.display = 'none';
@@ -808,15 +802,17 @@ async function submitReport(report){
     const desc = document.getElementById('f-desc').value.trim();
     const name = document.getElementById('f-name').value.trim();
     const pin = document.getElementById('f-pin').value.trim();
-    if(!type || !parish || !desc || !selectedSev || !name || !pin){
-      alert('Please fill in type, parish, severity, description, your name, and the community PIN.');
+    const isObs = type === 'Observation';
+    if(!type || !parish || !desc || (!selectedSev && !isObs) || !name || !pin){
+      alert(isObs ? 'Please fill in type, parish, what you observed, your name, and the community PIN.'
+                  : 'Please fill in type, parish, severity, description, your name, and the community PIN.');
       return;
     }
     const isQuake = type === 'Earthquake Report';
     const loc = await getLocation(); // real coordinates when available/permitted, blank otherwise
     const report = {
       id: 'r' + Date.now(),
-      type, parish, severity: selectedSev,
+      type, parish, severity: isObs ? 'Observation' : selectedSev,
       description: desc,
       damage: isQuake ? document.getElementById('f-damage').value : '',
       damageDetails: isQuake ? document.getElementById('f-damage-details').value.trim() : '',
@@ -904,7 +900,7 @@ async function submitReport(report){
           <div class="rc-type">
             <div class="rc-icon">${TYPE_ICONS[r.type]||'📋'}</div>
             <div>
-              <div class="rc-type-name">${r.type}</div>
+              <div class="rc-type-name">${escapeHtml(r.type === 'Observation' ? 'Weather Observation' : r.type)}</div>
               <div class="rc-parish">${r.parish.toUpperCase()}</div>
             </div>
           </div>
@@ -953,7 +949,6 @@ async function submitReport(report){
   renderStats();
   renderMap();
   renderRecaps();
-  updateRecapTabBadges();
   syncReports();
   setInterval(syncReports, 60000); // pick up other people's reports every minute
 </script>
