@@ -46,7 +46,7 @@ STATE_FILE = "data/warnings-state.json"
 CONFIG_FILE = "data/push-config.json"
 LEVEL = {"none": 0, "yellow": 1, "orange": 2, "amber": 2, "red": 3}
 COLOUR_WORD = {"yellow": "YELLOW", "orange": "ORANGE", "amber": "ORANGE", "red": "RED"}   # Jersey Met says Orange, not amber
-FOOTER = "Automated alert. The warning is officially issued by Jersey Met: see gov.je."
+FOOTER = "Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text \u00a9 States of Jersey: see gov.je."
 PUSH_TTL = 6 * 3600                 # keep trying to deliver for 6 hours if a phone is off
 PUSH_HEADERS = {"Urgency": "high"}  # tells Android to wake the phone now rather than batch it later
 FETCHES_TO_CONFIRM_DROP = 2         # separate gov.je fetches that must agree before a warning counts as lowered/cancelled
@@ -121,7 +121,11 @@ def parse_warnings(text):
 
 def build_message(w, kind):
     colour = COLOUR_WORD.get(w["colour"], w["colour"].upper())
-    title = f"Jersey Met: {colour} {w['hazard']} warning" + (" (at sea)" if w["sea"] else "") + (" UPGRADED" if kind == "upgraded" else "")
+    # "JWC:" first, so nobody mistakes our relayed alert for a message from Jersey Met itself
+    if kind == "upgraded":
+        title = f"JWC: Jersey Met {w['hazard']} warning upgraded to {colour}" + (" (at sea)" if w["sea"] else "")
+    else:
+        title = f"JWC: Jersey Met {colour} {w['hazard']} warning" + (" (at sea)" if w["sea"] else "")
     where = (w["area"] + " - at sea, not a land warning") if w["sea"] else ("For " + w["area"])
     msg = w.get("message", "").strip()
     if len(msg) > 140:
@@ -132,7 +136,7 @@ def build_message(w, kind):
 
 def build_generic_message(severity, kind):
     colour = COLOUR_WORD.get(severity, severity.upper())
-    return {"title": f"Jersey Met: {colour} warning" + (" UPGRADED" if kind == "upgraded" else ""),
+    return {"title": (f"JWC: Jersey Met warning upgraded to {colour}" if kind == "upgraded" else f"JWC: Jersey Met {colour} warning"),
             "body": "A Jersey Met weather warning has been issued. " + FOOTER, "url": SITE_URL, "tag": "jwc-w-generic"}
 
 # ---------- talking to the Apps Script ----------
