@@ -922,6 +922,8 @@ animation: tickerFade 0.6s ease; font-weight:600;
 }
 @keyframes tickerFade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
 footer b{ color:var(--dim); }
+footer a{ color:var(--dim); text-decoration:underline; text-underline-offset:2px; }
+footer a:hover{ color:var(--cyan); }
 @keyframes blipfade{ 0%,100%{opacity:0.2;} 50%{opacity:1;} }
 </style>
 </head>
@@ -961,6 +963,7 @@ footer b{ color:var(--dim); }
 <li><b>Storm reports are from members</b> and are not verified.</li>
 <li><b>Warning alerts are automated.</b> If you tap ALERT ME, this device gets a notification when our checker spots a new or upgraded Jersey Met warning on gov.je. It can lag behind or miss one, and it never replaces the official warning. We store the anonymous push address your phone gives us, plus the browser type and when you signed up &mdash; no name, email or location &mdash; and TURN OFF removes it.</li>
 <li><b>Special weather messages to your phone are a responsibility we take seriously.</b> A post on this site is something you choose to read; a notification on your phone is not, so we hold ourselves to a higher standard and only send one when we believe it genuinely matters. Our system checks the live data on this site around the clock &mdash; airport observations from Jersey, Guernsey and Alderney, local weather stations, forecast models, air pressure, and tides with wave heights &mdash; against set thresholds, such as gusts of 70&nbsp;mph or more, or big waves arriving at high tide. Reaching a threshold never sends anything on its own: it alerts the site&rsquo;s admin, who checks the readings and decides whether a message is warranted. Every suggestion, the readings behind it, the decision made and the exact message sent are recorded, so we can be held to account. Occasionally we may send a message without a threshold being met &mdash; for example to pass on important official advice &mdash; and those are recorded too. A special message is never an official warning: Jersey Met remains the authority.</li>
+<li><b>Privacy.</b> Jersey Weather Chat is registered with the Jersey Office of the Information Commissioner (<a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">registration no. 104194</a>). We hold very little personal data, and only to run this site: the notification address, browser type and sign-up time for alerts (TURN OFF deletes them); the name, report and optional email you give with a storm report; and visit counts through Google Analytics. It is kept in our Google account and passes through GitHub and your browser maker&rsquo;s notification service, so it may be held outside Jersey. We never sell or share it. To see, correct or delete your data, email jwcliveops@gmail.com; you can also complain to the <a href="https://jerseyoic.org" target="_blank" rel="noopener">Jersey Office of the Information Commissioner</a>. <a href="alerts-help.html#privacy">Full privacy note &rarr;</a></li>
 <li><b>In an emergency call 999.</b></li>
 </ul>
 </div>
@@ -1685,7 +1688,8 @@ Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The
 </div>
 </section>
 <footer>
-<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; NOAA/NCEP (STORM WATCH FORECAST LOOP &amp; STORM TRACKER) &middot; GOV.JE (WARNINGS)</div>
+<div>DATA: OPEN-METEO (CONDITIONS, CONVECTIVE INDICES, AIR QUALITY, RAINFALL) &middot; RAINVIEWER (RADAR) &middot; WINDY (SATELLITE) &middot; BLITZORTUNG.ORG (LIGHTNING) &middot; USGS &amp; EMSC (EARTHQUAKES) &middot; NOAA/NCEP (STORM WATCH FORECAST LOOP &amp; STORM TRACKER) &middot; GOV.JE (WARNINGS, &copy; STATES OF JERSEY)</div>
+<div><b>DATA PROTECTION:</b> REGISTERED WITH THE JERSEY OFFICE OF THE INFORMATION COMMISSIONER AS A NON-PROFIT DATA CONTROLLER &middot; <a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">REGISTRATION NO. 104194</a> &middot; <a href="alerts-help.html#privacy">PRIVACY NOTE</a></div>
 <div><b>LAST REFRESH:</b> <span id="lastRefresh">--</span> &middot; AUTO-REFRESH EVERY 10 MIN</div>
 </footer>
 </div>
