@@ -907,6 +907,27 @@ background:var(--bg-panel-2); cursor:pointer; transition:border-color .15s ease;
 .corner.tr{ top:6px; right:6px; border-left:0; border-bottom:0; }
 .corner.bl{ bottom:6px; left:6px; border-right:0; border-top:0; }
 .corner.br{ bottom:6px; right:6px; border-left:0; border-top:0; }
+/* ---- Channel Islands wind tracker (VeryWeather): a card on the page, the map opens in a pop-up ---- */
+.vw-card{ display:flex; width:100%; text-align:left; gap:16px; align-items:stretch; background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); border:1px solid var(--line); border-radius:14px; padding:0; overflow:hidden; cursor:pointer; color:var(--text); font-family:inherit; }
+.vw-card:hover, .vw-card:focus-visible{ border-color:var(--cyan); }
+.vw-card-art{ flex:0 0 170px; min-height:118px; background:repeating-linear-gradient(112deg, rgba(255,255,255,0) 0 15px, rgba(255,255,255,0.32) 15px 16px), radial-gradient(circle at 30% 40%, #ff2fa8, #8a1fb0 58%, #3a0d52); background-size:64px 64px, 100% 100%; animation:vwStreak 1.4s linear infinite; }
+@keyframes vwStreak{ from{ background-position:0 0, 0 0; } to{ background-position:-64px 0, 0 0; } }
+@media (prefers-reduced-motion: reduce){ .vw-card-art{ animation:none; } }
+.vw-card-text{ display:flex; flex-direction:column; gap:6px; padding:16px 18px 16px 0; font-size:12px; line-height:1.55; color:var(--dim); }
+.vw-card-text b{ font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:1.5px; color:var(--text); }
+.vw-card-cta{ font-weight:800; letter-spacing:1.5px; color:var(--cyan); font-size:11px; margin-top:2px; }
+@media (max-width:560px){ .vw-card{ flex-direction:column; gap:0; } .vw-card-art{ flex-basis:64px; min-height:64px; } .vw-card-text{ padding:12px 14px 14px; } }
+.vw-credit{ font-size:10.5px; color:var(--dim2); margin-top:8px; letter-spacing:0.3px; }
+.vw-credit a{ color:var(--dim); }
+.fc-modal.vw-modal{ max-width:1500px; width:100%; height:88vh; max-height:none; display:flex; flex-direction:column; padding:16px 14px 14px; overflow:hidden; }
+.vw-modal .fc-modal-sub{ margin-bottom:10px; }
+.vw-frame{ position:relative; flex:1; min-height:0; border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#0e1822; }
+.vw-frame iframe{ position:absolute; left:0; top:0; width:100%; height:100%; border:0; transform-origin:0 0; }
+/* computers: the whole tracker shown at 80% so the map gets more room (phones: full size) */
+@media (min-width:760px){
+  .fc-modal.vw-modal{ width:96vw; height:92vh; max-height:none; }
+  .vw-frame iframe{ width:125%; height:125%; transform:scale(0.8); }
+}
 footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
 .news-panel{ grid-column:1 / -1; }
 .globe-spin{ display:inline-block; animation: spin 6s linear infinite; margin-right:7px; }
@@ -1639,6 +1660,60 @@ Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The
 </details>
 </div>
 </section>
+<!-- CHANNEL ISLANDS WIND TRACKER (VeryWeather): only a card here, so the page scrolls freely;
+     the animated map opens in a pop-up and only loads when opened. index.html#windtracker opens it directly. -->
+<section id="windTracker">
+<div class="sec-head imagery">
+<h3>WIND TRACKER</h3>
+<div class="bar"></div>
+<div class="tag">HARMONIE &middot; VERYWEATHER</div>
+</div>
+<button type="button" class="vw-card" id="vwOpen" aria-haspopup="dialog">
+<span class="vw-card-art" aria-hidden="true"></span>
+<span class="vw-card-text">
+<b>CHANNEL ISLANDS WIND TRACKER</b>
+<span>High-resolution HARMONIE gust forecast for Jersey, Guernsey, Sark and Alderney, hour by hour, on an animated wind map.</span>
+<span class="vw-card-cta">OPEN WIND TRACKER &#9656;</span>
+</span>
+</button>
+<div class="vw-credit">By <a href="https://veryweather.co.uk/ukweathermap.html?mode=channelislands" target="_blank" rel="noopener">VeryWeather</a>, shown with permission &middot; a computer forecast, not an official warning.</div>
+</section>
+<div class="fc-modal-backdrop" id="vwBackdrop">
+<div class="fc-modal vw-modal" role="dialog" aria-modal="true" aria-labelledby="vwTitle">
+<button type="button" class="fc-modal-close" id="vwClose" aria-label="Close">&times;</button>
+<div class="fc-modal-title" id="vwTitle">CHANNEL ISLANDS WIND TRACKER</div>
+<div class="fc-modal-sub">HARMONIE GUST FORECAST &middot; BY VERYWEATHER, SHOWN WITH PERMISSION</div>
+<div class="vw-frame" id="vwFrame"></div>
+</div>
+</div>
+<script>
+/* Wind tracker pop-up: the map loads when opened and is removed again when closed (so it isn't running
+   unseen in the background). Closes with X, a tap outside it, or Esc. */
+(function(){
+const SRC = 'https://veryweather.co.uk/ukweathermap.html?mode=channelislands';
+const bd = document.getElementById('vwBackdrop'), box = document.getElementById('vwFrame');
+const openBtn = document.getElementById('vwOpen'), closeBtn = document.getElementById('vwClose');
+if(!bd || !openBtn) return;
+function open(){
+  if(!box.querySelector('iframe')){
+    const f = document.createElement('iframe');
+    f.src = SRC; f.title = 'VeryWeather Channel Islands wind tracker';
+    f.setAttribute('allow', 'fullscreen'); f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    box.appendChild(f);
+  }
+  bd.classList.add('open'); document.body.style.overflow = 'hidden'; closeBtn.focus();
+}
+function close(){
+  bd.classList.remove('open'); document.body.style.overflow = ''; box.innerHTML = ''; openBtn.focus();
+  if(location.hash === '#windtracker'){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
+}
+openBtn.addEventListener('click', open);
+closeBtn.addEventListener('click', close);
+bd.addEventListener('click', function(e){ if(e.target === bd) close(); });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && bd.classList.contains('open')) close(); });
+if(location.hash === '#windtracker') open();
+})();
+</script>
 <!-- LIVE IMAGERY -->
 <section>
 <div class="sec-head imagery">
