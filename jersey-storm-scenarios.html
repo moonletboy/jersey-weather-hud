@@ -817,6 +817,11 @@ background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; pa
 .sc-chart h4{ margin:0 0 4px; font-size:11px; letter-spacing:2px; color:var(--cyan); }
 .sc-chart .cap{ font-size:10px; color:var(--dim); line-height:1.6; margin:0 0 10px; }
 .sc-svg{ width:100%; height:auto; display:block; }
+.sc-fan{ touch-action:pan-y; cursor:crosshair; }
+.sc-fanread{ font-size:10.5px; letter-spacing:0.8px; color:var(--dim); margin:0 0 8px; min-height:18px; line-height:1.6; }
+.sc-fanread b{ color:var(--text); }
+.sc-arrow{ display:inline-block; color:var(--cyan); font-size:12px; line-height:1; transform-origin:50% 50%; }
+.sc-card .row .v small{ font-size:9px; color:var(--dim); font-weight:400; }
 .sc-legend{ display:flex; flex-wrap:wrap; gap:14px; font-size:9.5px; letter-spacing:1px; color:var(--dim); margin-top:8px; }
 .sc-legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
 /* facebook post */
@@ -1048,13 +1053,13 @@ finally{ clearTimeout(t); }
 }
 async function loadEnsemble(m){
 const url = 'https://ensemble-api.open-meteo.com/v1/ensemble?latitude=' + LAT + '&longitude=' + LON +
-'&hourly=wind_gusts_10m,wind_speed_10m&models=' + m.id + '&wind_speed_unit=mph&timezone=Europe%2FLondon&forecast_days=7';
+'&hourly=wind_gusts_10m,wind_speed_10m,wind_direction_10m&models=' + m.id + '&wind_speed_unit=mph&timezone=Europe%2FLondon&forecast_days=7';
 try{
 const j = await getJson(url);
 const h = j.hourly, runs = [];
 Object.keys(h).forEach(function(k){
 if(k.indexOf('wind_gusts_10m') !== 0 || !h[k].some(v => v != null)) return;
-runs.push({ g:h[k], w:h['wind_speed_10m' + k.slice(14)] || [] });
+runs.push({ g:h[k], w:h['wind_speed_10m' + k.slice(14)] || [], d:h['wind_direction_10m' + k.slice(14)] || [] });
 });
 if(!runs.length) return null;
 const byDay = {};
@@ -1077,19 +1082,19 @@ SC.ens.forEach(function(md){
 const idx = md.byDay[day];
 if(!idx) return;
 md.runs.forEach(function(r){
-let pk = -1, wpk = -1, n = 0, f60 = -1, l60 = -1;
-const h24 = new Array(24).fill(null);
+let pk = -1, wpk = -1, n = 0, f60 = -1, l60 = -1, pkd = null;
+const h24 = new Array(24).fill(null), h24w = new Array(24).fill(null), h24d = new Array(24).fill(null);
 idx.forEach(function(i){
 const v = r.g[i];
 if(v == null) return;
 n++;
 const hr = Number(md.time[i].slice(11, 13));
-h24[hr] = v;
-if(v > pk) pk = v;
+h24[hr] = v; h24w[hr] = r.w[i] != null ? r.w[i] : null; h24d[hr] = r.d[i] != null ? r.d[i] : null;
+if(v > pk){ pk = v; pkd = r.d[i] != null ? r.d[i] : null; }
 if(r.w[i] != null && r.w[i] > wpk) wpk = r.w[i];
 if(v >= 60){ if(f60 < 0) f60 = hr; l60 = hr; }
 });
-if(n >= 18) recs.push({ model:md.m, pk:pk, wpk:wpk, f60:f60, l60:l60, h24:h24 });
+if(n >= 18) recs.push({ model:md.m, pk:pk, pkd:pkd, wpk:wpk, f60:f60, l60:l60, h24:h24, h24w:h24w, h24d:h24d });
 });
 });
 if(recs.length < 10) return null;
@@ -1161,9 +1166,10 @@ st.sc = [
 ].map(function(s, i){
 const g = groups[i];
 s.n = g.length; s.p = pcs[i]; s.top = (i === biggest);
-if(!g.length){ s.v = i === 0 ? cut.b1 - 3 : i === 1 ? (cut.b1 + cut.b2) / 2 : cut.b2 + 3; s.wind = 0; s.win = null; s.lean = []; s.leanNm = []; return s; }
+if(!g.length){ s.v = i === 0 ? cut.b1 - 3 : i === 1 ? (cut.b1 + cut.b2) / 2 : cut.b2 + 3; s.wind = 0; s.win = null; s.lean = []; s.leanNm = []; s.dir = null; return s; }
 s.v = med(g.map(r => r.pk));                                      // the typical peak gust within this range
 s.wind = med(g.map(r => r.wpk));
+s.dir = dirSummary(g.map(r => r.pkd));                            // where the strongest gusts come from in these runs
 const hit = g.filter(r => r.f60 >= 0);
 s.win = hit.length >= g.length / 2 ? [Math.round(med(hit.map(r => r.f60))), Math.max(Math.round(med(hit.map(r => r.f60))) + 1, Math.round(med(hit.map(r => r.l60))) + 1)] : null;   // [start hour, hour it ends]
 /* which models are over-represented in this range */
@@ -1177,7 +1183,9 @@ return s;
 st.fan = [];
 for(let h = 0; h < 24; h++){
 const v = recs.map(r => r.h24[h]).filter(x => x != null);
-st.fan.push(v.length >= 5 ? { h:h, p10:pct(v, 0.1), p25:pct(v, 0.25), p50:pct(v, 0.5), p75:pct(v, 0.75), p90:pct(v, 0.9) } : null);
+const wv = recs.map(r => r.h24w[h]).filter(x => x != null);
+const dsum = dirSummary(recs.map(r => r.h24d[h]));
+st.fan.push(v.length >= 5 ? { h:h, p10:pct(v, 0.1), p25:pct(v, 0.25), p50:pct(v, 0.5), p75:pct(v, 0.75), p90:pct(v, 0.9), w50:(wv.length ? med(wv) : null), dir:dsum } : null);
 }
 return st;
 }
@@ -1203,6 +1211,19 @@ function compassWord(deg){
 const w = { N:'north', NNE:'north-north-east', NE:'north-east', ENE:'east-north-east', E:'east', ESE:'east-south-east', SE:'south-east', SSE:'south-south-east', S:'south', SSW:'south-south-west', SW:'south-west', WSW:'west-south-west', W:'west', WNW:'west-north-west', NW:'north-west', NNW:'north-north-west' };
 return w[compass16(deg)];
 }
+/* a set of directions -> { deg, pt (16-point), word, pts (the 8-point sectors seen, in compass order), agree } or null */
+function dirSummary(ds){
+ds = ds.filter(d => d != null);
+if(!ds.length) return null;
+let sx = 0, sy = 0;
+ds.forEach(function(d){ sx += Math.cos(d * Math.PI / 180); sy += Math.sin(d * Math.PI / 180); });
+let m = Math.atan2(sy, sx) * 180 / Math.PI; if(m < 0) m += 360;
+const C8 = ['N','NE','E','SE','S','SW','W','NW'], seen = {};
+ds.forEach(d => { seen[C8[((Math.round(d / 45) % 8) + 8) % 8]] = 1; });
+const pts = C8.filter(c => seen[c]);
+return { deg:m, pt:compass16(m), word:compassWord(m), pts:pts, agree:pts.length === 1 };
+}
+function dirArrow(deg){ return '<span class="sc-arrow" style="transform:rotate(' + Math.round(deg + 90) + 'deg);">&#10148;</span>'; }
 function peakDir(dp){
 const ds = dp.map(d => d.dir).filter(d => d != null);
 if(!ds.length) return null;
@@ -1282,13 +1303,24 @@ const top = Math.max(70, Math.ceil((Math.max.apply(null, f.map(p => p.p90)) + 5)
 const W = SC.W, H = hOverride || (SC.W < 1000 ? 380 : 300), L = SC.W < 1000 ? 52 : 44, R = SC.W < 1000 ? 96 : 70, T = 14, B = 34;
 const X = h => L + h * (W - L - R) / 23, Y = v => T + (top - Math.max(0, Math.min(top, v))) * (H - T - B) / top;
 const path = (k1, k2) => { const a = f.map(p => X(p.h).toFixed(1) + ',' + Y(p[k1]).toFixed(1)); const b = f.slice().reverse().map(p => X(p.h).toFixed(1) + ',' + Y(p[k2]).toFixed(1)); return 'M' + a.join('L') + 'L' + b.join('L') + 'Z'; };
-let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gusts through the day">';
+let s = '<svg class="sc-svg' + (hOverride ? '' : ' sc-fan') + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gusts through the day"' + (hOverride ? '' : ' data-l="' + L + '" data-r="' + R + '" data-w="' + W + '" data-top="' + top + '" data-t="' + T + '" data-h="' + H + '" data-b="' + B + '"') + '>';
 s += tierBands(Y, L, W - R, true, 0, top);
 BANDS.forEach(b => { if(b[0] < top) s += '<text x="' + (W - R + 6) + '" y="' + (Y(b[0]) - 3) + '" fill="#5f7c88" font-size="' + fsz(9.5) + '" font-family="JetBrains Mono, monospace">' + b[3] + '</text>'; });
 for(let v = 0; v <= top; v += 10) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="rgba(95,124,136,0.15)"/><text x="' + (L - 6) + '" y="' + (Y(v) + 3) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + v + '</text>';
 s += '<path d="' + path('p90', 'p10') + '" fill="rgba(255,176,32,0.16)"/>';
 s += '<path d="' + path('p75', 'p25') + '" fill="rgba(255,176,32,0.30)"/>';
 s += '<path d="M' + f.map(p => X(p.h).toFixed(1) + ',' + Y(p.p50).toFixed(1)).join('L') + '" fill="none" stroke="#ffb020" stroke-width="3"/>';
+/* little labels along the line every 3 hours: the middle run's gust and where the wind blows from */
+f.forEach(function(p){
+if(p.h % 3) return;
+const lx = X(p.h), ly = Y(p.p50) - 9;
+s += '<text x="' + lx + '" y="' + ly + '" fill="#ffb020" font-size="' + fsz(9.5) + '" font-weight="700" text-anchor="middle" font-family="JetBrains Mono, monospace" paint-order="stroke" stroke="#05080d" stroke-width="3">' + Math.round(p.p50) + (p.dir ? ' ' + p.dir.pt : '') + '</text>';
+});
+/* the moving cursor (shown by the hover/touch code when the chart is on the page, never in the Facebook picture) */
+if(!hOverride){
+s += '<g class="fan-cur" style="display:none;"><line x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" stroke="#4cd3ff" stroke-width="1.5" stroke-dasharray="4 3"/><circle cx="0" cy="0" r="5" fill="#4cd3ff" stroke="#05080d" stroke-width="2"/></g>';
+s += '<rect class="fan-hit" x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent"/>';
+}
 s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(60) + '" y2="' + Y(60) + '" stroke="#ff4b5c" stroke-width="1.5" stroke-dasharray="6 5"/><text x="' + (L + 6) + '" y="' + (Y(60) - 5) + '" fill="#ff4b5c" font-size="' + fsz(10) + '" font-family="JetBrains Mono, monospace">60 MPH</text>';
 for(let h = 0; h <= 21; h += 3) s += '<text x="' + X(h) + '" y="' + (H - 10) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="middle" font-family="JetBrains Mono, monospace">' + hh(h) + '</text>';
 return s + '</svg>';
@@ -1361,6 +1393,7 @@ return '<div class="sc-card ' + sc.key + '"><div class="lab">' + sc.emo + ' ' + 
 '<div class="big">' + sc.range + '</div><div class="unit">MPH PEAK GUSTS</div>' +
 '<div class="row"><span>TYPICAL PEAK GUST</span><span class="v">' + (sc.n ? 'ABOUT ' + Math.round(sc.v) + ' MPH' : '&ndash;') + '</span></div>' +
 '<div class="row" style="margin-top:0;"><span>AVERAGE WIND UP TO</span><span class="v">' + (sc.n ? Math.round(sc.wind) + ' MPH' : '&ndash;') + '</span></div>' +
+'<div class="row" style="margin-top:0;"><span>STRONGEST GUSTS FROM</span><span class="v">' + (sc.dir ? dirArrow(sc.dir.deg) + ' ' + sc.dir.pt + (sc.dir.agree ? '' : ' <small>(' + sc.dir.pts.join('&ndash;') + ')</small>') : '&ndash;') + '</span></div>' +
 '<div class="row" style="margin-top:0;"><span>60+ MPH GUSTS</span><span class="v">' + (sc.win ? hh(sc.win[0]) + '&ndash;' + hh(sc.win[1]) : 'NONE') + '</span></div>' +
 '<div class="tl">' + timeline(sc.win, col) + '</div>' +
 (t ? '<div class="imp" style="color:' + t.col + ';background:' + t.bg + ';"><b>' + t.head + '</b>' + t.body + '</div>' : '<div class="imp" style="color:var(--green);background:rgba(45,225,160,0.07);"><b>BELOW GALE FORCE</b>Breezy at most; no wind impacts expected.</div>') +
@@ -1389,6 +1422,40 @@ const p = st.ch[t], col = scenCol(st, t);
 return '<div class="sc-rung' + (p ? '' : ' zero') + '"><div class="lv" style="color:' + col + ';">' + names[t] + '</div><div class="tr"><i style="width:' + p + '%;background:' + col + ';"></i></div><div class="pc" style="color:' + (p ? col : 'var(--dim2)') + ';">' + p + '%</div></div>';
 }).join('') + '</div><p class="cap" style="margin:8px 0 0;">Share of all ' + st.n + ' runs reaching each speed at some point in the day.<br>' + SCEN_KEY + '</p></div>';
 }
+/* hover / drag across the THROUGH THE DAY chart: snap to the nearest hour and show that hour's figures */
+function fanHover(e){
+const svg = e.target.closest('.sc-fan');
+if(!svg) return;
+const st = SC.stats[SC.day];
+if(!st) return;
+const d = svg.dataset, W = +d.w, L = +d.l, R = +d.r, T = +d.t, H = +d.h, B = +d.b, top = +d.top;
+const box = svg.getBoundingClientRect();
+const vx = (e.clientX - box.left) / box.width * W;
+let h = Math.round((vx - L) / (W - L - R) * 23);
+h = Math.max(0, Math.min(23, h));
+let p = st.fan[h];
+if(!p){ p = st.fan.filter(Boolean).reduce((a, q) => (!a || Math.abs(q.h - h) < Math.abs(a.h - h)) ? q : a, null); if(!p) return; h = p.h; }
+const X = L + h * (W - L - R) / 23, Y = T + (top - Math.max(0, Math.min(top, p.p50))) * (H - T - B) / top;
+const g = svg.querySelector('.fan-cur');
+if(g){ g.style.display = ''; const ln = g.querySelector('line'), c = g.querySelector('circle'); ln.setAttribute('x1', X); ln.setAttribute('x2', X); c.setAttribute('cx', X); c.setAttribute('cy', Y); }
+const r = document.getElementById('scFanRead');
+if(r){
+const t = tierOf(p.p50), col = t ? t.hex : '#2de1a0';
+r.innerHTML = '<b>' + hh(h) + '</b> &middot; GUSTS <b style="color:' + col + ';">' + Math.round(p.p25) + '&ndash;' + Math.round(p.p75) + ' MPH</b> (MIDDLE RUN ' + Math.round(p.p50) + ', WILDEST ' + Math.round(p.p90) + ')' +
+(p.w50 != null ? ' &middot; AVERAGE WIND <b>' + Math.round(p.w50) + ' MPH</b>' : '') +
+(p.dir ? ' &middot; FROM ' + dirArrow(p.dir.deg) + ' <b>' + p.dir.pt + '</b>' + (p.dir.agree ? '' : ' <span style="color:var(--dim);">(' + p.dir.pts.join('&ndash;') + ' ACROSS THE RUNS)</span>') : '');
+}
+}
+function fanLeave(e){
+const svg = e.target.closest ? e.target.closest('.sc-fan') : null;
+if(!svg) return;
+const g = svg.querySelector('.fan-cur'); if(g) g.style.display = 'none';
+const r = document.getElementById('scFanRead'); if(r) r.innerHTML = '&larr; HOVER OR DRAG ACROSS THE CHART FOR AN HOUR\u2019S GUSTS, WIND AND DIRECTION';
+}
+document.getElementById('scMain').addEventListener('pointermove', fanHover);
+document.getElementById('scMain').addEventListener('pointerdown', fanHover);
+document.getElementById('scMain').addEventListener('pointerleave', fanLeave, true);
+document.getElementById('scMain').addEventListener('pointerout', function(e){ if(e.target.closest && e.target.closest('.sc-fan') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.sc-fan'))) fanLeave(e); });
 function renderMain(){
 const st = SC.stats[SC.day];
 scSize();
@@ -1404,7 +1471,7 @@ main.innerHTML = headline(st) +
 st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c', 'CHANCE OF ' + sc.lbl, 'GUSTS ' + sc.range + ' MPH &middot; ' + sc.n + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
 ladder(st) +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + noEns + '</div></div>' +
-'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + fanKey + '</div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible. <b>Move your finger or mouse across the chart</b> to read the wind at any hour.</p><div class="sc-fanread" id="scFanRead">&larr; HOVER OR DRAG ACROSS THE CHART FOR AN HOUR\u2019S GUSTS, WIND AND DIRECTION</div>' + fanChart(st) + fanKey + '</div>' +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story. The letters after each peak are where that model has the wind blowing <i>from</i> at its strongest hour.</p>' + detChart(st, dp) + '</div>' +
 (SC.admin ? '<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' : '') +
 (SC.admin ? 
@@ -1684,7 +1751,7 @@ const line = function(sc){
 const short = DAYS.format(dayDate(st.day));
 let t = sc.emo + ' ' + sc.lbl + (sc.top && sc.key !== 'likely' ? ' (most common single range)' : '') + ' \u2013 ' + sc.p + '% chance: gusts ' + sc.rangeTxt + ' mph';
 if(!sc.n) return t + '. No model runs show this today.';
-t += ' (typically about ' + Math.round(sc.v) + ')' + (sc.key === 'worst' ? ', higher on exposed coasts' : '') + ', average winds up to about ' + Math.round(sc.wind) + ' mph';
+t += ' (typically about ' + Math.round(sc.v) + ')' + (sc.key === 'worst' ? ', higher on exposed coasts' : '') + (sc.dir ? ', strongest from the ' + sc.dir.word : '') + ', average winds up to about ' + Math.round(sc.wind) + ' mph';
 t += sc.win ? ', 60+ mph gusts about ' + hh(sc.win[0]) + '\u2013' + hh(sc.win[1]) + ' ' + short + '.' : '. No 60+ mph gusts.';
 if(sc.leanNm.length) t += ' (mostly ' + sc.leanNm.join(' & ') + ' runs)';
 return t;
