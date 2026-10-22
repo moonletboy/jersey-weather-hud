@@ -1,6 +1,6 @@
 {
  "severity": "red",
- "hash": "af85fd7a8e06",
+ "hash": "b5fde09669f1",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -14,13 +14,26 @@
    "message": "W to SW wind F7 backing S severe gale F9 with gusts to 65kt expected later.",
    "missing": 0,
    "lower": 0
+  },
+  "thunderstorm": {
+   "key": "thunderstorm",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Thunderstorm",
+   "area": "Jersey",
+   "hazard": "thunderstorm",
+   "sea": false,
+   "issued": "9:03 p.m. Thursday 22 October",
+   "message": "",
+   "missing": 0,
+   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-22T14:45:00.0420928Z",
+ "lastFetch": "2026-10-22T20:15:00.0475103Z",
  "snippet": "Red - Channel Islands Shipping Area Wind Warning Issued at 14:43 UTC Thursday 22 October S severe gale F9 with gusts to 60kt expected soon, veering W to NW stor",
- "checkedAt": "2026-10-22T14:45:00.0420928Z",
- "lastAlertAt": "2026-10-22T02:50:01Z",
- "lastAlertKind": "upgraded"
+ "checkedAt": "2026-10-22T20:15:00.0475103Z",
+ "lastAlertAt": "2026-10-22T20:20:34Z",
+ "lastAlertKind": "new"
 }
