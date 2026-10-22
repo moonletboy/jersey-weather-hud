@@ -857,6 +857,9 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 .sc-news.fresh{ color:#05080d; background:var(--amber); font-weight:700; }
 .sc-news.quiet{ color:var(--dim); border:1px dashed var(--line); }
 .sc-news b{ font-weight:800; }
+.sc-news-day{ margin-top:8px; }
+.sc-news-row{ margin-top:4px; padding:5px 8px; border-radius:6px; background:rgba(5,8,13,0.08); }
+.sc-news-same{ opacity:0.65; font-weight:400; }
 .sc-runs{ display:grid; grid-template-columns:auto auto auto auto; gap:3px 18px; margin:0 0 16px; padding:10px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg-panel); font-size:9.5px; letter-spacing:0.8px; width:max-content; max-width:100%; }
 .sc-runs:empty{ display:none; }
 .sc-runs .h{ color:var(--dim2); font-size:8.5px; letter-spacing:1.5px; }
@@ -1721,7 +1724,30 @@ let common = 0;
 for(const k in a){ if(k in b){ common++; if(Math.abs(a[k] - b[k]) >= 0.1) return true; } }
 return false;
 }
-function headStats(st){ return st ? { b:Math.round(st.q10), l:Math.round(st.q50), w:Math.round(st.q90), c60:st.c60 } : null; }
+function headStats(st){
+if(!st) return null;
+const h = { b:Math.round(st.q10), l:Math.round(st.q50), w:Math.round(st.q90), c60:st.c60 };
+/* each scenario card's own figures, so the news line can say how each one moved */
+if(st.sc) h.sc = st.sc.map(function(x){ return { k:x.key, lbl:x.lbl, emo:x.emo, r:String(x.rangeTxt).toUpperCase(), v:Math.round(x.v), p:x.p, n:x.n }; });
+return h;
+}
+/* "How each scenario has changed": one row per scenario card - its gust range, its typical gust and
+   its share of the model runs, old -> new (an arrow shows the direction), or NO CHANGE. */
+function scenarioDrift(prevDay, nowDay){
+if(!prevDay || !nowDay || !prevDay.sc || !nowDay.sc) return '';
+const step = function(a, b, u){ return a === b ? b + u : a + u + ' &rarr; <b>' + b + u + (b > a ? ' &#9650;' : ' &#9660;') + '</b>'; };
+return nowDay.sc.map(function(s){
+const o = prevDay.sc.filter(function(x){ return x.k === s.k; })[0];
+if(!o) return '';
+const parts = [];
+parts.push(o.r === s.r ? 'GUSTS ' + s.r + ' MPH' : 'GUSTS ' + o.r + ' &rarr; <b>' + s.r + ' MPH</b>');
+if(o.n && s.n) parts.push('TYPICAL ' + step(o.v, s.v, ' MPH'));
+else if(!s.n) parts.push('NO RUNS IN THIS RANGE NOW');
+parts.push(step(o.p, s.p, '%') + ' OF RUNS');
+const same = o.r === s.r && o.v === s.v && o.p === s.p;
+return '<div class="sc-news-row">' + s.emo + ' <b>' + s.lbl + '</b>: ' + parts.join(' &middot; ') + (same ? ' <span class="sc-news-same">(NO CHANGE)</span>' : '') + '</div>';
+}).join('');
+}
 function newsLine(changed, prevDay, nowDay, sinceTxt, live){
 const el = document.getElementById('scNews');
 if(!changed.length){
@@ -1731,7 +1757,11 @@ wireBell();
 return;
 }
 let drift = '';
-if(prevDay && nowDay){
+const rows = scenarioDrift(prevDay, nowDay);
+if(rows){
+drift = '<div class="sc-news-day">FOR ' + nc(DAYF.format(dayDate(SC.day))).toUpperCase() + ', HOW EACH SCENARIO HAS CHANGED:</div>' + rows;
+}else if(prevDay && nowDay){
+/* first visit after this update: the last visit didn't store the scenarios yet, so show the overall figures */
 const d = function(lbl, a, b, u){ return a === b ? lbl + ' ' + b + u + ' (NO CHANGE)' : lbl + ' ' + a + u + ' &rarr; <b>' + b + u + '</b>'; };
 drift = '<br>FOR ' + nc(DAYF.format(dayDate(SC.day))).toUpperCase() + ': ' + d('MIDDLE RUN', prevDay.l, nowDay.l, ' MPH') + ' &middot; ' + d('WILDEST 1 IN 10', prevDay.w, nowDay.w, ' MPH') + ' &middot; ' + d('CHANCE OF 60+', prevDay.c60, nowDay.c60, '%');
 }
