@@ -708,7 +708,9 @@
 
   async function syncReports(){
     try{
-      const res = await fetch(REPORTS_API_URL);
+      // Cache-bust every poll: the browser (and the installed app) otherwise serves a stale copy
+      // of the feed for several minutes, which made new reports look like they'd gone missing.
+      const res = await fetch(REPORTS_API_URL + '?t=' + Date.now(), { cache: 'no-store' });
       const data = await res.json();
       if(Array.isArray(data) && data.length){
         // The server feed is cached for a few minutes, so a report this device has just
