@@ -41,8 +41,10 @@ FEED_TYPES = [("WindWarning", "WindWarningData", "wind"), ("ThunderWarning", "Th
               ("TideWarning", "TideWarningData", "tide"), ("SnowWarning", "SnowWarningData", "snow"),
               ("SnowAlert", "SnowAlertData", "snow"), ("IceWarning", "IceWarningData", "ice")]
 API_URL = "https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec"
-SITE_URL = "https://www.jerseyweatherchat.com/index.html?source=push"
+SITE_URL = "https://www.jerseyweatherchat.com/index.html?source=push#alerts"   # #alerts: the page scrolls to LATEST ALERTS
 STATE_FILE = "data/warnings-state.json"
+ALERTS_FILE = "data/alerts.json"    # public copy of the last few alerts sent, shown on the home page as LATEST ALERTS
+ALERTS_KEEP = 20
 CONFIG_FILE = "data/push-config.json"
 LEVEL = {"none": 0, "yellow": 1, "orange": 2, "amber": 2, "red": 3}
 COLOUR_WORD = {"yellow": "YELLOW", "orange": "ORANGE", "amber": "ORANGE", "red": "RED"}   # Jersey Met says Orange, not amber
@@ -209,6 +211,19 @@ def log_event(admin_key, event):
     except Exception as ex:
         print("Log skipped:", str(ex)[:120])
 
+def publish_alert(kind, title, body, sent_count=None):
+    """Add an alert to the public data/alerts.json (newest first) so the home page can show it.
+    Only real sends to everyone are published - never owner-only tests. Never allowed to break a send."""
+    try:
+        cur = load_json(ALERTS_FILE, {})
+        items = cur.get("alerts", []) if isinstance(cur, dict) else []
+        items.insert(0, {"at": now_iso(), "kind": kind, "title": title, "body": body,
+                         "sent": sent_count if sent_count is not None else ""})
+        save_json(ALERTS_FILE, {"updated": now_iso(), "alerts": items[:ALERTS_KEEP]})
+        print("Published", ALERTS_FILE)
+    except Exception as ex:
+        print("Publish skipped:", str(ex)[:120])
+
 # ---------- sending ----------
 SEND_AT_ONCE = 20   # phones contacted at the same time (697 subscribers then take seconds, not minutes)
 
@@ -342,6 +357,7 @@ def check(vapid_private, vapid_subject, admin_key):
         for kind, msg, desc in alerts:
             print("Alert:", json.dumps(msg, ensure_ascii=False))
             res = send_all(subs, msg, vapid_private, vapid_subject, admin_key)
+            publish_alert("warning", msg["title"], msg["body"], res["sent"])
             log_event(admin_key, {"source": "jersey-met", "rule": "Jersey Met warning " + kind,
                                   "reason": desc, "title": msg["title"], "body": msg["body"],
                                   "status": "sent automatically", "sentCount": res["sent"], "deviceCount": res["of"]})
@@ -418,6 +434,8 @@ def main():
         msg = {"title": title, "body": body, "url": SITE_URL, "tag": "jwc-special-" + stamp}
         print(("Sending to EVERYONE: " if to_all else "Sending to the owner only: ") + json.dumps(msg, ensure_ascii=False))
         res = send_all(subs, msg, vapid_private, vapid_subject, admin_key)
+        if to_all:
+            publish_alert("special", title, body, res["sent"])
         log_event(admin_key, {"source": "special", "id": log_id, "rule": "Special alert" + ("" if to_all else " (owner test)"),
                               "title": title, "body": body,
                               "status": ("sent" if to_all else "sent to owner only"), "sentCount": res["sent"], "deviceCount": res["of"]})
