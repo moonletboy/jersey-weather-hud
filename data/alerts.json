@@ -1,0 +1,12 @@
+{
+ "updated": "2026-10-22T21:27:00Z",
+ "alerts": [
+  {
+   "at": "2026-10-22T21:27:00Z",
+   "kind": "special",
+   "title": "Jersey Weather Chat: pressure falling very rapidly",
+   "body": "Pressure at Jersey Airport has fallen 6 hPa in 3 hours, a sign of a deepening storm nearby. Check gov.je for official Jersey Met warnings.",
+   "sent": ""
+  }
+ ]
+}
