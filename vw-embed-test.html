@@ -8,41 +8,64 @@
 body{ background:#05080d; color:#e9f6f5; font-family:'JetBrains Mono', ui-monospace, Menlo, monospace; font-size:13px; line-height:1.6; margin:0; padding:16px; }
 h1{ font-size:16px; letter-spacing:2px; color:#4cd3ff; margin:0 0 10px; }
 .box{ border:1px solid #1a2a36; border-radius:12px; background:#0b131c; padding:12px; margin:12px 0; }
+.controls{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.controls button{ font-family:inherit; font-size:11px; font-weight:800; letter-spacing:1.5px; color:#9fb8c2; background:transparent; border:1px solid #3a4e58; border-radius:7px; padding:8px 12px; cursor:pointer; }
+.controls button.on{ color:#05080d; background:#4cd3ff; border-color:#4cd3ff; }
 .frame-wrap{ position:relative; width:100%; height:70vh; min-height:420px; border-radius:10px; overflow:hidden; border:1px solid #3a4e58; background:#0e1822; }
-.frame-wrap iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+.frame-wrap iframe{ position:absolute; left:0; top:0; width:100%; height:100%; border:0; transform-origin:0 0; }
+.frame-wrap:fullscreen{ border-radius:0; border:0; height:100vh; }
 .credit{ font-size:11px; color:#5f7c88; margin-top:8px; }
 .credit a{ color:#4cd3ff; }
-.pass{ color:#2de1a0; font-weight:700; } .fail{ color:#ff4b5c; font-weight:700; } .note{ color:#5f7c88; font-size:12px; }
-#loadInfo{ font-size:12px; color:#ffb020; }
+.note{ color:#5f7c88; font-size:12px; }
+#setting{ font-size:12px; color:#ffb020; margin-top:6px; }
 </style>
 </head>
 <body>
-<h1>VERYWEATHER &middot; EMBED TEST</h1>
-<p class="note">Open this page at <b>jerseyweatherchat.com/vw-embed-test.html</b> (some sites only allow being shown on particular addresses, so testing from the real site matters).</p>
+<h1>VERYWEATHER &middot; SIZE TEST</h1>
+<p class="note">Try each size on your PC and on your phone, then tell me which you prefer (and whether full screen works on the phone).</p>
 
 <div class="box">
-<div class="frame-wrap">
+<div class="controls">
+<button type="button" data-size="standard" class="on">STANDARD</button>
+<button type="button" data-size="tall">TALLER</button>
+<button type="button" data-size="shrink">SHRINK TO FIT</button>
+<button type="button" id="fsBtn">&#x26F6; FULL SCREEN</button>
+</div>
+<div class="frame-wrap" id="wrap">
 <iframe id="vw" src="https://veryweather.co.uk/ukweathermap.html?mode=channelislands"
-        title="VeryWeather Channel Islands wind tracker" loading="eager" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        title="VeryWeather Channel Islands wind tracker" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </div>
 <div class="credit">Wind tracker by <a href="https://veryweather.co.uk/ukweathermap.html?mode=channelislands" target="_blank" rel="noopener">VeryWeather</a> &middot; shown with permission</div>
-<div id="loadInfo">Loading&hellip;</div>
-</div>
-
-<div class="box">
-<p><span class="pass">PASS</span> if you see the animated wind map <b>moving inside the box above</b>, and can zoom or click it as you would on VeryWeather&rsquo;s own page.</p>
-<p><span class="fail">FAIL</span> if the box shows a grey &ldquo;refused to connect&rdquo; / sad-face message, or stays blank. That means VeryWeather&rsquo;s site blocks being shown inside other sites, and he would need to allow jerseyweatherchat.com on his side.</p>
-<p class="note">Please also tell me: does it look right on your phone (size, readable labels)? And does the animation run smoothly?</p>
+<div id="setting"></div>
 </div>
 
 <script>
-/* The browser can't tell this page whether the other site refused to be shown (for privacy reasons),
-   so the PASS/FAIL above is by eye. This just records when the frame finished loading. */
+/* STANDARD = 70% of the screen height; TALLER = 90%; SHRINK TO FIT = taller box with the whole page shown
+   at 80% size, so the map gets more room and the hour band takes less. FULL SCREEN fills the screen
+   (where the phone doesn't allow that, it opens VeryWeather's own page instead). */
 (function(){
-const t0 = Date.now();
-document.getElementById('vw').addEventListener('load', function(){
-  document.getElementById('loadInfo').textContent = 'Frame finished loading after ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s - now check by eye (PASS / FAIL below).';
+const wrap = document.getElementById('wrap'), frame = document.getElementById('vw'), info = document.getElementById('setting');
+const SIZES = {
+  standard: { h:'70vh', scale:1,   label:'Standard: 70% of the screen height, full size' },
+  tall:     { h:'90vh', scale:1,   label:'Taller: 90% of the screen height, full size' },
+  shrink:   { h:'90vh', scale:0.8, label:'Shrink to fit: 90% of the screen height, page shown at 80%' }
+};
+function apply(name){
+  const s = SIZES[name];
+  wrap.style.height = s.h;
+  frame.style.transform = s.scale === 1 ? '' : 'scale(' + s.scale + ')';
+  frame.style.width = (100 / s.scale) + '%';
+  frame.style.height = (100 / s.scale) + '%';
+  document.querySelectorAll('.controls [data-size]').forEach(b => b.classList.toggle('on', b.dataset.size === name));
+  info.textContent = s.label;
+}
+document.querySelectorAll('.controls [data-size]').forEach(b => b.addEventListener('click', () => apply(b.dataset.size)));
+document.getElementById('fsBtn').addEventListener('click', function(){
+  if(wrap.requestFullscreen){ wrap.requestFullscreen().catch(() => window.open(frame.src, '_blank')); }
+  else if(wrap.webkitRequestFullscreen){ wrap.webkitRequestFullscreen(); }
+  else { window.open(frame.src, '_blank'); }      /* iPhone Safari: no full screen for page sections */
 });
+apply('standard');
 })();
 </script>
 </body>
