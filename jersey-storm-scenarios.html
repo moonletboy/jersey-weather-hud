@@ -1370,13 +1370,15 @@ const main = document.getElementById('scMain');
 if(!st){ main.innerHTML = '<div class="sc-loading">NOT ENOUGH MODEL RUNS FOR THIS DAY.</div>'; return; }
 const dp = detPeaks(st.day);
 const legend = ENS.filter(m => st.models[m.lbl]).map(m => '<span><i style="background:' + m.col + ';"></i>' + m.lbl + ' (' + st.models[m.lbl] + ')</span>').join('');
+const fanKey = '<div class="sc-legend"><span>ALL RUNS COMBINED &mdash; ' + ENS.filter(m => st.models[m.lbl]).map(m => m.lbl + ' (' + st.models[m.lbl] + ')').join(' &middot; ') + '</span></div>';
+const noEns = '<span>M\u00c9T\u00c9O-FRANCE (AROME + ARPEGE) ISN&rsquo;T SHOWN: IT HAS NO ENSEMBLE, SO IT APPEARS IN THE MAIN MODEL RUNS BELOW</span>';
 main.innerHTML = headline(st) +
 '<div class="sc-cards">' + st.sc.map(card).join('') + '</div>' +
 '<div class="sc-gauges">' +
 st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c', 'CHANCE OF ' + sc.lbl, 'GUSTS ' + sc.range + ' MPH &middot; ' + sc.n + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
 ladder(st) +
-'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + '</div></div>' +
-'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + '</div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + noEns + '</div></div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + fanKey + '</div>' +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
 (SC.admin ? '<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' : '') +
 (SC.admin ? 
