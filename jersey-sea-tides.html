@@ -845,7 +845,7 @@ Tide predictions: National Oceanography Centre, via gov.je. Times and heights on
 <div class="cfr-empty">LOADING HIGH TIDE OUTLOOK&hellip;</div>
 </div>
 <div class="cfr-note">
-An indicative guide only &mdash; not an official warning. For each of the next four high tides it combines the predicted high-water height with the small lift from low air pressure (roughly 1cm per hPa below normal), plus onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time. A big tide on its own is usually fine; the risk climbs when several of these line up. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call 999 in an emergency.
+An indicative guide only &mdash; not an official warning. For each of the next four high tides it looks at two things. <b>Flooding:</b> the predicted high-water height plus the small lift from low air pressure (roughly 1cm per hPa below normal), onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time &mdash; a big tide on its own is usually fine; the risk climbs when several of these line up. <b>Waves over sea walls:</b> in a storm, big waves out at sea (4m+) and strong onshore gusts (about 50mph+) within two hours of high water can throw waves, spray and stones over sea walls and onto coast roads and promenades even on an ordinary tide. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call 999 in an emergency.
 </div>
 </div>
 </section>
@@ -1463,8 +1463,33 @@ windMod: 17,        // knots
 windStrong: 25,     // knots
 waveMod: 1.5,       // metres
 waveHigh: 2.5,      // metres
-refPressure: 1013.25
+refPressure: 1013.25,
+// WAVES OVER SEA WALLS (overtopping): big waves + strong onshore wind around high tide. This is the main
+// storm risk on an ordinary tide, when the sea level itself is nowhere near flooding. Same thresholds as
+// Storm Watch's coastal rule, so the page and the suggestion emails agree.
+otTide: 8.5,        // m - high water at least this high (mid-range tides and up)
+otTideBig: 9.5,
+otWave: 4.0,        // m - waves out at sea off La Corbiere, within 2 h of high water
+otWaveBig: 5.5,
+otGust: 43,         // knots (about 50 mph) - gusts within 2 h of high water ...
+otGustBig: 56,      // knots (about 65 mph)
+otFrom: 140,        // ... blowing from SE round to NW, i.e. onto the south or west coasts
+otTo: 320
 };
+const OFF_LAT = 49.12, OFF_LON = -2.30;   // open sea off La Corbiere, where storm waves arrive from
+let offshoreWaves = null;
+async function loadOffshoreWaves(){
+try{
+const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${OFF_LAT}&longitude=${OFF_LON}&hourly=wave_height&timezone=Europe%2FLondon&forecast_days=7`;
+const j = await (await fetch(url)).json();
+if(j && j.hourly && j.hourly.time && (j.hourly.wave_height || []).some(v => v !== null)) offshoreWaves = j.hourly;
+}catch(e){ console.error('offshore wave fetch failed', e); }
+buildFloodRisk();
+}
+function coastOf(dir){
+if(dir === null || dir === undefined) return '';
+return dir < 235 ? 'south coast' : dir < 280 ? 'south & west coasts' : 'west coast';
+}
 let tideEvents = [];
 let floodWx = null;
 
@@ -1492,6 +1517,15 @@ return i < 0 ? null : i;
 function floodAgg(h, field, i, mode){
 if(!h || !h[field] || i === null) return null;
 const vals = [i-1, i, i+1].filter(k => k >= 0 && k < h[field].length).map(k => h[field][k]).filter(v => v !== null && v !== undefined && !isNaN(v));
+if(!vals.length) return null;
+return mode === 'min' ? Math.min(...vals) : Math.max(...vals);
+}
+
+// the same, but over a wider window (span hours either side of high water)
+function floodAggSpan(h, field, i, span, mode){
+if(!h || !h[field] || i === null) return null;
+const vals = [];
+for(let k = i - span; k <= i + span; k++) if(k >= 0 && k < h[field].length){ const v = h[field][k]; if(v !== null && v !== undefined && !isNaN(v)) vals.push(v); }
 if(!vals.length) return null;
 return mode === 'min' ? Math.min(...vals) : Math.max(...vals);
 }
@@ -1528,14 +1562,33 @@ rating = total >= 5 ? 'HIGH' : total >= 3 ? 'ELEVATED' : 'LOW';
 if(rating === 'HIGH' && tidePts < 2) rating = 'ELEVATED';
 }
 
+// --- waves over sea walls (overtopping), judged separately from the sea level itself ---
+const oi = floodIndex(offshoreWaves, key);
+const waveOff = floodAggSpan(offshoreWaves, 'wave_height', oi, 2, 'max');
+const otGust = floodAggSpan(floodWx, 'wind_gusts_10m', wi, 2, 'max');
+const otOnshore = windDir !== null && windDir !== undefined && windDir >= c.otFrom && windDir <= c.otTo;
+// open-sea waves if available; otherwise the nearer-shore figure with lower thresholds
+const otWave = waveOff !== null ? waveOff : waveH;
+const wLo = waveOff !== null ? c.otWave : c.waveHigh, wHi = waveOff !== null ? c.otWaveBig : c.waveHigh + 1;
+let otRating = 'LOW';
+if(ev.heightM >= c.otTide && otOnshore && otGust !== null && otGust >= c.otGust && otWave !== null && otWave >= wLo){
+const big = (level >= c.otTideBig ? 1 : 0) + (otWave >= wHi ? 1 : 0) + (otGust >= c.otGustBig ? 1 : 0);
+otRating = big >= 2 ? 'HIGH' : 'ELEVATED';
+}
+const coast = coastOf(windDir);
+const RANKS = { LOW:1, ELEVATED:2, HIGH:3 };
+if(RANKS[otRating] > RANKS[rating]) rating = otRating;
+
 const drivers = [];
+if(otRating !== 'LOW') drivers.push('big waves + strong onshore wind near high tide (waves over sea walls on the ' + coast + ')');
 if(tidePts >= 2) drivers.push('high spring tide');
 if(surge >= 0.15) drivers.push('low pressure');
-if(windPts > 0) drivers.push('onshore wind');
-if(wavePts > 0) drivers.push('heavy seas');
+if(windPts > 0 && otRating === 'LOW') drivers.push('onshore wind');
+if(wavePts > 0 && otRating === 'LOW') drivers.push('heavy seas');
 
 return {
 rating, tidePts, windPts, wavePts, surge, level, pressure, windKn, gustKn, windDir, onshore, waveH, drivers,
+otRating, waveOff, otGust, coast,
 partial: (pressure === null || windKn === null || waveH === null)
 };
 }
@@ -1577,8 +1630,12 @@ if(a.windKn !== null){
 windTxt = (a.windDir !== null && a.windDir !== undefined ? compass16(a.windDir) + ' ' : '') + Math.round(a.windKn) + 'kn' + (a.gustKn ? ' &middot; gusts ' + Math.round(a.gustKn) : '') + (a.onshore ? ' &middot; ONSHORE' : '');
 windCls = a.windPts >= 2 ? 'bad' : a.windPts === 1 ? 'warn' : '';
 }
-const waveTxt = a.waveH !== null ? a.waveH.toFixed(1) + 'm' : '&mdash;';
-const waveCls = a.wavePts >= 2 ? 'bad' : a.wavePts === 1 ? 'warn' : '';
+const waveTxt = a.waveOff !== null
+? a.waveOff.toFixed(1) + 'm at sea' + (a.waveH !== null ? ' &middot; ' + a.waveH.toFixed(1) + 'm inshore' : '')
+: (a.waveH !== null ? a.waveH.toFixed(1) + 'm' : '&mdash;');
+const waveCls = (a.otRating === 'HIGH' || a.wavePts >= 2) ? 'bad' : (a.otRating === 'ELEVATED' || a.wavePts === 1) ? 'warn' : '';
+const wallTxt = a.otRating === 'HIGH' ? 'LIKELY &middot; ' + a.coast.toUpperCase() : a.otRating === 'ELEVATED' ? 'POSSIBLE &middot; ' + a.coast.toUpperCase() : 'unlikely';
+const wallCls = a.otRating === 'HIGH' ? 'bad' : a.otRating === 'ELEVATED' ? 'warn' : '';
 const levelCls = a.tidePts >= 3 ? 'bad' : a.tidePts >= 1 ? 'warn' : '';
 const date = ev.dt.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}).toUpperCase();
 return `
@@ -1594,6 +1651,7 @@ return `
 <div class="cfr-row"><span class="k">PRESSURE</span><span class="v ${pressCls}">${pressTxt}</span></div>
 <div class="cfr-row"><span class="k">WIND</span><span class="v ${windCls}">${windTxt}</span></div>
 <div class="cfr-row"><span class="k">WAVES</span><span class="v ${waveCls}">${waveTxt}</span></div>
+<div class="cfr-row"><span class="k">WAVES OVER SEA WALLS</span><span class="v ${wallCls}">${wallTxt}</span></div>
 <div class="cfr-drivers">${a.drivers.length ? 'Driven by: ' + a.drivers.join(', ') + '.' : 'No significant drivers.'}</div>
 </div>`;
 }).join('');
@@ -1719,7 +1777,7 @@ document.getElementById('lastRefresh').textContent = new Intl.DateTimeFormat('en
 }
 async function refreshAll(){
 await loadTides();
-await Promise.all([loadMarine(), loadFloodWeather()]);
+await Promise.all([loadMarine(), loadFloodWeather(), loadOffshoreWaves()]);
 stampRefresh();
 }
 revealTiles();
