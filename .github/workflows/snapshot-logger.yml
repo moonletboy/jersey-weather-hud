@@ -1,0 +1,64 @@
+# Snapshot logger - records what the site was showing every 30 minutes
+#
+# Posts one snapshot to the "JWC Snapshots" Google Sheet (via its receiver script), so the forecasts can be
+# compared with what actually happened after Storm Austen.
+#
+# ON / OFF: GitHub > Settings > Secrets and variables > Actions > Variables tab:
+#   SNAPSHOT_LOGGING = live   -> the 30-minute schedule logs
+#   anything else, or deleted -> the schedule does nothing
+# Run it by hand (Actions > "Snapshot logger" > Run workflow) to log one snapshot at any time, whatever the
+# switch says - it is marked "manual" in the source column. Tick "Dry run" to see the row in the log without
+# writing it to the sheet.
+#
+# GitHub's timer can run several minutes late, or skip a run when GitHub is busy. Every row carries its own
+# real time, so gaps and late runs are visible rather than hidden.
+#
+# Secrets needed: SNAPSHOT_URL (the receiver's web app address) and SNAPSHOT_TOKEN.
+
+name: Snapshot logger
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (show the row in the log, don't write it)"
+        required: false
+        default: false
+        type: boolean
+      source:
+        description: "Leave as manual"
+        required: false
+        default: "manual"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snapshot-logger
+  cancel-in-progress: false
+
+jobs:
+  log:
+    # schedule: only when the switch is "live". By hand: always. From the Apps Script heartbeat: only when "live".
+    if: >-
+      (github.event_name == 'schedule' && vars.SNAPSHOT_LOGGING == 'live') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.source != 'heartbeat' || vars.SNAPSHOT_LOGGING == 'live'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Get the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Take the snapshot
+        env:
+          SNAPSHOT_URL: ${{ secrets.SNAPSHOT_URL }}
+          SNAPSHOT_TOKEN: ${{ secrets.SNAPSHOT_TOKEN }}
+          SOURCE: ${{ github.event_name == 'schedule' && 'schedule' || inputs.source || 'manual' }}
+        run: node scripts/snapshot-logger.mjs ${{ format('{0}', inputs.dry_run) == 'true' && '--dry-run' || '' }}
