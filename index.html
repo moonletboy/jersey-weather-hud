@@ -162,6 +162,10 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .alert-acts{ display:flex; gap:8px; margin-top:8px; }
 .alert-acts:empty{ display:none; }
 .alert-help{ display:inline-block; margin-top:9px; color:var(--cyan); font-size:11px; text-decoration:none; }
+/* "Need to talk?" line: calm, one short line under the alert bar */
+.talk-line{ margin:6px 0 0; padding:6px 10px; border:1px solid rgba(76,211,255,0.25); border-radius:8px; background:rgba(76,211,255,0.04); font-size:11px; line-height:1.5; color:var(--dim); }
+.talk-line a{ color:var(--cyan); text-decoration:none; }
+.talk-line b{ color:var(--text); font-weight:700; }
 .fb-about-link{ color:var(--cyan); text-decoration:none; border-bottom:1px dotted var(--cyan); white-space:nowrap; }
 .fb-about-link:hover{ color:var(--text); border-bottom-color:var(--text); }
 /* the About & disclaimer panel under the banner */
@@ -1244,6 +1248,7 @@ tbtn.addEventListener('click', testNote);
 init();
 })();
 </script>
+<div class="talk-line">&#128172; <b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">chat with others in the Jersey Weather Chat group</a> (open its <b>Chats</b> tab and join any chat). Samaritans: <b>116 123</b>, free, 24/7.</div>
 <div class="special-msg-panel" id="specialMsgPanel">
 <div class="special-msg-title">&#9888; SPECIAL WEATHER MESSAGE</div>
 <div class="special-msg-text" id="specialMsgText"></div>
@@ -1443,7 +1448,7 @@ init();
 <div class="warning-body">
 <div class="warning-title" id="warningTitle">NO WARNINGS IN FORCE</div>
 <div class="warning-text" id="warningText"></div>
-<div class="warning-disclaimer">Source: Jersey Met Office / Government of Jersey. Automated check, may lag behind the official page. <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">View official warnings page &rarr;</a></div>
+<div class="warning-disclaimer">Source: Jersey Met Office / Government of Jersey. Warning text &copy; States of Jersey, reproduced from gov.je. Automated check, may lag behind the official page. <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">View official warnings page &rarr;</a></div>
 </div>
 </div>
 </section>
