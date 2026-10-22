@@ -947,9 +947,9 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 <div class="bar"></div>
 <div class="tag">BEST &middot; MIDDLE &middot; WORST</div>
 </div>
-<p class="sc-intro">Every big weather model is run many times over with slightly different starting conditions, because nobody can measure today&rsquo;s weather perfectly. This page takes <b>every one of those runs</b> for Jersey from four models &mdash; the European (ECMWF), American (GFS), German (ICON) and UK Met Office &mdash; and splits them into three scenarios &mdash; <b>best case</b>, <b>middle</b> and <b>worst case</b> &mdash; each a range of gust speeds. A scenario&rsquo;s chance is simply the share of runs that fall in it, so the three always add up to 100%. Pick a day below.</p>
-<div class="sc-official"><b>&#9888; Computer model runs, not an official forecast.</b> This page shows what the weather models are calculating, before any forecaster has looked at it. <b>For warnings and advice, Jersey Met is the authority</b> &mdash; <a href="https://www.gov.je/weather" target="_blank" rel="noopener">gov.je/weather</a>. In an emergency call 999.</div>
-<div class="sc-howto"><b>HOW TO USE THIS PAGE</b><span>&#9312; Look at all three cards and their chances, not just the worst case.</span><span>&#9313; A storm four or five days away often changes &mdash; watch how the chances move over a few updates.</span><span>&#9314; If the dots drift right, into the red and purple zones, the storm is trending stronger; if they drift left, it is easing.</span></div>
+<p class="sc-intro">Each weather model is run dozens of times from slightly different starting points. This page takes <b>every run</b> for Jersey from ECMWF, GFS, ICON and the UK Met Office and sorts them into <b>best case</b>, <b>middle</b> and <b>worst case</b> gust ranges. A scenario&rsquo;s chance is the share of runs in it, so the three add up to 100%. Pick a day below.</p>
+<div class="sc-official"><b>&#9888; Model runs, not an official forecast.</b> For warnings and advice, <b>Jersey Met is the authority</b> &mdash; <a href="https://www.gov.je/weather" target="_blank" rel="noopener">gov.je/weather</a>. In an emergency call 999.</div>
+<div class="sc-howto"><b>HOW TO USE THIS PAGE</b><span>&#9312; Read all three cards and their chances, not just the worst case.</span><span>&#9313; Storms several days away change &mdash; watch how the chances move between updates.</span><span>&#9314; Dots drifting right (into red and purple) mean a strengthening trend; drifting left means easing.</span></div>
 <div class="sc-status" id="scStatus">LOADING THE MODEL RUNS&hellip;</div>
 <div class="sc-news" id="scNews"></div>
 <div class="sc-runs" id="scRuns"></div>
@@ -1065,7 +1065,7 @@ return { m:m, time:h.time, runs:runs, byDay:byDay };
 async function loadDet(){
 try{
 const j = await getJson('https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
-'&hourly=wind_gusts_10m&models=' + DET.map(d => d.id).join(',') + '&wind_speed_unit=mph&timezone=Europe%2FLondon&forecast_days=7');
+'&hourly=wind_gusts_10m,wind_direction_10m&models=' + DET.map(d => d.id).join(',') + '&wind_speed_unit=mph&timezone=Europe%2FLondon&forecast_days=7');
 return j.hourly;
 }catch(e){ console.warn('main models not loaded', e); return null; }
 }
@@ -1187,11 +1187,36 @@ if(!h) return [];
 const idx = [];
 h.time.forEach((t, i) => { if(t.slice(0, 10) === day) idx.push(i); });
 return DET.map(function(d){
-const s = h['wind_gusts_10m_' + d.id];
+const s = h['wind_gusts_10m_' + d.id], dd = h['wind_direction_10m_' + d.id];
 if(!s) return null;
-const v = idx.map(i => s[i]).filter(x => x != null);
-return v.length >= 18 ? { lbl:d.lbl, sub:d.sub || '', pk:Math.max.apply(null, v) } : null;
+let pk = -1, pi = -1;
+idx.forEach(function(i){ if(s[i] != null && s[i] > pk){ pk = s[i]; pi = i; } });
+const n = idx.filter(i => s[i] != null).length;
+return n >= 18 ? { lbl:d.lbl, sub:d.sub || '', pk:pk, dir:(dd && dd[pi] != null ? dd[pi] : null) } : null;
 }).filter(Boolean);
+}
+/* where the strongest gusts come from: the direction at each main model's peak hour, as one compass point
+   (the average of the models), plus the spread when they do not agree. Returns null when nothing is loaded. */
+const COMPASS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function compass16(deg){ return COMPASS16[((Math.round(deg / 22.5) % 16) + 16) % 16]; }
+function compassWord(deg){
+const w = { N:'north', NNE:'north-north-east', NE:'north-east', ENE:'east-north-east', E:'east', ESE:'east-south-east', SE:'south-east', SSE:'south-south-east', S:'south', SSW:'south-south-west', SW:'south-west', WSW:'west-south-west', W:'west', WNW:'west-north-west', NW:'north-west', NNW:'north-north-west' };
+return w[compass16(deg)];
+}
+function peakDir(dp){
+const ds = dp.map(d => d.dir).filter(d => d != null);
+if(!ds.length) return null;
+let sx = 0, sy = 0;
+ds.forEach(function(d){ sx += Math.cos(d * Math.PI / 180); sy += Math.sin(d * Math.PI / 180); });
+let m = Math.atan2(sy, sx) * 180 / Math.PI; if(m < 0) m += 360;
+const pts = {}; ds.forEach(d => { pts[compass16(d)] = 1; });
+const names = Object.keys(pts).sort((a, b) => COMPASS16.indexOf(a) - COMPASS16.indexOf(b));
+return { deg:m, pt:compass16(m), word:compassWord(m), agree:names.length === 1, pts:names };
+}
+function dirSentence(dp){
+const pd = peakDir(dp);
+if(!pd) return '';
+return ' Strongest gusts from the <b>' + pd.word + '</b>' + (pd.agree || pd.pts.length < 2 ? '' : ' (models range ' + pd.pts.join(' to ') + ')') + '.';
 }
 
 /* ---------- graphics ---------- */
@@ -1272,7 +1297,7 @@ function detChart(st, dp){
 if(!dp.length) return '<div class="cap">The main model runs are not available right now.</div>';
 const p10 = st.q10, p50 = st.q50, p90 = st.q90;
 const hi = Math.max(90, Math.ceil((Math.max(p90, Math.max.apply(null, dp.map(d => d.pk))) + 5) / 10) * 10), lo = 20;
-const W = SC.W, L = SC.W < 1000 ? 170 : 150, R = 60, rowH = SC.W < 1000 ? 38 : 30, T = 10, H = T + dp.length * rowH + 30;
+const W = SC.W, L = SC.W < 1000 ? 170 : 150, R = 96, rowH = SC.W < 1000 ? 38 : 30, T = 10, H = T + dp.length * rowH + 30;
 const x = v => L + (Math.max(lo, Math.min(hi, v)) - lo) * (W - L - R) / (hi - lo);
 let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Main model runs compared">';
 s += '<rect x="' + x(p10) + '" y="' + T + '" width="' + (x(p90) - x(p10)) + '" height="' + (dp.length * rowH) + '" fill="rgba(255,176,32,0.12)"/>';
@@ -1283,7 +1308,7 @@ const col = t ? t.hex : '#4cd3ff';
 s += '<text x="' + (L - 10) + '" y="' + (y + (d.sub ? 7 : 11)) + '" fill="#e9f6f5" font-size="' + fsz(11) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + d.lbl + '</text>';
 if(d.sub) s += '<text x="' + (L - 10) + '" y="' + (y + 7 + Math.round(10.5 * SC.F)) + '" fill="#5f7c88" font-size="' + fsz(8.5) + '" text-anchor="end" font-family="JetBrains Mono, monospace">' + d.sub + '</text>';
 s += '<rect x="' + x(lo) + '" y="' + y + '" width="' + (x(d.pk) - x(lo)) + '" height="14" rx="4" fill="' + col + '" fill-opacity="0.85"/>';
-s += '<text x="' + (x(d.pk) + 6) + '" y="' + (y + 11) + '" fill="' + col + '" font-size="' + fsz(11) + '" font-weight="700" font-family="JetBrains Mono, monospace">' + Math.round(d.pk) + '</text>';
+s += '<text x="' + (x(d.pk) + 6) + '" y="' + (y + 11) + '" fill="' + col + '" font-size="' + fsz(11) + '" font-weight="700" font-family="JetBrains Mono, monospace">' + Math.round(d.pk) + (d.dir != null ? ' <tspan fill="#5f7c88" font-weight="400">' + compass16(d.dir) + '</tspan>' : '') + '</text>';
 });
 for(let v = lo; v <= hi; v += 10) s += '<text x="' + x(v) + '" y="' + (H - 8) + '" fill="#5f7c88" font-size="' + fsz(10) + '" text-anchor="middle" font-family="JetBrains Mono, monospace">' + v + '</text>';
 return s + '</svg>';
@@ -1305,9 +1330,10 @@ box.querySelectorAll('button[data-day]').forEach(b => b.addEventListener('click'
 function headline(st){
 const L = st.sc[1], W = st.sc[2], B = st.sc[0];
 const hp = headText(st), h = hp.h, col = hp.col;
+const dirTxt = dirSentence(detPeaks(st.day));
 return '<div class="sc-headline" style="border-color:' + col + ';"><div class="when">' + nc(DAYF.format(dayDate(st.day))).toUpperCase() + ' &middot; ' + st.n + ' MODEL RUNS</div>' +
 '<h2 style="color:' + col + ';">' + h + '</h2><p>' + (L.top ? 'Most common' : 'In between') + ' (<b>' + L.p + '% chance</b>): gusts of <b>' + L.range + ' mph</b>, typically about ' + Math.round(L.v) + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
-'. Best case (' + B.p + '%): ' + B.range.toLowerCase() + ' mph. Worst case (' + W.p + '%): ' + W.range + ' mph, typically about ' + Math.round(W.v) + ', higher on exposed coasts.' + (B.top && B.p < 50 ? ' <b>The star marks the biggest single range, not a majority:</b> the other two ranges together make ' + (100 - B.p) + '% of runs.' : '') + (st.levelCut ? '' : ' <b>The runs agree closely today, so the three ranges are narrow.</b>') + '</p></div>';
+'. Best case (' + B.p + '%): ' + B.range.toLowerCase() + ' mph. Worst case (' + W.p + '%): ' + W.range + ' mph, typically about ' + Math.round(W.v) + ', higher on exposed coasts.' + dirTxt + (B.top && B.p < 50 ? ' <b>The star marks the biggest single range, not a majority:</b> the other two ranges together make ' + (100 - B.p) + '% of runs.' : '') + (st.levelCut ? '' : ' <b>The runs agree closely today, so the three ranges are narrow.</b>') + '</p></div>';
 }
 /* the big headline sentence and its colour (used on the page and in the Facebook picture) */
 function headText(st){
@@ -1379,7 +1405,7 @@ st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' 
 ladder(st) +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + noEns + '</div></div>' +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible.</p>' + fanChart(st) + fanKey + '</div>' +
-'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story.</p>' + detChart(st, dp) + '</div>' +
+'<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="det">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THE MAIN MODEL RUNS</h4><p class="cap">The single main run of each model (the one most apps show), against the spread of all runs: the shaded band holds 8 in 10 of all runs and the dashed line is the middle run. A main run sitting near the edge of the band is an outlier, not the whole story. The letters after each peak are where that model has the wind blowing <i>from</i> at its strongest hour.</p>' + detChart(st, dp) + '</div>' +
 (SC.admin ? '<div class="sc-postbar"><button type="button" class="sc-bigbtn" id="scMake">&#128227; MAKE FACEBOOK POST</button></div>' : '') +
 (SC.admin ? 
 '<div class="sc-post" id="scPost"><div class="inputs"><label>STORM NAME (OPTIONAL) <input id="scName" placeholder="e.g. Austen" size="14"></label><label>UPDATE NO. <input id="scNum" type="number" min="1" placeholder="1" style="width:64px;"></label><span>Changing these rebuilds the text below. You can also edit the text itself before copying.</span></div>' +
@@ -1665,6 +1691,7 @@ return t;
 };
 return '\ud83c\udf00 ' + title + ' (model data, ' + nc(FETCHF.format(SC.fetched)) + ')\n\n' +
 st.sc.map(line).join('\n\n') + '\n\n' +
+(function(){ const pd = peakDir(detPeaks(st.day)); return pd ? '\ud83e\udded Strongest gusts from the ' + pd.word + (pd.agree || pd.pts.length < 2 ? '' : ' (models range ' + pd.pts.join(' to ') + ')') + '.\n\n' : ''; })() +
 '\ud83d\udcca Chances are the share of ' + st.n + ' computer runs from 4 weather models. Overall, ' + st.c60 + '% give Jersey 60+ mph gusts' + [70, 80, 90, 100].filter(t => st.ch[t] >= 5).map(t => '; ' + st.ch[t] + '% give ' + t + '+').join('') + '.\n\n' +
 'Gust figures are for a point near the middle of the island, so exposed coasts can be stronger. We\u2019ll post the next update after the next model runs. For official warnings, check gov.je/weather.\n\nFull charts and how this works: https://jerseyweatherchat.com/jersey-storm-scenarios.html';
 }
