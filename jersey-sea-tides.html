@@ -845,7 +845,7 @@ Tide predictions: National Oceanography Centre, via gov.je. Times and heights on
 <div class="cfr-empty">LOADING HIGH TIDE OUTLOOK&hellip;</div>
 </div>
 <div class="cfr-note">
-An indicative guide only &mdash; not an official warning. For each of the next four high tides it looks at two things. <b>Flooding:</b> the predicted high-water height plus the small lift from low air pressure (roughly 1cm per hPa below normal), onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time &mdash; a big tide on its own is usually fine; the risk climbs when several of these line up. <b>Waves over sea walls:</b> in a storm, big waves out at sea (4m+) and strong onshore gusts (about 50mph+) within two hours of high water can throw waves, spray and stones over sea walls and onto coast roads and promenades even on an ordinary tide. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call 999 in an emergency.
+An indicative guide only &mdash; not an official warning. For each of the next four high tides it looks at two things. <b>Flooding:</b> the predicted high-water height plus the small lift from low air pressure (roughly 1cm per hPa below normal), onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time &mdash; a big tide on its own is usually fine; the risk climbs when several of these line up. <b>Waves over sea walls:</b> in a storm, big waves and strong onshore gusts within two hours of high water can throw waves, spray and stones over sea walls and onto coast roads and promenades even on an ordinary tide. Tide height, wave height (out at sea and inshore) and gust strength are each scored, so very strong wind can make up for slightly smaller waves; the wind must be blowing onto the coast. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call 999 in an emergency.
 </div>
 </div>
 </section>
@@ -1465,15 +1465,20 @@ waveMod: 1.5,       // metres
 waveHigh: 2.5,      // metres
 refPressure: 1013.25,
 // WAVES OVER SEA WALLS (overtopping): big waves + strong onshore wind around high tide. This is the main
-// storm risk on an ordinary tide, when the sea level itself is nowhere near flooding. Same thresholds as
+// storm risk on an ordinary tide, when the sea level itself is nowhere near flooding. Each factor is SCORED
+// (so very strong wind can make up for slightly smaller waves) and the scores are added up. Same scoring as
 // Storm Watch's coastal rule, so the page and the suggestion emails agree.
-otTide: 8.5,        // m - high water at least this high (mid-range tides and up)
-otTideBig: 9.5,
-otWave: 4.0,        // m - waves out at sea off La Corbiere, within 2 h of high water
-otWaveBig: 5.5,
-otGust: 43,         // knots (about 50 mph) - gusts within 2 h of high water ...
-otGustBig: 56,      // knots (about 65 mph)
-otFrom: 140,        // ... blowing from SE round to NW, i.e. onto the south or west coasts
+otTide: 8.5,        // m (incl. low-pressure lift) - 1 point; a lower tide never counts
+otTideBig: 9.5,     //   2 points
+otWaveMin: 3.0,     // m - waves out at sea off La Corbiere within 2 h of high water: 1 point
+otWave: 4.0,        //   2 points
+otWaveBig: 5.5,     //   3 points  (inshore waves score too: 1.5 m = 1, 2.5 m = 2, 3.5 m = 3; the higher score counts)
+otGustMin: 35,      // knots (about 40 mph) - gusts within 2 h of high water: 1 point
+otGust: 43,         //   about 50 mph: 2 points
+otGustBig: 56,      //   about 65 mph: 3 points
+otElevated: 5,      // total points for POSSIBLE / ELEVATED
+otHigh: 7,          // total points for LIKELY / HIGH
+otFrom: 140,        // wind must blow from SE round to NW, i.e. onto the south or west coasts
 otTo: 320
 };
 const OFF_LAT = 49.12, OFF_LON = -2.30;   // open sea off La Corbiere, where storm waves arrive from
@@ -1567,13 +1572,15 @@ const oi = floodIndex(offshoreWaves, key);
 const waveOff = floodAggSpan(offshoreWaves, 'wave_height', oi, 2, 'max');
 const otGust = floodAggSpan(floodWx, 'wind_gusts_10m', wi, 2, 'max');
 const otOnshore = windDir !== null && windDir !== undefined && windDir >= c.otFrom && windDir <= c.otTo;
-// open-sea waves if available; otherwise the nearer-shore figure with lower thresholds
-const otWave = waveOff !== null ? waveOff : waveH;
-const wLo = waveOff !== null ? c.otWave : c.waveHigh, wHi = waveOff !== null ? c.otWaveBig : c.waveHigh + 1;
+const otTideP = level >= c.otTideBig ? 2 : level >= c.otTide ? 1 : 0;
+const offP = waveOff === null ? 0 : waveOff >= c.otWaveBig ? 3 : waveOff >= c.otWave ? 2 : waveOff >= c.otWaveMin ? 1 : 0;
+const inP = waveH === null ? 0 : waveH >= c.waveHigh + 1 ? 3 : waveH >= c.waveHigh ? 2 : waveH >= c.waveMod ? 1 : 0;
+const otWaveP = Math.max(offP, inP);
+const otGustP = otGust === null ? 0 : otGust >= c.otGustBig ? 3 : otGust >= c.otGust ? 2 : otGust >= c.otGustMin ? 1 : 0;
+const otScore = otTideP + otWaveP + otGustP;
 let otRating = 'LOW';
-if(ev.heightM >= c.otTide && otOnshore && otGust !== null && otGust >= c.otGust && otWave !== null && otWave >= wLo){
-const big = (level >= c.otTideBig ? 1 : 0) + (otWave >= wHi ? 1 : 0) + (otGust >= c.otGustBig ? 1 : 0);
-otRating = big >= 2 ? 'HIGH' : 'ELEVATED';
+if(otOnshore && otTideP > 0 && otWaveP > 0 && otGustP > 0){
+otRating = otScore >= c.otHigh ? 'HIGH' : otScore >= c.otElevated ? 'ELEVATED' : 'LOW';
 }
 const coast = coastOf(windDir);
 const RANKS = { LOW:1, ELEVATED:2, HIGH:3 };
@@ -1588,7 +1595,7 @@ if(wavePts > 0 && otRating === 'LOW') drivers.push('heavy seas');
 
 return {
 rating, tidePts, windPts, wavePts, surge, level, pressure, windKn, gustKn, windDir, onshore, waveH, drivers,
-otRating, waveOff, otGust, coast,
+otRating, otScore, waveOff, otGust, coast,
 partial: (pressure === null || windKn === null || waveH === null)
 };
 }
