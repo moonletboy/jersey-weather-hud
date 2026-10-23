@@ -329,6 +329,9 @@ border:1px solid var(--line); border-radius:12px; padding:14px 16px 10px; displa
 .nt .stat-block-trend{ margin-top:8px; }
 .nt-spark{ width:100%; height:30px; margin-top:auto; padding-top:10px; }
 .nt-spark-lg{ height:40px; }
+.nt-spark-wind{ height:58px; }
+.nt-spark circle.peak{ display:block; }
+.nt-spark .peak-txt{ font-family:'JetBrains Mono',monospace; font-size:5px; fill:var(--red); letter-spacing:.3px; }
 .nt-spark polyline{ vector-effect:non-scaling-stroke; }
 .nt-spark circle{ display:none; }
 .nt-foot{ font-size:8px; letter-spacing:1.5px; color:var(--dim2); margin-top:3px; }
@@ -1365,8 +1368,8 @@ init();
 <div class="bf-bars" id="bfBars"></div>
 <div class="stat-block-trend" id="windBlockBeaufort">&mdash;</div>
 <div class="stat-block-sub" id="windBlockEffect">&mdash;</div>
-<svg class="mini-spark nt-spark" id="windSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
-<div class="nt-foot">LAST 12 HOURS &middot; <span style="color:var(--cyan);">SPEED</span> &middot; <span style="color:var(--red);">GUST</span></div>
+<svg class="mini-spark nt-spark nt-spark-wind" id="windSpark" viewBox="0 0 100 28" preserveAspectRatio="none"></svg>
+<div class="nt-foot">LAST 12 HOURS &middot; <span style="color:var(--cyan);">SPEED</span> &middot; <span style="color:var(--red);">GUST</span><span id="windPeakFoot"></span></div>
 </div>
 <div class="nt">
 <div class="nt-lbl">PRESSURE</div>
@@ -1990,6 +1993,69 @@ svg.innerHTML =
 '<circle cx="'+lastB[0]+'" cy="'+lastB[1]+'" r="2" fill="'+colorB+'"/>'+
 '<polyline points="'+ptsA.join(' ')+'" fill="none" stroke="'+colorA+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'+
 '<circle cx="'+lastA[0]+'" cy="'+lastA[1]+'" r="2.2" fill="'+colorA+'"/>';
+}
+/* Wind sparkline: flag the strongest model gust of the last 12 hours with a dot and
+   value on the chart, and repeat it (with the hour) in the footer. The chart is
+   auto-scaled to its own min/max, so a storm that stays strong all night can
+   look flat — the peak label makes the real range obvious at a glance. */
+function markWindPeak(gusts, times, speeds, sourceLabel){
+const svg = document.getElementById('windSpark');
+const foot = document.getElementById('windPeakFoot');
+if(!svg || !gusts || gusts.length < 2) return;
+let peakI = -1, peak = -Infinity;
+gusts.forEach((g,i) => { if(g !== null && g !== undefined && !isNaN(g) && g > peak){ peak = g; peakI = i; } });
+if(peakI < 0) return;
+const all = [...gusts, ...speeds].filter(v => v !== null && v !== undefined && !isNaN(v));
+const min = Math.min(...all), max = Math.max(...all), range = (max-min) || 1;
+const w=100, h=28, pad=3;
+const cx = pad + peakI * ((w-2*pad)/(gusts.length-1));
+const cy = h-pad-((peak-min)/range)*(h-2*pad);
+const label = 'G' + Math.round(peak);
+const tx = Math.min(w - pad - label.length*3.2, Math.max(pad, cx - label.length*1.6));
+svg.innerHTML += '<circle class="peak" cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="2.4" fill="'+RED+'" stroke="#05080d" stroke-width="0.8"/>'
+  + '<text class="peak-txt" x="'+tx.toFixed(1)+'" y="'+Math.max(6, cy-3.5).toFixed(1)+'">'+label+'</text>';
+if(foot && times && times[peakI]){
+const t = String(times[peakI]);
+const hh = t.length === 5 ? t : t.slice(11,16);
+foot.innerHTML = ' &middot; <span style="color:var(--red);">PEAK ' + label + ' MPH</span> @ ' + hh + (sourceLabel ? ' &middot; ' + sourceLabel : '');
+}
+}
+/* ---------- which data draws the 12-hour wind line ----------
+   Real Jersey Airport (EGJJ) anemometer readings when the Apps Script has them and
+   they're fresh; otherwise the Open-Meteo model series. The model is a smoothed
+   guess for a grid square and never shows squall-line peaks, so observations win. */
+let modelWindSpark = null;
+let metarHistory = null;
+const KT_TO_MPH = 1.15078;
+function metarWindSeries(){
+if(!metarHistory || metarHistory.status !== 'ok' || !Array.isArray(metarHistory.obs)) return null;
+const nowS = Date.now()/1000;
+const obs = metarHistory.obs.filter(o => o.obsTime && (nowS - o.obsTime) <= 12.5*3600 && o.windSpeedKt !== null && !isNaN(o.windSpeedKt));
+if(obs.length < 6) return null;                                   // too thin to be a 12-hour picture
+if((nowS - obs[obs.length-1].obsTime)/60 > 90) return null;      // latest ob is stale - fall back to the model
+const fmt = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false });
+return {
+  speeds: obs.map(o => Math.round(o.windSpeedKt * KT_TO_MPH)),
+  gusts: obs.map(o => Math.round(Math.max(o.windSpeedKt, (o.windGustKt !== null && !isNaN(o.windGustKt)) ? o.windGustKt : 0) * KT_TO_MPH)),
+  times: obs.map(o => fmt.format(new Date(o.obsTime*1000)))
+};
+}
+function renderWindSpark(){
+const obsSeries = metarWindSeries();
+const series = obsSeries || modelWindSpark;
+if(!series) return;
+renderSparkDual('windSpark', series.speeds, CYAN, series.gusts, RED);
+markWindPeak(series.gusts, series.times, series.speeds, obsSeries ? '<span style="color:var(--green);">EGJJ OBS</span>' : 'MODEL');
+}
+async function loadMetarHistory(){
+try{
+const url = WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=metar_history&hours=13';
+const res = await fetch(url, { cache:'no-store' });
+const data = await res.json();
+if(data.status === 'ok'){ metarHistory = data; renderWindSpark(); }
+}catch(e){
+console.error('metar history fetch failed', e);
+}
 }
 function animateNum(el, target, decimals=0, suffix=''){
 let start=0; const dur=900; const t0=performance.now();
@@ -2993,7 +3059,12 @@ windEl.style.setProperty('--gust-c', windColor(windGust));
 document.getElementById('windDirArrow').style.transform = 'rotate(' + (cur.wind_direction_10m+180) + 'deg)';
 document.getElementById('wind-center').innerHTML = Math.round(windSpeed) + '<small id="wind-gust-label">G' + Math.round(windGust) + '</small>';
 document.getElementById('s-wind').textContent = 'MPH SUSTAINED / GUST';
-renderSparkDual('windSpark', data.hourly.wind_speed_10m.slice(histStart, nowIdxTrend+1), CYAN, data.hourly.wind_gusts_10m.slice(histStart, nowIdxTrend+1), RED);
+modelWindSpark = {
+  speeds: data.hourly.wind_speed_10m.slice(histStart, nowIdxTrend+1),
+  gusts: data.hourly.wind_gusts_10m.slice(histStart, nowIdxTrend+1),
+  times: data.hourly.time.slice(histStart, nowIdxTrend+1)
+};
+renderWindSpark();
 return cur;
 }
 function wxRenderStorm(data, cur){
@@ -5381,6 +5452,7 @@ loadAirQuality();
 loadRainfall();
 loadRadarReadText();
 loadWarnings();
+loadMetarHistory();
 await loadMetar();
 loadForecast();
 stampRefresh();
