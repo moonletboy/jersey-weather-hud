@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "b901f2e428a2",
+ "hash": "6caa7b6e3777",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -25,15 +25,15 @@
    "sea": false,
    "issued": "10:22 p.m. Thursday 22 October",
    "message": "",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-23T12:00:00.0279122Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 11:58 UTC Friday 23 October W to NW severe gale F9 with gusts to 60kt continuing. Yellow - Thunder",
- "checkedAt": "2026-10-23T12:00:00.0279122Z",
+ "lastFetch": "2026-10-23T12:06:19.6585756Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 11:58 UTC Friday 23 October W to NW severe gale F9 with gusts to 60kt continuing.",
+ "checkedAt": "2026-10-23T12:06:19.6585756Z",
  "lastAlertAt": "2026-10-22T20:20:34Z",
  "lastAlertKind": "new"
 }
