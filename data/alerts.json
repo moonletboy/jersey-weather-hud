@@ -1,6 +1,13 @@
 {
- "updated": "2026-10-22T21:27:00Z",
+ "updated": "2026-10-23T01:14:47Z",
  "alerts": [
+  {
+   "at": "2026-10-23T01:14:47Z",
+   "kind": "special",
+   "title": "Jersey Weather Chat: damaging gusts expected soon",
+   "body": "3 of 5 weather models show gusts of 71-82 mph in Jersey within the next 3 hours. Take care outdoors. Check gov.je for official Jersey Met warnings.",
+   "sent": 939
+  },
   {
    "at": "2026-10-22T21:27:00Z",
    "kind": "special",
