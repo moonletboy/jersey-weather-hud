@@ -22,217 +22,223 @@
   }
  },
  "pws": {
-  "at": "2026-10-23T16:24:38Z",
+  "at": "2026-10-23T17:24:38Z",
   "readings": [
    {
     "id": "ITRINITY2",
     "name": "Trinity",
-    "gust": 25,
-    "t": "2026-10-23T16:15:32Z"
+    "gust": 27,
+    "t": "2026-10-23T17:15:32Z"
    },
    {
     "id": "ISAINT6315",
     "name": "Saint Ouen",
-    "gust": 16,
-    "t": "2026-10-23T16:23:56Z"
+    "gust": 22,
+    "t": "2026-10-23T17:23:56Z"
    },
    {
     "id": "ITRINI32",
     "name": "Trinity",
-    "gust": 13,
-    "t": "2026-10-23T16:24:30Z"
+    "gust": 6,
+    "t": "2026-10-23T17:24:42Z"
    },
    {
     "id": "IJERSEY24",
     "name": "Jersey",
-    "gust": 2,
-    "t": "2026-10-23T16:24:23Z"
+    "gust": 3,
+    "t": "2026-10-23T17:24:40Z"
    },
    {
     "id": "ISAINT7711",
     "name": "Saint Saviour",
-    "gust": 30,
-    "t": "2026-10-23T16:24:34Z"
+    "gust": 15,
+    "t": "2026-10-23T17:24:38Z"
    },
    {
     "id": "ISAINT5503",
     "name": "Saint Helier",
-    "gust": 23,
-    "t": "2026-10-23T16:24:28Z"
+    "gust": 18,
+    "t": "2026-10-23T17:24:44Z"
+   },
+   {
+    "id": "ISTPET54",
+    "name": "St Peter's",
+    "gust": 19,
+    "t": "2026-10-23T17:15:00Z"
    },
    {
     "id": "ISAINT7013",
     "name": "Saint Martin",
-    "gust": 16,
-    "t": "2026-10-23T16:24:34Z"
+    "gust": 8,
+    "t": "2026-10-23T17:24:32Z"
    },
    {
     "id": "ISAINTLA156",
     "name": "Saint Lawrence",
-    "gust": 26,
-    "t": "2026-10-23T16:24:24Z"
+    "gust": 29,
+    "t": "2026-10-23T17:24:45Z"
    },
    {
     "id": "ISAINT9517",
     "name": "Saint Martin",
-    "gust": 7,
-    "t": "2026-10-23T16:24:31Z"
+    "gust": 6,
+    "t": "2026-10-23T17:24:31Z"
    },
    {
     "id": "ISAINT10791",
     "name": "Saint Martin",
-    "gust": 18,
-    "t": "2026-10-23T16:23:00Z"
+    "gust": 9,
+    "t": "2026-10-23T17:23:00Z"
    },
    {
     "id": "ISTPET53",
     "name": "St Peters",
     "gust": 0,
-    "t": "2026-10-23T16:24:26Z"
+    "t": "2026-10-23T17:24:39Z"
    },
    {
     "id": "ISAINT10594",
     "name": "Saint Saviour",
-    "gust": 10,
-    "t": "2026-10-23T16:15:00Z"
+    "gust": 4,
+    "t": "2026-10-23T17:15:00Z"
    },
    {
     "id": "IJERSE26",
     "name": "Jersey",
-    "gust": 9,
-    "t": "2026-10-23T16:24:31Z"
+    "gust": 7,
+    "t": "2026-10-23T17:24:47Z"
    },
    {
     "id": "ISAINT9683",
     "name": "Saint Brelade",
-    "gust": 9,
-    "t": "2026-10-23T16:24:37Z"
+    "gust": 8,
+    "t": "2026-10-23T17:24:37Z"
    },
    {
     "id": "ISAINT8998",
     "name": "Saint Brelade",
-    "gust": 7,
-    "t": "2026-10-23T16:24:14Z"
+    "gust": 17,
+    "t": "2026-10-23T17:24:13Z"
    },
    {
     "id": "ISAINT11214",
     "name": "Saint Saviour",
-    "gust": 11,
-    "t": "2026-10-23T16:24:24Z"
+    "gust": 15,
+    "t": "2026-10-23T17:24:24Z"
    },
    {
     "id": "ISAINT8993",
     "name": "Saint Brelade",
-    "gust": 16,
-    "t": "2026-10-23T16:20:00Z"
+    "gust": 12,
+    "t": "2026-10-23T17:20:00Z"
    },
    {
     "id": "ISAINT9928",
     "name": "Saint Helier",
-    "gust": 14,
-    "t": "2026-10-23T16:24:37Z"
+    "gust": 13,
+    "t": "2026-10-23T17:24:36Z"
    },
    {
     "id": "ISAINT11417",
     "name": "Saint Lawrence",
-    "gust": 18,
-    "t": "2026-10-23T16:23:00Z"
+    "gust": 17,
+    "t": "2026-10-23T17:23:00Z"
    },
    {
     "id": "IGROUVIL2",
     "name": "Gorey",
-    "gust": 20,
-    "t": "2026-10-23T16:15:00Z"
+    "gust": 16,
+    "t": "2026-10-23T17:15:00Z"
    },
    {
     "id": "ICHANNEL3",
     "name": "Jersey",
-    "gust": 13,
-    "t": "2026-10-23T16:20:04Z"
+    "gust": 10,
+    "t": "2026-10-23T17:20:08Z"
    },
    {
     "id": "ISAINT1019",
     "name": "Saint Helier",
-    "gust": 18,
-    "t": "2026-10-23T16:24:37Z"
+    "gust": 9,
+    "t": "2026-10-23T17:24:37Z"
    },
    {
     "id": "ISAINT9664",
     "name": "Saint Helier",
-    "gust": 32,
-    "t": "2026-10-23T16:24:25Z"
+    "gust": 19,
+    "t": "2026-10-23T17:24:49Z"
    },
    {
     "id": "IMAISO24",
     "name": "Maison St.Louis",
-    "gust": 15,
-    "t": "2026-10-23T16:24:30Z"
+    "gust": 6,
+    "t": "2026-10-23T17:24:42Z"
    },
    {
     "id": "IGROUV4",
     "name": "Grouville",
-    "gust": 29,
-    "t": "2026-10-23T16:20:14Z"
+    "gust": 18,
+    "t": "2026-10-23T17:20:14Z"
    },
    {
     "id": "ISAINT5592",
     "name": "Saint Brelade",
-    "gust": 38,
-    "t": "2026-10-23T16:24:12Z"
+    "gust": 45,
+    "t": "2026-10-23T17:24:39Z"
    },
    {
     "id": "IJERSE35",
     "name": "Jersey",
-    "gust": 25,
-    "t": "2026-10-23T16:24:31Z"
+    "gust": 31,
+    "t": "2026-10-23T17:24:48Z"
    },
    {
     "id": "ISAINT4222",
     "name": "Saint Helier",
-    "gust": 27,
-    "t": "2026-10-23T16:24:29Z"
+    "gust": 10,
+    "t": "2026-10-23T17:24:43Z"
    },
    {
     "id": "ISAINT7913",
     "name": "Saint Saviour",
-    "gust": 16,
-    "t": "2026-10-23T16:24:30Z"
+    "gust": 6,
+    "t": "2026-10-23T17:24:27Z"
    },
    {
     "id": "ISAINT10533",
     "name": "Saint Helier",
-    "gust": 44,
-    "t": "2026-10-23T16:24:29Z"
+    "gust": 21,
+    "t": "2026-10-23T17:24:48Z"
    },
    {
     "id": "ISAINT11726",
     "name": "Saint Helier",
-    "gust": 15,
-    "t": "2026-10-23T16:24:28Z"
+    "gust": 2,
+    "t": "2026-10-23T17:24:40Z"
    },
    {
     "id": "ISAINT7380",
     "name": "Saint Clement",
-    "gust": 18,
-    "t": "2026-10-23T16:23:57Z"
+    "gust": 10,
+    "t": "2026-10-23T17:23:57Z"
    },
    {
     "id": "ISAINT5415",
     "name": "Saint Brelade",
-    "gust": 8,
-    "t": "2026-10-23T16:24:28Z"
+    "gust": 19,
+    "t": "2026-10-23T17:24:40Z"
    },
    {
     "id": "ISAINT6802",
     "name": "Saint Clement",
-    "gust": 11,
-    "t": "2026-10-23T16:15:00Z"
+    "gust": 9,
+    "t": "2026-10-23T17:20:00Z"
    },
    {
     "id": "IGROUV2",
     "name": "Grouville",
-    "gust": 11,
-    "t": "2026-10-23T16:24:25Z"
+    "gust": 9,
+    "t": "2026-10-23T17:24:42Z"
    }
   ]
  }
