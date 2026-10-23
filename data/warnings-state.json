@@ -18,9 +18,11 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-23T15:00:00.0390711Z",
+ "lastFetch": "2026-10-23T20:30:00.0567961Z",
  "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 14:52 UTC Friday 23 October W to NW gale F8 with gusts to 50kt backing SW 7 with gusts to 45kt lat",
- "checkedAt": "2026-10-23T15:00:00.0390711Z",
+ "checkedAt": "2026-10-23T20:30:00.0567961Z",
  "lastAlertAt": "2026-10-22T20:20:34Z",
- "lastAlertKind": "new"
+ "lastAlertKind": "new",
+ "lastChangeAt": "",
+ "lastChange": ""
 }
