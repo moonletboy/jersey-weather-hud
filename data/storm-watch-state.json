@@ -3,6 +3,10 @@
   "pressure-fall": {
    "at": "2026-10-22T20:54:39Z",
    "value": 6
+  },
+  "forecast-gust": {
+   "at": "2026-10-23T01:04:39Z",
+   "value": 82
   }
  },
  "pws": {
