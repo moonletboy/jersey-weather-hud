@@ -7,6 +7,10 @@
   "forecast-gust": {
    "at": "2026-10-23T01:04:39Z",
    "value": 82
+  },
+  "coastal-overtopping": {
+   "at": "2026-10-23T01:14:39Z",
+   "value": 7
   }
  },
  "pws": {
