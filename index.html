@@ -4083,6 +4083,12 @@ const g = t => (parts.find(x => x.type === t) || {}).value || '';
 return (g('weekday') + ' ' + g('hour') + ':' + g('minute')).toUpperCase();
 }
 function stTimeD(d){ return ST_WDD.format(d).replace(/,/g, '').toUpperCase(); }
+/* the forecast step closest to the real current time (runs start ~6 h before they are published, so hour 0 is already old) */
+function stNowHour(){
+if(!ST.data) return 0;
+const el = (Date.now() - new Date(ST.data.cycle).getTime()) / 3600000;
+return Math.max(0, Math.min(240, Math.round(el / 6) * 6));
+}
 function stHourDate(h){ return new Date(new Date(ST.data.cycle).getTime() + h * 3600000); }
 function stKm(a, b){
 const R = 6371, rad = Math.PI / 180;
@@ -4445,7 +4451,7 @@ if(!ST.live.hasLayer(m.dot)){ ST.live.addLayer(m.dot); ST.live.addLayer(m.lbl); 
 });
 Object.keys(ST.liveM).forEach(function(id){ if(!seen[id]){ ST.live.removeLayer(ST.liveM[id].dot); ST.live.removeLayer(ST.liveM[id].lbl); } });
 const when = stHourDate(h);
-document.getElementById('stValid').innerHTML = stTime(when) + '<small>' + (h === 0 ? 'NOW &mdash; START OF THE FORECAST' : '+' + h + ' HOURS &middot; JERSEY TIME') + '</small>';
+document.getElementById('stValid').innerHTML = stTime(when) + '<small>' + (h === stNowHour() ? 'NOW &mdash; CLOSEST FORECAST STEP TO THE REAL TIME &middot; +' + h + 'H INTO THE RUN' : (h === 0 ? 'START OF THE MODEL RUN' : '+' + h + ' HOURS INTO THE RUN') + ' &middot; JERSEY TIME') + '</small>';
 stMarkHours();
 wfUpdate();
 }
@@ -4648,8 +4654,7 @@ stMsg('');
 if(ST.firstHour){
 ST.firstHour = false;
 ST.tracks = d.tracks.filter(t => t.min_hpa <= ST.maxP);
-const t = stClosestInside();
-ST.hour = t ? Math.round(t.closest_hour / 6) * 6 : 0;
+ST.hour = stNowHour();
 }
 stRender();
 stMarkHours();
@@ -5280,6 +5285,7 @@ el.innerHTML = '<span class="k">MODEL</span><span class="v">NOAA GFS &middot; ' 
 '<span class="k">NEXT RUN</span><span class="v ' + cls + '">' + nextTxt + '</span>';
 }
 setInterval(stRunBadge, 30000);
+setInterval(function(){ if(typeof stMarkHours === 'function') stMarkHours(); }, 300000);
 /* the row of hour buttons: NOW, 6, 12 ... 240, with the day marked where it changes */
 function stBuildHours(){
 const box = document.getElementById('stHours');
@@ -5288,7 +5294,7 @@ box.innerHTML = '';
 for(let h=0; h<=240; h+=6){
 const b = document.createElement('button');
 b.type = 'button'; b.dataset.h = h;
-b.innerHTML = (h === 0 ? 'NOW' : h) + '<small>&nbsp;</small>';
+b.innerHTML = '<span class="sthn">' + (h === 0 ? 'RUN' : h) + '</span><small>&nbsp;</small>';
 b.addEventListener('click', function(){ stSetHour(h, true); });
 box.appendChild(b);
 }
@@ -5297,6 +5303,7 @@ function stMarkHours(){
 const box = document.getElementById('stHours');
 if(!box || !ST.data) return;
 const cycle = new Date(ST.data.cycle);
+const nowH = stNowHour();
 let prevDay = '';
 box.querySelectorAll('button').forEach(function(b){
 const h = Number(b.dataset.h);
@@ -5306,7 +5313,9 @@ const hh = (parts.find(p => p.type === 'hour') || {}).value || '';
 const day = ((parts.find(p => p.type === 'weekday') || {}).value || '').toUpperCase();
 const newDay = h > 0 && day !== prevDay;                                   // first step of each new day shows its name
 prevDay = day;
-b.querySelector('small').textContent = h === 0 ? 'NOW' : (newDay ? day + ' ' + hh : hh + 'h');
+const isNow = h === nowH;
+b.querySelector('.sthn').textContent = isNow ? 'NOW' : (h === 0 ? 'RUN' : h);
+b.querySelector('small').textContent = h === 0 ? 'START' : (newDay ? day + ' ' + hh : hh + 'h');
 b.classList.toggle('day', newDay);
 b.classList.toggle('active', h === ST.hour);
 });
