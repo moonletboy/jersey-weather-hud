@@ -1,6 +1,13 @@
 {
- "updated": "2026-10-23T04:36:54Z",
+ "updated": "2026-10-23T05:09:06Z",
  "alerts": [
+  {
+   "at": "2026-10-23T05:09:06Z",
+   "kind": "special",
+   "title": "Jersey Weather Chat: gusts 84 mph at Jersey Airport",
+   "body": "Gusts of 84 mph recorded at Jersey Airport at 05:50. Take care outdoors. Check gov.je for official Jersey Met warnings.",
+   "sent": 946
+  },
   {
    "at": "2026-10-23T04:36:54Z",
    "kind": "special",
