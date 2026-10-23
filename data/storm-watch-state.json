@@ -11,6 +11,14 @@
   "coastal-overtopping": {
    "at": "2026-10-23T04:14:39Z",
    "value": 8
+  },
+  "jersey-airport-gust": {
+   "at": "2026-10-23T04:24:38Z",
+   "value": 74
+  },
+  "upstream-gust": {
+   "at": "2026-10-23T04:24:38Z",
+   "value": 72
   }
  },
  "pws": {
