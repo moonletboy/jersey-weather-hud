@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "6caa7b6e3777",
+ "hash": "add0fb41ed07",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -10,7 +10,7 @@
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "11:58 UTC Friday 23 October",
+   "issued": "14:52 UTC Friday 23 October",
    "message": "W to NW severe gale F9 with gusts to 60kt continuing.",
    "missing": 0,
    "lower": 0
@@ -18,9 +18,9 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-23T12:15:00.0532467Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 11:58 UTC Friday 23 October W to NW severe gale F9 with gusts to 60kt continuing.",
- "checkedAt": "2026-10-23T12:15:00.0532467Z",
+ "lastFetch": "2026-10-23T15:00:00.0390711Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 14:52 UTC Friday 23 October W to NW gale F8 with gusts to 50kt backing SW 7 with gusts to 45kt lat",
+ "checkedAt": "2026-10-23T15:00:00.0390711Z",
  "lastAlertAt": "2026-10-22T20:20:34Z",
  "lastAlertKind": "new"
 }
