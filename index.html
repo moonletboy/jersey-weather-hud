@@ -2027,12 +2027,15 @@ foot.innerHTML = ' &middot; <span style="color:var(--red);">PEAK ' + label + ' M
 let modelWindSpark = null;
 let metarHistory = null;
 const KT_TO_MPH = 1.15078;
+let windObsReason = 'OBS NOT LOADED';   // why the model is being shown instead of observations (for the footer)
 function metarWindSeries(){
-if(!metarHistory || metarHistory.status !== 'ok' || !Array.isArray(metarHistory.obs)) return null;
+if(!metarHistory){ windObsReason = 'OBS NOT LOADED'; return null; }
+if(metarHistory.status !== 'ok' || !Array.isArray(metarHistory.obs)){ windObsReason = 'OBS ERROR'; return null; }
 const nowS = Date.now()/1000;
-const obs = metarHistory.obs.filter(o => o.obsTime && (nowS - o.obsTime) <= 12.5*3600 && o.windSpeedKt !== null && !isNaN(o.windSpeedKt));
-if(obs.length < 6) return null;                                   // too thin to be a 12-hour picture
-if((nowS - obs[obs.length-1].obsTime)/60 > 90) return null;      // latest ob is stale - fall back to the model
+const obs = metarHistory.obs.filter(o => o.obsTime && (nowS - Number(o.obsTime)) <= 12.5*3600 && o.windSpeedKt !== null && !isNaN(o.windSpeedKt));
+if(obs.length < 6){ windObsReason = 'ONLY ' + obs.length + ' OBS'; return null; }           // too thin to be a 12-hour picture
+const ageMin = Math.round((nowS - Number(obs[obs.length-1].obsTime))/60);
+if(ageMin > 90){ windObsReason = 'OBS STALE ' + ageMin + ' MIN'; return null; }                // latest ob is stale - fall back to the model
 const fmt = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false });
 return {
   speeds: obs.map(o => Math.round(o.windSpeedKt * KT_TO_MPH)),
@@ -2045,16 +2048,20 @@ const obsSeries = metarWindSeries();
 const series = obsSeries || modelWindSpark;
 if(!series) return;
 renderSparkDual('windSpark', series.speeds, CYAN, series.gusts, RED);
-markWindPeak(series.gusts, series.times, series.speeds, obsSeries ? '<span style="color:var(--green);">EGJJ OBS</span>' : 'MODEL');
+markWindPeak(series.gusts, series.times, series.speeds, obsSeries ? '<span style="color:var(--green);">EGJJ OBS</span>' : 'MODEL (' + windObsReason + ')');
 }
 async function loadMetarHistory(){
 try{
 const url = WARNINGS_API_URL + (WARNINGS_API_URL.includes('?') ? '&' : '?') + 'action=metar_history&hours=13';
 const res = await fetch(url, { cache:'no-store' });
 const data = await res.json();
-if(data.status === 'ok'){ metarHistory = data; renderWindSpark(); }
+metarHistory = data;
+renderWindSpark();
 }catch(e){
 console.error('metar history fetch failed', e);
+windObsReason = 'OBS FETCH FAILED';
+if(!loadMetarHistory.retried){ loadMetarHistory.retried = true; setTimeout(loadMetarHistory, 5000); }   // one retry for a sleepy Apps Script
+else renderWindSpark();
 }
 }
 function animateNum(el, target, decimals=0, suffix=''){
