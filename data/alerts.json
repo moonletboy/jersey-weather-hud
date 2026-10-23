@@ -1,6 +1,13 @@
 {
- "updated": "2026-10-23T09:30:29Z",
+ "updated": "2026-10-23T20:50:12Z",
  "alerts": [
+  {
+   "at": "2026-10-23T20:50:12Z",
+   "kind": "warning",
+   "title": "JWC: Jersey Met ORANGE wind warning updated (at sea)",
+   "body": "Channel Islands Shipping Area - at sea, not a land warning. W to NW wind F7 backing SW gale F8 with gusts to 50kt later. Issued 20:35 UTC Friday 23 October. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.",
+   "sent": 973
+  },
   {
    "at": "2026-10-23T09:30:29Z",
    "kind": "special",
