@@ -14,26 +14,13 @@
    "message": "W to NW severe gale F9 with gusts to 60kt continuing.",
    "missing": 0,
    "lower": 0
-  },
-  "thunderstorm": {
-   "key": "thunderstorm",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Thunderstorm",
-   "area": "Jersey",
-   "hazard": "thunderstorm",
-   "sea": false,
-   "issued": "10:22 p.m. Thursday 22 October",
-   "message": "",
-   "missing": 1,
-   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-23T12:06:19.6585756Z",
+ "lastFetch": "2026-10-23T12:15:00.0532467Z",
  "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 11:58 UTC Friday 23 October W to NW severe gale F9 with gusts to 60kt continuing.",
- "checkedAt": "2026-10-23T12:06:19.6585756Z",
+ "checkedAt": "2026-10-23T12:15:00.0532467Z",
  "lastAlertAt": "2026-10-22T20:20:34Z",
  "lastAlertKind": "new"
 }
