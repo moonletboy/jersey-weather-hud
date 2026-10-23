@@ -9,10 +9,17 @@ MODE=check (default) - run by .github/workflows/warning-alerts.yml every ~10 min
      it falls back to ?action=warnings from the Apps Script (the old page-reading method);
   3. takes EACH warning separately (colour, area, type, issue time, message)
      and compares with data/warnings-state.json;
-  4. sends a push to every subscribed device ONLY for a warning that is NEW or UPGRADED
+  4. sends a push to every subscribed device for a warning that is NEW, UPGRADED or RE-ISSUED
      (a land warning and a shipping-area warning are tracked separately, so a new
      yellow land warning still alerts while an orange at-sea warning is in force);
   5. removes subscriptions the push services report as dead.
+
+  Every change gov.je makes (new, upgraded, re-issued at the same colour, lowered,
+  cleared) is reported to the AlertLog sheet, including the ones that send nothing, so
+  the log shows what the checker saw and why it stayed quiet. Pushes go out for NEW,
+  UPGRADED and RE-ISSUED warnings (a re-issue is the same colour with a new issue time -
+  people want to know when the forecast wind has been eased as much as when it was
+  raised). Set ALERT_ON_REISSUE below to False to go back to new/upgraded only.
 
   Safeguard: a warning only counts as cancelled or lowered once TWO separate gov.je
   fetches agree. One bad fetch that briefly shows "no warnings" can therefore never
@@ -52,6 +59,7 @@ FOOTER = "Automated alert from Jersey Weather Chat. Official warning issued by J
 PUSH_TTL = 6 * 3600                 # keep trying to deliver for 6 hours if a phone is off
 PUSH_HEADERS = {"Urgency": "high"}  # tells Android to wake the phone now rather than batch it later
 FETCHES_TO_CONFIRM_DROP = 2         # separate gov.je fetches that must agree before a warning counts as lowered/cancelled
+ALERT_ON_REISSUE = True             # also push when Jersey Met re-issues a warning at the SAME colour (new issue time, updated wording)
 
 def now_iso():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -126,6 +134,8 @@ def build_message(w, kind):
     # "JWC:" first, so nobody mistakes our relayed alert for a message from Jersey Met itself
     if kind == "upgraded":
         title = f"JWC: Jersey Met {w['hazard']} warning upgraded to {colour}" + (" (at sea)" if w["sea"] else "")
+    elif kind == "reissued":
+        title = f"JWC: Jersey Met {colour} {w['hazard']} warning updated" + (" (at sea)" if w["sea"] else "")
     else:
         title = f"JWC: Jersey Met {colour} {w['hazard']} warning" + (" (at sea)" if w["sea"] else "")
     where = (w["area"] + " - at sea, not a land warning") if w["sea"] else ("For " + w["area"])
@@ -281,7 +291,8 @@ def check(vapid_private, vapid_subject, admin_key):
     prev_level = LEVEL.get(prev.get("severity", "none"), 0)
     warnings = {k: dict(v) for k, v in (prev.get("warnings") or {}).items()}
     parsed = cur["parsed"] if "parsed" in cur else (parse_warnings(cur.get("text", "")) if sev != "none" else [])
-    alerts = []   # (kind, message, description)
+    alerts = []   # (kind, message, description) - these are pushed to everyone
+    quiet = []    # (kind, message, description) - changes recorded in the AlertLog only, nothing sent
     fallback = 0
     # warnings at or below this level are recorded without an alert: on the first run of this version
     # (they were already in force), and on the first readable fetch after an "unreadable layout" alert
@@ -324,8 +335,10 @@ def check(vapid_private, vapid_subject, admin_key):
                            for o in warnings.values())
                 if w["level"] <= quiet_level:
                     print(f"  {w['name']}: already alerted/in force before - recorded, no alert")
+                    quiet.append(("already in force", build_message(w, "new"), f"{w['colour']} {w['name']}"))
                 elif twin:
                     print(f"  {w['name']}: same warning as one already recorded (renamed or new data source) - recorded, no alert")
+                    quiet.append(("renamed", build_message(w, "new"), f"{w['colour']} {w['name']}"))
                 else:
                     alerts.append(("new", build_message(w, "new"), f"{w['colour']} {w['name']}"))
                 warnings[w["key"]] = dict(w, missing=0, lower=0)
@@ -337,17 +350,25 @@ def check(vapid_private, vapid_subject, admin_key):
                 old["missing"] = 0
                 if old["lower"] >= FETCHES_TO_CONFIRM_DROP:
                     print(f"  {w['name']}: lowered to {w['colour']} (confirmed by {old['lower']} fetches)")
+                    quiet.append(("lowered", build_message(w, "new"), f"{old['colour']} -> {w['colour']} {w['name']}"))
                     warnings[w["key"]] = dict(w, missing=0, lower=0)
                 else:
                     print(f"  {w['name']}: shows {w['colour']}, waiting for a second fetch before accepting the lower level")
+            elif w["issued"] and w["issued"] != old.get("issued", ""):
+                # same colour, new issue time: Jersey Met re-issued the warning with updated wording
+                print(f"  {w['name']}: re-issued at the same colour ({old.get('issued', '?')} -> {w['issued']})")
+                desc = f"{w['colour']} {w['name']} re-issued {w['issued']} (was {old.get('issued', '?')})"
+                (alerts if ALERT_ON_REISSUE else quiet).append(("reissued", build_message(w, "reissued"), desc))
+                old.update(issued=w["issued"], message=w.get("message", old.get("message", "")), missing=0, lower=0)
             else:
-                old.update(issued=w["issued"], missing=0, lower=0)
+                old.update(missing=0, lower=0)
         for key in list(warnings):
             if key in seen:
                 continue
             warnings[key]["missing"] = warnings[key].get("missing", 0) + (1 if new_fetch else 0)
             if warnings[key]["missing"] >= FETCHES_TO_CONFIRM_DROP:
                 print(f"  {warnings[key]['name']}: gone from gov.je (confirmed by {warnings[key]['missing']} fetches) - removed")
+                quiet.append(("cleared", None, f"{warnings[key]['colour']} {warnings[key]['name']} cleared by gov.je"))
                 del warnings[key]
             else:
                 print(f"  {warnings[key]['name']}: not on this fetch - keeping it until a second fetch agrees")
@@ -363,6 +384,11 @@ def check(vapid_private, vapid_subject, admin_key):
                                   "status": "sent automatically", "sentCount": res["sent"], "deviceCount": res["of"]})
     else:
         print("No new or upgraded warnings - no alert.")
+    for kind, msg, desc in quiet:
+        # the AlertLog shows what was seen and that nothing was sent, so every change is accounted for
+        log_event(admin_key, {"source": "jersey-met", "rule": "Jersey Met warning " + kind, "reason": desc,
+                              "title": msg["title"] if msg else "", "body": msg["body"] if msg else "",
+                              "status": "no message sent", "sentCount": 0, "deviceCount": 0})
 
     overall = max([w["level"] for w in warnings.values()] + [fallback])
     state = {
@@ -376,6 +402,8 @@ def check(vapid_private, vapid_subject, admin_key):
         "checkedAt": fetch_id or now_iso(),
         "lastAlertAt": now_iso() if alerts else prev.get("lastAlertAt", ""),
         "lastAlertKind": alerts[-1][0] if alerts else prev.get("lastAlertKind", ""),
+        "lastChangeAt": now_iso() if (alerts or quiet) else prev.get("lastChangeAt", ""),
+        "lastChange": (alerts + quiet)[-1][2] if (alerts or quiet) else prev.get("lastChange", ""),
     }
     # Only save when something about the warnings changed. Saving makes GitHub rebuild the website, so
     # saving just because gov.je refreshed its feed (new timestamp, same warnings) would rebuild it every
