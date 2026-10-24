@@ -1967,9 +1967,12 @@ SC.days = Object.keys(days).sort().slice(0, 7);
 SC.stats = {};
 SC.days.forEach(d => { SC.stats[d] = dayStats(d); });
 if(!SC.userPicked || !SC.stats[SC.day]){
-/* start on the stormiest day: highest chance of 60+, then highest most-likely peak */
+/* start on TODAY while it still has forecast hours left; once today is over, fall back to the
+   stormiest day (highest chance of 60+, then highest most-likely peak) */
+const todayKey = nowLocal().day;
 let best = null;
-SC.days.forEach(d => { const s = SC.stats[d]; if(s && (!best || s.c60 > best.c60 || (s.c60 === best.c60 && s.q50 > best.q50))) best = s; });
+if(SC.stats[todayKey]) best = SC.stats[todayKey];
+else SC.days.forEach(d => { const s = SC.stats[d]; if(s && (!best || s.c60 > best.c60 || (s.c60 === best.c60 && s.q50 > best.q50))) best = s; });
 SC.day = best ? best.day : SC.days[0];
 }
 const runs = ens.reduce((a, m) => a + m.runs.length, 0);
