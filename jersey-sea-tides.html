@@ -1748,9 +1748,14 @@ ctx.putImageData(img, 0, 0);
 return cv.toDataURL('image/png');
 }
 async function initSstAnomalyMap(best){
-const map = L.map('sstAnomalyMap', {zoomControl:true, attributionControl:false, dragging:true, scrollWheelZoom:true}).setView([LAT, LON], 6);
+// Static map: locked on Jersey, no dragging/zooming of any kind, so it never grabs the page while scrolling.
+const map = L.map('sstAnomalyMap', {
+zoomControl:false, attributionControl:false,
+dragging:false, scrollWheelZoom:false, touchZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false,
+zoomSnap:0, minZoom:6, maxZoom:6
+}).setView([LAT, LON], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
-L.circleMarker([LAT,LON], {radius:4, color:'#ffb020'}).addTo(map);
+L.circleMarker([LAT,LON], {radius:4, color:'#ffb020', interactive:false}).addTo(map);
 const statusEl = document.getElementById('sstMapStatus');
 if(!best){
 if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NO NOAA ANOMALY DATA AVAILABLE RIGHT NOW</span>';
@@ -1770,7 +1775,7 @@ L.imageOverlay(url, bounds, {opacity:0.8}).addTo(map);
 map.on('click', e => {
 const v = gridAt(g, e.latlng.lat, e.latlng.lng);
 if(isNaN(v)) return;
-L.popup().setLatLng(e.latlng).setContent('<b>' + (v > 0 ? '+' : '') + v.toFixed(1) + '\u00b0C</b> vs average').openOn(map);
+L.popup({autoPan:false}).setLatLng(e.latlng).setContent('<b>' + (v > 0 ? '+' : '') + v.toFixed(1) + '\u00b0C</b> vs average').openOn(map);
 });
 const d = used.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
 if(statusEl) statusEl.textContent = used.ds.tag + ' \u00b7 DATA FOR ' + d + ' \u00b7 TAP MAP FOR A VALUE';
