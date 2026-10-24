@@ -14,28 +14,15 @@
    "message": "SW gale F8 with gusts to 55kt veering W to NW wind F7 with gusts to 45kt imminent.",
    "missing": 0,
    "lower": 0
-  },
-  "tide": {
-   "key": "tide",
-   "colour": "orange",
-   "level": 2,
-   "name": "Tide",
-   "area": "Jersey",
-   "hazard": "tide",
-   "sea": false,
-   "issued": "10:41 a.m. Saturday 24 October",
-   "message": "",
-   "missing": 1,
-   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-24T21:00:00.0657892Z",
+ "lastFetch": "2026-10-24T21:16:10.7318309Z",
  "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 20:55 UTC Saturday 24 October SW gale F8 with gusts to 55kt veering W to NW wind F7 with gusts to ",
- "checkedAt": "2026-10-24T21:00:00.0657892Z",
+ "checkedAt": "2026-10-24T21:16:10.7318309Z",
  "lastAlertAt": "2026-10-24T20:59:59Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-10-24T20:59:59Z",
- "lastChange": "orange Channel Islands Shipping Area Wind re-issued 20:55 UTC Saturday 24 October (was 14:45 UTC Saturday 24 October)"
+ "lastChangeAt": "2026-10-24T21:19:47Z",
+ "lastChange": "orange Tide cleared by gov.je"
 }
