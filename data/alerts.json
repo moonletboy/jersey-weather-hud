@@ -1,6 +1,13 @@
 {
- "updated": "2026-10-24T13:05:04Z",
+ "updated": "2026-10-24T14:27:29Z",
  "alerts": [
+  {
+   "at": "2026-10-24T14:27:29Z",
+   "kind": "special",
+   "title": "Jersey Weather Chat: waves over sea walls possible at high tide",
+   "body": "High tide at 18:04 (10.3 m) comes with large waves and strong SW winds (gusts up to about 52 mph). Waves and spray over sea walls are possible on the south coast - take care on coast roads and promenades. Check gov.je for official Jersey Met warnings.",
+   "sent": 974
+  },
   {
    "at": "2026-10-24T13:05:04Z",
    "kind": "warning",
