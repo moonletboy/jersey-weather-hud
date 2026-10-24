@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "e05a3a13bc00",
+ "hash": "6e183fecb5e0",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -14,15 +14,28 @@
    "message": "SW gale F8 with gusts to 55kt imminent.",
    "missing": 0,
    "lower": 0
+  },
+  "tide": {
+   "key": "tide",
+   "colour": "orange",
+   "level": 2,
+   "name": "Tide",
+   "area": "Jersey",
+   "hazard": "tide",
+   "sea": false,
+   "issued": "10:41 a.m. Saturday 24 October",
+   "message": "",
+   "missing": 0,
+   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-24T08:45:00.0349361Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 08:32 UTC Saturday 24 October SW gale F8 with gusts to 55kt imminent.",
- "checkedAt": "2026-10-24T08:45:00.0349361Z",
- "lastAlertAt": "2026-10-24T08:50:41Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-10-24T08:50:41Z",
- "lastChange": "orange Channel Islands Shipping Area Wind re-issued 08:32 UTC Saturday 24 October (was 02:45 UTC Saturday 24 October)"
+ "lastFetch": "2026-10-24T09:44:40.2821354Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 08:32 UTC Saturday 24 October SW gale F8 with gusts to 55kt imminent. Orange - Tide Warning Issued",
+ "checkedAt": "2026-10-24T09:44:40.2821354Z",
+ "lastAlertAt": "2026-10-24T09:45:08Z",
+ "lastAlertKind": "new",
+ "lastChangeAt": "2026-10-24T09:45:08Z",
+ "lastChange": "orange Tide"
 }
