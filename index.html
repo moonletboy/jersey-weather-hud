@@ -478,6 +478,13 @@ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-spa
 }
 .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
 .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--green); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+.sec-head .tag{ flex:0 0 auto; white-space:nowrap; }
+/* phones: long section titles wrap instead of pushing the tag off the right edge (which widened the whole page) */
+@media (max-width:640px){
+.sec-head{ flex-wrap:wrap; gap:8px 12px; }
+.sec-head h3{ white-space:normal; min-width:0; flex:1 1 auto; font-size:13px; letter-spacing:2px; line-height:1.35; }
+.sec-head .bar{ display:none; }
+}
 .sec-head.storm .tag{ background:var(--amber); }
 .sec-head.storm h3{ color:var(--amber); }
 .sec-head.imagery .tag{ background:var(--cyan); }
