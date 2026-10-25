@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "79cb1e231634",
+ "hash": "977c059cbb34",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -10,19 +10,19 @@
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "20:55 UTC Saturday 24 October",
-   "message": "SW gale F8 with gusts to 55kt veering W to NW wind F7 with gusts to 45kt imminent.",
+   "issued": "02:31 UTC Sunday 25 October",
+   "message": "W to NW wind F7 with gusts to 45kt continuing.",
    "missing": 0,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-24T21:16:10.7318309Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 20:55 UTC Saturday 24 October SW gale F8 with gusts to 55kt veering W to NW wind F7 with gusts to ",
- "checkedAt": "2026-10-24T21:16:10.7318309Z",
- "lastAlertAt": "2026-10-24T20:59:59Z",
+ "lastFetch": "2026-10-25T02:31:52.3045065Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:31 UTC Sunday 25 October W to NW wind F7 with gusts to 45kt continuing.",
+ "checkedAt": "2026-10-25T02:31:52.3045065Z",
+ "lastAlertAt": "2026-10-25T02:35:13Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-10-24T21:19:47Z",
- "lastChange": "orange Tide cleared by gov.je"
+ "lastChangeAt": "2026-10-25T02:35:13Z",
+ "lastChange": "orange Channel Islands Shipping Area Wind re-issued 02:31 UTC Sunday 25 October (was 20:55 UTC Saturday 24 October)"
 }
