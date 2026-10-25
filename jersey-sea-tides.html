@@ -71,7 +71,7 @@ header{
 display:flex; align-items:center; justify-content:space-between;
 flex-wrap:wrap; gap:14px;
 border-bottom:1px solid var(--line);
-padding-bottom:16px; margin-bottom:26px;
+padding-bottom:16px; margin-bottom:14px;
 }
 .brand{ display:flex; align-items:center; gap:12px; }
 .brand-mark{
@@ -135,10 +135,20 @@ margin-bottom:10px; display:flex; align-items:center; gap:8px; position:relative
 .special-msg-text{ font-size:13px; color:var(--text); line-height:1.65; position:relative; z-index:2; }
 .special-msg-meta{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-top:14px; position:relative; z-index:2; }
 .special-msg-meta b{ color:var(--red); }
-nav.tabs{ display:flex; gap:10px; margin-bottom:32px; flex-wrap:wrap; }
+/* NAV: one swipeable row, directly under the header, sticks to the top while scrolling (matches the home page) */
+nav.tabs{
+display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+scrollbar-width:none; -ms-overflow-style:none;
+position:sticky; top:0; z-index:30;
+margin:0 -20px 14px; padding:8px 20px;
+background:rgba(5,8,13,0.94);
+border-bottom:1px solid var(--line);
+}
+nav.tabs::-webkit-scrollbar{ display:none; }
 nav.tabs a{
+flex:0 0 auto; white-space:nowrap;
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
-color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+color:var(--dim); padding:9px 16px; border:1px solid var(--line); border-radius:6px;
 transition:all .2s ease;
 }
 nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
@@ -255,6 +265,13 @@ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-spa
 }
 .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
 .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--green); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+.sec-head .tag{ flex:0 0 auto; white-space:nowrap; }
+/* phones: long section titles wrap instead of pushing the tag off the right edge (which widened the whole page) */
+@media (max-width:640px){
+.sec-head{ flex-wrap:wrap; gap:8px 12px; }
+.sec-head h3{ white-space:normal; min-width:0; flex:1 1 auto; font-size:13px; letter-spacing:2px; line-height:1.35; }
+.sec-head .bar{ display:none; }
+}
 .sec-head.storm .tag{ background:var(--amber); }
 .sec-head.storm h3{ color:var(--amber); }
 .sec-head.imagery .tag{ background:var(--cyan); }
@@ -617,12 +634,6 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div id="clock">--:--:--</div>
 </div>
 </header>
-<div class="fb-banner">
-<span class="fb-icon" aria-hidden="true">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
-</span>
-<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community.</span>
-</div>
 <nav class="tabs">
 <a href="index.html">LIVE OPS</a>
 <a href="jersey-storm-scenarios.html">STORM SCENARIOS</a>
@@ -631,6 +642,12 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <a href="jersey-sea-tides.html" class="active">SEA &amp; TIDES</a>
 <a href="microclimate-grid.html">MICROCLIMATE</a>
 </nav>
+<div class="fb-banner">
+<span class="fb-icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
+</span>
+<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community.</span>
+</div>
 
 <!-- SEA STATE HERO -->
 <section>
@@ -1794,6 +1811,12 @@ if(nextTideDt){
 document.getElementById('tideCountdown').textContent = formatCountdown(nextTideDt - new Date());
 }
 }, 1000);
+
+/* nav strip: on a phone the row scrolls sideways, so make sure the current page's tab is in view */
+(function(){
+const nav = document.querySelector('nav.tabs'), a = nav && nav.querySelector('a.active');
+if(a && nav.scrollWidth > nav.clientWidth){ nav.scrollLeft = Math.max(0, a.offsetLeft - 20); }
+})();
 </script>
 
 </html>
