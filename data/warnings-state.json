@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "659af188930d",
+ "hash": "b151d603bad1",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -14,15 +14,28 @@
    "message": "W to NW wind F7 with gusts to 45kt backing W wind F6 soon.",
    "missing": 0,
    "lower": 0
+  },
+  "tide": {
+   "key": "tide",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Tide",
+   "area": "Jersey",
+   "hazard": "tide",
+   "sea": false,
+   "issued": "8:44 a.m. Sunday 25 October",
+   "message": "",
+   "missing": 0,
+   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-25T08:45:00.0476752Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:23 UTC Sunday 25 October W to NW wind F7 with gusts to 45kt backing W wind F6 soon.",
- "checkedAt": "2026-10-25T08:45:00.0476752Z",
- "lastAlertAt": "2026-10-25T02:35:13Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-10-25T08:49:42Z",
- "lastChange": "orange -> yellow Channel Islands Shipping Area Wind"
+ "lastFetch": "2026-10-25T08:58:45.7431912Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:23 UTC Sunday 25 October W to NW wind F7 with gusts to 45kt backing W wind F6 soon. Yellow - Ti",
+ "checkedAt": "2026-10-25T08:58:45.7431912Z",
+ "lastAlertAt": "2026-10-25T09:00:17Z",
+ "lastAlertKind": "new",
+ "lastChangeAt": "2026-10-25T09:00:17Z",
+ "lastChange": "yellow Tide"
 }
