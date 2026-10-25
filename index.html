@@ -71,7 +71,7 @@ header{
 display:flex; align-items:center; justify-content:space-between;
 flex-wrap:wrap; gap:14px;
 border-bottom:1px solid var(--line);
-padding-bottom:16px; margin-bottom:26px;
+padding-bottom:16px; margin-bottom:14px;
 }
 .brand{ display:flex; align-items:center; gap:12px; }
 .brand-mark{
@@ -173,6 +173,21 @@ background:#1877F2; display:flex; align-items:center; justify-content:center;
 .about-body li b, .about-body p b{ color:var(--text); }
 .about-body a{ color:var(--cyan); }
 @media (max-width:560px){ .fb-text{ font-size:10.5px; } }
+/* merged ABOUT & COMMUNITY box: one slim collapsed row, the banner + support line + disclaimer live inside */
+.about-box > summary .about-sub{ display:block; margin-top:3px; font-size:10px; font-weight:400; letter-spacing:0.3px; color:var(--dim); }
+.about-box > summary .about-sub::before{ content:none; }
+.about-body .fb-banner{ margin:0 0 10px; }
+.about-body .talk-line{ margin:0 0 12px; }
+/* special weather message: slim one-line green strip when there is nothing to report */
+.special-msg-panel.is-clear{
+padding:9px 14px; margin-bottom:12px; border-color:rgba(45,225,160,0.35);
+background:rgba(45,225,160,0.05);
+}
+.special-msg-panel.is-clear::before{ display:none; }
+.special-msg-panel.is-clear .special-msg-title{ display:none; }
+.special-msg-panel.is-clear .special-msg-meta{ display:none; }
+.special-msg-panel.is-clear .special-msg-text{ font-size:11px; color:var(--green); letter-spacing:0.5px; line-height:1.4; }
+.special-msg-panel.is-clear .special-msg-text::before{ content:"\2714  "; }
 .special-msg-panel{
 position:relative; overflow:hidden;
 border:1px solid var(--red); border-radius:10px; padding:20px 22px; margin-bottom:22px;
@@ -199,7 +214,7 @@ margin-bottom:10px; display:flex; align-items:center; gap:8px; position:relative
    alert again after swiping the notification away. Tapping a notification lands here (#alerts). */
 .alerts-log{
 display:none; border:1px solid rgba(76,211,255,0.45); border-radius:10px; margin-bottom:22px;
-background:linear-gradient(90deg, rgba(76,211,255,0.08), rgba(76,211,255,0.02)); scroll-margin-top:12px;
+background:linear-gradient(90deg, rgba(76,211,255,0.08), rgba(76,211,255,0.02)); scroll-margin-top:64px;
 }
 .alerts-log.flash{ animation: alertsFlash 1.6s ease-out 2; }
 @keyframes alertsFlash{ 0%{ box-shadow:0 0 0 0 rgba(76,211,255,0.7); } 100%{ box-shadow:0 0 0 14px rgba(76,211,255,0); } }
@@ -220,10 +235,20 @@ font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:2px; color:var
 .alert-item .ai-title{ font-size:12.5px; font-weight:800; color:var(--text); margin:4px 0 3px; }
 .alert-item .ai-body{ font-size:12px; color:var(--text); line-height:1.6; opacity:0.9; }
 .alerts-log-foot{ font-size:10px; color:var(--dim2); letter-spacing:0.5px; padding:8px 0 0; }
-nav.tabs{ display:flex; gap:10px; margin-bottom:32px; flex-wrap:wrap; }
+/* NAV: one swipeable row, directly under the header, sticks to the top while scrolling */
+nav.tabs{
+display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+scrollbar-width:none; -ms-overflow-style:none;
+position:sticky; top:0; z-index:30;
+margin:0 -20px 14px; padding:8px 20px;
+background:rgba(5,8,13,0.94);
+border-bottom:1px solid var(--line);
+}
+nav.tabs::-webkit-scrollbar{ display:none; }
 nav.tabs a{
+flex:0 0 auto; white-space:nowrap;
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
-color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+color:var(--dim); padding:9px 16px; border:1px solid var(--line); border-radius:6px;
 transition:all .2s ease;
 }
 nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
@@ -986,15 +1011,24 @@ footer a:hover{ color:var(--cyan); }
 <div id="clock">--:--:--</div>
 </div>
 </header>
+<nav class="tabs">
+<a href="index.html" class="active">LIVE OPS</a>
+<a href="jersey-storm-scenarios.html">STORM SCENARIOS</a>
+<a href="jersey-storm-reports.html">STORM REPORTS</a>
+<a href="jersey-space-weather.html">SPACE WEATHER</a>
+<a href="jersey-sea-tides.html">SEA &amp; TIDES</a>
+<a href="microclimate-grid.html">MICROCLIMATE</a>
+</nav>
+<details class="about-box" id="aboutBox">
+<summary>ABOUT &amp; DISCLAIMER<span class="about-sub">Volunteer-run &middot; forecasts are computer models, not official warnings &middot; community &amp; support</span></summary>
+<div class="about-body">
 <div class="fb-banner">
 <span class="fb-icon" aria-hidden="true">
 <svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
 </span>
 <span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings</span>
 </div>
-<details class="about-box" id="aboutBox">
-<summary>ABOUT THIS SITE &amp; DISCLAIMER</summary>
-<div class="about-body">
+<div class="talk-line">&#128172; <b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">chat with others in the Jersey Weather Chat group</a> (open its <b>Chats</b> tab and join any chat).</div>
 <p><b>About this site.</b> Jersey Weather Chat is a community run by volunteers who love weather. This site pulls together public data and computer forecast models so islanders can see what&rsquo;s coming and make their own decisions. It&rsquo;s free, it always will be, and nobody&rsquo;s paid to do it.</p>
 <p><b>A few things to know before relying on it</b></p>
 <ul>
@@ -1294,7 +1328,6 @@ tbtn.addEventListener('click', testNote);
 init();
 })();
 </script>
-<div class="talk-line">&#128172; <b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">chat with others in the Jersey Weather Chat group</a> (open its <b>Chats</b> tab and join any chat).</div>
 <div class="special-msg-panel" id="specialMsgPanel">
 <div class="special-msg-title">&#9888; SPECIAL WEATHER MESSAGE</div>
 <div class="special-msg-text" id="specialMsgText"></div>
@@ -1306,14 +1339,6 @@ init();
 </button>
 <div class="alerts-log-list" id="alertsList" hidden></div>
 </div>
-<nav class="tabs">
-<a href="index.html" class="active">LIVE OPS</a>
-<a href="jersey-storm-scenarios.html">STORM SCENARIOS</a>
-<a href="jersey-storm-reports.html">STORM REPORTS</a>
-<a href="jersey-space-weather.html">SPACE WEATHER</a>
-<a href="jersey-sea-tides.html">SEA &amp; TIDES</a>
-<a href="microclimate-grid.html">MICROCLIMATE</a>
-</nav>
 <!-- NOW: a headline strip, one tile per reading (each with its last 12 hours), and Jersey at a glance -->
 <section class="now">
 <div class="now-head">
@@ -1821,6 +1846,9 @@ panel.style.display = 'none';
 return;
 }
 panel.style.display = 'block';
+/* "No special weather messages." (the all-clear text) shows as one slim green line; a real message gets the full red card */
+const isClear = /^\s*no\s+special\s+weather\s+messages?\b[\s.!]*$/i.test(SPECIAL_MESSAGE_TEXT);
+panel.classList.toggle('is-clear', isClear);
 document.getElementById('specialMsgText').textContent = SPECIAL_MESSAGE_TEXT;
 const opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/London' };
 const stamp = new Intl.DateTimeFormat('en-GB', opts).format(SPECIAL_MESSAGE_TIME || new Date()) + ' GMT/BST';
@@ -1936,6 +1964,12 @@ setTimeout(function(){ box.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 });
 setInterval(load, 5 * 60 * 1000);
+})();
+
+/* nav strip: on a phone the row scrolls sideways, so make sure the current page's tab is in view */
+(function(){
+const nav = document.querySelector('nav.tabs'), a = nav && nav.querySelector('a.active');
+if(a && nav.scrollWidth > nav.clientWidth){ nav.scrollLeft = Math.max(0, a.offsetLeft - 20); }
 })();
 
 // ---------- CLOCK ----------
