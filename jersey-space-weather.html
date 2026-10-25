@@ -71,7 +71,7 @@ header{
 display:flex; align-items:center; justify-content:space-between;
 flex-wrap:wrap; gap:14px;
 border-bottom:1px solid var(--line);
-padding-bottom:16px; margin-bottom:18px;
+padding-bottom:16px; margin-bottom:14px;
 }
 .brand{ display:flex; align-items:center; gap:12px; }
 .brand-mark{
@@ -93,10 +93,20 @@ animation:spin 6s linear infinite reverse;
 .live-dot{ width:7px;height:7px;border-radius:50%; background:var(--green); animation:pulse 1.4s ease-in-out infinite; }
 @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 #clock{ color:var(--green); font-size:14px; font-weight:700; letter-spacing:1px; }
-nav.tabs{ display:flex; gap:10px; margin-bottom:32px; flex-wrap:wrap; }
+/* NAV: one swipeable row, directly under the header, sticks to the top while scrolling (matches the home page) */
+nav.tabs{
+display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+scrollbar-width:none; -ms-overflow-style:none;
+position:sticky; top:0; z-index:30;
+margin:0 -20px 14px; padding:8px 20px;
+background:rgba(5,8,13,0.94);
+border-bottom:1px solid var(--line);
+}
+nav.tabs::-webkit-scrollbar{ display:none; }
 nav.tabs a{
+flex:0 0 auto; white-space:nowrap;
 font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
-color:var(--dim); padding:9px 18px; border:1px solid var(--line); border-radius:6px;
+color:var(--dim); padding:9px 16px; border:1px solid var(--line); border-radius:6px;
 transition:all .2s ease;
 }
 nav.tabs a:hover{ color:var(--text); border-color:var(--green); }
@@ -217,6 +227,13 @@ margin-bottom:10px; display:flex; align-items:center; gap:8px; position:relative
 .sec-head h3{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap; }
 .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
 .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--green); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; }
+.sec-head .tag{ flex:0 0 auto; white-space:nowrap; }
+/* phones: long section titles wrap instead of pushing the tag off the right edge (which widened the whole page) */
+@media (max-width:640px){
+.sec-head{ flex-wrap:wrap; gap:8px 12px; }
+.sec-head h3{ white-space:normal; min-width:0; flex:1 1 auto; font-size:13px; letter-spacing:2px; line-height:1.35; }
+.sec-head .bar{ display:none; }
+}
 section{ margin-bottom:52px; }
 /* GAUGES GRID */
 .grid5{ display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
@@ -372,6 +389,9 @@ background:linear-gradient(90deg, rgba(6,95,55,0.4), #16af5a 40%, #28eb64 80%, #
 .corner.tr{ top:6px; right:6px; border-left:0; border-bottom:0; }
 .corner.bl{ bottom:6px; left:6px; border-right:0; border-top:0; }
 .corner.br{ bottom:6px; right:6px; border-left:0; border-top:0; }
+.kp-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:16px; }
+.kp-scroll .kp-table{ margin-top:0; }
+@media (max-width:640px){ .kp-scroll .kp-table{ min-width:480px; } .kp-table th, .kp-table td{ padding:8px 6px; } }
 .kp-table{ width:100%; border-collapse:collapse; margin-top:16px; font-size:11px; }
 .kp-table th, .kp-table td{ padding:8px 10px; text-align:center; border-bottom:1px solid var(--line); }
 .kp-table th{ color:var(--dim); letter-spacing:1px; font-weight:700; font-size:10px; }
@@ -586,12 +606,14 @@ footer b{ color:var(--dim); }
 </div>
 <p class="scope-note">You are looking down on the North Pole, turned so Jersey sits at the bottom. The glowing band is where aurora is likely right now; the dashed ring is Jersey's latitude. To see aurora from the island, the glow needs to reach &mdash; or come close to &mdash; that ring on the <b>bottom</b> of the picture, because you would be looking <b>north</b>, up the dashed line towards the pole. The real oval is not a neat circle: it bulges further south on the night side.</p>
 </div>
+<div class="kp-scroll">
 <table class="kp-table" id="kpTable">
 <thead><tr><th>KP</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr></thead>
 <tbody>
 <tr><td>OVAL EDGE (&deg;N, APPROX)</td><td>66.5</td><td>64.5</td><td>62.4</td><td>60.4</td><td>58.3</td><td>56.3</td><td>54.2</td><td>52.2</td><td>50.1</td><td>48.1</td></tr>
 </tbody>
 </table>
+</div>
 </section>
 
 <!-- IMAGERY -->
@@ -1399,6 +1421,12 @@ renderScope();
 loadOvation();
 setInterval(() => { if(!document.hidden) loadOvation(); }, 10*60*1000);  // OVATION updates every few minutes; 10 is plenty
 setInterval(()=>{ heroFaceIndex++; renderHeroFace(); }, 4000);
+
+/* nav strip: on a phone the row scrolls sideways, so make sure the current page's tab is in view */
+(function(){
+const nav = document.querySelector('nav.tabs'), a = nav && nav.querySelector('a.active');
+if(a && nav.scrollWidth > nav.clientWidth){ nav.scrollLeft = Math.max(0, a.offsetLeft - 20); }
+})();
 </script>
 </body>
 </html>
