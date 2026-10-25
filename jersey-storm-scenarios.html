@@ -915,7 +915,7 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 <span class="fb-icon" aria-hidden="true">
 <svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
 </span>
-<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings &middot; <a href="#" class="fb-about-link" id="aboutOpen">About this site &amp; disclaimer &#9656;</a></span>
+<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings</span>
 </div>
 <details class="about-box" id="aboutBox">
 <summary>ABOUT THIS SITE &amp; DISCLAIMER</summary>
@@ -975,10 +975,6 @@ const opts = { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', secon
 document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-GB', opts).format(d) + ' GMT/BST';
 }
 tickClock(); setInterval(tickClock, 1000);
-(function(){
-const a = document.getElementById('aboutOpen'), box = document.getElementById('aboutBox');
-if(a && box) a.addEventListener('click', function(e){ e.preventDefault(); box.open = !box.open; if(box.open) box.scrollIntoView({ behavior:'smooth', block:'nearest' }); });
-})();
 
 /* ================= STORM SCENARIOS =================
    Ensembles: each model run many times (members). For a chosen day we take each run's

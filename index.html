@@ -990,7 +990,7 @@ footer a:hover{ color:var(--cyan); }
 <span class="fb-icon" aria-hidden="true">
 <svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
 </span>
-<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings &middot; <a href="#" class="fb-about-link" id="aboutOpen">About this site &amp; disclaimer &#9656;</a></span>
+<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings</span>
 </div>
 <details class="about-box" id="aboutBox">
 <summary>ABOUT THIS SITE &amp; DISCLAIMER</summary>
@@ -5307,11 +5307,6 @@ if(!WF.pop) WF.pop = L.popup({ className:'st-pop-wrap', autoPan:false, maxWidth:
 WF.pop.setLatLng(ev.latlng).setContent(wfPointInfo(ev.latlng)).openOn(ST.map);
 WF.popLL = ev.latlng;
 }
-/* the "About this site & disclaimer" link in the banner opens the panel under it */
-(function(){
-const a = document.getElementById('aboutOpen'), box = document.getElementById('aboutBox');
-if(a && box) a.addEventListener('click', function(e){ e.preventDefault(); box.open = !box.open; if(box.open) box.scrollIntoView({ behavior:'smooth', block:'nearest' }); });
-})();
 function initStormTracker(){
 if(!document.getElementById('stPanel') || typeof L === 'undefined') return;
 stOwnMap();
