@@ -429,6 +429,8 @@ border:2px solid var(--amber); border-radius:14px; padding:22px 24px; margin-bot
 position:relative; overflow:hidden;
 }
 .storm-outlook-icon{ font-size:42px; flex:0 0 auto; line-height:1; filter:drop-shadow(0 0 10px rgba(255,176,32,0.6)); }
+.jx-label{ background:transparent; border:0; box-shadow:none; padding:0; color:#fff; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:800; letter-spacing:2px; text-shadow:0 0 3px #05080d, 0 0 6px #05080d, 0 0 9px #05080d; pointer-events:none; }
+.jx-label::before{ display:none; }
 .bolt-flash{ display:inline-block; animation: boltFlash 2.6s ease-in-out infinite; }
 @keyframes boltFlash{
 0%, 88%, 100%{ opacity:0.35; transform:scale(1); }
@@ -1045,7 +1047,7 @@ const wh = cur.wave_height;
 document.getElementById('seaHeroValue').innerHTML = wh.toFixed(1) + '<span class="unit">M</span>';
 document.getElementById('seaHeroValue').style.color = waveColor(wh);
 document.getElementById('seaHeroSub').textContent = waveLabel(wh) + ' \u00b7 ' + compass16(cur.wave_direction) + ' \u00b7 ' + cur.wave_period.toFixed(0) + 's period';
-document.getElementById('seaHeroIcon').textContent = wh < 0.6 ? '\ud83c\udf0a' : wh < 1.5 ? '\ud83c\udf0a\ud83d\udca8' : '\ud83c\udf0a\u26a1';
+document.getElementById('seaHeroIcon').textContent = wh < 0.6 ? '\ud83c\udf0a' : wh < 1.5 ? '\ud83c\udf0a\ud83d\udca8' : '\ud83c\udf0a\u26a0\ufe0f';
 
 document.getElementById('seaTempValue').innerHTML = cur.sea_surface_temperature.toFixed(1) + '<span class="unit">\u00b0C</span>';
 document.getElementById('seaTempValue').style.color = seaTempColor(cur.sea_surface_temperature);
@@ -1176,7 +1178,7 @@ html += `
 <div class="day-card sea-day-card">
 <div class="day-label">${i===0?'TODAY':dayName}</div>
 <div class="day-date">${dayDate}</div>
-<div class="day-icon">${wh < 0.6 ? '\ud83c\udf0a' : wh < 1.5 ? '\ud83c\udf0a\ud83d\udca8' : '\ud83c\udf0a\u26a1'}</div>
+<div class="day-icon">${wh < 0.6 ? '\ud83c\udf0a' : wh < 1.5 ? '\ud83c\udf0a\ud83d\udca8' : '\ud83c\udf0a\u26a0\ufe0f'}</div>
 <div class="day-temps"><span class="hi" style="color:${waveColor(wh)}">${wh.toFixed(1)}m</span></div>
 <div class="day-cond">${waveLabel(wh)}</div>
 <div class="day-row"><span>WAVE PERIOD</span><span class="v">${wp.toFixed(0)}s</span></div>
@@ -1758,7 +1760,13 @@ dragging:false, scrollWheelZoom:false, touchZoom:false, doubleClickZoom:false, b
 zoomSnap:0, minZoom:6, maxZoom:6
 }).setView([LAT, LON], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
-L.circleMarker([LAT,LON], {radius:4, color:'#ffb020', interactive:false}).addTo(map);
+/* Jersey marker: white on a dark halo so it stands out on blue, orange and red anomaly colours alike.
+   It lives in its own pane above the anomaly overlay (the overlay used to be drawn over it). */
+map.createPane('jerseyPane'); map.getPane('jerseyPane').style.zIndex = 650; map.getPane('jerseyPane').style.pointerEvents = 'none';
+L.circleMarker([LAT,LON], {pane:'jerseyPane', radius:12, color:'#05080d', weight:5, opacity:0.85, fill:false, interactive:false}).addTo(map);
+L.circleMarker([LAT,LON], {pane:'jerseyPane', radius:12, color:'#ffffff', weight:2, fill:false, interactive:false}).addTo(map);
+L.circleMarker([LAT,LON], {pane:'jerseyPane', radius:4, color:'#05080d', weight:2, fillColor:'#ffffff', fillOpacity:1, interactive:false}).addTo(map)
+.bindTooltip('JERSEY', {permanent:true, direction:'right', offset:[12,0], className:'jx-label', interactive:false});
 const statusEl = document.getElementById('sstMapStatus');
 if(!best){
 if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NO NOAA ANOMALY DATA AVAILABLE RIGHT NOW</span>';
