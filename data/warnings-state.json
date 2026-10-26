@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "b517c6496ecf",
+ "hash": "c19148cc7f3b",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -10,8 +10,8 @@
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "20:44 UTC Sunday 25 October",
-   "message": "W wind F6 backing S to SW F7 soon.",
+   "issued": "02:50 UTC Monday 26 October",
+   "message": "S to SW wind F7 imminent.",
    "missing": 0,
    "lower": 0
   },
@@ -31,11 +31,11 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-25T20:45:22.0325766Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 20:44 UTC Sunday 25 October W wind F6 backing S to SW F7 soon. Yellow - Tide Warning Issued at 8:4",
- "checkedAt": "2026-10-25T20:45:22.0325766Z",
- "lastAlertAt": "2026-10-25T20:50:03Z",
+ "lastFetch": "2026-10-26T02:56:30.7787032Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 02:50 UTC Monday 26 October S to SW wind F7 imminent. Yellow - Tide Warning Issued at 8:44 a.m. Su",
+ "checkedAt": "2026-10-26T02:56:30.7787032Z",
+ "lastAlertAt": "2026-10-26T03:00:06Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-10-25T20:50:03Z",
- "lastChange": "yellow Channel Islands Shipping Area Wind re-issued 20:44 UTC Sunday 25 October (was 14:42 UTC Sunday 25 October)"
+ "lastChangeAt": "2026-10-26T03:00:06Z",
+ "lastChange": "yellow Channel Islands Shipping Area Wind re-issued 02:50 UTC Monday 26 October (was 20:44 UTC Sunday 25 October)"
 }
