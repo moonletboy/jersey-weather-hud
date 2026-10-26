@@ -1,6 +1,13 @@
 {
- "updated": "2026-10-26T03:00:04Z",
+ "updated": "2026-10-26T08:19:56Z",
  "alerts": [
+  {
+   "at": "2026-10-26T08:19:56Z",
+   "kind": "warning",
+   "title": "JWC: Jersey Met YELLOW tide warning updated",
+   "body": "For Jersey. Issued 8:13 a.m. Monday 26 October. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.",
+   "sent": 949
+  },
   {
    "at": "2026-10-26T03:00:04Z",
    "kind": "warning",
@@ -133,13 +140,6 @@
    "title": "Jersey Weather Chat: damaging gusts expected soon",
    "body": "3 of 5 weather models show gusts of 71-82 mph in Jersey within the next 3 hours. Take care outdoors. Check gov.je for official Jersey Met warnings.",
    "sent": 939
-  },
-  {
-   "at": "2026-10-22T21:27:00Z",
-   "kind": "special",
-   "title": "Jersey Weather Chat: pressure falling very rapidly",
-   "body": "Pressure at Jersey Airport has fallen 6 hPa in 3 hours, a sign of a deepening storm nearby. Check gov.je for official Jersey Met warnings.",
-   "sent": ""
   }
  ]
 }
