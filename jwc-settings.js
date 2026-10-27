@@ -15,27 +15,19 @@
  *
  * Settings and saved report details are kept in this browser only (localStorage). Nothing here is sent to us.
  *
- * TO ADD A "WHAT'S NEW" LINE: add a line at the TOP of WHATS_NEW below (newest first, same format)
- * and upload this file. Anyone who hasn't seen it yet gets a small amber dot on the gear.
+ * WHAT'S NEW: the lines live in data/whats-new.json. Add one (or remove the newest) with the form on GitHub:
+ * Actions tab > Add What's New line > Run workflow. No need to edit this file. Anyone who hasn't seen the
+ * newest line yet gets a small amber dot on the gear.
  *
- * Links that open the panel from anywhere: add #settings, #about or #systems to a page address,
+ * Links that open the panel from anywhere: add #settings, #about, #systems or #whats-new to a page address,
  * or give a button the attribute data-jwc-open="about" (or "settings", "privacy", "systems", "news").
  */
 (function(){
   'use strict';
 
   /* ================= things you may want to edit ================= */
-  var WHATS_NEW = [
-    ['2026-10-27', 'New Settings panel: tap the gear at the end of the tab bar for About, privacy, help and more.'],
-    ['2026-10-27', 'Systems check (Settings \u203A About & help) shows how fresh each piece of data on the page is.'],
-    ['2026-10-27', 'Storm Reports can remember your name and parish on this device.'],
-    ['2026-10-27', 'Installed app: choose which page it opens on (Settings \u203A App).'],
-    ['2026-10-23', 'The Live Ops wind card now uses real Jersey Airport gusts for the last 12 hours.'],
-    ['2026-10-22', 'Latest alerts sent: read an alert again after swiping the notification away.'],
-    ['2026-10-22', 'Channel Islands Wind Tracker by VeryWeather added to Live Ops.'],
-    ['2026-10-21', 'Warning alerts: a notification when Jersey Met issues or upgrades a warning.'],
-    ['2026-10-20', 'Storm Scenarios opened to everyone, and the site moved to jerseyweatherchat.com.']
-  ];
+  /* What's New lines are in data/whats-new.json: add them with the "Add What's New line" form in GitHub's Actions tab */
+  var NEWS_URL = 'data/whats-new.json';
   var EMAIL = 'jwcliveops@gmail.com';
   var FACEBOOK = 'https://www.facebook.com/groups/jerseywxchat/';
   var PAGES = [
@@ -48,7 +40,8 @@
   ];
 
   /* ================= small helpers ================= */
-  var K_START = 'jwc-start-page', K_SEEN = 'jwc-news-seen', K_REMEMBER = 'jwc-remember-report', K_DETAILS = 'jwc-report-details';
+  var K_START = 'jwc-start-page', K_SEEN_ID = 'jwc-news-seen-id', K_REMEMBER = 'jwc-remember-report', K_DETAILS = 'jwc-report-details';
+  var K_SEEN = 'jwc-news-seen';   /* the first version remembered a date here; read once to carry it over, then removed */
   function lsGet(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k, v){ try{ window.localStorage.setItem(k, v); }catch(e){} }
   function lsDel(k){ try{ window.localStorage.removeItem(k); }catch(e){} }
@@ -238,6 +231,32 @@
     return { text:'All ' + total + ' data feeds working', level:'ok' };
   }
 
+  /* ================= 2b. What's new: the list lives in data/whats-new.json =================
+     Lines are added and removed with the "Add What's New line" form (GitHub > Actions), never in this file.
+     Every line has a number that only ever goes up, so each new line lights the amber dot on the gear,
+     even a second one on the same day. Loaded once per page, checked with the site so it's never out of date. */
+  var NEWS = { state:'loading', items:[] }, newsListeners = [];
+  (function(){
+    function done(){ for(var k = 0; k < newsListeners.length; k++){ try{ newsListeners[k](); }catch(e){} } }
+    /* uses the browser's own fetch, so this list isn't counted in the Systems check */
+    if(typeof pageFetch !== 'function'){ NEWS.state = 'fail'; return; }
+    try{
+      pageFetch.call(window, NEWS_URL, { cache:'no-cache' }).then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      }).then(function(j){
+        var raw = (j && Array.isArray(j.items)) ? j.items : [], list = [];
+        for(var i = 0; i < raw.length; i++){
+          var it = raw[i] || {}, id = Number(it.id), d = String(it.date || ''), t = String(it.text || '').replace(/\s+/g, ' ').trim();
+          if(id > 0 && /^\d{4}-\d\d-\d\d$/.test(d) && t) list.push({ id:id, date:d, text:t });
+        }
+        list.sort(function(a, b){ return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
+        NEWS.items = list;
+        NEWS.state = 'ok';
+      }).catch(function(){ NEWS.state = 'fail'; }).then(done);
+    }catch(e){ NEWS.state = 'fail'; }
+  })();
+
   /* ================= 3. styles (use each page's own colours) ================= */
   var CSS = [
     '.jwcs-navbar{display:flex;align-items:stretch;gap:8px}',
@@ -309,9 +328,16 @@
     '.jwcs-news time{font-size:9.5px;letter-spacing:1.2px;color:var(--dim,#6f8d99);font-weight:800;padding-top:2px;white-space:nowrap}',
     '.jwcs-news li.is-new time{color:var(--amber,#ffb020)}',
     '.jwcs-news li.is-new time::after{content:" \\2022";color:var(--amber,#ffb020)}',
+    '.jwcs-news li.jwcs-news-msg{display:block;color:var(--dim,#6f8d99)}',
     '.jwcs-more-btn{margin-top:12px}',
     '.jwcs-foot{margin:26px 0 0;padding-top:14px;border-top:1px solid var(--line,rgba(76,211,255,.14));font-size:10px;letter-spacing:1px;color:var(--dim,#6f8d99);line-height:1.7}',
     '.jwcs-foot b{color:var(--text,#e9f6f5)}',
+    /* "call 999": a phone link, so a tap on a phone opens the dialler with 999 filled in (the caller still presses Call) */
+    '.jwcs-sos{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin:-8px 0 -2px;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text,#e9f6f5);text-decoration:none}',
+    '.jwcs-sos svg{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:var(--red,#ff4b5c);stroke-width:1.8;stroke-linejoin:round}',
+    'a.jwcs-sos b,.jwcs-sheet a.jwcs-tel{color:var(--red,#ff4b5c);font-weight:800;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}',
+    'a.jwcs-sos:hover b,.jwcs-sheet a.jwcs-tel:hover{text-decoration-thickness:2px}',
+    '.jwcs-sheet a.jwcs-tel{display:inline-block;padding:8px 6px;margin:-8px -6px}',
     '.jwcs-prose{font-size:11px;line-height:1.75;letter-spacing:.3px;color:var(--text,#e9f6f5);padding-top:2px}',
     '.jwcs-prose p{margin:0 0 8px}',
     '.jwcs-prose ul{margin:0;padding-left:18px}',
@@ -351,6 +377,7 @@
   /* ================= 4. icons ================= */
   var GEAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.76,10.07 L21.86,9.37 L21.86,14.63 L19.76,13.93 L18.85,16.13 L20.83,17.11 L17.11,20.83 L16.13,18.85 L13.93,19.76 L14.63,21.86 L9.37,21.86 L10.07,19.76 L7.87,18.85 L6.89,20.83 L3.17,17.11 L5.15,16.13 L4.24,13.93 L2.14,14.63 L2.14,9.37 L4.24,10.07 L5.15,7.87 L3.17,6.89 L6.89,3.17 L7.87,5.15 L10.07,4.24 L9.37,2.14 L14.63,2.14 L13.93,4.24 L16.13,5.15 L17.11,3.17 L20.83,6.89 L18.85,7.87Z"/><circle cx="12" cy="12" r="3.4"/></svg>';
   var CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  var PHONE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.6l2.6.4 1.3 4.2-2.2 1.6c1.1 2.5 3 4.4 5.4 5.4l1.6-2.2 4.2 1.3.4 2.6c.1 1-.6 1.9-1.6 2.1C10.6 20 4 13.4 5.1 5.2c.2-1 1.1-1.7 2.1-1.6z"/></svg>';
   var FB_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff" aria-hidden="true"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>';
 
   /* ================= 5. the panel's contents ================= */
@@ -370,7 +397,7 @@
     '<li><b>Warning alerts are automated.</b> If you tap ALERT ME, this device gets a notification when our checker spots a new or upgraded Jersey Met warning on gov.je. It can lag behind or miss one, and it never replaces the official warning. We store the anonymous push address your phone gives us, plus the browser type and when you signed up &mdash; no name, email or location &mdash; and TURN OFF removes it.</li>' +
     '<li><b>Special weather messages to your phone are a responsibility we take seriously.</b> A post on this site is something you choose to read; a notification on your phone is not, so we hold ourselves to a higher standard and only send one when we believe it genuinely matters. Our system checks the live data on this site around the clock &mdash; airport observations from Jersey, Guernsey and Alderney, local weather stations, forecast models, air pressure, and tides with wave heights &mdash; against set thresholds, such as gusts of 70&nbsp;mph or more, or big waves arriving at high tide. Reaching a threshold never sends anything on its own: it alerts the site&rsquo;s admin, who checks the readings and decides whether a message is warranted. Every suggestion, the readings behind it, the decision made and the exact message sent are recorded, so we can be held to account. Occasionally we may send a message without a threshold being met &mdash; for example to pass on important official advice &mdash; and those are recorded too. A special message is never an official warning: Jersey Met remains the authority.</li>' +
     '<li><b>Privacy.</b> See <a href="#" data-jwcs-go="privacy">Privacy &amp; cookies</a> for what little we hold and how to see or delete it.</li>' +
-    '<li><b>In an emergency call 999.</b></li>' +
+    '<li><b>In an emergency call <a class="jwcs-tel" href="tel:999" aria-label="Call 999">999</a>.</b></li>' +
     '</ul></div>';
 
   var PRIVACY_HTML =
@@ -406,7 +433,7 @@
       '<a class="jwcs-nav" href="alerts-help.html"><span><b>Step-by-step help</b><small>Warning alerts, installing the app, fixing problems</small></span>' + CHEV + '</a>' +
       '<a class="jwcs-nav" id="jwcs-report" href="mailto:' + EMAIL + '"><span><b>Report a problem</b><small>Email ' + EMAIL + ' &middot; the systems check is added for you</small></span>' + CHEV + '</a>' +
       '<a class="jwcs-nav" href="' + FACEBOOK + '" target="_blank" rel="noopener"><span><b>Jersey Weather Chat on Facebook</b><small>Chat with others, share photos and reports</small></span>' + CHEV + '</a></div>' +
-    '<p class="jwcs-foot"><b>In an emergency call 999.</b><br>JERSEY WEATHER CHAT &middot; VOLUNTEER-RUN &middot; SINCE 2011</p>';
+    '<p class="jwcs-foot"><a class="jwcs-sos" href="tel:999">' + PHONE + '<span>In an emergency call <b>999</b></span></a><br>JERSEY WEATHER CHAT &middot; VOLUNTEER-RUN &middot; SINCE 2011</p>';
 
   var SYSTEMS_HTML =
     '<p class="jwcs-intro" id="jwcs-sys-intro"></p>' +
@@ -419,20 +446,62 @@
   var TITLES = { main:'SETTINGS', about:'ABOUT & DISCLAIMER', privacy:'PRIVACY & COOKIES', systems:'SYSTEMS CHECK', news:'WHAT\u2019S NEW' };
 
   /* ================= 6. building the gear and the panel ================= */
-  var layer, sheet, titleEl, backBtn, headIco, gearBtn, views = {}, current = 'main', lastFocus = null, sysTimer = null, newsSeenBefore = '';
+  var layer, sheet, titleEl, backBtn, headIco, gearBtn, views = {}, current = 'main', lastFocus = null, sysTimer = null;
+  var newsBefore = null, newsMarked = false;   /* the newest line this device had seen when the panel opened */
 
-  function newsUnseen(){ var seen = lsGet(K_SEEN) || ''; return WHATS_NEW.length && WHATS_NEW[0][0] > seen; }
+  function newsMaxId(){ var m = 0; for(var i = 0; i < NEWS.items.length; i++){ if(NEWS.items[i].id > m) m = NEWS.items[i].id; } return m; }
+  /* the newest line this device has seen: a number, or null if Settings has never been opened here */
+  function newsSeenId(){
+    var v = lsGet(K_SEEN_ID);
+    if(v && /^\d+$/.test(v)) return +v;
+    /* carried over from the first version, which remembered a date and had lines 1-9 built in:
+       lines up to that date count as seen, but never a line added after that version */
+    var old = lsGet(K_SEEN);
+    if(old){
+      var m = 0;
+      for(var i = 0; i < NEWS.items.length; i++){ var it = NEWS.items[i]; if(it.id <= 9 && it.date <= old && it.id > m) m = it.id; }
+      return m;
+    }
+    return null;
+  }
+  function newsUnseen(){
+    if(NEWS.state !== 'ok' || !NEWS.items.length) return false;
+    var s = newsSeenId();
+    return s === null || newsMaxId() > s;
+  }
+  /* when the panel opens (or the list arrives while it is open): note what was new, then count it all as seen */
+  function newsMarkSeen(){
+    if(newsMarked || NEWS.state !== 'ok') return;
+    newsMarked = true;
+    newsBefore = newsSeenId();
+    if(NEWS.items.length){ lsSet(K_SEEN_ID, String(newsMaxId())); lsDel(K_SEEN); }
+    if(gearBtn) gearBtn.classList.remove('jwcs-has-news');
+  }
   function renderNews(listId, max){
     var ul = document.getElementById(listId); if(!ul) return;
-    var cutoff = newsSeenBefore || '', h = '';
-    var newest = WHATS_NEW.length ? WHATS_NEW[0][0] : '';
-    for(var i = 0; i < WHATS_NEW.length && i < max; i++){
-      var d = WHATS_NEW[i][0];
-      var isNew = cutoff ? d > cutoff : d === newest;      /* first visit: only the latest day counts as new */
-      h += '<li class="' + (isNew ? 'is-new' : '') + '"><time datetime="' + d + '">' + shortDate(d) + '</time><span>' + esc(WHATS_NEW[i][1]) + '</span></li>';
+    if(NEWS.state !== 'ok' || !NEWS.items.length){
+      ul.innerHTML = '<li class="jwcs-news-msg">' + (NEWS.state === 'loading' ? 'Loading the latest updates\u2026' :
+        NEWS.state === 'fail' ? 'The list of updates didn\u2019t load just now. It will try again when you next open a page.' : 'No updates yet.') + '</li>';
+      return;
+    }
+    var newest = NEWS.items[0].date, h = '';
+    for(var i = 0; i < NEWS.items.length && i < max; i++){
+      var it = NEWS.items[i];
+      var isNew = newsBefore === null ? it.date === newest : it.id > newsBefore;   /* first visit: only the latest day counts as new */
+      h += '<li class="' + (isNew ? 'is-new' : '') + '"><time datetime="' + it.date + '">' + shortDate(it.date) + '</time><span>' + esc(it.text) + '</span></li>';
     }
     ul.innerHTML = h;
   }
+  /* the list arrives a moment after the page starts: update the dot, or the open panel */
+  newsListeners.push(function(){
+    if(layer && !layer.hidden){
+      newsMarkSeen();
+      renderNews('jwcs-news-top', 3);
+      if(current === 'news') renderNews('jwcs-news-all', 99);
+    } else if(gearBtn){
+      gearBtn.classList.toggle('jwcs-has-news', newsUnseen());
+    }
+  });
   function cookieState(){
     var el = document.getElementById('jwcs-cookie-state'); if(!el) return;
     var c = null; try{ c = window.jwcCookieConsent && window.jwcCookieConsent.get(); }catch(e){}
@@ -494,13 +563,12 @@
     if(!layer) return;
     if(layer.hidden){
       lastFocus = document.activeElement;
-      newsSeenBefore = lsGet(K_SEEN) || '';
       layer.hidden = false;
       document.body.style.overflow = 'hidden';
       if(gearBtn) gearBtn.setAttribute('aria-expanded', 'true');
+      newsMarked = false;
+      newsMarkSeen();
       renderNews('jwcs-news-top', 3);
-      if(WHATS_NEW.length) lsSet(K_SEEN, WHATS_NEW[0][0]);
-      if(gearBtn) gearBtn.classList.remove('jwcs-has-news');
       clearInterval(sysTimer);
       sysTimer = setInterval(renderSystems, 5000);
     }
