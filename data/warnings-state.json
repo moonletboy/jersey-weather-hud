@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "dcaa06107448",
+ "hash": "",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -12,15 +12,15 @@
    "sea": true,
    "issued": "14:31 UTC Tuesday 27 October",
    "message": "W wind F6 continuing.",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
- "source": "gov.je data feed",
+ "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-10-27T14:33:31.7460047Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 14:31 UTC Tuesday 27 October W wind F6 continuing.",
- "checkedAt": "2026-10-27T14:33:31.7460047Z",
+ "lastFetch": "2026-10-27T20:58:15.236Z",
+ "snippet": "",
+ "checkedAt": "2026-10-27T20:58:15.236Z",
  "lastAlertAt": "2026-10-27T14:35:13Z",
  "lastAlertKind": "reissued",
  "lastChangeAt": "2026-10-27T14:35:13Z",
