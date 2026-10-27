@@ -1772,8 +1772,22 @@ async function initSstAnomalyMap(best){
 const map = L.map('sstAnomalyMap', {
 zoomControl:false, attributionControl:false,
 dragging:false, scrollWheelZoom:false, touchZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false,
-zoomSnap:0, minZoom:6, maxZoom:6
-}).setView([LAT, LON], 6);
+zoomSnap:0, minZoom:6, maxZoom:9
+});
+/* The NOAA grid only spans 12W to 8E. On wide (PC) screens a fixed zoom 6 leaves blank strips either side,
+   so pick the smallest zoom at which the data still fills the frame, centred on Jersey. Phones stay at 6. */
+function sstFitZoom(){
+const w = document.getElementById('sstAnomalyMap').clientWidth || 800;
+const halfDeg = Math.min(LON + 12, 8 - LON) - 0.15; // nearest data edge to Jersey, with a small safety margin
+const z = Math.log2((w/2) * 360 / (halfDeg * 256));
+return Math.min(9, Math.max(6, z));
+}
+map.setView([LAT, LON], sstFitZoom(), {animate:false});
+let sstResizeTimer = null;
+window.addEventListener('resize', () => {
+clearTimeout(sstResizeTimer);
+sstResizeTimer = setTimeout(() => { map.invalidateSize(); map.setView([LAT, LON], sstFitZoom(), {animate:false}); }, 200);
+});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', {maxZoom:10}).addTo(map);
 /* Jersey marker: white on a dark halo so it stands out on blue, orange and red anomaly colours alike.
    It lives in its own pane above the anomaly overlay (the overlay used to be drawn over it). */
