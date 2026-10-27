@@ -29,6 +29,8 @@
   /* What's New lines are in data/whats-new.json: add them with the "Add What's New line" form in GitHub's Actions tab */
   var NEWS_URL = 'data/whats-new.json';
   var EMAIL = 'jwcliveops@gmail.com';
+  /* the Apps Script web app that keeps the warning-alert list (the same address sw.js uses) */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
   var FACEBOOK = 'https://www.facebook.com/groups/jerseywxchat/';
   var PAGES = [
     ['index.html', 'Live Ops'],
@@ -312,6 +314,23 @@
     '.jwcs-btn{flex:0 0 auto;min-height:40px;padding:8px 14px;font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:800;letter-spacing:1.5px;border:1px solid var(--line,rgba(76,211,255,.14));border-radius:7px;background:transparent;color:var(--cyan,#4cd3ff);cursor:pointer}',
     '.jwcs-btn:hover{border-color:var(--cyan,#4cd3ff);background:rgba(76,211,255,.08)}',
     '.jwcs-btn[hidden]{display:none}',
+    '.jwcs-btn.amber{color:#05080d;background:var(--amber,#ffb020);border-color:var(--amber,#ffb020)}',
+    '.jwcs-btn.cyan{color:#05080d;background:var(--cyan,#4cd3ff);border-color:var(--cyan,#4cd3ff)}',
+    '.jwcs-btn.amber:hover,.jwcs-btn.cyan:hover{filter:brightness(1.1)}',
+    '.jwcs-btn.ghost{color:var(--dim,#6f8d99);border-color:var(--dim2,#3a4e58)}',
+    '.jwcs-btn.ghost:hover{color:var(--text,#e9f6f5);border-color:var(--text,#e9f6f5);background:transparent}',
+    '.jwcs-btn:disabled{opacity:.6;cursor:wait;filter:none}',
+    /* warning alerts: status line, as in the mock-up */
+    '.jwcs-status{display:flex;align-items:center;gap:9px;margin:0 0 6px;font-size:11px;letter-spacing:1.5px;color:var(--text,#e9f6f5)}',
+    '.jwcs-status i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--amber,#ffb020)}',
+    '.jwcs-status b{font-weight:800;color:var(--amber,#ffb020)}',
+    '.jwcs-status.on i{background:var(--green,#2de1a0);box-shadow:0 0 6px var(--green,#2de1a0)}',
+    '.jwcs-status.on b{color:var(--green,#2de1a0)}',
+    '.jwcs-status.bad i{background:var(--red,#ff4b5c)}',
+    '.jwcs-status.bad b{color:var(--red,#ff4b5c)}',
+    '.jwcs-desc b{color:var(--text,#e9f6f5)}',
+    '.jwcs-desc .fix{display:block;margin-top:6px;color:var(--dim,#6f8d99)}',
+    '.jwcs-group[hidden]{display:none}',
     '.jwcs-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}',
     '.jwcs-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;width:100%;padding:9px 0;border:0;border-top:1px solid var(--line,rgba(76,211,255,.14));background:transparent;color:var(--text,#e9f6f5);font-family:"JetBrains Mono",monospace;font-size:12px;text-align:left;text-decoration:none;cursor:pointer}',
     '.jwcs-nav.first{border-top:0}',
@@ -423,8 +442,20 @@
     '<div class="jwcs-group"><div class="jwcs-ghead"><h3>WHAT&rsquo;S NEW</h3><span class="jwcs-bar"></span></div>' +
       '<ul class="jwcs-news" id="jwcs-news-top"></ul>' +
       '<button type="button" class="jwcs-btn jwcs-more-btn" data-jwcs-go="news">ALL UPDATES</button></div>' +
+    /* hidden until data/push-config.json has loaded (see section 7b) */
+    '<div class="jwcs-group" id="jwcs-alerts" hidden><div class="jwcs-ghead"><h3>WARNING ALERTS</h3><span class="jwcs-bar"></span></div>' +
+      '<div class="jwcs-status" id="jwcs-al-status"><i></i><b>WARNING ALERTS</b></div>' +
+      '<p class="jwcs-desc" id="jwcs-al-text"></p>' +
+      '<div class="jwcs-acts"><button type="button" class="jwcs-btn amber" id="jwcs-al-on" hidden>ALERT ME</button>' +
+      '<button type="button" class="jwcs-btn cyan" id="jwcs-al-test" hidden>SEND A TEST</button>' +
+      '<button type="button" class="jwcs-btn ghost" id="jwcs-al-off" hidden>TURN OFF</button></div>' +
+      '<div style="margin-top:12px">' +
+      '<a class="jwcs-nav" id="jwcs-al-log" href="index.html#alerts"><span><b>Latest alerts sent</b><small>Read an alert again after the notification has gone</small></span>' + CHEV + '</a>' +
+      '<a class="jwcs-nav" id="jwcs-al-help" href="alerts-help.html"><span><b>Help for your phone or computer</b><small>Switching alerts on, and what to do if they don&rsquo;t arrive</small></span>' + CHEV + '</a></div></div>' +
     '<div class="jwcs-group"><div class="jwcs-ghead"><h3>APP</h3><span class="jwcs-bar"></span></div>' +
-      '<div class="jwcs-row first"><div class="jwcs-txt"><label class="jwcs-label" for="jwcs-start">Start page</label><p class="jwcs-desc">The page the app opens on when you start it from your home screen.</p></div>' +
+      '<div class="jwcs-row first" id="jwcs-inst"><div class="jwcs-txt"><span class="jwcs-label" id="jwcs-inst-lbl">Install Jersey Weather Chat</span><p class="jwcs-desc" id="jwcs-inst-text">Opens full-screen from your home screen, like any other app. No app store needed.</p></div>' +
+      '<button type="button" class="jwcs-btn cyan" id="jwcs-inst-btn" hidden>INSTALL</button></div>' +
+      '<div class="jwcs-row"><div class="jwcs-txt"><label class="jwcs-label" for="jwcs-start">Start page</label><p class="jwcs-desc">The page the app opens on when you start it from your home screen.</p></div>' +
       '<select class="jwcs-select" id="jwcs-start">' + startOptions() + '</select></div></div>' +
     '<div class="jwcs-group"><div class="jwcs-ghead"><h3>ABOUT &amp; HELP</h3><span class="jwcs-bar"></span></div>' +
       '<button type="button" class="jwcs-nav first" data-jwcs-go="about"><span><b>About &amp; disclaimer</b><small>Volunteer-run &middot; not official warnings &middot; Jersey Met is the authority</small></span>' + CHEV + '</button>' +
@@ -539,7 +570,8 @@
     box.innerHTML = h;
   }
   function mailtoHref(){
-    var lines = ['Page: ' + location.href.split('#')[0], 'When: ' + new Date().toString().slice(0, 24), 'Device: ' + navigator.userAgent.slice(0, 160), '', 'Systems check:'];
+    var lines = ['Page: ' + location.href.split('#')[0], 'When: ' + new Date().toString().slice(0, 24), 'Device: ' + navigator.userAgent.slice(0, 160),
+                 'Warning alerts: ' + (AL.state || 'not loaded') + ' - opened ' + (standalone() ? 'in the installed app' : 'in a browser'), '', 'Systems check:'];
     for(var i = 0; i < FEED_ORDER.length; i++){ var r = FEEDS[FEED_ORDER[i]]; lines.push('- ' + r.name + ': ' + feedVerdict(r).toUpperCase() + ' - ' + feedDetail(r)); }
     lines.push('', 'What went wrong (please describe):', '');
     var body = lines.join('\n');
@@ -745,12 +777,382 @@
     fill();
   }
 
+  /* ================= 7b. Warning alerts and installing the app =================
+     One copy of the code, used by Settings on every page and by the two bars on Live Ops (the bars keep their
+     look; their old code in index.html has gone). ALERT ME asks for notification permission, makes a push
+     subscription for this device and saves it to the Google Sheet through the Apps Script; a GitHub Action then
+     pushes to every saved device when Jersey Met issues a new or upgraded warning. Nothing shows until
+     data/push-config.json (the public VAPID key) has loaded.
+     Awkward cases: iPhone/iPad only allow web push from the home-screen app (iOS 16.4+); Facebook's in-app
+     browser can't subscribe; blocked notifications have to be allowed again in the browser or phone settings. */
+  var UA = navigator.userAgent;
+  var IS_IOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var IS_ANDROID = /Android/i.test(UA);
+  var IN_FACEBOOK = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(UA);      /* Facebook's built-in browser can't install apps or take alerts */
+  var CAN_PUSH = typeof Promise !== 'undefined' && ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  var K_RESAVED = 'jwc-alert-saved';   /* when this device's alert subscription was last re-sent to the sheet */
+  function standalone(){ return !!((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true); }
+  function deviceAnchor(){ return IS_IOS ? 'iphone' : IS_ANDROID ? 'android' : /Mac/.test(UA) ? 'mac' : /Windows/i.test(UA) ? 'windows' : ''; }
+
+  var AL = { state:'', busy:'', note:'', key:'' }, alertListeners = [];
+  /* state: '' (not loaded yet) | on | off | facebook | ios-install | denied | unconfirmed | unsupported
+     busy:  '' | on | off | test | retry      note: a message that replaces the usual text after something happens
+     open:  true asks the Live Ops bar to open its details, false to close them */
+  function alertChanged(open){ for(var i = 0; i < alertListeners.length; i++){ try{ alertListeners[i](open); }catch(e){} } }
+  var GOV_LINK = '<a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">official Jersey Met warnings page</a>';
+  var AL_ABOUT = 'The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the ' + GOV_LINK + '.';
+  function fixTips(){
+    if(IS_IOS) return 'iPhone/iPad: <b>Settings</b> \u2192 <b>Notifications</b> \u2192 <b>JWC Weather</b> \u2192 Allow Notifications, and check Focus / Do Not Disturb is off.';
+    if(IS_ANDROID) return 'Android: phone <b>Settings</b> \u2192 <b>Apps</b> \u2192 <b>Chrome</b> \u2192 <b>Notifications</b> must be on, and <b>Battery</b> \u2192 Chrome \u2192 <b>Unrestricted</b>. Some phones also have a power saver (e.g. &ldquo;DuraSpeed&rdquo; or &ldquo;background app management&rdquo;) that must allow Chrome.';
+    if(/Mac/.test(UA)) return 'Mac: <b>System Settings</b> \u2192 <b>Notifications</b> \u2192 your browser \u2192 Allow, and check Focus is off.';
+    return 'Windows: <b>Settings</b> \u2192 <b>System</b> \u2192 <b>Notifications</b>: Do not disturb off and your browser switched on. Notifications only arrive while the browser is running.';
+  }
+  function failText(e){
+    return '<b>Sorry, that didn&rsquo;t work</b> &mdash; this device couldn&rsquo;t reach our server (' + esc(e && e.message ? e.message : 'unknown error') +
+      '). Check your internet connection, turn off any VPN or ad-blocker for a moment, then try again.';
+  }
+  /* what each state says: colour, the Live Ops bar's one-line summary, the Settings status, the main button, the details */
+  function alertInfo(st){
+    var s = {
+      on:          ['on', '<b>ALERTS ON</b><span class="alert-dim"> &middot; this device</span>', 'ON FOR THIS DEVICE', '',
+                    'You&rsquo;ll get a notification when Jersey Met issues a <b>new</b> warning or <b>upgrades</b> one (not for warnings already in force). ' + AL_ABOUT],
+      off:         ['off', '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; get notified of Jersey Met warnings</span>', 'OFF ON THIS DEVICE', 'ALERT ME',
+                    'Tap ALERT ME to get a notification on this device whenever Jersey Met issues a new weather warning or upgrades one. ' + AL_ABOUT],
+      facebook:    ['off', '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; open in your browser to switch on</span>', 'OPEN IN YOUR BROWSER TO SWITCH ON', '',
+                    'Alerts can&rsquo;t be switched on inside Facebook&rsquo;s browser. ' + (IS_IOS
+                      ? 'Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then tap ALERT ME there.'
+                      : 'Tap <b>\u22EE</b> (top right), choose <b>Open in Chrome</b>, then tap ALERT ME there.')],
+      'ios-install': ['off', '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; add to Home Screen first</span>', 'ADD TO HOME SCREEN FIRST', '',
+                    'On iPhone and iPad, alerts only work from the home-screen app: tap <b>Share</b> (\u2191), then <b>Add to Home Screen</b>, open the app and tap ALERT ME there (needs iOS 16.4 or newer).'],
+      denied:      ['bad', '<b>ALERTS BLOCKED</b><span class="alert-dim"> &middot; tap to fix</span>', 'BLOCKED ON THIS DEVICE', 'ALERT ME',
+                    'Notifications are blocked for this site, so alerts can&rsquo;t be sent. To allow them: ' + (standalone() && IS_IOS
+                      ? 'open iPhone <b>Settings</b> \u2192 <b>Notifications</b> \u2192 <b>JWC Weather</b> and switch them on, then tap ALERT ME.'
+                      : IS_ANDROID
+                      ? 'tap the <b>lock</b> (or tune) icon next to the address, then <b>Permissions</b> \u2192 <b>Notifications</b> \u2192 Allow, then tap ALERT ME.'
+                      : 'click the <b>lock</b> (or tune) icon next to the address, set <b>Notifications</b> to Allow, then tap ALERT ME.')],
+      unconfirmed: ['off', '<b>ALERTS ON?</b><span class="alert-dim"> &middot; not confirmed &middot; tap RETRY</span>', 'ON, BUT NOT CONFIRMED', 'RETRY',
+                    'This device has alerts switched on, but it couldn&rsquo;t reach our server to add itself to the alert list, so alerts may not arrive yet. Check your internet connection, turn off any VPN or ad-blocker for a moment, then tap RETRY.'],
+      unsupported: ['off', '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; not available in this browser</span>', 'NOT AVAILABLE IN THIS BROWSER', '',
+                    'This browser can&rsquo;t receive notifications. Chrome, Edge or Firefox on a phone or computer can.']
+    }[st];
+    return s ? { tone:s[0], sum:s[1], status:s[2], btn:s[3], text:s[4] } : null;
+  }
+
+  function b64ToBytes(b64){
+    var pad = '===='.slice(0, (4 - b64.length % 4) % 4);
+    var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    var out = new Uint8Array(raw.length);
+    for(var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  /* the site's service worker (sw.js), which every page registers; gives up rather than waiting for ever */
+  function swReady(ms){
+    return new Promise(function(resolve, reject){
+      var t = setTimeout(function(){ reject(new Error('the site\u2019s background helper didn\u2019t start')); }, ms);
+      navigator.serviceWorker.ready.then(function(r){ clearTimeout(t); resolve(r); }, function(e){ clearTimeout(t); reject(e); });
+    });
+  }
+  function currentSub(ms){ return swReady(ms).then(function(reg){ return reg.pushManager.getSubscription(); }); }
+  function localNote(title, body, tag){
+    return swReady(10000).then(function(reg){ return reg.showNotification(title, { body:body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag:tag }); });
+  }
+  /* works with both the old (callback) and new (promise) way browsers ask for permission */
+  function askPermission(){
+    return new Promise(function(resolve){
+      var p = Notification.requestPermission(function(r){ resolve(r); });
+      if(p && p.then) p.then(resolve, function(){ resolve('default'); });
+    });
+  }
+  /* Saves this device's subscription to the alert list. Tries twice normally; then once more without following
+     Google's redirect - the script has already saved the subscription by the time it redirects, and the redirect
+     is the step most often blocked (VPNs, ad-blockers, Safari privacy settings). */
+  function saveSub(sub){
+    var body = JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:UA, standalone:standalone(), page:location.pathname, owner:(location.hash === '#admin') });
+    var lastErr = null;
+    function attempt(i){
+      return pageFetch.call(window, API_URL, { method:'POST', body:body }).then(function(res){ return res.json(); }).then(function(out){
+        if(out && out.status === 'ok') return true;
+        var err = new Error((out && out.message) || 'server said no'); err.server = true; throw err;
+      }).then(null, function(e){
+        if(e && e.server) throw e;                  /* the server answered and refused - retrying won't help */
+        lastErr = e;
+        return sleep(1500).then(function(){ return i < 1 ? attempt(i + 1) : lastTry(); });
+      });
+    }
+    function lastTry(){
+      return pageFetch.call(window, API_URL, { method:'POST', body:body, redirect:'manual' }).then(function(r){
+        if(r.type === 'opaqueredirect' || r.ok) return true;
+        throw lastErr || new Error('could not reach the server');
+      }, function(e){ throw lastErr || e || new Error('could not reach the server'); });
+    }
+    return attempt(0).then(function(ok){ lsSet(K_RESAVED, JSON.stringify({ e:sub.endpoint, t:Date.now() })); return ok; });
+  }
+  /* An existing subscription is re-sent now and then, so the sheet always has it and its "last seen" stays fresh
+     (and it is marked as the owner's when the page is opened with #admin). At most every 12 hours per device,
+     now that every page does this; if it fails, say so honestly. */
+  function resave(sub){
+    var last = {};
+    try{ last = JSON.parse(lsGet(K_RESAVED) || '{}') || {}; }catch(e){}
+    if(location.hash !== '#admin' && last.e === sub.endpoint && Date.now() - (Number(last.t) || 0) < 12 * 3600000) return;
+    saveSub(sub).then(null, function(e){
+      try{ console.warn('alert re-save failed', e); }catch(x){}
+      if(AL.state === 'on'){ AL.state = 'unconfirmed'; AL.note = ''; alertChanged(); }
+    });
+  }
+  function alertInit(){
+    if(typeof Promise === 'undefined' || typeof window.fetch !== 'function') return;
+    /* through the Systems check, as before ("Warning alerts set-up") */
+    window.fetch('data/push-config.json?t=' + Math.floor(Date.now() / 600000), { cache:'no-store' }).then(function(r){
+      if(!r.ok) throw new Error('no push-config');
+      return r.json();
+    }).then(function(cfg){
+      AL.key = (cfg && cfg.publicKey) || '';
+      if(!AL.key) return;                           /* alerts not switched on for the site - keep everything hidden */
+      if(IN_FACEBOOK && (IS_IOS || IS_ANDROID)) AL.state = 'facebook';
+      else if(!CAN_PUSH) AL.state = (IS_IOS && !standalone()) ? 'ios-install' : 'unsupported';
+      else if(Notification.permission === 'denied') AL.state = 'denied';
+      else{
+        /* normally answers in a moment; if the background helper is slow, show OFF for now and correct it later */
+        var settled = false;
+        var t = setTimeout(function(){ if(!settled && !AL.state){ AL.state = 'off'; alertChanged(); } }, 8000);
+        navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+          settled = true; clearTimeout(t);
+          if(AL.busy) return;
+          AL.state = sub ? 'on' : 'off'; alertChanged();
+          if(sub) resave(sub);
+        }, function(){ settled = true; clearTimeout(t); if(!AL.busy){ AL.state = 'off'; alertChanged(); } });
+        return;
+      }
+      alertChanged();
+    }).then(null, function(){});
+  }
+  function alertSubscribe(){
+    if(AL.busy || !CAN_PUSH || !AL.key) return;
+    AL.busy = 'on'; AL.note = ''; alertChanged();
+    var STOP = {};
+    askPermission().then(function(perm){         /* asked straight away, while the tap still counts (iPhone needs that) */
+      if(perm !== 'granted'){
+        AL.busy = ''; AL.state = (perm === 'denied') ? 'denied' : 'off'; AL.note = '';
+        alertChanged(AL.state === 'denied' ? true : undefined);
+        throw STOP;
+      }
+      return swReady(20000);
+    }).then(function(reg){
+      var keyBytes = b64ToBytes(AL.key);
+      return reg.pushManager.getSubscription().then(function(sub){
+        /* a subscription made with a different key is useless to the sender - replace it */
+        if(sub && sub.options && sub.options.applicationServerKey){
+          var have = new Uint8Array(sub.options.applicationServerKey), same = have.length === keyBytes.length;
+          for(var i = 0; same && i < have.length; i++) same = have[i] === keyBytes[i];
+          if(!same) return sub.unsubscribe().then(function(){ return null; });
+        }
+        return sub;
+      }).then(function(sub){ return sub || reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:keyBytes }); });
+    }).then(function(sub){
+      return saveSub(sub);
+    }).then(function(){
+      AL.busy = ''; AL.state = 'on'; AL.note = ''; alertChanged(false);
+      return localNote('Jersey Weather Chat', 'Warning alerts are ON for this device. You\u2019ll get a notification like this when Jersey Met issues a new or upgraded warning.', 'jwc-welcome')
+        .then(null, function(){ AL.note = 'Alerts are <b>ON</b>, but this device blocked a test notification. Check: <span class="fix">' + fixTips() + '</span>'; alertChanged(true); });
+    }, function(e){
+      if(e === STOP) return;
+      try{ console.error('alert subscribe failed', e); }catch(x){}
+      return currentSub(8000).then(null, function(){ return null; }).then(function(sub){
+        AL.busy = ''; AL.state = sub ? 'unconfirmed' : 'off';   /* the phone may have a push address that just didn't reach the list */
+        AL.note = failText(e); alertChanged(true);
+      });
+    });
+  }
+  function alertRetry(){
+    if(AL.busy) return;
+    AL.busy = 'retry'; alertChanged();
+    currentSub(10000).then(function(sub){
+      if(!sub){ AL.state = 'off'; AL.note = ''; return undefined; }
+      return saveSub(sub).then(function(){ AL.state = 'on'; AL.note = 'Done &mdash; this device is on the alert list. Tap SEND A TEST to check notifications show.'; return true; });
+    }).then(function(open){ AL.busy = ''; alertChanged(open); }, function(e){
+      AL.busy = ''; AL.state = 'unconfirmed'; AL.note = failText(e); alertChanged(true);
+    });
+  }
+  function alertOff(){
+    if(AL.busy) return;
+    AL.busy = 'off'; alertChanged();
+    currentSub(10000).then(function(sub){
+      if(!sub) return undefined;
+      return pageFetch.call(window, API_URL, { method:'POST', body:JSON.stringify({ action:'unsubscribe', endpoint:sub.endpoint }) })
+        .then(null, function(){}).then(function(){ return sub.unsubscribe(); });
+    }).then(null, function(e){ try{ console.error('alert unsubscribe failed', e); }catch(x){} }).then(function(){
+      lsDel(K_RESAVED);
+      AL.busy = ''; AL.state = 'off';
+      AL.note = 'Warning alerts are <b>off</b> for this device. Tap ALERT ME any time to switch them back on.';
+      alertChanged(true);
+    });
+  }
+  function alertTest(){
+    if(AL.busy) return;
+    AL.busy = 'test'; alertChanged();
+    localNote('Jersey Weather Chat: TEST', 'If you can see this, warning alerts will show on this device.', 'jwc-local-test-' + Date.now()).then(function(){
+      AL.note = 'Test sent. <b>Did a notification appear?</b> If yes, you&rsquo;re all set. If not, check: <span class="fix">' + fixTips() + '</span>';
+    }, function(e){
+      AL.note = '<b>This device blocked the test notification</b> (' + esc(e && e.message ? e.message : 'unknown') + '). Check: <span class="fix">' + fixTips() + '</span>';
+    }).then(function(){ AL.busy = ''; alertChanged(true); });
+  }
+  function alertMain(){ if(AL.state === 'unconfirmed') alertRetry(); else alertSubscribe(); }
+
+  /* the WARNING ALERTS group in Settings */
+  function wireAlertGroup(){
+    var g = document.getElementById('jwcs-alerts'); if(!g) return;
+    var st = document.getElementById('jwcs-al-status'), tx = document.getElementById('jwcs-al-text');
+    var on = document.getElementById('jwcs-al-on'), te = document.getElementById('jwcs-al-test'), off = document.getElementById('jwcs-al-off');
+    var help = document.getElementById('jwcs-al-help'), log = document.getElementById('jwcs-al-log');
+    if(help) help.href = 'alerts-help.html#' + deviceAnchor();
+    /* on Live Ops the "Latest alerts sent" panel is on this page: close Settings so it can be seen */
+    if(log) log.addEventListener('click', function(){ if(thisPage() === 'index.html') close(); });
+    function draw(){
+      var s = alertInfo(AL.state);
+      g.hidden = !s; if(!s) return;
+      var busyMain = AL.busy === 'on' || AL.busy === 'retry', extra = AL.state === 'on' || AL.state === 'unconfirmed';
+      st.className = 'jwcs-status ' + s.tone;
+      st.querySelector('b').textContent = AL.busy === 'on' ? 'SWITCHING ON\u2026' : s.status;
+      tx.innerHTML = AL.note || s.text;
+      on.hidden = !s.btn && !busyMain; on.textContent = busyMain ? 'WORKING\u2026' : s.btn; on.disabled = !!AL.busy;
+      te.hidden = off.hidden = !extra; te.disabled = off.disabled = !!AL.busy;
+      te.textContent = AL.busy === 'test' ? 'SENDING\u2026' : 'SEND A TEST';
+      off.textContent = AL.busy === 'off' ? 'WORKING\u2026' : 'TURN OFF';
+    }
+    on.addEventListener('click', alertMain);
+    te.addEventListener('click', alertTest);
+    off.addEventListener('click', alertOff);
+    alertListeners.push(draw); draw();
+  }
+  /* the slim warning-alerts bar on Live Ops (index.html keeps its markup and look) */
+  function wireAlertStrip(){
+    var strip = document.getElementById('alertBar'); if(!strip) return;
+    var head = document.getElementById('alertBarHead'), sum = document.getElementById('alertBarSum'), more = document.getElementById('alertBarMore');
+    var txt = document.getElementById('alertBarText'), btn = document.getElementById('alertBarBtn');
+    var tbtn = document.getElementById('alertBarTest'), obtn = document.getElementById('alertBarOff'), help = document.getElementById('alertBarHelp');
+    if(!head || !sum || !more || !txt || !btn || !tbtn || !obtn) return;
+    if(help) help.href = 'alerts-help.html#' + deviceAnchor();
+    function setOpen(o){ more.hidden = !o; head.setAttribute('aria-expanded', o ? 'true' : 'false'); strip.classList.toggle('is-open', o); }
+    function draw(open){
+      var s = alertInfo(AL.state);
+      if(!s){ strip.hidden = true; return; }
+      var busyMain = AL.busy === 'on' || AL.busy === 'retry', extra = AL.state === 'on' || AL.state === 'unconfirmed';
+      strip.classList.remove('is-on', 'is-off', 'is-bad');
+      strip.classList.add('is-' + s.tone);
+      sum.innerHTML = AL.busy === 'on' ? '<b>SWITCHING ON\u2026</b>' : s.sum;
+      btn.hidden = !s.btn && !busyMain; btn.textContent = busyMain ? 'WORKING\u2026' : s.btn; btn.disabled = !!AL.busy;
+      tbtn.hidden = obtn.hidden = !extra; tbtn.disabled = obtn.disabled = !!AL.busy;
+      tbtn.textContent = AL.busy === 'test' ? 'SENDING\u2026' : 'SEND A TEST';
+      obtn.textContent = AL.busy === 'off' ? 'WORKING\u2026' : 'TURN OFF';
+      txt.innerHTML = AL.note || s.text;
+      strip.hidden = false;
+      if(open === true || open === false) setOpen(open);
+    }
+    head.addEventListener('click', function(){ setOpen(more.hidden); });
+    btn.addEventListener('click', alertMain);
+    tbtn.addEventListener('click', alertTest);
+    obtn.addEventListener('click', alertOff);
+    alertListeners.push(draw); draw();
+  }
+
+  /* ---------- installing the app ----------
+     Chrome and Edge (Android, Windows, Mac) offer an install prompt once someone has used the site for a little
+     while: the INSTALL button opens it. iPhone/iPad: Share > Add to Home Screen. Inside the installed app this
+     says so instead. Facebook's in-app browser can't install anything. */
+  var INST = { mode:'', deferred:null }, instListeners = [];
+  function instChanged(){ for(var i = 0; i < instListeners.length; i++){ try{ instListeners[i](); }catch(e){} } }
+  (function(){
+    if(standalone()){ INST.mode = 'installed'; return; }
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); INST.deferred = e; INST.mode = 'prompt'; instChanged(); });
+    window.addEventListener('appinstalled', function(){ INST.deferred = null; INST.mode = 'installed-now'; instChanged(); });
+    if(IN_FACEBOOK && (IS_IOS || IS_ANDROID)) INST.mode = 'facebook';
+    else if(IS_IOS) INST.mode = 'ios';
+    else if(IS_ANDROID) setTimeout(function(){ if(!INST.deferred && !INST.mode){ INST.mode = 'android'; instChanged(); } }, 3000);
+    else INST.mode = 'computer';
+  })();
+  function instHow(m){
+    if(m === 'facebook') return IS_IOS
+      ? 'Facebook can\u2019t install apps. Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then in Safari tap <b>Share</b> \u2192 <b>Add to Home Screen</b>.'
+      : 'Facebook can\u2019t install apps. Tap <b>\u22EE</b> (top right), choose <b>Open in Chrome</b>, then tap <b>\u22EE</b> \u2192 <b>Add to Home screen</b> \u2192 <b>Install</b>.';
+    if(m === 'ios') return 'Tap the <b>Share</b> button (the square with an arrow, \u2191) at the bottom of the screen, then <b>Add to Home Screen</b>.';
+    if(m === 'android') return 'Tap Chrome\u2019s <b>\u22EE</b> menu (top right), then <b>Add to Home screen</b> (or <b>Install app</b>) and choose <b>Install</b> \u2014 not \u201CCreate shortcut\u201D.';
+    return 'In <b>Chrome</b> or <b>Edge</b>, click the install icon at the right-hand end of the address bar, or open the browser menu and choose <b>Install</b>. On a Mac in <b>Safari</b>: <b>File</b> \u2192 <b>Add to Dock</b>.';
+  }
+  function instPrompt(){
+    var d = INST.deferred;
+    if(!d) return Promise.resolve('none');
+    INST.deferred = null;
+    var fallback = IS_ANDROID ? 'android' : 'computer';
+    try{ d.prompt(); }catch(e){ INST.mode = fallback; instChanged(); return Promise.resolve('error'); }
+    return d.userChoice.then(function(c){
+      var out = (c && c.outcome) || '';
+      if(INST.mode !== 'installed-now') INST.mode = out === 'accepted' ? 'installed-now' : fallback;
+      instChanged(); return out;
+    }, function(){ INST.mode = fallback; instChanged(); return 'error'; });
+  }
+  /* the install row in Settings > APP */
+  function wireInstallRow(){
+    var lbl = document.getElementById('jwcs-inst-lbl'), tx = document.getElementById('jwcs-inst-text'), b = document.getElementById('jwcs-inst-btn');
+    if(!lbl || !tx || !b) return;
+    var how = false, DEF = 'Opens full-screen from your home screen, like any other app. No app store needed.';
+    function draw(){
+      var m = INST.mode || (IS_ANDROID ? 'android' : 'computer');
+      if(m === 'installed' || m === 'installed-now'){
+        lbl.textContent = m === 'installed' ? 'You\u2019re using the app' : 'App installed';
+        tx.textContent = m === 'installed' ? 'Jersey Weather Chat is installed on this device. Choose the page it opens on below.' : 'Open it from your home screen or app list.';
+        b.hidden = true; return;
+      }
+      if(m === 'prompt') how = false;
+      lbl.textContent = 'Install Jersey Weather Chat';
+      if(how){ tx.innerHTML = instHow(m); b.hidden = true; return; }
+      tx.textContent = DEF;
+      b.hidden = false; b.disabled = false; b.textContent = m === 'prompt' ? 'INSTALL' : 'HOW?';
+    }
+    b.addEventListener('click', function(){
+      if(INST.mode === 'prompt'){ b.disabled = true; instPrompt().then(draw, draw); return; }
+      how = true; draw();
+    });
+    instListeners.push(draw); draw();
+  }
+  /* the "Get the app" bar on Live Ops: hidden in the app, on computers without an install offer,
+     and for 30 days after someone taps its cross */
+  function wireAppStrip(){
+    var strip = document.getElementById('appBar'); if(!strip) return;
+    var btn = document.getElementById('appBarInstall'), txt = document.getElementById('appBarText'), x = document.getElementById('appBarDismiss');
+    if(!btn || !txt) return;
+    var gone = false, how = false;
+    try{ gone = (Date.now() - Number(lsGet('jwcAppDismissed') || 0)) < 30 * 86400000; }catch(e){}
+    function draw(){
+      var m = INST.mode;
+      if(gone || !m || m === 'installed' || m === 'installed-now' || m === 'computer'){ strip.hidden = true; return; }
+      if(how) return;                               /* leave the instructions on screen */
+      btn.hidden = false; btn.textContent = m === 'prompt' ? 'INSTALL' : 'HOW?';
+      strip.hidden = false;
+    }
+    btn.addEventListener('click', function(){
+      if(INST.mode === 'prompt'){ instPrompt().then(function(){ gone = true; draw(); }); return; }
+      txt.innerHTML = instHow(INST.mode); btn.hidden = true; how = true;
+    });
+    if(x) x.addEventListener('click', function(){ gone = true; strip.hidden = true; lsSet('jwcAppDismissed', String(Date.now())); });
+    instListeners.push(draw); draw();
+  }
+
   /* ================= 8. start-up ================= */
   function init(){
-    try{ buildSheet(); }catch(e){ return; }
-    try{ buildGear(); }catch(e){}
-    try{ wireOpeners(); }catch(e){}
+    var panel = true;
+    try{ buildSheet(); }catch(e){ panel = false; }
+    if(panel){
+      try{ buildGear(); }catch(e){}
+      try{ wireOpeners(); }catch(e){}
+      try{ wireAlertGroup(); }catch(e){}
+      try{ wireInstallRow(); }catch(e){}
+    }
     try{ wireReportForm(); }catch(e){}
+    /* the Live Ops bars work even if the panel couldn't be built */
+    try{ wireAlertStrip(); }catch(e){}
+    try{ wireAppStrip(); }catch(e){}
+    try{ alertInit(); }catch(e){}
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

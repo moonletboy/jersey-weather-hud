@@ -1062,289 +1062,32 @@ footer a:hover{ color:var(--cyan); }
 <span class="about-line-txt"><b>Volunteer-run</b> &middot; forecasts are computer models, not official warnings &middot; <b>Jersey Met</b> is the authority</span>
 <span class="about-line-go"><span>ABOUT &amp; DISCLAIMER</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
 </button>
-<div class="app-strip" id="appStrip" hidden>
+<div class="app-strip" id="appBar" hidden>
 <span class="app-ic"><img src="icons/icon-192.png" alt="" width="30" height="30"></span>
-<span class="app-txt" id="appStripText"><b>Get the Jersey Weather Chat app</b> &mdash; opens full-screen from your home screen, no app store needed.</span>
-<button type="button" class="app-btn" id="appInstall">INSTALL</button>
-<button type="button" class="app-x" id="appDismiss" aria-label="Not now">&times;</button>
+<span class="app-txt" id="appBarText"><b>Get the Jersey Weather Chat app</b> &mdash; opens full-screen from your home screen, no app store needed.</span>
+<button type="button" class="app-btn" id="appBarInstall">INSTALL</button>
+<button type="button" class="app-x" id="appBarDismiss" aria-label="Not now">&times;</button>
 </div>
-<script>
-/* ---------- "install as an app" strip ----------
-   Shown only where the site can be installed: Android / desktop Chrome and Edge offer an install
-   prompt (the INSTALL button opens it); on iPhone and iPad it explains Share > Add to Home Screen.
-   Hidden inside the installed app itself, and for 30 days after someone taps the cross. */
-(function(){
-const strip = document.getElementById('appStrip');
-if(!strip) return;
-const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-let dismissed = false;
-try{ dismissed = (Date.now() - Number(localStorage.getItem('jwcAppDismissed') || 0)) < 30 * 86400000; }catch(e){}
-if(standalone || dismissed) return;
-const ua = navigator.userAgent;
-const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const isAndroid = /Android/i.test(ua);
-const inFacebook = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(ua);      // Facebook's built-in browser can't install apps
-const btn = document.getElementById('appInstall'), txt = document.getElementById('appStripText');
-let deferred = null, mode = '';
-/* Chrome offers installation only after a visitor has tapped the page and stayed about 30 seconds;
-   when it does, the button becomes a one-tap INSTALL */
-window.addEventListener('beforeinstallprompt', function(e){
-e.preventDefault(); deferred = e; mode = 'prompt';
-btn.hidden = false; btn.textContent = 'INSTALL'; strip.hidden = false;
-});
-if(inFacebook && (isIOS || isAndroid)){ mode = 'facebook'; strip.hidden = false; btn.textContent = 'HOW?'; }
-else if(isIOS){ mode = 'ios'; strip.hidden = false; btn.textContent = 'HOW?'; }
-else if(isAndroid){ setTimeout(function(){ if(!deferred){ mode = 'android'; strip.hidden = false; btn.textContent = 'HOW?'; } }, 3000); }
-btn.addEventListener('click', function(){
-if(deferred){
-deferred.prompt();
-deferred.userChoice.then(function(){ deferred = null; strip.hidden = true; }, function(){ deferred = null; });
-return;
-}
-if(mode === 'facebook'){
-txt.innerHTML = isIOS ? 'Facebook can\u2019t install apps. Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then in Safari tap <b>Share</b> \u2192 <b>Add to Home Screen</b>.'
-: 'Facebook can\u2019t install apps. Tap <b>\u22ee</b> (top right), choose <b>Open in Chrome</b>, then tap <b>\u22ee</b> \u2192 <b>Add to Home screen</b> \u2192 <b>Install</b>.';
-} else if(mode === 'ios'){
-txt.innerHTML = 'Tap the <b>Share</b> button (the square with an arrow, \u2191) at the bottom of the screen, then <b>Add to Home Screen</b>.';
-} else if(mode === 'android'){
-txt.innerHTML = 'Tap Chrome\u2019s <b>\u22ee</b> menu (top right), then <b>Add to Home screen</b> (or <b>Install app</b>) and choose <b>Install</b> \u2014 not \u201cCreate shortcut\u201d.';
-}
-btn.hidden = true;
-});
-document.getElementById('appDismiss').addEventListener('click', function(){
-strip.hidden = true;
-try{ localStorage.setItem('jwcAppDismissed', String(Date.now())); }catch(e){}
-});
-window.addEventListener('appinstalled', function(){ strip.hidden = true; });
-})();
-</script>
-<div class="alert-strip" id="alertStrip" hidden>
+<!-- the install bar is run by jwc-settings.js, the same code as Settings > App -->
+<div class="alert-strip" id="alertBar" hidden>
 <div class="alert-row">
-<button type="button" class="alert-head" id="alertHead" aria-expanded="false" aria-controls="alertMore">
+<button type="button" class="alert-head" id="alertBarHead" aria-expanded="false" aria-controls="alertBarMore">
 <span class="alert-dot" aria-hidden="true"></span>
-<span class="alert-sum" id="alertSum">Warning alerts</span>
+<span class="alert-sum" id="alertBarSum">Warning alerts</span>
 <span class="alert-chev" aria-hidden="true">&#9662;</span>
 </button>
-<button type="button" class="alert-btn" id="alertBtn" hidden>ALERT ME</button>
+<button type="button" class="alert-btn" id="alertBarBtn" hidden>ALERT ME</button>
 </div>
-<div class="alert-more" id="alertMore" hidden>
-<div class="alert-txt" id="alertText"></div>
+<div class="alert-more" id="alertBarMore" hidden>
+<div class="alert-txt" id="alertBarText"></div>
 <div class="alert-acts" id="alertActs">
-<button type="button" class="alert-btn alert-test" id="alertTest" hidden>TEST</button>
-<button type="button" class="alert-btn alert-off" id="alertOff" hidden>TURN OFF</button>
+<button type="button" class="alert-btn alert-test" id="alertBarTest" hidden>SEND A TEST</button>
+<button type="button" class="alert-btn alert-off" id="alertBarOff" hidden>TURN OFF</button>
 </div>
-<a class="alert-help" id="alertHelp" href="alerts-help.html">Step-by-step help for your device &rsaquo;</a>
+<a class="alert-help" id="alertBarHelp" href="alerts-help.html">Step-by-step help for your device &rsaquo;</a>
 </div>
 </div>
-<script>
-/* ---------- warning-alerts bar: push notifications for new Jersey Met warnings ----------
-   One slim line showing this device's status; tap it to open the details (TEST, TURN OFF, help).
-   ALERT ME asks for notification permission, creates a push subscription for this device and saves
-   it to the Google Sheet via the Apps Script. A GitHub Action reads gov.je's warning feed every few
-   minutes and pushes to every saved device when a warning is NEW or UPGRADED. The bar stays hidden
-   until data/push-config.json (the public VAPID key) exists.
-   Awkward cases: iPhone/iPad only allow web push from the home-screen app (iOS 16.4+); Facebook's
-   in-app browser can't subscribe; blocked permission needs re-enabling in the device settings. */
-(function(){
-const strip = document.getElementById('alertStrip');
-if(!strip) return;
-const head = document.getElementById('alertHead'), sum = document.getElementById('alertSum'), more = document.getElementById('alertMore');
-const txt = document.getElementById('alertText'), btn = document.getElementById('alertBtn');
-const tbtn = document.getElementById('alertTest'), obtn = document.getElementById('alertOff');
-const API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
-const GOV = '<a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener">official Jersey Met warnings page</a>';
-const ABOUT = 'The alert is automated; the warning itself is officially issued by Jersey Met &mdash; see the ' + GOV + '.';
-const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-const ua = navigator.userAgent;
-const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const isAndroid = /Android/i.test(ua);
-const inFacebook = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(ua);
-const supported = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
-let publicKey = '', state = '';
-document.getElementById('alertHelp').href = 'alerts-help.html#' + (isIOS ? 'iphone' : isAndroid ? 'android' : /Mac/.test(ua) ? 'mac' : /Windows/i.test(ua) ? 'windows' : '');
-
-function b64ToBytes(b64){
-const pad = '='.repeat((4 - b64.length % 4) % 4);
-const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
-const out = new Uint8Array(raw.length);
-for(let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-return out;
-}
-function setOpen(open){
-more.hidden = !open;
-head.setAttribute('aria-expanded', open ? 'true' : 'false');
-strip.classList.toggle('is-open', open);
-}
-function fixTips(){
-if(isIOS) return 'iPhone/iPad: <b>Settings</b> \u2192 <b>Notifications</b> \u2192 <b>JWC Weather</b> \u2192 Allow Notifications, and check Focus / Do Not Disturb is off.';
-if(isAndroid) return 'Android: phone <b>Settings</b> \u2192 <b>Apps</b> \u2192 <b>Chrome</b> \u2192 <b>Notifications</b> must be on, and <b>Battery</b> \u2192 Chrome \u2192 <b>Unrestricted</b>. Some phones also have a power saver (e.g. &ldquo;DuraSpeed&rdquo; or &ldquo;background app management&rdquo;) that must allow Chrome.';
-if(/Mac/.test(ua)) return 'Mac: <b>System Settings</b> \u2192 <b>Notifications</b> \u2192 your browser \u2192 Allow, and check Focus is off.';
-return 'Windows: <b>Settings</b> \u2192 <b>System</b> \u2192 <b>Notifications</b>: Do not disturb off and your browser switched on. Notifications only arrive while the browser is running.';
-}
-/* one place that draws the bar: summary line, colour, which buttons show, and the details text */
-function render(note){
-const s = {
-on:          ['on',   '<b>ALERTS ON</b><span class="alert-dim"> &middot; this device</span>', '',
-              'You&rsquo;ll get a notification when Jersey Met issues a <b>new</b> warning or <b>upgrades</b> one (not for warnings already in force). ' + ABOUT],
-off:         ['off',  '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; get notified of Jersey Met warnings</span>', 'ALERT ME',
-              'Tap ALERT ME to get a notification on this device whenever Jersey Met issues a new weather warning or upgrades one. ' + ABOUT],
-facebook:    ['off',  '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; open in your browser to switch on</span>', '',
-              'Alerts can&rsquo;t be switched on inside Facebook&rsquo;s browser. ' + (isIOS
-                ? 'Tap <b>\u2022\u2022\u2022</b> (top right), choose <b>Open in external browser</b>, then tap ALERT ME there.'
-                : 'Tap <b>\u22ee</b> (top right), choose <b>Open in Chrome</b>, then tap ALERT ME there.')],
-'ios-install':['off', '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; add to Home Screen first</span>', '',
-              'On iPhone and iPad, alerts only work from the home-screen app: tap <b>Share</b> (\u2191), then <b>Add to Home Screen</b>, open the app and tap ALERT ME there (needs iOS 16.4 or newer).'],
-denied:      ['bad',  '<b>ALERTS BLOCKED</b><span class="alert-dim"> &middot; tap to fix</span>', 'ALERT ME',
-              'Notifications are blocked for this site, so alerts can&rsquo;t be sent. To allow them: ' + (standalone && isIOS
-                ? 'open iPhone <b>Settings</b> \u2192 <b>Notifications</b> \u2192 <b>JWC Weather</b> and switch them on, then tap ALERT ME.'
-                : isAndroid
-                ? 'tap the <b>lock</b> (or tune) icon next to the address, then <b>Permissions</b> \u2192 <b>Notifications</b> \u2192 Allow, then tap ALERT ME.'
-                : 'click the <b>lock</b> (or tune) icon next to the address, set <b>Notifications</b> to Allow, then tap ALERT ME.')],
-unconfirmed: ['off',  '<b>ALERTS ON?</b><span class="alert-dim"> &middot; not confirmed &middot; tap RETRY</span>', 'RETRY',
-              'This device has alerts switched on, but it couldn&rsquo;t reach our server to add itself to the alert list, so alerts may not arrive yet. Check your internet connection, turn off any VPN or ad-blocker for a moment, then tap RETRY.'],
-unsupported: ['off',  '<b>WARNING ALERTS</b><span class="alert-dim"> &middot; not available in this browser</span>', '',
-              'This browser can&rsquo;t receive notifications. Chrome, Edge or Firefox on a phone or computer can.']
-}[state];
-if(!s) return;
-strip.classList.remove('is-on', 'is-off', 'is-bad');
-strip.classList.add('is-' + s[0]);
-sum.innerHTML = s[1];
-btn.hidden = !s[2]; btn.disabled = false; btn.textContent = s[2] || '';
-tbtn.hidden = obtn.hidden = (state !== 'on' && state !== 'unconfirmed'); tbtn.disabled = obtn.disabled = false;
-txt.innerHTML = note || s[3];
-strip.hidden = false;
-}
-async function localNote(title, body, tag){
-const reg = await navigator.serviceWorker.ready;
-await reg.showNotification(title, { body: body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag: tag });
-}
-function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
-function failText(e){
-return '<b>Sorry, that didn&rsquo;t work</b> &mdash; this device couldn&rsquo;t reach our server (' + (e && e.message ? e.message : 'unknown error') +
-'). Check your internet connection, turn off any VPN or ad-blocker for a moment, then try again.';
-}
-/* Saves this device's subscription to the alert list. Tries twice normally; then once more without following
-   Google's redirect - the script has already saved the subscription by the time it redirects, and the redirect
-   is the step most often blocked (VPNs, ad-blockers, Safari privacy settings). */
-async function saveSub(sub){
-const body = JSON.stringify({ action:'subscribe', subscription:sub.toJSON(), ua:ua, standalone:standalone, page:location.pathname, owner:(location.hash === '#admin') });
-let lastErr = null;
-for(let i = 0; i < 2; i++){
-try{
-const res = await fetch(API_URL, { method:'POST', body: body });
-const out = await res.json();
-if(out.status === 'ok') return true;
-const err = new Error(out.message || 'server said no'); err.server = true; throw err;
-}catch(e){
-if(e.server) throw e;                       /* the server answered and refused - retrying won't help */
-lastErr = e; await sleep(1500);
-}
-}
-try{
-const r = await fetch(API_URL, { method:'POST', body: body, redirect:'manual' });
-if(r.type === 'opaqueredirect' || r.ok) return true;
-}catch(e){ lastErr = e; }
-throw lastErr || new Error('could not reach the server');
-}
-async function retrySave(){
-btn.disabled = true; btn.textContent = 'WORKING\u2026';
-try{
-const sub = await currentSub();
-if(!sub){ state = 'off'; render(); return; }
-await saveSub(sub);
-state = 'on'; render('Done &mdash; this device is on the alert list. Tap TEST to check notifications show.'); setOpen(true);
-}catch(e){
-state = 'unconfirmed'; render(failText(e)); setOpen(true);
-}
-}
-async function currentSub(){
-const reg = await navigator.serviceWorker.ready;
-return reg.pushManager.getSubscription();
-}
-async function init(){
-try{
-const r = await fetch('data/push-config.json?t=' + Math.floor(Date.now() / 600000), { cache:'no-store' });
-if(!r.ok) return;
-const cfg = await r.json();
-publicKey = (cfg && cfg.publicKey) || '';
-}catch(e){ return; }                              /* alerts not switched on yet - keep the bar hidden */
-if(!publicKey) return;
-if(inFacebook && (isIOS || isAndroid)) state = 'facebook';
-else if(!supported) state = (isIOS && !standalone) ? 'ios-install' : 'unsupported';
-else if(Notification.permission === 'denied') state = 'denied';
-else{
-let sub = null;
-try{ sub = await currentSub(); }catch(e){}
-state = sub ? 'on' : 'off';
-render();
-/* an existing subscription is re-saved so the sheet always has it and its "last seen" stays fresh (and it is
-   marked as the owner's when the page is opened with #admin). If that fails, say so honestly. */
-if(sub){ saveSub(sub).catch(function(e){ console.warn('alert re-save failed', e); state = 'unconfirmed'; render(); }); }
-return;
-}
-render();
-}
-async function subscribe(){
-btn.disabled = true; btn.textContent = 'WORKING\u2026';
-sum.innerHTML = '<b>SWITCHING ON\u2026</b>';
-try{
-const perm = await Notification.requestPermission();
-if(perm !== 'granted'){ state = (perm === 'denied') ? 'denied' : 'off'; render(); if(state === 'denied') setOpen(true); return; }
-const reg = await navigator.serviceWorker.ready;
-const keyBytes = b64ToBytes(publicKey);
-let sub = await reg.pushManager.getSubscription();
-/* a subscription made with a different key is useless to the sender - replace it */
-if(sub && sub.options && sub.options.applicationServerKey){
-const have = new Uint8Array(sub.options.applicationServerKey);
-let same = have.length === keyBytes.length;
-for(let i = 0; same && i < have.length; i++) same = have[i] === keyBytes[i];
-if(!same){ await sub.unsubscribe(); sub = null; }
-}
-if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:keyBytes });
-await saveSub(sub);
-state = 'on'; render(); setOpen(false);
-try{ await localNote('Jersey Weather Chat', 'Warning alerts are ON for this device. You\u2019ll get a notification like this when Jersey Met issues a new or upgraded warning.', 'jwc-welcome'); }
-catch(e){ render('Alerts are <b>ON</b>, but this device blocked a test notification. Check: <span class="fix">' + fixTips() + '</span>'); setOpen(true); }
-}catch(e){
-console.error('alert subscribe failed', e);
-let sub = null;
-try{ sub = await currentSub(); }catch(x){}
-state = sub ? 'unconfirmed' : 'off';          /* the phone may have a push address that just didn't reach the list */
-render(failText(e));
-setOpen(true);
-}
-}
-async function unsubscribe(){
-obtn.disabled = true; obtn.textContent = 'WORKING\u2026';
-try{
-const sub = await currentSub();
-if(sub){
-try{ await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'unsubscribe', endpoint:sub.endpoint }) }); }catch(e){}
-await sub.unsubscribe();
-}
-}catch(e){ console.error('alert unsubscribe failed', e); }
-obtn.textContent = 'TURN OFF';
-state = 'off';
-render('Warning alerts are <b>off</b> for this device. Tap ALERT ME any time to switch them back on.');
-setOpen(true);
-}
-async function testNote(){
-tbtn.disabled = true;
-try{
-await localNote('Jersey Weather Chat: TEST', 'If you can see this, warning alerts will show on this device.', 'jwc-local-test-' + Date.now());
-render('Test sent. <b>Did a notification appear?</b> If yes, you&rsquo;re all set. If not, check: <span class="fix">' + fixTips() + '</span>');
-}catch(e){
-render('<b>This device blocked the test notification</b> (' + (e && e.message ? e.message : 'unknown') + '). Check: <span class="fix">' + fixTips() + '</span>');
-}
-setOpen(true);
-}
-head.addEventListener('click', function(){ setOpen(more.hidden); });
-btn.addEventListener('click', function(){ if(state === 'unconfirmed') retrySave(); else subscribe(); });
-obtn.addEventListener('click', unsubscribe);
-tbtn.addEventListener('click', testNote);
-init();
-})();
-</script>
+<!-- the warning-alerts bar is run by jwc-settings.js, the same code as Settings > Warning alerts -->
 <div class="special-msg-panel" id="specialMsgPanel">
 <div class="special-msg-title">&#9888; SPECIAL WEATHER MESSAGE</div>
 <div class="special-msg-text" id="specialMsgText"></div>
