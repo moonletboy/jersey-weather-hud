@@ -14,28 +14,15 @@
    "message": "W to SW wind F6 continuing.",
    "missing": 0,
    "lower": 0
-  },
-  "tide": {
-   "key": "tide",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Tide",
-   "area": "Jersey",
-   "hazard": "tide",
-   "sea": false,
-   "issued": "8:13 a.m. Monday 26 October",
-   "message": "",
-   "missing": 1,
-   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-10-27T08:02:33.5446338Z",
+ "lastFetch": "2026-10-27T08:15:00.0386707Z",
  "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 06:10 UTC Tuesday 27 October W to SW wind F6 continuing.",
- "checkedAt": "2026-10-27T08:02:33.5446338Z",
+ "checkedAt": "2026-10-27T08:15:00.0386707Z",
  "lastAlertAt": "2026-10-26T20:20:16Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-10-27T06:19:47Z",
- "lastChange": "orange -> yellow Channel Islands Shipping Area Wind"
+ "lastChangeAt": "2026-10-27T08:19:45Z",
+ "lastChange": "yellow Tide cleared by gov.je"
 }
