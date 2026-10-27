@@ -1,0 +1,186 @@
+name: "Add What's New line"
+
+# Adds a line to the What's New list in the Settings panel (data/whats-new.json),
+# or removes the newest line if you spot a mistake.
+# On GitHub: Actions tab > Add What's New line > Run workflow.
+# Only people who can edit this repository see the Run workflow button.
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: "The new line: one short sentence members will see"
+        required: false
+        type: string
+      date:
+        description: "Date as YYYY-MM-DD (leave empty for today)"
+        required: false
+        type: string
+      what:
+        description: "What to do"
+        required: true
+        type: choice
+        default: "Add the line above"
+        options:
+          - "Add the line above"
+          - "Remove the newest line"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: whats-new
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Get the site files
+        uses: actions/checkout@v5
+
+      - name: Update the What's New list
+        id: update
+        env:
+          WHAT: ${{ inputs.what }}
+          TEXT: ${{ inputs.text }}
+          DATE: ${{ inputs.date }}
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os, re, sys
+
+          PATH = "data/whats-new.json"
+          MAX_LEN = 200
+          ABOUT = ("What's New lines for the Settings panel, newest first. Add or remove lines with the "
+                   "'Add What's New line' form: GitHub > Actions > Add What's New line > Run workflow.")
+
+          def note(md):
+              print(md)
+              path = os.environ.get("GITHUB_STEP_SUMMARY")
+              if path:
+                  with open(path, "a", encoding="utf-8") as f:
+                      f.write(md + "\n")
+
+          def stop(msg):
+              print("::error::" + msg)
+              note("### Nothing was changed\n\n" + msg)
+              sys.exit(1)
+
+          def num(v):
+              try:
+                  return int(v)
+              except (TypeError, ValueError):
+                  return 0
+
+          def tidy(s):
+              return " ".join(str(s or "").split())
+
+          def jersey_today():
+              try:
+                  from zoneinfo import ZoneInfo
+                  return datetime.datetime.now(ZoneInfo("Europe/Jersey")).date()
+              except Exception:
+                  return datetime.datetime.now(datetime.timezone.utc).date()
+
+          what = os.environ.get("WHAT", "")
+          text = tidy(os.environ.get("TEXT"))
+          date_in = tidy(os.environ.get("DATE"))
+          today = jersey_today()
+
+          try:
+              with open(PATH, encoding="utf-8") as f:
+                  data = json.load(f)
+          except FileNotFoundError:
+              data = {}
+          except ValueError as e:
+              stop("data/whats-new.json can't be read (" + str(e) + "), so nothing was changed. Ask Claude to repair it.")
+          if not isinstance(data, dict):
+              stop("data/whats-new.json isn't in the expected shape, so nothing was changed. Ask Claude to repair it.")
+
+          items = [i for i in (data.get("items") or []) if isinstance(i, dict)]
+          # every line gets a number that only ever goes up (never reused, even after a removal),
+          # so the amber dot on the gear comes back for every new line
+          next_id = max([num(data.get("next_id")), 1] + [num(i.get("id")) + 1 for i in items])
+
+          if what.startswith("Remove"):
+              if not items:
+                  stop("The list is already empty.")
+              newest = max(items, key=lambda i: num(i.get("id")))
+              items.remove(newest)
+              done = "Removed the newest line (" + str(newest.get("date")) + "): " + tidy(newest.get("text"))
+              msg = "What's new: remove newest line"
+          else:
+              if not text:
+                  stop("The line was empty. Type one short sentence in the first box, then press Run workflow again.")
+              if len(text) > MAX_LEN:
+                  stop("That line is " + str(len(text)) + " characters long. Please keep it under " + str(MAX_LEN) + ".")
+              if date_in:
+                  if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_in):
+                      stop("'" + date_in + "' isn't a date in the form YYYY-MM-DD (today is " + today.isoformat() + "). Or leave the date empty for today.")
+                  try:
+                      day = datetime.date.fromisoformat(date_in)
+                  except ValueError:
+                      stop("'" + date_in + "' isn't a real date. Leave the date empty for today.")
+                  if day > today + datetime.timedelta(days=1):
+                      stop(date_in + " is in the future. Leave the date empty for today.")
+              else:
+                  day = today
+              if any(tidy(i.get("text")).lower() == text.lower() for i in items):
+                  stop("That exact line is already in the list, so it wasn't added again.")
+              items.append({"id": next_id, "date": day.isoformat(), "text": text})
+              next_id += 1
+              done = "Added for " + day.isoformat() + ": " + text
+              msg = "What's new: " + (text if len(text) <= 37 else text[:34].rstrip() + "...")
+
+          # newest date first; lines on the same day newest first
+          items.sort(key=lambda i: (str(i.get("date", "")), num(i.get("id"))), reverse=True)
+          rows = [json.dumps({"id": num(i.get("id")), "date": str(i.get("date", "")), "text": tidy(i.get("text"))}, ensure_ascii=False) for i in items]
+          stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          out = ("{\n"
+                 '  "about": ' + json.dumps(ABOUT, ensure_ascii=False) + ",\n"
+                 '  "next_id": ' + str(next_id) + ",\n"
+                 '  "updated": "' + stamp + '",\n'
+                 '  "items": [' + ("\n" + ",\n".join("    " + r for r in rows) + "\n  " if rows else "") + "]\n"
+                 "}\n")
+          json.loads(out)  # never save a file the site can't read
+          os.makedirs("data", exist_ok=True)
+          with open(PATH, "w", encoding="utf-8", newline="\n") as f:
+              f.write(out)
+
+          top = "\n".join("- **" + str(i.get("date")) + "** " + tidy(i.get("text")).replace("<", "&lt;") for i in items[:5]) or "(the list is empty)"
+          note("### What's New updated\n\n" + done.replace("<", "&lt;") +
+               "\n\nIt shows in Settings on every page within a couple of minutes. Anyone who hasn't seen it yet gets an amber dot on the gear." +
+               "\n\n**Newest lines now:**\n\n" + top)
+          out_path = os.environ.get("GITHUB_OUTPUT")
+          if out_path:
+              with open(out_path, "a", encoding="utf-8") as f:
+                  f.write("msg=" + msg + "\n")
+          PY
+
+      - name: Save and publish
+        env:
+          MSG: ${{ steps.update.outputs.msg }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/whats-new.json
+          if git diff --cached --quiet; then
+            echo "Nothing to save."
+            exit 0
+          fi
+          msg="$MSG"
+          if [ -z "$msg" ]; then msg="What's new: update"; fi
+          git commit -q -m "$msg"
+          for try in 1 2 3 4 5; do
+            if git push -q origin HEAD:main; then
+              echo "Saved. The site updates within a couple of minutes."
+              exit 0
+            fi
+            echo "Someone else saved at the same moment - trying again ($try of 5)."
+            sleep $((try * 3))
+            git pull -q --rebase origin main
+          done
+          echo "::error::Couldn't save after 5 tries. Please run the workflow again in a minute."
+          exit 1
