@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <script src="cookie-consent.js" defer></script>
+<!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
@@ -43,7 +45,7 @@
 --red:#ff4b5c;
 --violet:#b98aff;
 --text:#e9f6f5;
---dim:#5f7c88;
+--dim:#6f8d99;
 --dim2:#3a4e58;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
@@ -1093,7 +1095,7 @@ ctx.fillStyle = 'rgba(233,246,245,0.75)'; ctx.beginPath(); ctx.arc(cx, cy, 2.5*d
 
 ctx.font = (9*dpr) + 'px "JetBrains Mono", monospace';
 ctx.shadowColor = 'rgba(5,8,13,0.95)'; ctx.shadowBlur = 5*dpr;
-ctx.textBaseline = 'middle'; ctx.fillStyle = '#5f7c88';
+ctx.textBaseline = 'middle'; ctx.fillStyle = '#6f8d99';
 ctx.textAlign = 'center';
 for(let lon = 0; lon < 360; lon += 30){
 const l = lon > 180 ? lon - 360 : lon;

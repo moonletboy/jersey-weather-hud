@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <script src="cookie-consent.js" defer></script>
+<!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
@@ -44,7 +46,7 @@
 --amber:#ffb020;
 --red:#ff4b5c;
 --text:#e9f6f5;
---dim:#5f7c88;
+--dim:#6f8d99;
 --dim2:#3a4e58;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
@@ -1018,6 +1020,14 @@ footer a{ color:var(--dim); text-decoration:underline; text-underline-offset:2px
 footer a:hover{ color:var(--cyan); }
 @keyframes blipfade{ 0%,100%{opacity:0.2;} 50%{opacity:1;} }
 
+/* one-line disclaimer under the tab bar; tapping it opens Settings > About & disclaimer (jwc-settings.js) */
+.about-line{ display:flex; align-items:center; gap:10px; width:100%; min-height:40px; margin:8px 0 0; padding:8px 10px 8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg-panel-2); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5; letter-spacing:0.3px; color:var(--dim); text-align:left; cursor:pointer; transition:border-color .2s ease; }
+.about-line:hover{ border-color:var(--cyan); }
+.about-line svg{ flex:0 0 auto; width:16px; height:16px; fill:none; stroke:var(--cyan); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.about-line-txt{ flex:1; min-width:0; }
+.about-line-txt b{ color:var(--text); font-weight:700; }
+.about-line-go{ flex:0 0 auto; display:flex; align-items:center; gap:4px; color:var(--cyan); font-size:10px; font-weight:800; letter-spacing:1.5px; }
+@media (max-width:640px){ .about-line-go span{ display:none; } }
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
 </style>
 </head>
@@ -1046,32 +1056,12 @@ footer a:hover{ color:var(--cyan); }
 <a href="microclimate-grid.html">MICROCLIMATE</a>
 </nav>
 <p class="seo-intro">Live weather for Jersey, Channel Islands: radar, lightning, Jersey Met warnings, wind, rainfall and a 5-day forecast, run by volunteers from the Jersey Weather Chat community.</p>
-<details class="about-box" id="aboutBox">
-<summary>ABOUT &amp; DISCLAIMER<span class="about-sub">Volunteer-run &middot; forecasts are computer models, not official warnings &middot; community &amp; support</span></summary>
-<div class="about-body">
-<div class="fb-banner">
-<span class="fb-icon" aria-hidden="true">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>
-</span>
-<span class="fb-text">Live data and storm reporting for the Facebook <b>Jersey Weather Chat</b> community &middot; run by volunteers &middot; forecasts are computer models, not official warnings</span>
-</div>
-<div class="talk-line">&#128172; <b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">chat with others in the Jersey Weather Chat group</a> (open its <b>Chats</b> tab and join any chat).</div>
-<p><b>About this site.</b> Jersey Weather Chat is a community run by volunteers who love weather. This site pulls together public data and computer forecast models so islanders can see what&rsquo;s coming and make their own decisions. It&rsquo;s free, it always will be, and nobody&rsquo;s paid to do it.</p>
-<p><b>A few things to know before relying on it</b></p>
-<ul>
-<li><b>Forecasts are predictions, not facts.</b> They change with every update and are often wrong about timing and strength several days out. That&rsquo;s why we show several models side by side &mdash; so you can see how much they agree before you decide.</li>
-<li><b>This is not the official forecast or warning service.</b> The authority for Jersey is <a href="https://www.gov.je/weather" target="_blank" rel="noopener">Jersey Met (gov.je)</a>. Always check their warnings and follow official advice; if we and they disagree, trust Jersey Met.</li>
-<li><b>We post about storms because the models show one &mdash; not to alarm anyone.</b> We know Ciar&aacute;n and Goretti left a mark. A storm that fizzles is good news, and we&rsquo;ll say so. Please don&rsquo;t shoot the messenger.</li>
-<li><b>Use at your own risk.</b> The site, its data and the Facebook group are provided &ldquo;as is&rdquo;. We can&rsquo;t accept responsibility for decisions you make or any loss or damage arising from using them &mdash; boats, travel, outdoor work, events, property or anything else.</li>
-<li><b>The data isn&rsquo;t ours.</b> It comes from NOAA, Open-Meteo, Jersey Met, USGS, EMSC, Weather Underground and others, and can be late, incomplete or wrong. The site itself may go down, usually at the worst moment.</li>
-<li><b>Storm reports are from members</b> and are not verified.</li>
-<li><b>Warning alerts are automated.</b> If you tap ALERT ME, this device gets a notification when our checker spots a new or upgraded Jersey Met warning on gov.je. It can lag behind or miss one, and it never replaces the official warning. We store the anonymous push address your phone gives us, plus the browser type and when you signed up &mdash; no name, email or location &mdash; and TURN OFF removes it.</li>
-<li><b>Special weather messages to your phone are a responsibility we take seriously.</b> A post on this site is something you choose to read; a notification on your phone is not, so we hold ourselves to a higher standard and only send one when we believe it genuinely matters. Our system checks the live data on this site around the clock &mdash; airport observations from Jersey, Guernsey and Alderney, local weather stations, forecast models, air pressure, and tides with wave heights &mdash; against set thresholds, such as gusts of 70&nbsp;mph or more, or big waves arriving at high tide. Reaching a threshold never sends anything on its own: it alerts the site&rsquo;s admin, who checks the readings and decides whether a message is warranted. Every suggestion, the readings behind it, the decision made and the exact message sent are recorded, so we can be held to account. Occasionally we may send a message without a threshold being met &mdash; for example to pass on important official advice &mdash; and those are recorded too. A special message is never an official warning: Jersey Met remains the authority.</li>
-<li><b>Privacy.</b> Jersey Weather Chat is registered with the Jersey Office of the Information Commissioner (<a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">registration no. 104194</a>). We hold very little personal data, and only to run this site: the notification address, browser type and sign-up time for alerts (TURN OFF deletes them); the name, report and optional email you give with a storm report; and visit counts through Google Analytics. It is kept in our Google account and passes through GitHub and your browser maker&rsquo;s notification service, so it may be held outside Jersey. We never sell or share it. To see, correct or delete your data, email jwcliveops@gmail.com; you can also complain to the <a href="https://jerseyoic.org" target="_blank" rel="noopener">Jersey Office of the Information Commissioner</a>. <a href="alerts-help.html#privacy">Full privacy note &rarr;</a></li>
-<li><b>In an emergency call 999.</b></li>
-</ul>
-</div>
-</details>
+<!-- one-line disclaimer: the full About & disclaimer text now lives in Settings (jwc-settings.js) -->
+<button type="button" class="about-line" data-jwc-open="about" aria-haspopup="dialog">
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v6M12 7.4v0.2"/></svg>
+<span class="about-line-txt"><b>Volunteer-run</b> &middot; forecasts are computer models, not official warnings &middot; <b>Jersey Met</b> is the authority</span>
+<span class="about-line-go"><span>ABOUT &amp; DISCLAIMER</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+</button>
 <div class="app-strip" id="appStrip" hidden>
 <span class="app-ic"><img src="icons/icon-192.png" alt="" width="30" height="30"></span>
 <span class="app-txt" id="appStripText"><b>Get the Jersey Weather Chat app</b> &mdash; opens full-screen from your home screen, no app store needed.</span>
@@ -2748,7 +2738,7 @@ if(isDay){
 g += '<path d="' + arc(0, f) + 'L' + pt(f)[0].toFixed(1) + ',' + yH + 'L' + x0 + ',' + yH + 'Z" fill="url(#sunSky)"/>';
 g += '<path d="' + arc(0, f) + '" fill="none" stroke="#ffb020" stroke-width="2.5"/>';
 }
-g += '<line x1="8" x2="312" y1="' + yH + '" y2="' + yH + '" stroke="#5f7c88" stroke-width="1"/>';
+g += '<line x1="8" x2="312" y1="' + yH + '" y2="' + yH + '" stroke="#6f8d99" stroke-width="1"/>';
 if(isDay){
 const p = pt(f);
 g += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="17" fill="url(#sunGlow)"/><circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="7" fill="#ffd166"/>';
@@ -2815,7 +2805,7 @@ g += '<line x1="' + X(now.getTime()).toFixed(1) + '" x2="' + X(now.getTime()).to
 if(nv !== null) g += '<circle cx="' + X(now.getTime()).toFixed(1) + '" cy="' + Y(nv).toFixed(1) + '" r="4.5" fill="#e9f6f5"/><text x="' + X(now.getTime()).toFixed(1) + '" y="81" text-anchor="middle" fill="#e9f6f5" font-size="9" font-weight="700" font-family="JetBrains Mono, monospace">NOW</text>';
 ev.filter(e => e.dt >= t0 && e.dt <= t1).forEach(function(e){
 const x = X(e.dt.getTime()), y = Y(e.h), hiW = e.type === 'high';
-g += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5" fill="' + (hiW ? '#4cd3ff' : '#5f7c88') + '"/>';
+g += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5" fill="' + (hiW ? '#4cd3ff' : '#6f8d99') + '"/>';
 g += '<text x="' + x.toFixed(1) + '" y="' + (hiW ? y - 7 : y + 14).toFixed(1) + '" text-anchor="middle" fill="' + (hiW ? '#4cd3ff' : '#9db4bd') + '" font-size="10" font-weight="700" font-family="JetBrains Mono, monospace">' + GL_HM.format(e.dt) + '</text>';
 });
 svg.innerHTML = g;
@@ -4368,7 +4358,7 @@ svg += '<path d="' + pb + '" fill="none" stroke="#ffffff" stroke-width="' + (mp 
 if(o.labels){
 [['N',0],['E',90],['S',180],['W',270]].forEach(function(a){
 const p = stPolar(c, R + 10, a[1]);
-svg += '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] + 3).toFixed(1) + '" text-anchor="middle" font-size="9" font-family="JetBrains Mono,monospace" fill="#5f7c88" font-weight="700">' + a[0] + '</text>';
+svg += '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] + 3).toFixed(1) + '" text-anchor="middle" font-size="9" font-family="JetBrains Mono,monospace" fill="#6f8d99" font-weight="700">' + a[0] + '</text>';
 });
 }
 svg += '<circle cx="' + c + '" cy="' + c + '" r="2.6" fill="#05080d" stroke="#e9f6f5" stroke-width="1.2"/>';

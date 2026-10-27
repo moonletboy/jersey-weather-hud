@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <script src="cookie-consent.js" defer></script>
+<!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
@@ -42,7 +44,7 @@
     --amber:#ffb020;
     --red:#ff4b5c;
     --text:#e9f6f5;
-    --dim:#5f7c88;
+    --dim:#6f8d99;
     --dim2:#3a4e58;
   }
   *{box-sizing:border-box; margin:0; padding:0;}

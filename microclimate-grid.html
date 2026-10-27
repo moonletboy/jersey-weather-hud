@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <script src="cookie-consent.js" defer></script>
+<!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
@@ -42,7 +44,7 @@
     --amber:#ffb020;
     --red:#ff4b5c;
     --text:#e9f6f5;
-    --dim:#5f7c88;
+    --dim:#6f8d99;
     --dim2:#3a4e58;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -959,7 +961,7 @@ transition:all .2s ease;
     const link = 'https://www.wunderground.com/dashboard/pws/' + encodeURIComponent(o.id);
     const age = o.time ? hhmm(o.time) : '--:--';
     return '<b>' + escapeHtml(o.name) + '</b><br>' +
-      '<span style="color:#5f7c88">' + escapeHtml(o.id) + '</span><br>' +
+      '<span style="color:#6f8d99">' + escapeHtml(o.id) + '</span><br>' +
       'Temp: ' + fmt(o.temp, 1) + '°C<br>' +
       'Wind: ' + fmt(o.wind, 0) + ' mph ' + compass(o.dir) + ' (gust ' + fmt(o.gust, 0) + ')<br>' +
       'Rain today: ' + fmt(o.rain, 1) + ' mm<br>' +
@@ -1001,7 +1003,7 @@ transition:all .2s ease;
         mk.bindTooltip(fmt(o[m.key], m.dec), { permanent:true, direction:'right', offset:[8,0], className:'pws-tip' });
         if(windMode && o.dir !== null) addBarb(o);
       } else {
-        mk = L.circleMarker([o.lat, o.lng], { radius:4, color:'#5f7c88', weight:1, fillColor:'#3a4e58', fillOpacity:0.9 });
+        mk = L.circleMarker([o.lat, o.lng], { radius:4, color:'#6f8d99', weight:1, fillColor:'#3a4e58', fillOpacity:0.9 });
       }
       mk.bindPopup(popupHtml(o));
       mk.addTo(markerLayer);
