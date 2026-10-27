@@ -1,6 +1,13 @@
 {
- "updated": "2026-10-26T20:20:07Z",
+ "updated": "2026-10-27T14:35:08Z",
  "alerts": [
+  {
+   "at": "2026-10-27T14:35:08Z",
+   "kind": "warning",
+   "title": "JWC: Jersey Met YELLOW wind warning updated (at sea)",
+   "body": "Channel Islands Shipping Area - at sea, not a land warning. W wind F6 continuing. Issued 14:31 UTC Tuesday 27 October. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.",
+   "sent": 931
+  },
   {
    "at": "2026-10-26T20:20:07Z",
    "kind": "warning",
@@ -133,13 +140,6 @@
    "title": "Jersey Weather Chat: gusts 84 mph at Jersey Airport",
    "body": "Gusts of 84 mph recorded at Jersey Airport at 05:50. Take care outdoors. Check gov.je for official Jersey Met warnings.",
    "sent": 946
-  },
-  {
-   "at": "2026-10-23T04:36:54Z",
-   "kind": "special",
-   "title": "Jersey Weather Chat: gusts 74 mph at Jersey Airport",
-   "body": "Gusts of 74 mph recorded at Jersey Airport at 05:20. Take care outdoors. Check gov.je for official Jersey Met warnings.",
-   "sent": 947
   }
  ]
 }
