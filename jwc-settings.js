@@ -76,16 +76,17 @@
 
   /* ================= 1b. Display: dark / light / auto / sun, and calm display =================
      Runs straight away, before the page draws, so there is no flash of the wrong colours.
-     PREVIEW: for now only devices that have opened the site once with #admin see the Display choice
-     (Matthew's devices). Everyone else always gets dark. To offer it to everyone, set DISPLAY_FOR_EVERYONE to true.
+     Everyone can choose since 28 Oct 2026 (DISPLAY_FOR_EVERYONE = true); the default is dark, so nothing changes
+     for anyone until they pick another look. Set it back to false to hide the choice again: everyone then gets dark,
+     except devices that have opened the site once with #admin (they keep the choice, marked PREVIEW).
      A page only goes light if it says it can: <meta name="jwc-themes" content="dark light"> in its <head>,
      before this script. Pages without it stay dark whatever is chosen. */
-  var DISPLAY_FOR_EVERYONE = false;
+  var DISPLAY_FOR_EVERYONE = true;
   var K_THEME = 'jwc-theme', K_CALM = 'jwc-calm', K_PREVIEW = 'jwc-preview';
   var JERSEY = [49.1805, -2.1058];
   try{
     if(location.hash === '#admin') lsSet(K_PREVIEW, '1');
-    if(location.hash === '#preview-off'){ lsDel(K_PREVIEW); lsDel(K_THEME); lsDel(K_CALM); }   /* back to what members see */
+    if(location.hash === '#preview-off'){ lsDel(K_PREVIEW); lsDel(K_THEME); lsDel(K_CALM); }   /* back to the defaults: dark, calm display off */
   }catch(e){}
   function displayAllowed(){ return DISPLAY_FOR_EVERYONE || lsGet(K_PREVIEW) === '1'; }
   function pageHasLight(){ var m = document.querySelector('meta[name="jwc-themes"]'); return !!(m && /\blight\b/.test(m.getAttribute('content') || '')); }
@@ -557,14 +558,14 @@
   }
   /* hidden unless this device may use the Display choice (see section 1b) */
   var DISPLAY_HTML =
-    '<div class="jwcs-group" id="jwcs-display" hidden><div class="jwcs-ghead"><h3>DISPLAY</h3><span class="jwcs-bar"></span><span class="jwcs-pill">PREVIEW</span></div>' +
+    '<div class="jwcs-group" id="jwcs-display" hidden><div class="jwcs-ghead"><h3>DISPLAY</h3><span class="jwcs-bar"></span>' + (DISPLAY_FOR_EVERYONE ? '' : '<span class="jwcs-pill">PREVIEW</span>') + '</div>' +
       '<span class="jwcs-label" id="jwcs-look-lbl">Look</span>' +
       '<div class="jwcs-seg" role="group" aria-labelledby="jwcs-look-lbl">' + lookButtons() + '</div>' +
       '<p class="jwcs-desc jwcs-look-help" id="jwcs-look-help"></p>' +
       '<p class="jwcs-note" id="jwcs-look-note" hidden>This page doesn&rsquo;t have a light version yet, so it stays dark.</p>' +
       '<div class="jwcs-row"><div class="jwcs-txt"><span class="jwcs-label" id="jwcs-calm-lbl">Calm display</span><p class="jwcs-desc">Turns off the pulsing, spinning and scrolling effects. Easier on the eyes.</p></div>' +
       '<button type="button" class="jwcs-switch" role="switch" aria-checked="false" aria-labelledby="jwcs-calm-lbl" id="jwcs-calm"></button></div>' +
-      '<p class="jwcs-note">Preview: only your own devices show this section (each opened once with #admin). Everyone else still sees the dark look.</p></div>';
+      (DISPLAY_FOR_EVERYONE ? '' : '<p class="jwcs-note">Preview: only your own devices show this section (each opened once with #admin). Everyone else still sees the dark look.</p>') + '</div>';
   var MAIN_HTML =
     '<p class="jwcs-intro">Saved on this device only. No account, and nothing is sent to us.</p>' +
     DISPLAY_HTML +
@@ -1145,7 +1146,7 @@
   }
   function alertMain(){ if(AL.state === 'unconfirmed') alertRetry(); else alertSubscribe(); }
 
-  /* the DISPLAY group in Settings (preview: only shown where displayAllowed(), see section 1b) */
+  /* the DISPLAY group in Settings (shown where displayAllowed(): everyone while DISPLAY_FOR_EVERYONE is true, see section 1b) */
   function lookHelp(c){
     if(c === 'light') return 'Easier to read outdoors and in bright rooms. Maps and live screens stay dark.';
     if(c === 'auto') return 'Follows your phone or computer\u2019s own light/dark setting. It is set to <b>' + (deviceDark() ? 'dark' : 'light') + '</b> right now.';
