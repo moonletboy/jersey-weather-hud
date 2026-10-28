@@ -3,6 +3,7 @@
 <head>
 <script src="cookie-consent.js" defer></script>
 <!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version: Settings > Display (see jwc-settings.js) -->
 <script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -433,6 +434,63 @@ footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px
 footer b{ color:var(--dim); }
 
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --green ...) live in jwc-settings.js; these are this page's own
+   touches. The aurora scope, the vantage-point map and the cloud map keep the dark look, like screens in a
+   bright room (the NOAA and SOHO pictures are dark by nature). */
+html[data-theme="light"] :is(.scope-panel, #vantage-map, #cloud-embed){
+  color-scheme:dark; color:var(--text);
+  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(45,225,160,0.14);
+  --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --violet:#b98aff; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
+}
+/* this page's lines keep their green tint */
+html[data-theme="light"]{ --line:rgba(0,118,79,0.2); }
+/* the page */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(0,170,120,0.10), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,150,200,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--green-fill), var(--violet-fill), var(--cyan-fill), var(--green-fill)); box-shadow:0 2px 3px rgba(0,90,60,0.25), 0 6px 16px -6px rgba(0,118,79,0.55); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] nav.tabs a.active{ color:#ffffff; }
+html[data-theme="light"] .live-pill{ background:var(--bg-panel); }
+/* cards lift off the pale ground with a soft shadow instead of a glow */
+html[data-theme="light"] :is(.panel, .tile, .stat-block, .alert-banner, .verdict-panel, .swx-card, .vantage-card, .radar-hero){ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .tile:hover{ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .scope-panel{ background:var(--bg-panel); border-color:#16232d; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6); }
+html[data-theme="light"] :is(#vantage-map, #cloud-embed){ background:#0b131c; }
+html[data-theme="light"] .panel-head .dot{ box-shadow:none; }
+html[data-theme="light"] .sec-head .tag{ color:#ffffff; }
+/* the big dial */
+html[data-theme="light"] .radar-hero .sweep{ background:conic-gradient(from 0deg, rgba(19,165,116,0.32), transparent 34%); mix-blend-mode:multiply; }
+html[data-theme="light"] .radar-hero .ring{ border-color:rgba(0,118,79,0.3); }
+html[data-theme="light"] .radar-hero .dial-value{ text-shadow:none; }
+/* pop-up explanations and their colour bars */
+html[data-theme="light"] .tip{ background:var(--bg-panel); box-shadow:0 12px 30px rgba(12,40,55,0.25); }
+html[data-theme="light"] .tip-marker{ background:var(--text); box-shadow:0 0 0 1.5px var(--bg-panel); }
+html[data-theme="light"] .kp-bar{ background:linear-gradient(90deg, #13a574 0%, #13a574 33%, #f0a100 55%, #e0384c 78%, #e0384c 100%); }
+html[data-theme="light"] .bz-bar{ background:linear-gradient(90deg, #13a574 0%, #13a574 42%, #f0a100 50%, #e0384c 58%, #e0384c 100%); }
+html[data-theme="light"] .speed-bar, html[data-theme="light"] .dens-bar{ background:linear-gradient(90deg, #13a574 0%, #13a574 25%, #f0a100 55%, #e0384c 80%, #e0384c 100%); }
+/* gauges: dark-on-light tracks */
+html[data-theme="light"] .gauge{ background:conic-gradient(var(--gc,var(--green)) calc(var(--pct,0)*1%), rgba(12,26,34,0.09) 0); }
+/* official bulletins */
+html[data-theme="light"] .swx-summary-panel{ background:linear-gradient(90deg, rgba(224,56,76,0.10), rgba(224,56,76,0.02)), var(--bg-panel); box-shadow:var(--card-shadow); }
+html[data-theme="light"] .swx-summary-panel::before{ background:linear-gradient(180deg, transparent, rgba(192,17,45,0.6), transparent); box-shadow:none; }
+html[data-theme="light"] .swx-list::-webkit-scrollbar-thumb{ background:rgba(0,118,79,0.35); }
+/* the storm banner (only shown during a geomagnetic storm) */
+html[data-theme="light"] .storm-banner{ background:linear-gradient(100deg, rgba(224,56,76,0.12), var(--bg-panel) 55%); box-shadow:0 1px 2px rgba(192,17,45,0.10), 0 12px 26px -14px rgba(224,56,76,0.5); }
+html[data-theme="light"] .storm-banner.major{ animation-name:stormGlowLight; }
+@keyframes stormGlowLight{
+0%,100%{ box-shadow:0 0 0 0 rgba(224,56,76,0), 0 12px 26px -14px rgba(224,56,76,0.5); }
+50%{ box-shadow:0 0 0 5px rgba(224,56,76,0.16), 0 12px 26px -14px rgba(224,56,76,0.5); }
+}
+html[data-theme="light"] .storm-banner.minor{ background:linear-gradient(100deg, rgba(240,161,0,0.14), var(--bg-panel) 55%); box-shadow:0 1px 2px rgba(153,87,0,0.10), 0 12px 26px -14px rgba(240,161,0,0.55); }
+html[data-theme="light"] :is(.storm-icon, .storm-title, .storm-banner.minor .storm-icon, .storm-banner.minor .storm-title){ text-shadow:none; }
+html[data-theme="light"] .storm-go{ color:#ffffff; box-shadow:none; }
+html[data-theme="light"] .storm-banner.minor .storm-go{ color:#0c1a22; background:var(--amber-fill); box-shadow:none; }
+/* Kp table and the solar imagery buttons */
+html[data-theme="light"] .kp-table tr.current-row td{ background:#e3f4ed; }
+html[data-theme="light"] .soho-tab.active{ color:#ffffff; }
 </style>
 </head>
 <body>
@@ -711,7 +769,8 @@ document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-GB', 
 }
 tickClock(); setInterval(tickClock, 1000);
 
-const GREEN='#2de1a0', AMBER='#ffb020', RED='#ff4b5c', CYAN='#4cd3ff', VIOLET='#b98aff';
+/* the page's colours, as CSS colour names so light mode can swap them (the canvas and the map use real colours) */
+const GREEN='var(--green)', AMBER='var(--amber)', RED='var(--red)', CYAN='var(--cyan)', VIOLET='var(--violet)';
 const JERSEY_LAT = 49.18;
 // Rough NOAA-derived table: Kp -> approximate equatorward edge of the
 // aurora oval, in degrees latitude. Used only as a simple guide.
@@ -777,7 +836,7 @@ const color = SWX_TYPE_COLOR[item.alert_type] || CYAN;
 return `<div class="swx-card" style="border-left-color:${color}">
 <div class="swx-card-meta">
 <span class="swx-card-time">${swxFormatTime(item.issue_datetime)} &middot; ${item.product_id || ''}</span>
-<span class="swx-badge" style="background:${color}22; color:${color};">${item.alert_type || 'ALERT'}</span>
+<span class="swx-badge" style="background:color-mix(in srgb, ${color} 13.3333%, transparent); color:${color};">${item.alert_type || 'ALERT'}</span>
 </div>
 <div class="swx-card-text">${(item.message || '').replace(/</g,'&lt;')}</div>
 </div>`;
@@ -1354,7 +1413,7 @@ function initVantageMap(){
 const map = L.map('vantage-map', { attributionControl:false, scrollWheelZoom:false }).setView([49.225, -2.14], 11);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2j49_1_a24cd99f8829db6f2edd261d', { maxZoom:14 }).addTo(map);
 VANTAGE_POINTS.forEach(p=>{
-const marker = L.circleMarker([p.lat, p.lon], { radius:9, color:GREEN, weight:2, fillColor:GREEN, fillOpacity:0.45 }).addTo(map);
+const marker = L.circleMarker([p.lat, p.lon], { radius:9, color:'#2de1a0', weight:2, fillColor:'#2de1a0', fillOpacity:0.45 }).addTo(map);   // the map stays dark in light mode too
 marker.bindPopup(`<b>${p.name}</b><br>${p.desc}`);
 });
 }

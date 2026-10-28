@@ -15,7 +15,7 @@
  * If this file is ever changed, change VERSION too (jwc-v3, jwc-v4 ...) so
  * phones replace the old copy.
  */
-const VERSION = 'jwc-v4';   // v4: tapping a notification opens the LATEST ALERTS panel
+const VERSION = 'jwc-v5';   // v5: the offline page follows light/dark and its 999 is tap-to-call (v4: tapping a notification opens the LATEST ALERTS panel)
 const OFFLINE_URL = 'offline.html';
 const KEEP = ['offline.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 

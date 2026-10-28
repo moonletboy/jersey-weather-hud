@@ -3,6 +3,7 @@
 <head>
 <script src="cookie-consent.js" defer></script>
 <!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version: Settings > Display (see jwc-settings.js) -->
 <script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,6 +47,10 @@
 --text:#e9f6f5;
 --dim:#6f8d99;
 --dim2:#3a4e58;
+/* named colours used by the scripts below; light mode swaps them (see the LIGHT MODE section at the end) */
+--yellow:#e0d341; --orange:#ff8c30; --violet:#b48cff;
+--cyan-fill:#4cd3ff; --green-fill:#2de1a0; --amber-fill:#ffb020; --red-fill:#ff4b5c;
+--sea-cold:#2a5788; --anom-cold:#1b7fe0; --anom-zero:#f2f2f2;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html{scroll-behavior:smooth;}
@@ -554,7 +559,7 @@ padding:30px 20px; margin-bottom:10px;
 
 .wave-bar-wrap{ display:flex; justify-content:center; align-items:flex-end; height:64px; margin:0 auto; }
 .wave-bar-tube{ position:relative; width:16px; height:64px; border-radius:4px; background:rgba(255,255,255,0.06); overflow:hidden; }
-.wave-bar-fill{ position:absolute; bottom:0; left:0; right:0; height:0%; border-radius:4px; background:var(--cyan); transition:height .8s ease, background .6s ease; }
+.wave-bar-fill{ position:absolute; bottom:0; left:0; right:0; height:0%; border-radius:4px; background:var(--cyan-fill); transition:height .8s ease, background .6s ease; }
 
 .compass-wrap{ position:relative; width:60px; height:60px; margin:0 auto 6px; }
 .compass-ring{ position:absolute; inset:0; border-radius:50%; border:2px solid var(--line); }
@@ -633,6 +638,49 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 .sea-day-card .day-icon{ font-size:30px; }
 
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --cyan ...) live in jwc-settings.js; these are this page's own
+   touches. The sea temperature map keeps the dark look, like a screen in a bright room. */
+html[data-theme="light"] #sstAnomalyMap{
+  color-scheme:dark; color:var(--text); background:#0b131c;
+  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
+  --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
+}
+/* this page's colour names in light mode (sea temperature anomaly: well below / close to average) */
+html[data-theme="light"]{ --anom-cold:#1560b8; --anom-zero:#3a4c55; }
+/* the page */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(0,150,200,0.10), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,170,120,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--cyan-fill), var(--green-fill), var(--cyan-fill)); box-shadow:0 2px 3px rgba(0,80,110,0.25), 0 6px 16px -6px rgba(0,109,150,0.55); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] nav.tabs a.active{ color:#ffffff; }
+/* cards lift off the pale ground with a soft shadow instead of a glow */
+html[data-theme="light"] :is(.panel, .tile, .history-panel, .day-card){ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .tile:hover{ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .panel-head .dot{ box-shadow:none; }
+html[data-theme="light"] .forecast-scroll::-webkit-scrollbar-thumb{ background:rgba(0,98,138,0.35); }
+html[data-theme="light"] .sec-head .tag{ color:#ffffff; }
+html[data-theme="light"] .sec-head.storm .tag{ color:#0c1a22; background:var(--amber-fill); }
+/* sea state */
+html[data-theme="light"] .wave-bar-tube{ background:rgba(12,26,34,0.09); }
+html[data-theme="light"] .marine-advisory{ border-color:rgba(240,161,0,0.65); background:linear-gradient(90deg, rgba(240,161,0,0.13), rgba(240,161,0,0.03)), var(--bg-panel); box-shadow:var(--card-shadow); }
+/* tides */
+html[data-theme="light"] .tide-range-badge.spring{ background:var(--red); color:#ffffff; }
+html[data-theme="light"] .tide-range-badge.moderate{ background:var(--amber-fill); color:#0c1a22; }
+html[data-theme="light"] .tide-range-badge.neap{ background:var(--green-fill); color:#0c1a22; }
+html[data-theme="light"] .tide-list-row.is-next{ background:rgba(240,161,0,0.12); }
+/* coastal flood risk */
+html[data-theme="light"] .cfr-badge{ color:#ffffff; }
+html[data-theme="light"] .cfr-badge.LOW{ background:var(--green-fill); color:#0c1a22; }
+html[data-theme="light"] .cfr-badge.ELEVATED{ background:var(--amber-fill); color:#0c1a22; }
+html[data-theme="light"] .cfr-badge.HIGH{ background:var(--red); color:#ffffff; box-shadow:none; }
+html[data-theme="light"] .cfr-card{ background:var(--bg-panel-2); }
+/* 5-day sea forecast and the hour-by-hour pop-up */
+html[data-theme="light"] .day-btn:hover{ background:rgba(0,109,150,0.07); }
+html[data-theme="light"] .fc-modal-backdrop{ background:rgba(12,26,34,0.45); }
+html[data-theme="light"] .fc-modal{ box-shadow:0 20px 50px -20px rgba(12,40,55,0.45); }
 </style>
 
 </head>
@@ -728,15 +776,15 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <div class="compass-wrap">
 <div class="compass-ring"></div>
 <svg class="compass-arrow" id="waveDirArrow" viewBox="0 0 60 60" width="60" height="60">
-<line x1="30" y1="30" x2="30" y2="10" stroke="#4cd3ff" stroke-width="2"/>
-<polygon points="30,6 26,14 34,14" fill="#4cd3ff"/>
+<line x1="30" y1="30" x2="30" y2="10" style="stroke:var(--cyan)" stroke-width="2"/>
+<polygon points="30,6 26,14 34,14" style="fill:var(--cyan)"/>
 </svg>
 </div>
 <div class="val-lg" id="waveDirVal"><b>--</b></div>
 </div>
 <div class="tile">
 <div class="lbl">SWELL HEIGHT</div>
-<div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="swellHeightFill" style="background:var(--amber);"></div></div></div>
+<div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="swellHeightFill" style="background:var(--amber-fill);"></div></div></div>
 <div class="val-lg" id="swellHeightVal"><b>--</b></div>
 <div class="sub" id="swellHeightSub">&mdash;</div>
 </div>
@@ -747,7 +795,7 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 </div>
 <div class="tile">
 <div class="lbl">WIND WAVE</div>
-<div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="windWaveFill" style="background:var(--green);"></div></div></div>
+<div class="wave-bar-wrap"><div class="wave-bar-tube"><div class="wave-bar-fill" id="windWaveFill" style="background:var(--green-fill);"></div></div></div>
 <div class="val-lg" id="windWaveVal"><b>--</b></div>
 <div class="sub" id="windWaveSub">WIND-DRIVEN CHOP</div>
 </div>
@@ -781,7 +829,6 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 </div>
 </div>
 </div>
-</div>
 <div class="marine-advisory" id="marineAdvisory">
 <div class="marine-advisory-title">&#9888; MARINE CONDITIONS ADVISORY</div>
 <div class="marine-advisory-text" id="marineAdvisoryText"></div>
@@ -811,7 +858,7 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 <span>+3&deg;C</span>
 </div>
 </div>
-<div style="text-align:center; font-size:9px; color:var(--dim2); letter-spacing:1px; margin-top:8px;">&deg;C ANOMALY VS 1991&ndash;2020 AVERAGE &middot; <span style="color:#4cd3ff;">COOLER</span> / <span style="color:#ff4b5c;">WARMER</span></div>
+<div style="text-align:center; font-size:9px; color:var(--dim2); letter-spacing:1px; margin-top:8px;">&deg;C ANOMALY VS 1991&ndash;2020 AVERAGE &middot; <span style="color:var(--cyan);">COOLER</span> / <span style="color:var(--red);">WARMER</span></div>
 </div>
 </div>
 <div style="font-size:9.5px; color:var(--dim2); letter-spacing:0.5px; margin-top:10px; line-height:1.6;">
@@ -867,7 +914,7 @@ Tide predictions: National Oceanography Centre, via gov.je. Times and heights on
 <div class="cfr-empty">LOADING HIGH TIDE OUTLOOK&hellip;</div>
 </div>
 <div class="cfr-note">
-An indicative guide only &mdash; not an official warning. For each of the next four high tides it looks at two things. <b>Flooding:</b> the predicted high-water height plus the small lift from low air pressure (roughly 1cm per hPa below normal), onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time &mdash; a big tide on its own is usually fine; the risk climbs when several of these line up. <b>Waves over sea walls:</b> in a storm, big waves and strong onshore gusts within two hours of high water can throw waves, spray and stones over sea walls and onto coast roads and promenades even on an ordinary tide. Tide height, wave height (out at sea and inshore) and gust strength are each scored, so very strong wind can make up for slightly smaller waves; the wind must be blowing onto the coast. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call 999 in an emergency.
+An indicative guide only &mdash; not an official warning. For each of the next four high tides it looks at two things. <b>Flooding:</b> the predicted high-water height plus the small lift from low air pressure (roughly 1cm per hPa below normal), onshore wind (south-easterly to south-westerly, which pushes water into St Aubin's Bay and St Clement) and wave height at that time &mdash; a big tide on its own is usually fine; the risk climbs when several of these line up. <b>Waves over sea walls:</b> in a storm, big waves and strong onshore gusts within two hours of high water can throw waves, spray and stones over sea walls and onto coast roads and promenades even on an ordinary tide. Tide height, wave height (out at sea and inshore) and gust strength are each scored, so very strong wind can make up for slightly smaller waves; the wind must be blowing onto the coast. Thresholds are approximate and for guidance. Always follow official Jersey Met and gov.je tide warnings, and call <a href="tel:999" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">999</a> in an emergency.
 </div>
 </div>
 </section>
@@ -920,7 +967,7 @@ const range = (max-min) || 1;
 const step = (w-2*pad)/(clean.length-1);
 const pts = clean.map((v,i) => (pad+i*step).toFixed(1) + ',' + (h-pad-((v-min)/range)*(h-2*pad)).toFixed(1));
 const last = pts[pts.length-1].split(',');
-svg.innerHTML = '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+last[0]+'" cy="'+last[1]+'" r="2.2" fill="'+color+'"/>';
+svg.innerHTML = '<polyline points="'+pts.join(' ')+'" fill="none" style="stroke:'+color+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+last[0]+'" cy="'+last[1]+'" r="2.2" style="fill:'+color+'"/>';
 }
 
 // ---------- HELPERS ----------
@@ -928,12 +975,14 @@ const COMPASS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW
 function compass16(deg){ return COMPASS16[Math.round(deg/22.5) % 16]; }
 
 function waveColor(h){
-if(h === null || h === undefined) return '#4cd3ff';
-if(h < 0.5) return '#2de1a0';
-if(h < 1.2) return '#4cd3ff';
-if(h < 2.0) return '#ffb020';
-return '#ff4b5c';
+if(h === null || h === undefined) return 'var(--cyan)';
+if(h < 0.5) return 'var(--green)';
+if(h < 1.2) return 'var(--cyan)';
+if(h < 2.0) return 'var(--amber)';
+return 'var(--red)';
 }
+/* the same colours for filled bars (light mode uses brighter fills for these) */
+function waveFill(h){ return waveColor(h).replace(')', '-fill)'); }
 function waveLabel(h){
 if(h === null || h === undefined) return '\u2014';
 if(h < 0.3) return 'CALM';
@@ -944,22 +993,22 @@ if(h < 3.0) return 'VERY ROUGH';
 return 'HIGH';
 }
 function seaTempColor(t){
-if(t === null || t === undefined) return '#4cd3ff';
-if(t < 9) return '#2a5788';
-if(t < 12) return '#4cd3ff';
-if(t < 16) return '#2de1a0';
-if(t < 19) return '#e0d341';
-return '#ff8c30';
+if(t === null || t === undefined) return 'var(--cyan)';
+if(t < 9) return 'var(--sea-cold)';
+if(t < 12) return 'var(--cyan)';
+if(t < 16) return 'var(--green)';
+if(t < 19) return 'var(--yellow)';
+return 'var(--orange)';
 }
 
 function swimGuide(t){
-if(t === null || t === undefined) return {label:'—', sub:'—', color:'#4cd3ff'};
-if(t < 10) return {label:'VERY COLD', sub:'COLD SHOCK RISK · 5MM+ WETSUIT', color:'#2a5788'};
-if(t < 13) return {label:'COLD', sub:'COLD SHOCK RISK · 4/3MM WETSUIT', color:'#4cd3ff'};
-if(t < 15) return {label:'COOL', sub:'3/2MM WETSUIT ADVISED', color:'#4cd3ff'};
-if(t < 18) return {label:'FRESH', sub:'SHORTY OR BRAVE SWIMMERS', color:'#2de1a0'};
-if(t < 20) return {label:'MILD', sub:'COMFORTABLE FOR MOST', color:'#e0d341'};
-return {label:'WARM', sub:'PLEASANT FOR SWIMMING', color:'#ff8c30'};
+if(t === null || t === undefined) return {label:'—', sub:'—', color:'var(--cyan)'};
+if(t < 10) return {label:'VERY COLD', sub:'COLD SHOCK RISK · 5MM+ WETSUIT', color:'var(--sea-cold)'};
+if(t < 13) return {label:'COLD', sub:'COLD SHOCK RISK · 4/3MM WETSUIT', color:'var(--cyan)'};
+if(t < 15) return {label:'COOL', sub:'3/2MM WETSUIT ADVISED', color:'var(--cyan)'};
+if(t < 18) return {label:'FRESH', sub:'SHORTY OR BRAVE SWIMMERS', color:'var(--green)'};
+if(t < 20) return {label:'MILD', sub:'COMFORTABLE FOR MOST', color:'var(--yellow)'};
+return {label:'WARM', sub:'PLEASANT FOR SWIMMING', color:'var(--orange)'};
 }
 
 // ---------- SEA TEMP ANOMALY (NOAA OISST via ERDDAP) ----------
@@ -1035,13 +1084,13 @@ const best = results[0];
 sstChosen = best.ds;
 const a = best.anom;
 const sign = a > 0 ? '+' : '';
-const col = a <= -1.5 ? '#1b7fe0' : a < -0.3 ? '#4cd3ff' : a <= 0.3 ? '#f2f2f2' : a < 1.5 ? '#ffb020' : '#ff4b5c';
+const col = a <= -1.5 ? 'var(--anom-cold)' : a < -0.3 ? 'var(--cyan)' : a <= 0.3 ? 'var(--anom-zero)' : a < 1.5 ? 'var(--amber)' : 'var(--red)';
 valEl.innerHTML = sign + a.toFixed(1) + '<span class="unit">&deg;C</span>';
 valEl.style.color = col;
 const word = Math.abs(a) <= 0.3 ? 'CLOSE TO AVERAGE' : (a > 0 ? 'WARMER THAN AVERAGE' : 'COOLER THAN AVERAGE');
 const ageDays = Math.floor((Date.now() - best.time.getTime())/86400000);
 const dateStr = best.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
-subEl.innerHTML = word + '<br>NOAA &middot; ' + dateStr + (ageDays > 4 ? ' <span style="color:#ffb020;">(' + ageDays + 'D OLD)</span>' : '');
+subEl.innerHTML = word + '<br>NOAA &middot; ' + dateStr + (ageDays > 4 ? ' <span style="color:var(--amber);">(' + ageDays + 'D OLD)</span>' : '');
 return best;
 }
 
@@ -1082,7 +1131,7 @@ document.getElementById('swellSub').textContent = 'PRIMARY SWELL';
 document.getElementById('waveHeightVal').querySelector('b').textContent = wh.toFixed(1) + 'M';
 document.getElementById('waveHeightVal').style.color = waveColor(wh);
 document.getElementById('waveHeightFill').style.height = Math.min(100, (wh/4)*100) + '%';
-document.getElementById('waveHeightFill').style.background = waveColor(wh);
+document.getElementById('waveHeightFill').style.background = waveFill(wh);
 document.getElementById('waveHeightSub').textContent = waveLabel(wh);
 
 document.getElementById('wavePeriodVal').querySelector('b').textContent = cur.wave_period.toFixed(0) + 's';
@@ -1146,12 +1195,12 @@ if(!h){ h = data.hourly; end = hIdx; }
 if(end < 0) return;
 const start = Math.max(0, end - 12);
 const sl = f => (h[f] || []).slice(start, end+1);
-renderSpark('waveSpark', sl('wave_height'), '#4cd3ff');
-renderSpark('swellSpark', sl('swell_wave_height'), '#ffb020');
+renderSpark('waveSpark', sl('wave_height'), 'var(--cyan)');
+renderSpark('swellSpark', sl('swell_wave_height'), 'var(--amber)');
 renderSpark('seaTempSpark', sl('sea_surface_temperature'), seaTempColor(data.current.sea_surface_temperature));
-renderSpark('spWavePeriod', sl('wave_period'), '#b48cff');
-renderSpark('spSwellPeriod', sl('swell_wave_period'), '#ffb020');
-renderSpark('spWindWave', sl('wind_wave_height'), '#2de1a0');
+renderSpark('spWavePeriod', sl('wave_period'), 'var(--violet)');
+renderSpark('spSwellPeriod', sl('swell_wave_period'), 'var(--amber)');
+renderSpark('spWindWave', sl('wind_wave_height'), 'var(--green)');
 }
 
 function findNowHourIndex(hTimes, nowIso){
@@ -1458,15 +1507,15 @@ const todaysMarkers = contextEvents.filter(e => e.dt >= todayStart && e.dt <= to
 const frac = (e.dt - todayStart) / (24*3600*1000);
 const x = pad + frac * (w - 2*pad);
 const y = h - pad - ((e.heightM - minH)/(maxH-minH)) * (h - 2*pad);
-return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#0e1822" stroke="${e.type==='high'?'#4cd3ff':'#6f8d99'}" stroke-width="2"/>
-<text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" fill="${e.type==='high'?'#4cd3ff':'#6f8d99'}" font-size="10" text-anchor="middle" font-family="JetBrains Mono, monospace">${e.time}</text>`;
+return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" style="fill:var(--bg-panel-2);stroke:${e.type==='high'?'var(--cyan)':'var(--dim)'}" stroke-width="2"/>
+<text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" style="fill:${e.type==='high'?'var(--cyan)':'var(--dim)'}" font-size="10" text-anchor="middle" font-family="JetBrains Mono, monospace">${e.time}</text>`;
 }).join('');
 
 document.getElementById('tideCurveWrap').innerHTML = `
 <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-<polyline points="${pts.join(' ')}" fill="none" stroke="#4cd3ff" stroke-width="2"/>
-<line x1="${nowX.toFixed(1)}" y1="0" x2="${nowX.toFixed(1)}" y2="${h}" stroke="#ffb020" stroke-width="1.5" stroke-dasharray="3,3"/>
-<circle cx="${nowX.toFixed(1)}" cy="${nowY.toFixed(1)}" r="5" fill="#ffb020"/>
+<polyline points="${pts.join(' ')}" fill="none" style="stroke:var(--cyan)" stroke-width="2"/>
+<line x1="${nowX.toFixed(1)}" y1="0" x2="${nowX.toFixed(1)}" y2="${h}" style="stroke:var(--amber)" stroke-width="1.5" stroke-dasharray="3,3"/>
+<circle cx="${nowX.toFixed(1)}" cy="${nowY.toFixed(1)}" r="5" style="fill:var(--amber)"/>
 ${todaysMarkers}
 </svg>`;
 }
@@ -1800,7 +1849,7 @@ L.circleMarker([LAT,LON], {pane:'jerseyPane', radius:4, color:'#05080d', weight:
 .bindTooltip('JERSEY', {permanent:true, direction:'right', offset:[12,0], className:'jx-label', interactive:false});
 const statusEl = document.getElementById('sstMapStatus');
 if(!best){
-if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">NO NOAA ANOMALY DATA AVAILABLE RIGHT NOW</span>';
+if(statusEl) statusEl.innerHTML = '<span style="color:var(--amber);">NO NOAA ANOMALY DATA AVAILABLE RIGHT NOW</span>';
 return;
 }
 if(statusEl) statusEl.textContent = 'LOADING ' + best.ds.tag + ' ANOMALY GRID\u2026';
@@ -1822,7 +1871,7 @@ L.popup({autoPan:false}).setLatLng(e.latlng).setContent('<b>' + (v > 0 ? '+' : '
 const d = used.time.toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'}).toUpperCase();
 if(statusEl) statusEl.textContent = used.ds.tag + ' \u00b7 DATA FOR ' + d + ' \u00b7 TAP MAP FOR A VALUE';
 }catch(e){
-if(statusEl) statusEl.innerHTML = '<span style="color:#ffb020;">ANOMALY GRID FAILED TO LOAD (' + String(e.message || e).replace(/[<>&]/g,'') + ')</span>';
+if(statusEl) statusEl.innerHTML = '<span style="color:var(--amber);">ANOMALY GRID FAILED TO LOAD (' + String(e.message || e).replace(/[<>&]/g,'') + ')</span>';
 }
 }
 function stampRefresh(){

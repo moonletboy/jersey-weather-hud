@@ -3,6 +3,7 @@
 <head>
 <script src="cookie-consent.js" defer></script>
 <!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version: Settings > Display (see jwc-settings.js) -->
 <script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -243,6 +244,33 @@ transition:all .2s ease;
   footer b{ color:var(--dim); }
 
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --green ...) live in jwc-settings.js; these are this page's own
+   touches. The contour map keeps the dark look, like a screen in a bright room. */
+html[data-theme="light"] #pws-map{
+  color-scheme:dark; color:var(--text);
+  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
+  --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
+  background:#0b131c; border-color:#16232d; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6);
+}
+/* the page */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(0,170,120,0.10), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,150,200,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--green-fill), var(--cyan-fill), var(--green-fill)); box-shadow:0 2px 3px rgba(0,90,60,0.25), 0 6px 16px -6px rgba(0,118,79,0.55); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] nav.tabs a.active{ color:#ffffff; }
+html[data-theme="light"] .sec-head .tag, html[data-theme="light"] .tgl.active{ color:#ffffff; }
+html[data-theme="light"] .live-pill{ background:var(--bg-panel); }
+/* messages */
+html[data-theme="light"] .banner.warn{ background:linear-gradient(90deg, rgba(240,161,0,0.13), rgba(240,161,0,0.03)), var(--bg-panel); }
+html[data-theme="light"] .banner.err{ background:linear-gradient(90deg, rgba(224,56,76,0.10), rgba(224,56,76,0.02)), var(--bg-panel); }
+/* station cards: the value keeps its colour scale, darkened so it reads on white (the script puts it in --tc) */
+html[data-theme="light"] .pws-card{ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .metric-value{ color:color-mix(in oklab, var(--tc, var(--text)) 50%, #0c1a22) !important; }
+html[data-theme="light"] .dot{ box-shadow:none; }
+html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2); border-style:dashed; box-shadow:none; }   /* offline cards: flat and dashed rather than see-through, so they stay readable */
 </style>
 </head>
 <body>
@@ -1169,7 +1197,7 @@ transition:all .2s ease;
         html += '<div class="pws-card' + cardCls + '" data-id="' + escapeHtml(o.id) + '">' +
           '<div class="pws-top"><span class="pws-id">' + escapeHtml(o.id) + '</span><span class="dot' + dotCls + '"></span></div>' +
           '<div class="pws-name">' + escapeHtml(o.name) + '</div>' +
-          '<div class="metric-value" style="color:' + col + '">' + val + '</div>' +
+          '<div class="metric-value" style="color:' + col + ';--tc:' + col + '">' + val + '</div>' +   /* light mode reads --tc (see LIGHT MODE in the styles) */
           '<div class="pws-meta"><span>T ' + fmt(o.temp, 1) + '°</span><span>W ' + fmt(o.wind, 0) + '/' + fmt(o.gust, 0) + ' ' + compass(o.dir) + '</span><span>R ' + fmt(o.rain, 1) + '</span><span>H ' + fmt(o.hum, 0) + '%</span></div>' +
           '<div class="pws-age">' + age + '</div>' +
           '</div>';

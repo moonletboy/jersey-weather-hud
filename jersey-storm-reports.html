@@ -3,6 +3,7 @@
 <head>
 <script src="cookie-consent.js" defer></script>
 <!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version: Settings > Display (see jwc-settings.js) -->
 <script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -338,6 +339,42 @@ transition:all .2s ease;
   footer a:hover{ color:var(--cyan); }
 
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --red ...) live in jwc-settings.js; these are this page's own
+   touches. The report map keeps the dark look, like a screen in a bright room. */
+html[data-theme="light"] #report-map{
+  color-scheme:dark; color:var(--text);
+  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
+  --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
+}
+html[data-theme="light"] #report-map{ border-color:#16232d !important; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6); }
+/* the page */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(224,56,76,0.08), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,150,200,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--red-fill), var(--amber-fill), var(--red-fill)); box-shadow:0 2px 3px rgba(120,20,30,0.22), 0 6px 16px -6px rgba(192,17,45,0.5); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] nav.tabs a.active{ color:#ffffff; }
+html[data-theme="light"] .sec-head .tag{ color:#ffffff; }
+/* cards lift off the pale ground with a soft shadow instead of a glow */
+html[data-theme="light"] :is(.form-panel, .report-card, details.recap-line){ box-shadow:var(--card-shadow); }
+/* storm recaps */
+html[data-theme="light"] .rl-type, html[data-theme="light"] .recap-tab.active[data-type="event"], html[data-theme="light"] .recap-tab.active[data-type="monthly"]{ color:#ffffff; }
+html[data-theme="light"] .rl-new, html[data-theme="light"] .recap-tab-badge{ color:#0c1a22; background:var(--orange-fill); }
+html[data-theme="light"] .recap-tab-badge{ border-color:var(--bg-panel); }
+html[data-theme="light"] .rc2-title{ color:var(--orange); }
+/* the report form */
+html[data-theme="light"] :is(.field input, .field textarea)::placeholder{ color:var(--dim); opacity:1; }
+html[data-theme="light"] .sev-btn[data-sev="Severe"].active{ background:rgba(240,124,34,0.14); border-color:var(--orange); color:var(--orange); }
+html[data-theme="light"] .sev-btn[data-sev="Extreme"].active, html[data-theme="light"] .sev-btn[data-sev="Heavy Shaking"].active{ box-shadow:0 0 0 3px rgba(224,56,76,0.16); }
+html[data-theme="light"] .submit-btn{ background:linear-gradient(120deg, var(--red), var(--orange)); color:#ffffff; }
+html[data-theme="light"] .submit-btn:hover{ box-shadow:0 8px 24px rgba(192,17,45,0.3); }
+html[data-theme="light"] .toast{ color:#ffffff; box-shadow:0 10px 30px rgba(12,40,55,0.3); }
+/* the feed */
+html[data-theme="light"] .report-card.sev-Severe{ border-left-color:var(--orange-fill); }
+html[data-theme="light"] .sev-Severe .rc-sev-badge{ background:rgba(240,124,34,0.14); color:var(--orange); }
+html[data-theme="light"] .rc-timestamp{ opacity:1; }
 </style>
 </head>
 <body>
@@ -517,7 +554,7 @@ transition:all .2s ease;
 
   <footer>
     <div>JERSEY WEATHER CHAT &middot; COMMUNITY STORM REPORT NETWORK</div>
-    <div>REPORTS ARE CROWDSOURCED AND UNVERIFIED &middot; FOR EMERGENCIES ALWAYS CALL 999</div>
+    <div>REPORTS ARE CROWDSOURCED AND UNVERIFIED &middot; FOR EMERGENCIES ALWAYS CALL <a href="tel:999" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">999</a></div>
     <div><b>DATA PROTECTION:</b> REGISTERED WITH THE JERSEY OFFICE OF THE INFORMATION COMMISSIONER AS A NON-PROFIT DATA CONTROLLER &middot; <a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">REGISTRATION NO. 104194</a> &middot; <a href="alerts-help.html#privacy">PRIVACY NOTE</a></div>
   </footer>
 
@@ -559,7 +596,7 @@ transition:all .2s ease;
     'St Brelade': [49.1775, -2.1994],
     'St Lawrence': [49.2019, -2.1494]
   };
-  const SEV_COLOR = { Minor:'#2de1a0', Moderate:'#ffb020', Severe:'#ff6b35', Extreme:'#ff4b5c', Observation:'#4cd3ff' };
+  const SEV_COLOR = { Minor:'#2de1a0', Moderate:'#ffb020', Severe:'#ff6b35', Extreme:'#ff4b5c', Observation:'#4cd3ff' };   // map pins (the map stays dark in light mode too)
   const SEV_RANK = { Minor:1, Moderate:2, Severe:3, Extreme:4 };
 
   let reportMap = null;

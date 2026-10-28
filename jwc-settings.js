@@ -124,6 +124,7 @@
     if(calmOn()) root.setAttribute('data-motion', 'calm'); else root.removeAttribute('data-motion');
     var meta = document.querySelector('meta[name="theme-color"]');
     if(meta) meta.setAttribute('content', shown === 'light' ? '#e7edf0' : '#05080d');   /* the phone's status bar */
+    lsSet('jwc-look', shown + (calmOn() ? ' calm' : ''));   /* the offline page (offline.html) reads this to match */
     /* SUN: switch at the next sunrise or sunset (checked again every 10 minutes in case the device slept) */
     clearTimeout(displayTimer);
     if(themeChoice() === 'sun'){
@@ -560,7 +561,7 @@
       '<span class="jwcs-label" id="jwcs-look-lbl">Look</span>' +
       '<div class="jwcs-seg" role="group" aria-labelledby="jwcs-look-lbl">' + lookButtons() + '</div>' +
       '<p class="jwcs-desc jwcs-look-help" id="jwcs-look-help"></p>' +
-      '<p class="jwcs-note" id="jwcs-look-note" hidden>Light mode is on Live Ops for now; this page stays dark until it gets its own.</p>' +
+      '<p class="jwcs-note" id="jwcs-look-note" hidden>This page doesn&rsquo;t have a light version yet, so it stays dark.</p>' +
       '<div class="jwcs-row"><div class="jwcs-txt"><span class="jwcs-label" id="jwcs-calm-lbl">Calm display</span><p class="jwcs-desc">Turns off the pulsing, spinning and scrolling effects. Easier on the eyes.</p></div>' +
       '<button type="button" class="jwcs-switch" role="switch" aria-checked="false" aria-labelledby="jwcs-calm-lbl" id="jwcs-calm"></button></div>' +
       '<p class="jwcs-note">Preview: only your own devices show this section (each opened once with #admin). Everyone else still sees the dark look.</p></div>';
@@ -786,7 +787,24 @@
     function more(){ nav.classList.toggle('jwcs-more', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2); }
     nav.addEventListener('scroll', more, { passive:true });
     window.addEventListener('resize', more);
-    more();
+    /* moving the tab bar into the new row resets its sideways scroll, which undid each page's own
+       "show my tab" scroll on phones; bring the current page's tab back into view, and again once the
+       fonts have loaded (they change the tab widths), unless the visitor has scrolled the tabs already */
+    var touched = false;
+    function untouched(){ touched = true; }
+    nav.addEventListener('pointerdown', untouched, { passive:true });
+    nav.addEventListener('touchstart', untouched, { passive:true });
+    nav.addEventListener('wheel', untouched, { passive:true });
+    function showActiveTab(){
+      try{
+        var act = nav.querySelector('a.active');
+        if(act && !touched && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = Math.max(0, nav.scrollLeft + act.getBoundingClientRect().left - nav.getBoundingClientRect().left);
+      }catch(e){}
+      more();
+    }
+    showActiveTab();
+    try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(showActiveTab); }catch(e){}
+    window.addEventListener('load', showActiveTab);
   }
 
   function buildSheet(){

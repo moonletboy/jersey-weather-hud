@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <script src="cookie-consent.js" defer></script>
+<!-- settings: here it only sets the look chosen in Settings > Display (no gear on this page); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version (see jwc-settings.js) -->
+<script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
@@ -957,6 +960,23 @@ footer b{ color:var(--dim); }
 .media-body li{ margin:0 0 6px; }
 .media-body a{ color:var(--cyan); }
 .media-quote{ border-left:3px solid var(--cyan); padding:2px 0 2px 12px; color:var(--text); }
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --cyan ...) live in jwc-settings.js; these are this page's own touches. */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(0,150,200,0.10), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,170,120,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--cyan-fill), var(--green-fill), var(--cyan-fill)); box-shadow:0 2px 3px rgba(0,80,110,0.25), 0 6px 16px -6px rgba(0,109,150,0.55); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] :is(.pick button, .steps li, .prob, .stuck){ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .pick button{ border-color:var(--line); }
+html[data-theme="light"] .pick button.on{ background:linear-gradient(rgba(0,109,150,0.07), rgba(0,109,150,0.07)), var(--bg-panel); border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan) inset, var(--card-shadow); }
+html[data-theme="light"] .steps li, html[data-theme="light"] .prob{ border-color:var(--line); }
+html[data-theme="light"] .steps li::before{ color:#ffffff; }
+html[data-theme="light"] .tip{ background:linear-gradient(90deg, rgba(240,161,0,0.13), rgba(240,161,0,0.03)), var(--bg-panel); border-color:rgba(240,161,0,0.65); }
+html[data-theme="light"] .stuck{ border-color:var(--line); }
+html[data-theme="light"] .fc-modal-backdrop{ background:rgba(12,26,34,0.45); }
+html[data-theme="light"] .fc-modal{ box-shadow:0 20px 50px -20px rgba(12,40,55,0.45); }
 </style>
 </head>
 <body>
@@ -997,7 +1017,7 @@ footer b{ color:var(--dim); }
 <div id="problems"></div>
 </div>
 
-<div class="stuck"><b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener" style="color:var(--cyan)">chat with others in the Jersey Weather Chat group</a>: open its <b>Chats</b> tab and join any chat. In an emergency, call 999.</div>
+<div class="stuck"><b>Anxious about the weather?</b> You&rsquo;re not alone &mdash; <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener" style="color:var(--cyan)">chat with others in the Jersey Weather Chat group</a>: open its <b>Chats</b> tab and join any chat. In an emergency, call <a href="tel:999" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">999</a>.</div>
 <div class="stuck"><b>Still stuck?</b> Message Matthew via Facebook or Messenger with a screenshot of the alert bar and which phone or computer you have, and we&rsquo;ll help. Remember: the alert is automated &mdash; the warning itself is officially issued by <a href="https://www.gov.je/weather/jerseywarnings" target="_blank" rel="noopener" style="color:var(--cyan)">Jersey Met</a>.</div>
 <div class="media-row"><button type="button" class="media-link" id="mediaOpen">&#128240; Media &amp; official enquiries</button> <button type="button" class="media-link" id="privacyOpen">&#128274; Privacy</button></div>
 <div class="fc-modal-backdrop" id="mediaBackdrop">

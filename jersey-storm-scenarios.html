@@ -3,6 +3,7 @@
 <head>
 <script src="cookie-consent.js" defer></script>
 <!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version: Settings > Display (see jwc-settings.js) -->
 <script src="jwc-settings.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,6 +45,10 @@
 --text:#e9f6f5;
 --dim:#6f8d99;
 --dim2:#3a4e58;
+/* named colours used by the scripts below; light mode swaps them (see the LIGHT MODE section at the end).
+   The charts and the Facebook pictures keep their own fixed colours. */
+--t100:#ffffff; --t90:#c04dff; --t80:#ff2fa8;
+--m-ecmwf:#4cd3ff; --m-gfs:#b48cff; --m-icon:#ffd166; --m-ukmo:#ff8fab;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html{scroll-behavior:smooth;}
@@ -921,6 +926,48 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 
 
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --amber ...) live in jwc-settings.js; these are this page's own
+   touches. The four chart panels keep the dark look, like screens in a bright room: their colours (gust levels
+   up to white for 100+) are made for a dark background, and they match the Facebook pictures made from them. */
+html[data-theme="light"] .sc-chart{
+  color-scheme:dark; color:var(--text);
+  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
+  --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
+  --t100:#ffffff; --t90:#c04dff; --t80:#ff2fa8; --m-ecmwf:#4cd3ff; --m-gfs:#b48cff; --m-icon:#ffd166; --m-ukmo:#ff8fab;
+  background:var(--bg-panel); border-color:#16232d; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6);
+}
+/* this page's colour names in light mode: gust levels 80+ / 90+ / 100+, and the four models */
+html[data-theme="light"]{ --t100:#3b0764; --t90:#7a1fc7; --t80:#c0127a; --m-ecmwf:#006d96; --m-gfs:#6a3fc8; --m-icon:#7a6500; --m-ukmo:#b8325a; }
+/* the page */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(0,150,200,0.10), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,170,120,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--cyan-fill), var(--green-fill), var(--cyan-fill)); box-shadow:0 2px 3px rgba(0,80,110,0.25), 0 6px 16px -6px rgba(0,109,150,0.55); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] nav.tabs a.active{ color:#ffffff; }
+html[data-theme="light"] .sec-head.storm .tag{ color:#0c1a22; background:var(--amber-fill); }
+html[data-theme="light"] .sec-head.storm h3{ color:#8a4f00; }   /* a touch deeper: it sits on the tinted top of the page */
+html[data-theme="light"] .sc-runs-note{ color:var(--dim); }
+/* notes at the top */
+html[data-theme="light"] .sc-official{ border-color:rgba(240,161,0,0.65); background:linear-gradient(90deg, rgba(240,161,0,0.13), rgba(240,161,0,0.03)), var(--bg-panel); }
+html[data-theme="light"] .sc-news.fresh{ color:#0c1a22; background:var(--amber-fill); }
+html[data-theme="light"] .sc-passed{ background:linear-gradient(90deg, rgba(19,165,116,0.10), rgba(19,165,116,0.02)), var(--bg-panel); border-color:rgba(0,118,79,0.45); }
+html[data-theme="light"] .sc-passed.soft{ background:linear-gradient(90deg, rgba(0,109,150,0.07), rgba(0,109,150,0.01)), var(--bg-panel); border-color:rgba(0,109,150,0.3); }
+/* cards lift off the pale ground with a soft shadow instead of a glow */
+html[data-theme="light"] :is(.sc-day, .sc-headline, .sc-gauge, .sc-runs, .sc-post){ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .sc-day.active{ box-shadow:0 0 0 1px var(--cyan) inset, 0 1px 2px rgba(0,80,110,0.10), 0 12px 26px -14px rgba(0,109,150,0.5); }
+html[data-theme="light"] .sc-card{ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .sc-card.best{ border-color:rgba(19,165,116,0.6); box-shadow:0 1px 2px rgba(0,118,79,0.10), 0 12px 26px -14px rgba(19,165,116,0.45); }
+html[data-theme="light"] .sc-card.likely{ border-color:rgba(240,161,0,0.7); box-shadow:0 1px 2px rgba(153,87,0,0.10), 0 12px 26px -14px rgba(240,161,0,0.5); }
+html[data-theme="light"] .sc-card.worst{ border-color:rgba(224,56,76,0.6); box-shadow:0 1px 2px rgba(192,17,45,0.10), 0 12px 26px -14px rgba(224,56,76,0.45); }
+html[data-theme="light"] .sc-card .star{ color:#ffffff; }
+/* the impact box under each card: a light tint of its own colour */
+html[data-theme="light"] .sc-card .imp{ background:color-mix(in srgb, currentColor 9%, var(--bg-panel)) !important; }
+/* buttons */
+html[data-theme="light"] .sc-copy{ color:#ffffff; }
+html[data-theme="light"] .sc-bigbtn{ box-shadow:0 8px 20px -8px rgba(24,119,242,0.6); }
 </style>
 </head>
 <body>
@@ -956,7 +1003,7 @@ font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color:#
 <div class="tag">BEST &middot; MIDDLE &middot; WORST</div>
 </div>
 <p class="sc-intro">Each weather model is run dozens of times from slightly different starting points. This page takes <b>every run</b> for Jersey from ECMWF, GFS, ICON and the UK Met Office and sorts them into <b>best case</b>, <b>middle</b> and <b>worst case</b> gust ranges. A scenario&rsquo;s chance is the share of runs in it, so the three add up to 100%. Pick a day below.</p>
-<div class="sc-official"><b>&#9888; Model runs, not an official forecast.</b> For warnings and advice, <b>Jersey Met is the authority</b> &mdash; <a href="https://www.gov.je/weather" target="_blank" rel="noopener">gov.je/weather</a>. In an emergency call 999.</div>
+<div class="sc-official"><b>&#9888; Model runs, not an official forecast.</b> For warnings and advice, <b>Jersey Met is the authority</b> &mdash; <a href="https://www.gov.je/weather" target="_blank" rel="noopener">gov.je/weather</a>. In an emergency call <a href="tel:999" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">999</a>.</div>
 <div class="sc-howto"><b>HOW TO USE THIS PAGE</b><span>&#9312; Read all three cards and their chances, not just the worst case.</span><span>&#9313; Storms several days away change &mdash; watch how the chances move between updates.</span><span>&#9314; Dots drifting right (into red and purple) mean a strengthening trend; drifting left means easing.</span></div>
 <div class="sc-status" id="scStatus">LOADING THE MODEL RUNS&hellip;</div>
 <div class="sc-news" id="scNews"></div>
@@ -992,10 +1039,10 @@ tickClock(); setInterval(tickClock, 1000);
    scenario (not from all runs at once, because runs time the peak differently). */
 const LAT = 49.21, LON = -2.13;
 const ENS = [
-{ id:'ecmwf_ifs025',              lbl:'ECMWF',          col:'#4cd3ff', meta:['ecmwf_ifs025_ensemble'] },
-{ id:'gfs_seamless',              lbl:'GFS',            col:'#b48cff', meta:['ncep_gefs025'] },
-{ id:'icon_seamless',             lbl:'ICON',           col:'#ffd166', meta:['dwd_icon_eu_eps', 'dwd_icon_eps'] },   // the European ICON ensemble is the one in use (about 5 days ahead)
-{ id:'ukmo_global_ensemble_20km', lbl:'UK MET OFFICE',  col:'#ff8fab', nm:'UK Met Office', meta:['ukmo_global_ensemble_20km'] }
+{ id:'ecmwf_ifs025',              lbl:'ECMWF',          col:'#4cd3ff', css:'var(--m-ecmwf)', meta:['ecmwf_ifs025_ensemble'] },
+{ id:'gfs_seamless',              lbl:'GFS',            col:'#b48cff', css:'var(--m-gfs)', meta:['ncep_gefs025'] },
+{ id:'icon_seamless',             lbl:'ICON',           col:'#ffd166', css:'var(--m-icon)', meta:['dwd_icon_eu_eps', 'dwd_icon_eps'] },   // the European ICON ensemble is the one in use (about 5 days ahead)
+{ id:'ukmo_global_ensemble_20km', lbl:'UK MET OFFICE',  col:'#ff8fab', css:'var(--m-ukmo)', nm:'UK Met Office', meta:['ukmo_global_ensemble_20km'] }
 ];
 const DET = [
 { id:'gfs_seamless',         lbl:'GFS' },
@@ -1004,11 +1051,11 @@ const DET = [
 { id:'ukmo_seamless',        lbl:'UK MET OFFICE' },
 { id:'meteofrance_seamless', lbl:'M\u00c9T\u00c9O-FRANCE', sub:'(AROME + ARPEGE)' }
 ];
-/* gust levels, strongest first. hex = the colour used in the charts */
+/* gust levels, strongest first. hex = the colour used in the charts and pictures; col = the same colour on the page (light mode swaps it) */
 const TIERS = [
-{ min:100, hex:'#ffffff', col:'#ffffff',      bg:'rgba(255,255,255,0.14)', head:'EXCEPTIONAL GUSTS &middot; 100+ MPH', body:'Hurricane strength. Danger to life; buildings badly damaged, roofs and power lines down, island-wide disruption. Shelter indoors away from windows and follow official advice.' },
-{ min:90,  hex:'#c04dff', col:'#c04dff',      bg:'rgba(192,77,255,0.14)',  head:'SEVERE, DANGEROUS GUSTS', body:'Danger to life from flying debris and falling trees. Serious damage to buildings and long power cuts. Stay indoors and do not travel.' },
-{ min:80,  hex:'#ff2fa8', col:'#ff2fa8',      bg:'rgba(255,47,168,0.12)',  head:'VERY DAMAGING GUSTS',     body:'Widespread damage to roofs, trees and power lines; flying debris. Avoid all travel and keep well away from the coast.' },
+{ min:100, hex:'#ffffff', col:'var(--t100)',  bg:'rgba(255,255,255,0.14)', head:'EXCEPTIONAL GUSTS &middot; 100+ MPH', body:'Hurricane strength. Danger to life; buildings badly damaged, roofs and power lines down, island-wide disruption. Shelter indoors away from windows and follow official advice.' },
+{ min:90,  hex:'#c04dff', col:'var(--t90)',   bg:'rgba(192,77,255,0.14)',  head:'SEVERE, DANGEROUS GUSTS', body:'Danger to life from flying debris and falling trees. Serious damage to buildings and long power cuts. Stay indoors and do not travel.' },
+{ min:80,  hex:'#ff2fa8', col:'var(--t80)',   bg:'rgba(255,47,168,0.12)',  head:'VERY DAMAGING GUSTS',     body:'Widespread damage to roofs, trees and power lines; flying debris. Avoid all travel and keep well away from the coast.' },
 { min:70,  hex:'#ff4b5c', col:'var(--red)',   bg:'rgba(255,75,92,0.16)',   head:'DAMAGING GUSTS LIKELY',   body:'Structural damage and power cuts possible. Stay away from the coast and avoid travel if you can.' },
 { min:58,  hex:'#ff4b5c', col:'var(--red)',   bg:'rgba(255,75,92,0.08)',   head:'DAMAGING GUSTS POSSIBLE', body:'Roof tiles, fences and trees at risk. Secure loose items; take care near the coast.' },
 { min:47,  hex:'#ffb020', col:'var(--amber)', bg:'rgba(255,176,32,0.12)',  head:'STRONG GUSTS',            body:'Branches down and debris likely; difficult driving, especially for high-sided vehicles.' },
@@ -1272,16 +1319,16 @@ return horiz ? '<rect x="' + y0 + '" width="' + (y1 - y0) + '" y="' + x(c) + '" 
 function timeline(win, col){
 const W = 300, x = h => 6 + h * (W - 12) / 24;
 let s = '<svg class="sc-svg" viewBox="0 0 ' + W + ' 34" aria-hidden="true"><rect x="6" y="8" width="' + (W - 12) + '" height="10" rx="5" fill="rgba(95,124,136,0.25)"/>';
-if(win) s += '<rect x="' + x(win[0]) + '" y="8" width="' + Math.max(6, x(Math.min(24, win[1])) - x(win[0])) + '" height="10" rx="5" fill="' + col + '"/>';
-[0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + x(h) + '" y="31" fill="#6f8d99" font-size="8.5" text-anchor="middle" font-family="JetBrains Mono, monospace">' + String(h).padStart(2, '0') + '</text>'; });
+if(win) s += '<rect x="' + x(win[0]) + '" y="8" width="' + Math.max(6, x(Math.min(24, win[1])) - x(win[0])) + '" height="10" rx="5" style="fill:' + col + '"/>';
+[0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + x(h) + '" y="31" style="fill:var(--dim)" font-size="8.5" text-anchor="middle" font-family="JetBrains Mono, monospace">' + String(h).padStart(2, '0') + '</text>'; });
 return s + '</svg>';
 }
 function gauge(p, col, label, sub){
 const R = 70, cx = 90, cy = 86, a = Math.PI * (1 - p / 100);
 const ex = cx + R * Math.cos(a), ey = cy - R * Math.sin(a);
 let s = '<svg class="sc-svg" viewBox="0 0 180 100" style="max-width:220px;margin:0 auto;"><path d="M20 86 A70 70 0 0 1 160 86" fill="none" stroke="rgba(95,124,136,0.25)" stroke-width="13" stroke-linecap="round"/>';
-if(p > 0) s += '<path d="M20 86 A70 70 0 0 1 ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="13" stroke-linecap="round"/>';
-s += '<text x="90" y="80" fill="' + col + '" font-size="30" font-weight="900" text-anchor="middle" font-family="Orbitron, sans-serif">' + p + '%</text></svg>';
+if(p > 0) s += '<path d="M20 86 A70 70 0 0 1 ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + '" fill="none" style="stroke:' + col + '" stroke-width="13" stroke-linecap="round"/>';
+s += '<text x="90" y="80" style="fill:' + col + '" font-size="30" font-weight="900" text-anchor="middle" font-family="Orbitron, sans-serif">' + p + '%</text></svg>';
 return '<div class="sc-gauge">' + s + '<div class="t">' + label + '</div><div class="n">' + sub + '</div></div>';
 }
 function dotPlot(st){
@@ -1379,7 +1426,7 @@ const st = SC.stats[d];
 const today = d === nowLocal().day;
 if(!st) return '<div class="sc-day off"><div class="dn">' + (today ? 'TODAY' : DAYS.format(dayDate(d)).toUpperCase()) + '</div><div class="dd">' + nc(DAYF.format(dayDate(d))).split(' ').slice(1).join(' ') + '</div><div class="bar"></div><div class="pl">' + (today ? 'DAY OVER' : 'NOT ENOUGH RUNS') + '</div></div>';
 const t = tierOf(st.q50);
-const col = t ? t.hex : 'var(--cyan)';
+const col = t ? t.col : 'var(--cyan)';
 return '<button type="button" class="sc-day' + (d === SC.day ? ' active' : '') + '" data-day="' + d + '"><div class="dn">' + (today ? 'TODAY' : DAYS.format(dayDate(d)).toUpperCase()) + '</div><div class="dd">' + (st.from ? 'FROM ' + hh(st.from) : nc(DAYF.format(dayDate(d))).split(' ').slice(1).join(' ')) + '</div>' +
 '<div class="bar"><i style="height:' + Math.max(2, st.c60) + '%;background:' + col + ';"></i></div><div class="pc" style="color:' + col + ';">' + st.c60 + '%</div><div class="pl">' + (st.from ? 'CHANCE OF 60+ LEFT' : 'CHANCE OF 60+') + '</div></button>';
 }).join('');
@@ -1387,7 +1434,7 @@ box.querySelectorAll('button[data-day]').forEach(b => b.addEventListener('click'
 }
 function headline(st){
 const L = st.sc[1], W = st.sc[2], B = st.sc[0];
-const hp = headText(st), h = hp.h, col = hp.col;
+const hp = headText(st), h = hp.h, col = hp.css;
 const dirTxt = dirSentence(detPeaks(st.day));
 return peakPassed(st) + '<div class="sc-headline" style="border-color:' + col + ';"><div class="when">' + (st.from ? 'REST OF TODAY &middot; ' : '') + dayLabel(st).toUpperCase() + ' &middot; ' + st.n + ' MODEL RUNS</div>' +
 '<h2 style="color:' + col + ';">' + h + '</h2><p>' + (L.top ? 'Most common' : 'In between') + ' (<b>' + L.p + '% chance</b>): gusts of <b>' + L.range + ' mph</b>, typically about ' + Math.round(L.v) + (L.win ? ', with 60+ mph from about <b>' + hh(L.win[0]) + ' to ' + hh(L.win[1]) + '</b>' : '') +
@@ -1423,7 +1470,7 @@ else h = 'ABOUT ' + n10 + ' IN 10 RUNS GIVE JERSEY GUSTS OF ' + base + '+ MPH';
 const hiT = [100, 90, 80, 70].find(t => t > base && st.ch[t] >= 10);
 if(hiT && cb >= 10) h += ' &middot; ABOUT ' + Math.round(st.ch[hiT] / 10) + ' IN 10 GIVE ' + hiT + '+ MPH';
 const t = tierOf(st.q50);
-return { h:h, col:t ? t.hex : '#2de1a0' };
+return { h:h, col:t ? t.hex : '#2de1a0', css:t ? t.col : 'var(--green)' };   // col for the pictures, css for the page
 }
 function card(sc){
 const t = tierOf(sc.v);
@@ -1509,7 +1556,7 @@ const noEns = '<span>M\u00c9T\u00c9O-FRANCE (AROME + ARPEGE) ISN&rsquo;T SHOWN: 
 main.innerHTML = headline(st) +
 '<div class="sc-cards">' + st.sc.map(card).join('') + '</div>' +
 '<div class="sc-gauges">' +
-st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? '#2de1a0' : sc.key === 'likely' ? '#ffb020' : '#ff4b5c', 'CHANCE OF ' + sc.lbl, 'GUSTS ' + sc.range + ' MPH &middot; ' + sc.n + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
+st.sc.map(sc => gauge(sc.p, sc.key === 'best' ? 'var(--green)' : sc.key === 'likely' ? 'var(--amber)' : 'var(--red)', 'CHANCE OF ' + sc.lbl, 'GUSTS ' + sc.range + ' MPH &middot; ' + sc.n + ' OF ' + st.n + ' RUNS')).join('') + '</div>' +
 ladder(st) +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="dots">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>EVERY RUN, ONE DOT</h4><p class="cap">Each dot is one run of a weather model, placed at the strongest gust it gives Jersey on this day. Where the dots bunch up is where the models agree. The white dashed lines divide the three scenarios; the percentage is the share of dots in each.</p>' + dotPlot(st) + '<div class="sc-legend">' + legend + noEns + '</div></div>' +
 '<div class="sc-chart">' + (SC.admin ? '<button type="button" class="sc-imgbtn" data-img="fan">&#128247; FACEBOOK IMAGE</button>' : '') + '<h4>THROUGH THE DAY</h4><p class="cap">The line is the middle run hour by hour. The darker band holds half of all runs, the lighter band 8 in 10. Where the bands rise above the red dashed line, damaging gusts are possible. <b>Move your finger or mouse across the chart</b> to read the wind at any hour.</p><div class="sc-fanread" id="scFanRead">&larr; HOVER OR DRAG ACROSS THE CHART FOR AN HOUR\u2019S GUSTS, WIND AND DIRECTION</div>' + fanChart(st) + fanKey + '</div>' +
@@ -1832,13 +1879,13 @@ let next = null, dueNow = [];
 let h = '<span class="h">MODEL</span><span class="h">LATEST RUN</span><span class="h">ARRIVED</span><span class="h">NEXT EXPECTED</span>';
 ENS.forEach(function(m, i){
 const r = metas[i];
-if(!r){ h += '<span class="m" style="color:' + m.col + ';">' + m.lbl + '</span><span class="d">&ndash;</span><span class="d">&ndash;</span><span class="d">TIMES NOT LISTED</span>'; return; }
+if(!r){ h += '<span class="m" style="color:' + m.css + ';">' + m.lbl + '</span><span class="d">&ndash;</span><span class="d">&ndash;</span><span class="d">TIMES NOT LISTED</span>'; return; }
 const run = new Date(r.init);
 let nx;
 if(now < r.due){ nx = '<span class="ok">ABOUT ' + HM.format(new Date(r.due)) + '</span>'; if(!next || r.due < next.due) next = { due:r.due, lbl:m.lbl }; }
 else if(now < r.due + r.every){ nx = '<span class="due">DUE NOW</span>'; dueNow.push(m.lbl); }
 else nx = '<span class="late">LATE</span>';
-h += '<span class="m" style="color:' + m.col + ';">' + m.lbl + '</span><span>' + String(run.getUTCHours()).padStart(2, '0') + 'Z ' + nc(RUNF.format(run)).toUpperCase() + '</span><span class="d">' + HM.format(new Date(r.avail)) + '</span>' + nx;
+h += '<span class="m" style="color:' + m.css + ';">' + m.lbl + '</span><span>' + String(run.getUTCHours()).padStart(2, '0') + 'Z ' + nc(RUNF.format(run)).toUpperCase() + '</span><span class="d">' + HM.format(new Date(r.avail)) + '</span>' + nx;
 });
 el.innerHTML = h;
 const rn = document.getElementById('scRunsNote'); if(rn) rn.style.display = '';

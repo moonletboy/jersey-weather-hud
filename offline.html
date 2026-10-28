@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#05080d">
+<script>/* the same light or dark look the site last showed on this device (saved by jwc-settings.js) */
+try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ document.documentElement.setAttribute('data-theme', 'light'); document.querySelector('meta[name="theme-color"]').setAttribute('content', '#e7edf0'); } if(/calm/.test(jl)) document.documentElement.setAttribute('data-motion', 'calm'); }catch(e){}</script>
 <title>Offline — Jersey Weather Chat</title>
 <link rel="icon" type="image/png" href="icons/favicon-32.png">
 <style>
-:root{ --bg:#05080d; --panel:#0b131c; --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --text:#e9f6f5; --dim:#5f7c88; --line:rgba(76,211,255,0.18); }
+:root{ --bg:#05080d; --panel:#0b131c; --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --text:#e9f6f5; --dim:#6f8d99; --line:rgba(76,211,255,0.18); }
 *{ box-sizing:border-box; }
 html, body{ margin:0; min-height:100%; background:var(--bg); color:var(--text); font-family:'JetBrains Mono', Consolas, 'Courier New', monospace; }
 body{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
@@ -22,6 +24,12 @@ p{ font-size:13px; line-height:1.7; color:var(--text); margin:0 0 22px; }
 button{ font-family:inherit; font-size:12px; font-weight:800; letter-spacing:2px; color:var(--bg); background:var(--cyan); border:0; border-radius:10px; padding:13px 22px; cursor:pointer; }
 .small{ margin-top:18px; font-size:10px; line-height:1.7; color:var(--dim); }
 .small b{ color:var(--text); }
+/* light mode: follows the look the site last showed on this device (jwc-settings.js keeps it in "jwc-look") */
+html[data-theme="light"]{ color-scheme:light; --bg:#e7edf0; --panel:#fbfcfd; --cyan:#006d96; --green:#00764f; --amber:#995700; --text:#0c1a22; --dim:#4a616c; --line:rgba(0,98,138,0.2); }
+html[data-theme="light"] .card{ box-shadow:0 1px 2px rgba(12,40,55,0.06), 0 10px 24px -14px rgba(12,40,55,0.24); }
+html[data-theme="light"] .mark-img{ box-shadow:0 2px 4px rgba(0,80,110,0.2), 0 10px 26px -10px rgba(0,109,150,0.5); }
+html[data-theme="light"] button{ color:#ffffff; }
+html[data-motion="calm"] *{ animation:none !important; transition:none !important; }
 </style>
 </head>
 <body>
@@ -31,7 +39,7 @@ button{ font-family:inherit; font-size:12px; font-weight:800; letter-spacing:2px
 <div class="sub">JERSEY WEATHER CHAT</div>
 <p>The weather here is always live, so it needs an internet connection. As soon as you're back online this page will reload by itself.</p>
 <button type="button" onclick="location.reload()">TRY AGAIN</button>
-<div class="small">In a storm, check <b>gov.je/weather</b> and Jersey Met for warnings when you can &mdash; and in an emergency call <b>999</b>.</div>
+<div class="small">In a storm, check <b>gov.je/weather</b> and Jersey Met for warnings when you can &mdash; and in an emergency call <b><a href="tel:999" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">999</a></b>.</div>
 </div>
 <script>window.addEventListener('online', function(){ location.reload(); });</script>
 </body>
