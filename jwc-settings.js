@@ -74,6 +74,71 @@
     }catch(e){}
   })();
 
+  /* ================= 1b. Display: dark / light / auto / sun, and calm display =================
+     Runs straight away, before the page draws, so there is no flash of the wrong colours.
+     PREVIEW: for now only devices that have opened the site once with #admin see the Display choice
+     (Matthew's devices). Everyone else always gets dark. To offer it to everyone, set DISPLAY_FOR_EVERYONE to true.
+     A page only goes light if it says it can: <meta name="jwc-themes" content="dark light"> in its <head>,
+     before this script. Pages without it stay dark whatever is chosen. */
+  var DISPLAY_FOR_EVERYONE = false;
+  var K_THEME = 'jwc-theme', K_CALM = 'jwc-calm', K_PREVIEW = 'jwc-preview';
+  var JERSEY = [49.1805, -2.1058];
+  try{
+    if(location.hash === '#admin') lsSet(K_PREVIEW, '1');
+    if(location.hash === '#preview-off'){ lsDel(K_PREVIEW); lsDel(K_THEME); lsDel(K_CALM); }   /* back to what members see */
+  }catch(e){}
+  function displayAllowed(){ return DISPLAY_FOR_EVERYONE || lsGet(K_PREVIEW) === '1'; }
+  function pageHasLight(){ var m = document.querySelector('meta[name="jwc-themes"]'); return !!(m && /\blight\b/.test(m.getAttribute('content') || '')); }
+  function themeChoice(){ var t = displayAllowed() ? (lsGet(K_THEME) || '') : ''; return /^(dark|light|auto|sun)$/.test(t) ? t : 'dark'; }
+  function calmOn(){ return displayAllowed() && lsGet(K_CALM) === '1'; }
+  function deviceDark(){ try{ return window.matchMedia('(prefers-color-scheme: dark)').matches; }catch(e){ return true; } }
+  /* sunrise and sunset for a day in Jersey (the usual NOAA-style formula; good to a minute or two) */
+  function sunTimes(date){
+    var rad = Math.PI / 180, dayMs = 86400000, J1970 = 2440588, J2000 = 2451545, J0 = 0.0009;
+    var lw = rad * -JERSEY[1], phi = rad * JERSEY[0], e = rad * 23.4397;
+    var d = date.valueOf() / dayMs - 0.5 + J1970 - J2000;
+    var n = Math.round(d - J0 - lw / (2 * Math.PI));
+    var ds = J0 + lw / (2 * Math.PI) + n;
+    var M = rad * (357.5291 + 0.98560028 * ds);
+    var C = rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+    var L = M + C + rad * 102.9372 + Math.PI;
+    var dec = Math.asin(Math.sin(L) * Math.sin(e));
+    var Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+    var w = Math.acos((Math.sin(-0.833 * rad) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+    var Jset = J2000 + (J0 + (w + lw) / (2 * Math.PI) + n) + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+    var toDate = function(j){ return new Date((j + 0.5 - J1970) * dayMs); };
+    return { rise:toDate(Jnoon - (Jset - Jnoon)), set:toDate(Jset) };
+  }
+  function effectiveTheme(){
+    var c = themeChoice();
+    if(c === 'light') return 'light';
+    if(c === 'auto') return deviceDark() ? 'dark' : 'light';
+    if(c === 'sun'){ var now = new Date(), s = sunTimes(now); return (now >= s.rise && now < s.set) ? 'light' : 'dark'; }
+    return 'dark';
+  }
+  var displayTimer = null, displayListeners = [];
+  function applyDisplay(){
+    var root = document.documentElement;
+    var shown = pageHasLight() ? effectiveTheme() : 'dark';
+    if(root.getAttribute('data-theme') !== shown) root.setAttribute('data-theme', shown);
+    if(calmOn()) root.setAttribute('data-motion', 'calm'); else root.removeAttribute('data-motion');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute('content', shown === 'light' ? '#e7edf0' : '#05080d');   /* the phone's status bar */
+    /* SUN: switch at the next sunrise or sunset (checked again every 10 minutes in case the device slept) */
+    clearTimeout(displayTimer);
+    if(themeChoice() === 'sun'){
+      var now = new Date(), s = sunTimes(now), next = now < s.rise ? s.rise : now < s.set ? s.set : sunTimes(new Date(now.getTime() + 86400000)).rise;
+      displayTimer = setTimeout(applyDisplay, Math.max(5000, Math.min(10 * 60000, next - now + 2000)));
+    }
+    for(var i = 0; i < displayListeners.length; i++){ try{ displayListeners[i](); }catch(e){} }
+  }
+  try{ applyDisplay(); }catch(e){}
+  try{
+    var mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+    if(mqDark.addEventListener) mqDark.addEventListener('change', function(){ if(themeChoice() === 'auto') applyDisplay(); });
+    else if(mqDark.addListener) mqDark.addListener(function(){ if(themeChoice() === 'auto') applyDisplay(); });
+  }catch(e){}
+
   /* ================= 2. Systems check: a quiet note of each data request =================
      Wraps the browser's fetch() so every data request the page makes is noted (name, when it last loaded,
      whether it failed). It passes everything through untouched; nothing is stored or sent anywhere. */
@@ -264,7 +329,7 @@
     '.jwcs-navbar{display:flex;align-items:stretch;gap:8px}',
     '.jwcs-navbar>nav.tabs{position:static!important;top:auto!important;flex:1 1 auto;min-width:0;margin:0!important;padding:0!important;background:none!important;border:0!important}',
     '.jwcs-navbar>nav.tabs.jwcs-more{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent)}',
-    '.jwcs-gear{position:relative;flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;min-width:44px;padding:0 11px;border:1px solid rgba(233,246,245,.38);border-radius:6px;background:transparent;color:var(--text,#e9f6f5);cursor:pointer;font-family:"Orbitron",sans-serif;font-size:10px;letter-spacing:2px;transition:color .2s ease,border-color .2s ease}',
+    '.jwcs-gear{position:relative;flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;min-width:44px;padding:0 11px;border:1px solid var(--gear-line,rgba(233,246,245,.38));border-radius:6px;background:transparent;color:var(--text,#e9f6f5);cursor:pointer;font-family:"Orbitron",sans-serif;font-size:10px;letter-spacing:2px;transition:color .2s ease,border-color .2s ease}',
     '.jwcs-gear:hover,.jwcs-gear[aria-expanded="true"]{color:var(--cyan,#4cd3ff);border-color:var(--cyan,#4cd3ff)}',
     '.jwcs-gear svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;transition:transform .5s cubic-bezier(.2,.8,.2,1)}',
     '.jwcs-gear:hover svg{transform:rotate(45deg)}',
@@ -382,7 +447,45 @@
     '.jwcs-note{font-size:10.5px;color:var(--dim,#6f8d99);line-height:1.6;margin:14px 0 0;padding:8px 10px;border:1px dashed var(--line,rgba(76,211,255,.14));border-radius:8px}',
     '.jwcs-remember,.field .jwcs-remember{display:flex;align-items:center;gap:8px;margin:0;font-size:10.5px;letter-spacing:.3px;color:var(--dim,#6f8d99);cursor:pointer;line-height:1.4;text-transform:none}',
     '.jwcs-remember input,.field .jwcs-remember input{width:16px;height:16px;min-height:0;flex:0 0 auto;margin:0;padding:0;border:0;background:none;accent-color:var(--cyan,#4cd3ff);cursor:pointer}',
-    '.jwcs-sheet :focus-visible,.jwcs-gear:focus-visible{outline:2px solid var(--cyan,#4cd3ff);outline-offset:2px}'
+    '.jwcs-sheet :focus-visible,.jwcs-gear:focus-visible{outline:2px solid var(--cyan,#4cd3ff);outline-offset:2px}',
+    /* Display group: the DARK / LIGHT / AUTO / SUN switch, as in the mock-up */
+    '.jwcs-pill{flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:1.2px;padding:2px 7px;border-radius:3px;color:var(--amber,#ffb020);border:1px dashed var(--amber,#ffb020)}',
+    '.jwcs-seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;margin-top:9px;border:1px solid var(--line,rgba(76,211,255,.14));border-radius:10px;background:rgba(255,255,255,.04)}',
+    '.jwcs-seg button{min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:0;border-radius:7px;background:transparent;color:var(--dim,#6f8d99);font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:background .18s ease,color .18s ease}',
+    '.jwcs-seg button:not([aria-pressed="true"]):hover{color:var(--text,#e9f6f5);background:rgba(76,211,255,.08)}',
+    '.jwcs-seg button[aria-pressed="true"]{color:#05080d;background:var(--cyan,#4cd3ff)}',
+    '.jwcs-seg svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}',
+    '.jwcs-seg svg .f{fill:currentColor;stroke:none}',
+    '.jwcs-look-help{min-height:36px;margin-top:10px}',
+    /* Calm display: no pulsing, spinning or scrolling effects (works on every page) */
+    'html[data-motion="calm"] *,html[data-motion="calm"] *::before,html[data-motion="calm"] *::after{animation:none!important;transition:none!important}',
+    'html[data-motion="calm"]{scroll-behavior:auto!important}',
+    'html[data-motion="calm"] .scanline{display:none!important}',
+    /* ---------- light mode: the shared "daylight console" colours ----------
+       Only used when a page that supports light (see section 1b) is switched to it. Each page adds its own
+       finishing touches, and keeps its maps and live screens dark. */
+    'html[data-theme="light"]{color-scheme:light;--bg:#e7edf0;--bg-panel:#fbfcfd;--bg-panel-2:#f1f5f7;--line:rgba(0,98,138,0.2);' +
+      '--cyan:#006d96;--green:#00764f;--amber:#995700;--red:#c0112d;--text:#0c1a22;--dim:#4a616c;--dim2:#526873;--yellow:#7a6500;--orange:#b04700;--violet:#6a3fc8;' +
+      '--cyan-fill:#0e98cc;--green-fill:#13a574;--amber-fill:#f0a100;--red-fill:#e0384c;--yellow-fill:#e8d23a;--orange-fill:#f07c22;--violet-fill:#9b6cf0;' +
+      '--nav-bg:rgba(231,237,240,0.95);--gear-line:rgba(12,26,34,0.3);--card-shadow:0 1px 2px rgba(12,40,55,0.06),0 10px 24px -14px rgba(12,40,55,0.24)}',
+    'html[data-theme="light"] .jwcs-scrim{background:rgba(12,26,34,.38)}',
+    'html[data-theme="light"] .jwcs-sheet{box-shadow:-30px 0 60px -28px rgba(12,40,55,.45)}',
+    'html[data-theme="light"] .jwcs-select option{background:#fbfcfd;color:#0c1a22}',
+    'html[data-theme="light"] .jwcs-switch::before,html[data-theme="light"] .jwcs-seg{background:rgba(12,26,34,.06)}',
+    'html[data-theme="light"] .jwcs-switch[aria-checked="true"]::after{background:#ffffff}',
+    'html[data-theme="light"] .jwcs-seg button[aria-pressed="true"],html[data-theme="light"] .jwcs-btn.cyan{color:#ffffff}',
+    'html[data-theme="light"] .jwcs-seg button:not([aria-pressed="true"]):hover{background:rgba(0,109,150,.07)}',
+    'html[data-theme="light"] .jwcs-btn.amber{background:var(--amber-fill);border-color:var(--amber-fill);color:#0c1a22}',
+    'html[data-theme="light"] .jwcs-gear.jwcs-has-news::after{background:var(--amber-fill)}',
+    'html[data-theme="light"] .jwcs-news li.is-new time::after{color:var(--amber)}',
+    'html[data-theme="light"] .jwcs-talk{border-color:rgba(0,109,150,.25);background:rgba(0,109,150,.04)}',
+    'html[data-theme="light"] .jwcs-status.on i{box-shadow:none}',
+    /* the cookie banner (cookie-consent.js), in light mode */
+    'html[data-theme="light"] #jwc-cc{background:#fbfcfd;border-color:rgba(0,109,150,.35);box-shadow:0 14px 40px rgba(12,40,55,.28);color:#0c1a22}',
+    'html[data-theme="light"] #jwc-cc .jwc-cc-title,html[data-theme="light"] #jwc-cc a{color:#006d96}',
+    'html[data-theme="light"] #jwc-cc .jwc-cc-status{color:#4a616c}',
+    'html[data-theme="light"] #jwc-cc button{border-color:#006d96;color:#006d96}',
+    'html[data-theme="light"] #jwc-cc button:hover,html[data-theme="light"] #jwc-cc button:focus-visible{background:rgba(0,109,150,.08)}'
   ].join('\n');
   (function(){
     try{
@@ -437,8 +540,33 @@
     for(var i = 0; i < PAGES.length; i++) h += '<option value="' + PAGES[i][0] + '"' + (PAGES[i][0] === cur ? ' selected' : '') + '>' + esc(PAGES[i][1].toUpperCase()) + '</option>';
     return h;
   }
+  var LOOKS = [
+    ['dark', 'DARK', 'M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6z', ''],
+    ['light', 'LIGHT', 'M12 8.2a3.8 3.8 0 1 0 0 7.6a3.8 3.8 0 1 0 0-7.6zM12 2.5v2.3M12 19.2v2.3M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.3M19.2 12h2.3M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6', ''],
+    ['auto', 'AUTO', 'M12 3.2a8.8 8.8 0 1 0 0 17.6a8.8 8.8 0 1 0 0-17.6z', 'M12 3.2a8.8 8.8 0 0 1 0 17.6z'],
+    ['sun', 'SUN', 'M2.5 18.5h19M7 18.5a5 5 0 0 1 10 0M12 3.5v6M9.4 6l2.6-2.5L14.6 6M4.6 12.4l1.5 1.4M19.4 12.4l-1.5 1.4', '']
+  ];
+  function lookButtons(){
+    var h = '';
+    for(var i = 0; i < LOOKS.length; i++){
+      h += '<button type="button" aria-pressed="false" data-look="' + LOOKS[i][0] + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + LOOKS[i][2] + '"/>' +
+           (LOOKS[i][3] ? '<path class="f" d="' + LOOKS[i][3] + '"/>' : '') + '</svg><span>' + LOOKS[i][1] + '</span></button>';
+    }
+    return h;
+  }
+  /* hidden unless this device may use the Display choice (see section 1b) */
+  var DISPLAY_HTML =
+    '<div class="jwcs-group" id="jwcs-display" hidden><div class="jwcs-ghead"><h3>DISPLAY</h3><span class="jwcs-bar"></span><span class="jwcs-pill">PREVIEW</span></div>' +
+      '<span class="jwcs-label" id="jwcs-look-lbl">Look</span>' +
+      '<div class="jwcs-seg" role="group" aria-labelledby="jwcs-look-lbl">' + lookButtons() + '</div>' +
+      '<p class="jwcs-desc jwcs-look-help" id="jwcs-look-help"></p>' +
+      '<p class="jwcs-note" id="jwcs-look-note" hidden>Light mode is on Live Ops for now; this page stays dark until it gets its own.</p>' +
+      '<div class="jwcs-row"><div class="jwcs-txt"><span class="jwcs-label" id="jwcs-calm-lbl">Calm display</span><p class="jwcs-desc">Turns off the pulsing, spinning and scrolling effects. Easier on the eyes.</p></div>' +
+      '<button type="button" class="jwcs-switch" role="switch" aria-checked="false" aria-labelledby="jwcs-calm-lbl" id="jwcs-calm"></button></div>' +
+      '<p class="jwcs-note">Preview: only your own devices show this section (each opened once with #admin). Everyone else still sees the dark look.</p></div>';
   var MAIN_HTML =
     '<p class="jwcs-intro">Saved on this device only. No account, and nothing is sent to us.</p>' +
+    DISPLAY_HTML +
     '<div class="jwcs-group"><div class="jwcs-ghead"><h3>WHAT&rsquo;S NEW</h3><span class="jwcs-bar"></span></div>' +
       '<ul class="jwcs-news" id="jwcs-news-top"></ul>' +
       '<button type="button" class="jwcs-btn jwcs-more-btn" data-jwcs-go="news">ALL UPDATES</button></div>' +
@@ -641,8 +769,8 @@
     bar.style.zIndex = cs.zIndex;
     bar.style.margin = cs.marginTop + ' ' + cs.marginRight + ' ' + cs.marginBottom + ' ' + cs.marginLeft;
     bar.style.padding = cs.paddingTop + ' ' + cs.paddingRight + ' ' + cs.paddingBottom + ' ' + cs.paddingLeft;
-    bar.style.background = cs.backgroundColor;
-    bar.style.borderBottom = cs.borderBottomWidth + ' ' + cs.borderBottomStyle + ' ' + cs.borderBottomColor;
+    bar.style.background = 'var(--nav-bg, ' + cs.backgroundColor + ')';   /* light mode supplies --nav-bg */
+    bar.style.borderBottom = cs.borderBottomWidth + ' ' + cs.borderBottomStyle + ' var(--line, ' + cs.borderBottomColor + ')';
     nav.parentNode.insertBefore(bar, nav);
     bar.appendChild(nav);
     gearBtn = document.createElement('button');
@@ -999,6 +1127,35 @@
   }
   function alertMain(){ if(AL.state === 'unconfirmed') alertRetry(); else alertSubscribe(); }
 
+  /* the DISPLAY group in Settings (preview: only shown where displayAllowed(), see section 1b) */
+  function lookHelp(c){
+    if(c === 'light') return 'Easier to read outdoors and in bright rooms. Maps and live screens stay dark.';
+    if(c === 'auto') return 'Follows your phone or computer\u2019s own light/dark setting. It is set to <b>' + (deviceDark() ? 'dark' : 'light') + '</b> right now.';
+    if(c === 'sun'){
+      var s = sunTimes(new Date()), f = function(d){ try{ return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }); }catch(e){ return d.toTimeString().slice(0, 5); } };
+      return 'Light from sunrise to sunset in Jersey, dark after that. Today it is light from <b>' + f(s.rise) + '</b> to <b>' + f(s.set) + '</b>.';
+    }
+    return 'The classic Live Ops look. Best at night and in dim rooms.';
+  }
+  function wireDisplayGroup(){
+    var g = document.getElementById('jwcs-display'); if(!g) return;
+    var help = document.getElementById('jwcs-look-help'), note = document.getElementById('jwcs-look-note'), calm = document.getElementById('jwcs-calm');
+    var btns = g.querySelectorAll('[data-look]');
+    function draw(){
+      g.hidden = !displayAllowed();
+      var c = themeChoice();
+      for(var i = 0; i < btns.length; i++) btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-look') === c ? 'true' : 'false');
+      help.innerHTML = lookHelp(c);
+      note.hidden = pageHasLight() || c === 'dark';
+      calm.setAttribute('aria-checked', calmOn() ? 'true' : 'false');
+    }
+    for(var i = 0; i < btns.length; i++){
+      btns[i].addEventListener('click', function(){ lsSet(K_THEME, this.getAttribute('data-look')); applyDisplay(); });
+    }
+    calm.addEventListener('click', function(){ if(calmOn()) lsDel(K_CALM); else lsSet(K_CALM, '1'); applyDisplay(); });
+    displayListeners.push(draw); draw();
+  }
+
   /* the WARNING ALERTS group in Settings */
   function wireAlertGroup(){
     var g = document.getElementById('jwcs-alerts'); if(!g) return;
@@ -1142,12 +1299,16 @@
   function init(){
     var panel = true;
     try{ buildSheet(); }catch(e){ panel = false; }
+    try{ applyDisplay(); }catch(e){}       /* again now the whole <head> has loaded (theme-color meta etc.) */
     if(panel){
       try{ buildGear(); }catch(e){}
       try{ wireOpeners(); }catch(e){}
+      try{ wireDisplayGroup(); }catch(e){}
       try{ wireAlertGroup(); }catch(e){}
       try{ wireInstallRow(); }catch(e){}
     }
+    /* another tab changed the look: follow it */
+    try{ window.addEventListener('storage', function(e){ if(e.key === K_THEME || e.key === K_CALM || e.key === K_PREVIEW) applyDisplay(); }); }catch(e){}
     try{ wireReportForm(); }catch(e){}
     /* the Live Ops bars work even if the panel couldn't be built */
     try{ wireAlertStrip(); }catch(e){}
