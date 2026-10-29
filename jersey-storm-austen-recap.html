@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="cookie-consent.js" defer></script>
+<!-- settings gear + panel, shared by every page (see jwc-settings.js); loads early on purpose, no defer -->
+<meta name="jwc-themes" content="dark light"><!-- this page has a light version: Settings > Display (see jwc-settings.js) -->
+<script src="jwc-settings.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#05080d">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="JWC Weather">
+<script>if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }</script>
+<title>Storm Austen in Jersey, 22&ndash;23 October 2026: Storm Recap | Jersey Weather Chat</title>
+<meta name="description" content="Storm Austen in Jersey: an 84 mph gust at Jersey Airport, a red wind warning, 174 Government incidents in a day, how the forecasts compared and what Jersey Weather Chat members reported.">
+<link rel="canonical" href="https://jerseyweatherchat.com/jersey-storm-austen-recap.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Jersey Weather Chat">
+<meta property="og:title" content="Storm Austen in Jersey, 22&ndash;23 October 2026: Storm Recap">
+<meta property="og:description" content="An 84 mph gust at Jersey Airport, a red wind warning, 174 Government incidents in a day: the charts, the forecast replay and the community reports.">
+<meta property="og:url" content="https://jerseyweatherchat.com/jersey-storm-austen-recap.html">
+<meta property="og:image" content="https://jerseyweatherchat.com/icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Storm Austen in Jersey, 22&ndash;23 October 2026: Storm Recap">
+<meta name="twitter:description" content="An 84 mph gust at Jersey Airport, a red wind warning, 174 Government incidents in a day: the charts, the forecast replay and the community reports.">
+<meta name="twitter:image" content="https://jerseyweatherchat.com/icons/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --bg:#05080d;
+    --bg-panel:#0b131c;
+    --bg-panel-2:#0e1822;
+    --line:rgba(76,211,255,0.14);
+    --cyan:#4cd3ff;
+    --green:#2de1a0;
+    --amber:#ffb020;
+    --red:#ff4b5c;
+    --text:#e9f6f5;
+    --dim:#6f8d99;
+    --dim2:#3a4e58;
+    --orange:#ff6b35;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,75,92,0.07), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(76,211,255,0.06), transparent 50%),
+      var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+    z-index:0;
+    mask-image: radial-gradient(ellipse at 50% 0%, black, transparent 75%);
+  }
+  .scanline{
+    position:fixed; left:0; right:0; height:120px;
+    background:linear-gradient(180deg, transparent, rgba(255,75,92,0.05), transparent);
+    animation:scan 8s linear infinite;
+    pointer-events:none; z-index:1;
+  }
+  @keyframes scan{ 0%{top:-120px;} 100%{top:100vh;} }
+
+  .wrap{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:22px 20px 70px; }
+
+  /* HEADER */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px; margin-bottom:14px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:38px;height:38px; border-radius:8px;
+    background:conic-gradient(from 0deg, var(--red), var(--amber), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    animation:spin 6s linear infinite;
+    box-shadow:0 0 18px rgba(255,75,92,0.5);
+  }
+  .brand-mark::after{
+    content:"◉"; color:#05080d; font-size:16px; font-weight:900;
+    animation:spin 6s linear infinite reverse;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .brand h1{ font-family:'Orbitron', sans-serif; font-weight:900; font-size:19px; letter-spacing:2px; color:var(--text); }
+  .brand span{ display:block; font-size:10px; letter-spacing:3px; color:var(--dim); margin-top:2px; }
+  .status{ display:flex; align-items:center; gap:18px; font-size:12px; color:var(--dim); }
+  .arch-pill{ display:flex; align-items:center; gap:7px; border:1px solid var(--cyan); color:var(--cyan); padding:5px 11px; border-radius:20px; letter-spacing:2px; font-weight:700; font-size:11px; }
+  #clock{ color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; }
+
+/* NAV: one swipeable row, directly under the header, sticks to the top while scrolling (matches the home page) */
+nav.tabs{
+display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+scrollbar-width:none; -ms-overflow-style:none;
+position:sticky; top:0; z-index:30;
+margin:0 -20px 14px; padding:8px 20px;
+background:rgba(5,8,13,0.94);
+border-bottom:1px solid var(--line);
+}
+nav.tabs::-webkit-scrollbar{ display:none; }
+nav.tabs a{
+flex:0 0 auto; white-space:nowrap;
+font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; text-decoration:none;
+color:var(--dim); padding:9px 16px; border:1px solid var(--line); border-radius:6px;
+transition:all .2s ease;
+}
+  nav.tabs a:hover{ color:var(--text); border-color:var(--cyan); }
+  nav.tabs a.active{ color:var(--bg); background:var(--red); border-color:var(--red); font-weight:700; }
+
+  .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .sec-head h3{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:3px; white-space:nowrap; color:var(--text); }
+  .sec-head .bar{ height:1px; flex:1; background:linear-gradient(90deg, var(--line), transparent); }
+  .sec-head .tag{ font-size:10px; color:var(--bg); background:var(--red); padding:3px 8px; border-radius:3px; font-weight:800; letter-spacing:1px; flex:0 0 auto; white-space:nowrap; }
+  .sec-head .tag.cyan{ background:var(--cyan); }
+  .sec-head .tag.amber{ background:var(--amber); }
+  .sec-head .tag.green{ background:var(--green); }
+/* phones: long section titles wrap instead of pushing the tag off the right edge (which widened the whole page) */
+@media (max-width:640px){
+.sec-head{ flex-wrap:wrap; gap:8px 12px; }
+.sec-head h3{ white-space:normal; min-width:0; flex:1 1 auto; font-size:13px; letter-spacing:2px; line-height:1.35; }
+.sec-head .bar{ display:none; }
+}
+  section{ margin-bottom:50px; }
+  .leaflet-container{ background:var(--bg-panel); }
+  .leaflet-container .leaflet-control-attribution{ background:rgba(5,8,13,0.75); color:var(--dim); font-family:'JetBrains Mono',monospace; font-size:9px; }
+  .leaflet-container .leaflet-control-attribution a{ color:var(--cyan); }
+  footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
+  footer b{ color:var(--dim); }
+  footer a{ color:var(--dim); text-decoration:underline; text-underline-offset:2px; }
+  footer a:hover{ color:var(--cyan); }
+.seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+
+  /* ================= THIS PAGE: STORM RECAP ================= */
+  .backlink{ display:inline-block; font-size:10.5px; letter-spacing:2px; color:var(--dim); text-decoration:none; border:1px solid var(--line); border-radius:6px; padding:7px 12px; margin:0 0 18px; }
+  .backlink:hover{ color:var(--text); border-color:var(--cyan); }
+  .rc-hero{ padding:6px 4px 34px; border-bottom:1px solid var(--line); margin-bottom:36px; }
+  .rc-kicker{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:12px; }
+  .rc-kicker .ev{ font-size:9px; font-weight:800; letter-spacing:1.5px; padding:3px 7px; border-radius:4px; color:#05080d; background:var(--red); }
+  .rc-hero h2{ font-family:'Orbitron',sans-serif; font-size:38px; font-weight:900; letter-spacing:2px; line-height:1.1; }
+  .rc-hero h2 span{ color:var(--red); }
+  .rc-sub{ font-size:12px; letter-spacing:1.5px; color:var(--cyan); margin:10px 0 14px; }
+  .rc-lead{ font-size:13px; line-height:1.75; max-width:760px; color:var(--text); margin-bottom:24px; }
+  .kpis{ display:grid; grid-template-columns:repeat(6, 1fr); gap:12px; }
+  .kpi{ background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); border:1px solid var(--line); border-radius:12px; padding:14px 14px 12px; }
+  .kpi .v{ font-family:'Orbitron',sans-serif; font-size:26px; font-weight:900; line-height:1; color:var(--red); }
+  .kpi .v small{ font-size:11px; font-weight:700; letter-spacing:1px; margin-left:3px; }
+  .kpi .l{ font-size:9.5px; letter-spacing:1.6px; color:var(--text); font-weight:800; margin-top:9px; }
+  .kpi .s{ font-size:9.5px; color:var(--dim); line-height:1.5; margin-top:4px; }
+  .kpi.c-cyan .v{ color:var(--cyan); } .kpi.c-amber .v{ color:var(--amber); } .kpi.c-green .v{ color:var(--green); } .kpi.c-orange .v{ color:var(--orange); }
+  @media (max-width:980px){ .kpis{ grid-template-columns:repeat(3, 1fr); } }
+  @media (max-width:560px){ .kpis{ grid-template-columns:repeat(2, 1fr); gap:10px; } .kpi .v{ font-size:22px; } .rc-hero h2{ font-size:28px; } }
+
+  /* chart panels (they keep the dark look in light mode, like screens in a bright room) */
+  .chart{ position:relative; padding:16px 16px 12px; border-radius:14px; background:var(--bg-panel); border:1px solid var(--line); margin-bottom:22px; }
+  .chart h4{ margin:0 0 4px; font-size:11px; letter-spacing:2px; color:var(--cyan); }
+  .chart .cap{ font-size:10.5px; color:var(--dim); line-height:1.65; margin:0 0 10px; max-width:860px; }
+  .chart .cap b{ color:var(--text); font-weight:700; }
+  .svgbox{ width:100%; }
+  .svgbox svg{ width:100%; height:auto; display:block; }
+  .touch{ touch-action:pan-y; cursor:crosshair; }
+  .readout{ font-size:10.5px; letter-spacing:0.6px; color:var(--dim); margin:0 0 8px; min-height:36px; line-height:1.7; }
+  .readout b{ color:var(--text); }
+  .readout .hot{ color:var(--red); font-weight:800; }
+  .legend{ display:flex; flex-wrap:wrap; gap:8px 16px; font-size:9.5px; letter-spacing:1px; color:var(--dim); margin-top:10px; }
+  .legend i{ display:inline-block; width:14px; height:3px; border-radius:2px; margin-right:6px; vertical-align:3px; }
+  .legend i.dot{ width:9px; height:9px; border-radius:50%; vertical-align:-1px; }
+  .legend i.box{ width:11px; height:11px; border-radius:2px; vertical-align:-2px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  @media (max-width:860px){ .grid2{ grid-template-columns:1fr; gap:0; } }
+  /* two balanced columns of panels (they flow down the left column, then the right) */
+  .cols2{ column-count:2; column-gap:22px; }
+  .cols2 > .chart{ break-inside:avoid; -webkit-column-break-inside:avoid; display:inline-block; width:100%; }
+  @media (max-width:860px){ .cols2{ column-count:1; } }
+  .note{ font-size:10.5px; color:var(--dim); line-height:1.7; max-width:860px; }
+  .note b{ color:var(--text); }
+  .note a, .cap a{ color:var(--cyan); }
+
+  /* the verdict box */
+  .verdict{ padding:16px 18px; border-radius:12px; margin-bottom:22px; background:linear-gradient(90deg, rgba(45,225,160,0.10), rgba(45,225,160,0.02)), var(--bg-panel); border:1px solid rgba(45,225,160,0.45); }
+  .verdict .ttl{ font-family:'Orbitron',sans-serif; font-size:13px; letter-spacing:1.5px; color:var(--green); margin-bottom:8px; }
+  .verdict p{ font-size:12px; line-height:1.75; color:var(--text); }
+  .verdict p + p{ margin-top:8px; }
+
+  /* storm track map */
+  #trackMap{ height:380px; border-radius:10px; border:1px solid var(--line); }
+  @media (max-width:640px){ #trackMap{ height:300px; } }
+  .trk-label{ background:rgba(5,8,13,0.82); border:1px solid rgba(255,75,92,0.5); color:#e9f6f5; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.5px; padding:2px 6px; border-radius:4px; box-shadow:none; white-space:nowrap; }
+  .trk-label::before{ display:none; }
+  .trk-label.jsy{ border-color:rgba(76,211,255,0.7); color:#4cd3ff; font-weight:700; }
+  .trk-label.near{ border-color:rgba(255,255,255,0.5); }
+
+  /* replay */
+  .rp-top{ display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:6px 16px; margin-bottom:8px; }
+  .rp-when{ font-family:'Orbitron',sans-serif; font-size:15px; letter-spacing:1px; color:var(--text); }
+  .rp-ago{ font-size:10px; letter-spacing:1.5px; color:var(--amber); }
+  .rp-head{ font-size:10.5px; letter-spacing:0.8px; color:var(--dim); line-height:1.6; margin-bottom:8px; min-height:34px; }
+  .rp-head b{ color:var(--text); }
+  .rp-ctrl{ display:flex; align-items:center; gap:10px; margin:10px 0 4px; }
+  .rp-btn{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:800; letter-spacing:1.5px; cursor:pointer; color:#05080d; background:var(--cyan); border:0; border-radius:8px; padding:10px 16px; min-width:104px; }
+  .rp-btn.sm{ min-width:0; padding:10px 12px; background:transparent; color:var(--cyan); border:1px solid var(--line); }
+  .rp-btn:hover{ filter:brightness(1.1); }
+  .rp-range{ flex:1; accent-color:var(--cyan); min-width:80px; }
+  .rp-dot{ transition:transform .45s ease; }
+  .rp-det{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:10px; letter-spacing:0.8px; color:var(--dim); margin-top:8px; }
+  .rp-det b{ color:var(--text); }
+  .rp-det i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+  table.mt{ width:100%; border-collapse:collapse; font-size:11px; }
+  table.mt th{ text-align:left; font-size:9px; letter-spacing:1.5px; color:var(--dim); font-weight:700; padding:6px 8px; border-bottom:1px solid var(--line); }
+  table.mt td{ padding:8px; border-bottom:1px solid var(--line); color:var(--text); }
+  table.mt td.num, table.mt th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  table.mt td i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:-1px; }
+  table.mt .sub{ color:var(--dim); font-size:9.5px; }
+  @media (max-width:520px){ table.mt{ font-size:10px; } table.mt th, table.mt td{ padding:7px 4px; } table.mt th{ font-size:8px; letter-spacing:1px; } }
+  .tbl-wrap{ overflow-x:auto; }
+
+  /* incidents */
+  .ewx-kpis{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:22px; }
+  @media (max-width:760px){ .ewx-kpis{ grid-template-columns:repeat(2, 1fr); gap:10px; } }
+  .bars{ display:flex; flex-direction:column; gap:7px; }
+  .bar-row{ display:grid; grid-template-columns:minmax(96px, 38%) 1fr 34px; align-items:center; gap:10px; font-size:10.5px; }
+  .bar-row .k{ color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-row .t{ height:12px; border-radius:6px; background:rgba(95,124,136,0.18); overflow:hidden; }
+  .bar-row .t i{ display:block; height:100%; border-radius:6px; background:var(--green); }
+  .bar-row .n{ text-align:right; font-weight:800; color:var(--text); font-variant-numeric:tabular-nums; }
+  @media (max-width:520px){ .bar-row{ grid-template-columns:minmax(110px, 50%) 1fr 30px; gap:8px; } }
+  .roads{ list-style:none; font-size:10.5px; line-height:1.5; }
+  .roads li{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .roads li span:first-child{ color:var(--text); }
+  .roads li small{ color:var(--dim); margin-left:6px; }
+  .roads li span:last-child{ font-weight:800; color:var(--green); white-space:nowrap; }
+  .gov-box{ padding:14px 16px; border-radius:12px; border:1px dashed rgba(76,211,255,0.45); background:rgba(76,211,255,0.04); font-size:11px; line-height:1.7; color:var(--text); margin-bottom:22px; }
+  .gov-box a{ color:var(--cyan); font-weight:700; }
+  .news{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .news li{ padding:12px 14px; border-radius:10px; background:var(--bg-panel); border:1px solid var(--line); font-size:11.5px; line-height:1.65; }
+  .news li .src{ display:block; font-size:9.5px; letter-spacing:1px; color:var(--dim); margin-top:4px; }
+  .news li .src a{ color:var(--cyan); }
+
+  /* community reports (same look as the Storm Reports page) */
+  .feed{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:760px){ .feed{ grid-template-columns:1fr; } }
+  .report-card{ background:var(--bg-panel); border:1px solid var(--line); border-left:3px solid var(--dim2); border-radius:10px; padding:16px 18px; }
+  .report-card.sev-Minor{ border-left-color:var(--green); }
+  .report-card.sev-Moderate{ border-left-color:var(--amber); }
+  .report-card.sev-Severe{ border-left-color:var(--orange); }
+  .report-card.sev-Observation{ border-left-color:var(--cyan); }
+  .rc-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .rc-type-name{ font-weight:800; font-size:13px; letter-spacing:0.5px; }
+  .rc-parish{ font-size:10px; color:var(--cyan); letter-spacing:1px; margin-top:2px; }
+  .rc-meta{ text-align:right; font-size:10px; color:var(--dim); }
+  .rc-sev-badge{ display:inline-block; font-size:9px; letter-spacing:1px; font-weight:800; padding:2px 8px; border-radius:4px; margin-top:4px; }
+  .sev-Minor .rc-sev-badge{ background:rgba(45,225,160,0.15); color:var(--green); }
+  .sev-Moderate .rc-sev-badge{ background:rgba(255,176,32,0.15); color:var(--amber); }
+  .sev-Observation .rc-sev-badge{ background:rgba(76,211,255,0.14); color:var(--cyan); }
+  .rc-desc{ font-size:12.5px; color:var(--text); line-height:1.6; margin-bottom:10px; }
+  .rc-bottom{ display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:10px; color:var(--dim2); letter-spacing:0.5px; }
+  .rc-bottom a{ color:var(--cyan); text-decoration:none; }
+
+  /* warnings and alerts log */
+  .log{ list-style:none; border-left:2px solid var(--line); margin-left:6px; }
+  .log li{ position:relative; padding:0 0 14px 18px; font-size:11.5px; line-height:1.6; }
+  .log li::before{ content:""; position:absolute; left:-7px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--dim); }
+  .log li.c-red::before{ border-color:var(--red); background:var(--red); }
+  .log li.c-orange::before{ border-color:var(--orange); background:var(--orange); }
+  .log li.c-yellow::before{ border-color:#ffd23f; background:#ffd23f; }
+  .log li.c-clear::before{ border-color:var(--green); }
+  .log li.c-jwc::before{ border-color:var(--cyan); background:var(--bg); }
+  .log li.c-jwcw::before{ border-color:var(--amber); background:var(--bg); }
+  .log .when{ display:block; font-size:9.5px; letter-spacing:1.5px; color:var(--dim); }
+  .log .who{ display:inline-block; font-size:8.5px; font-weight:800; letter-spacing:1.2px; padding:2px 6px; border-radius:3px; margin-right:6px; vertical-align:1px; color:#05080d; background:var(--dim); }
+  .log .who.met{ background:var(--text); }
+  .log .who.jwc{ background:var(--cyan); }
+  .log .sent{ font-size:9.5px; color:var(--dim); letter-spacing:0.8px; }
+  details.more > summary{ list-style:none; cursor:pointer; font-size:10px; letter-spacing:2px; color:var(--dim); padding:10px 14px; border:1px dashed var(--line); border-radius:10px; margin-top:6px; }
+  details.more > summary::-webkit-details-marker{ display:none; }
+  details.more > summary:hover{ color:var(--text); border-color:var(--cyan); }
+  details.more[open] > summary{ margin-bottom:14px; color:var(--text); }
+
+  /* written recap and sources */
+  .story{ max-width:820px; }
+  .story p{ font-size:13px; line-height:1.8; color:var(--text); margin-bottom:14px; }
+  .sources{ list-style:none; font-size:10.5px; line-height:1.7; color:var(--dim); max-width:900px; }
+  .sources li{ padding:7px 0; border-bottom:1px solid var(--line); }
+  .sources li b{ color:var(--text); }
+  .sources a{ color:var(--cyan); }
+  .disclaimer{ margin-top:18px; padding:14px 16px; border-radius:10px; border:1px solid var(--line); background:var(--bg-panel); font-size:10.5px; line-height:1.7; color:var(--dim); max-width:900px; }
+  .disclaimer b{ color:var(--text); }
+  .disclaimer a{ color:var(--cyan); }
+
+/* ================= LIGHT MODE (Settings > Display) =================
+   Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
+   The shared daylight colours (--bg, --text, --red ...) live in jwc-settings.js; these are this page's own
+   touches. The chart panels and the storm-track map keep the dark look, like screens in a bright room. */
+html[data-theme="light"] :is(.chart, #trackMap){
+  color-scheme:dark; color:var(--text);
+  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
+  --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58; --orange:#ff6b35;
+}
+html[data-theme="light"] .chart{ background:var(--bg-panel); border-color:#16232d; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6); }
+html[data-theme="light"] #trackMap{ border-color:#16232d !important; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6); }
+/* the page */
+html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(224,56,76,0.08), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,150,200,0.06), transparent 46%), var(--bg); }
+html[data-theme="light"] body::before{ opacity:0.5; }
+html[data-theme="light"] .scanline{ display:none; }
+html[data-theme="light"] .brand-mark{ background:conic-gradient(from 0deg, var(--red-fill), var(--amber-fill), var(--red-fill)); box-shadow:0 2px 3px rgba(120,20,30,0.22), 0 6px 16px -6px rgba(192,17,45,0.5); }
+html[data-theme="light"] .brand-mark::after{ color:#0c1a22; }
+html[data-theme="light"] nav.tabs a.active{ color:#ffffff; }
+html[data-theme="light"] .sec-head .tag, html[data-theme="light"] .rc-kicker .ev{ color:#ffffff; }
+html[data-theme="light"] .sec-head .tag.amber{ color:#0c1a22; background:var(--amber-fill); }
+html[data-theme="light"] .sec-head .tag.green{ color:#ffffff; background:var(--green-fill); }
+html[data-theme="light"] .sec-head .tag.cyan{ color:#ffffff; background:var(--cyan-fill); }
+html[data-theme="light"] .kpi.c-orange .v{ color:var(--orange); }
+/* cards lift off the pale ground with a soft shadow instead of a glow */
+html[data-theme="light"] :is(.kpi, .report-card, .news li, .disclaimer){ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .verdict{ background:linear-gradient(90deg, rgba(19,165,116,0.10), rgba(19,165,116,0.02)), var(--bg-panel); border-color:rgba(0,118,79,0.45); box-shadow:var(--card-shadow); }
+html[data-theme="light"] .gov-box{ border-color:rgba(0,109,150,0.45); background:rgba(0,109,150,0.05); }
+html[data-theme="light"] .report-card.sev-Severe{ border-left-color:var(--orange-fill); }
+html[data-theme="light"] .log li.c-yellow::before{ border-color:var(--yellow-fill); background:var(--yellow-fill); }
+html[data-theme="light"] .log li.c-orange::before{ border-color:var(--orange-fill); background:var(--orange-fill); }
+html[data-theme="light"] .log .who{ color:#ffffff; }
+html[data-theme="light"] .log .who.met{ background:#0c1a22; }
+html[data-theme="light"] .log .who.jwc{ background:var(--cyan-fill); }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>JERSEY WEATHER CHAT</h1>
+        <span>STORM RECAP</span>
+      </div>
+    </div>
+    <div class="status">
+      <div class="arch-pill">ARCHIVE</div>
+      <div id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a href="index.html">LIVE OPS</a>
+    <a href="jersey-storm-scenarios.html">STORM SCENARIOS</a>
+    <a href="jersey-storm-reports.html" class="active">STORM REPORTS</a>
+    <a href="jersey-space-weather.html">SPACE WEATHER</a>
+    <a href="jersey-sea-tides.html">SEA &amp; TIDES</a>
+    <a href="microclimate-grid.html">MICROCLIMATE</a>
+  </nav>
+<p class="seo-intro">Storm Austen in Jersey, Channel Islands, 22&ndash;23 October 2026: wind gusts and pressure at Jersey Airport, the storm&rsquo;s track, how the forecasts compared, Jersey Met warnings, Government of Jersey incident counts and community storm reports.</p>
+
+  <a class="backlink" href="jersey-storm-reports.html#recaps">&larr; ALL STORM &amp; MONTHLY RECAPS</a>
+
+  <!-- ================= HERO ================= -->
+  <div class="rc-hero">
+    <div class="rc-kicker"><span class="ev">EVENT RECAP</span><span id="heroPub"></span></div>
+    <h2>STORM <span id="heroName"></span></h2>
+    <div class="rc-sub" id="heroSub"></div>
+    <p class="rc-lead" id="heroLead"></p>
+    <div class="kpis" id="heroKpis"></div>
+  </div>
+
+  <!-- ================= 1. THE STORM AT JERSEY AIRPORT ================= -->
+  <section id="timeline">
+    <div class="sec-head"><h3>THE STORM AT JERSEY AIRPORT</h3><div class="bar"></div><div class="tag">OBSERVED</div></div>
+    <div class="chart">
+      <h4>WIND, PRESSURE AND INCIDENTS, HOUR BY HOUR</h4>
+      <p class="cap">Every half-hourly report from Jersey Airport through the storm, with the warnings in force across the top, JWC&rsquo;s push alerts as diamonds, and the Government&rsquo;s incident log underneath. <b>Move your finger or mouse across the chart</b> to read any report.</p>
+      <div class="readout" id="tlRead"></div>
+      <div class="svgbox touch" id="tlChart"></div>
+      <div class="legend" id="tlLegend"></div>
+    </div>
+  </section>
+
+  <!-- ================= 2. WHERE THE STORM WENT ================= -->
+  <section id="track">
+    <div class="sec-head"><h3>WHERE AUSTEN WENT</h3><div class="bar"></div><div class="tag cyan">STORM TRACKER</div></div>
+    <div class="grid2">
+      <div class="chart">
+        <h4>THE STORM&rsquo;S CENTRE, EVERY SIX HOURS</h4>
+        <p class="cap" id="trackCap"></p>
+        <div id="trackMap" role="img" aria-label="Map of Storm Austen's track"></div>
+        <div class="legend" id="trackLegend"></div>
+      </div>
+      <div class="chart">
+        <h4>HOW EARLY THE STORM TRACKER SAW IT</h4>
+        <p class="cap">Each dot is one run of the GFS model data behind the Live Ops Storm Tracker, placed at the time it reached the site: how close it expected Austen&rsquo;s centre to pass to Jersey. The dashed line is how close it really came. <b>Tap or hover a dot</b> for that run.</p>
+        <div class="readout" id="cyRead"></div>
+        <div class="svgbox touch" id="cyChart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. FORECAST VS REALITY ================= -->
+  <section id="forecast">
+    <div class="sec-head"><h3>FORECAST VS REALITY</h3><div class="bar"></div><div class="tag amber">REPLAY</div></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="chart" id="replay">
+      <h4>THE STORM SCENARIOS PAGE, REPLAYED</h4>
+      <p class="cap">What the Storm Scenarios page showed for Friday&rsquo;s strongest gust, captured every half hour from Thursday lunchtime until the storm hit. Each dot is one run of a weather model; the white dashed lines divide the three scenarios and the solid white line is what Jersey Airport actually recorded. <b>Press PLAY</b>, or drag the slider.</p>
+      <div class="rp-top"><div class="rp-when" id="rpWhen"></div><div class="rp-ago" id="rpAgo"></div></div>
+      <div class="rp-head" id="rpHead"></div>
+      <div class="svgbox" id="rpChart"></div>
+      <div class="rp-ctrl">
+        <button type="button" class="rp-btn" id="rpPlay">&#9654; PLAY</button>
+        <button type="button" class="rp-btn sm" id="rpPrev" aria-label="Previous snapshot">&#9664;</button>
+        <input type="range" class="rp-range" id="rpRange" min="0" max="1" value="0" aria-label="Forecast snapshot">
+        <button type="button" class="rp-btn sm" id="rpNext" aria-label="Next snapshot">&#9654;</button>
+      </div>
+      <div class="rp-det" id="rpDet"></div>
+      <div class="legend" id="rpLegend"></div>
+    </div>
+    <div class="chart">
+      <h4>THE FORECAST OVER THOSE 18 HOURS</h4>
+      <p class="cap">The same snapshots side by side. The shaded band holds 8 in 10 of all the runs, the amber line is the middle run, and the thin coloured lines are each model&rsquo;s single main run (the one most weather apps show). <b>Tap the chart</b> to jump the replay to that moment.</p>
+      <div class="svgbox touch" id="fcChart"></div>
+      <div class="legend" id="fcLegend"></div>
+    </div>
+    <div class="chart">
+      <h4>MODEL BY MODEL, IN THE LAST FORECAST BEFORE THE PEAK</h4>
+      <p class="cap">How each model&rsquo;s runs compared with the 84 mph recorded at Jersey Airport (snapshot taken at 05:59 on Friday, using the model runs available then).</p>
+      <div class="tbl-wrap" id="mtTable"></div>
+    </div>
+  </section>
+
+  <!-- ================= 4. AROUND THE ISLAND ================= -->
+  <section id="impacts">
+    <div class="sec-head"><h3>AROUND THE ISLAND</h3><div class="bar"></div><div class="tag green">IMPACTS</div></div>
+    <div class="ewx-kpis" id="ewxKpis"></div>
+    <div class="cols2">
+      <div class="chart"><h4>WHAT WAS LOGGED</h4><p class="cap">Incidents on the Government&rsquo;s severe incident reporting system, by type.</p><div class="bars" id="ewxType"></div></div>
+      <div class="chart"><h4>WHERE</h4><p class="cap">By parish. All twelve logged incidents; St Clement&rsquo;s only one came in on Monday.</p><div class="bars" id="ewxParish"></div></div>
+      <div class="chart"><h4>WHO CLEARED IT</h4><p class="cap">The team each incident was assigned to.</p><div class="bars" id="ewxTeam"></div></div>
+      <div class="chart"><h4>ROAD ACCESS WHEN LOGGED</h4><p class="cap">How much of the road was still open when each incident was reported.</p><div class="bars" id="ewxAccess"></div></div>
+      <div class="chart"><h4>ROADS WITH THE MOST INCIDENTS</h4><p class="cap">Three or more incidents logged on the same road.</p><ul class="roads" id="ewxRoads"></ul></div>
+    </div>
+    <div class="gov-box" id="govBox"></div>
+    <h4 style="font-size:11px; letter-spacing:2px; color:var(--cyan); margin:6px 0 12px;">WHAT ELSE WAS REPORTED</h4>
+    <ul class="news" id="newsList"></ul>
+  </section>
+
+  <!-- ================= 5. COMMUNITY REPORTS ================= -->
+  <section id="reports">
+    <div class="sec-head"><h3>JWC COMMUNITY REPORTS</h3><div class="bar"></div><div class="tag cyan">MEMBERS</div></div>
+    <p class="note" style="margin-bottom:16px;">Filed by members on the <a href="jersey-storm-reports.html">Storm Reports page</a> during the storm and its follow-up. Reports are crowdsourced and not checked.</p>
+    <div class="feed" id="repFeed"></div>
+  </section>
+
+  <!-- ================= 6. WARNINGS AND ALERTS ================= -->
+  <section id="alerts">
+    <div class="sec-head"><h3>WARNINGS &amp; ALERTS</h3><div class="bar"></div><div class="tag">LOG</div></div>
+    <p class="note" style="margin-bottom:16px;">Jersey Met&rsquo;s official warnings as they changed, and every push alert Jersey Weather Chat sent, in order. Warning alerts are automatic relays of Jersey Met&rsquo;s warnings; special alerts are suggested by the site&rsquo;s Storm Watch checks and sent by the JWC admin team. Times are Jersey time.</p>
+    <ul class="log" id="logList"></ul>
+  </section>
+
+  <!-- ================= 7. SEA AND COAST ================= -->
+  <section id="sea">
+    <div class="sec-head"><h3>SEA &amp; COAST</h3><div class="bar"></div><div class="tag cyan">TIDES</div></div>
+    <div class="chart">
+      <h4>WAVES AND HIGH TIDES</h4>
+      <p class="cap" id="seaCap"></p>
+      <div class="svgbox" id="seaChart"></div>
+      <div class="legend" id="seaLegend"></div>
+    </div>
+  </section>
+
+  <!-- ================= 8. THE WRITTEN RECAP ================= -->
+  <section id="story">
+    <div class="sec-head"><h3>THE WRITTEN RECAP</h3><div class="bar"></div><div class="tag cyan">SUMMARY</div></div>
+    <div class="story" id="storyText"></div>
+  </section>
+
+  <!-- ================= 9. SOURCES ================= -->
+  <section id="sources">
+    <div class="sec-head"><h3>SOURCES &amp; NOTES</h3><div class="bar"></div><div class="tag cyan">METHOD</div></div>
+    <ul class="sources" id="srcList"></ul>
+    <div class="disclaimer"><b>About this recap.</b> Jersey Weather Chat is a volunteer-run community site. This recap is put together from public data and members&rsquo; reports so the record of the storm stays available; it is not an official report. Jersey Met (<a href="https://www.gov.je/weather" target="_blank" rel="noopener">gov.je/weather</a>) is the official source of weather warnings for Jersey. In an emergency always call <a href="tel:999">999</a>.</div>
+  </section>
+
+  <footer>
+    <div>JERSEY WEATHER CHAT &middot; STORM RECAP ARCHIVE</div>
+    <div>COMMUNITY REPORTS ARE CROWDSOURCED AND UNVERIFIED &middot; FOR EMERGENCIES ALWAYS CALL <a href="tel:999" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">999</a></div>
+    <div><b>DATA PROTECTION:</b> REGISTERED WITH THE JERSEY OFFICE OF THE INFORMATION COMMISSIONER AS A NON-PROFIT DATA CONTROLLER &middot; <a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">REGISTRATION NO. 104194</a> &middot; <a href="alerts-help.html#privacy">PRIVACY NOTE</a></div>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   STORM RECAP PAGE
+   Everything about this storm lives in RECAP below; the drawing code after it is the same for any storm.
+   For the next storm: copy this page, rename it, change the <head> titles and RECAP, and add a line
+   for it to the RECAPS list on jersey-storm-reports.html.
+   Times in RECAP are UTC ("Z"); the page shows them in Jersey time.
+   ============================================================ */
+const RECAP = {"id":"storm-austen-2026","name":"Austen","published":"29 Oct 2026","publishedISO":"2026-10-29","hero":{"sub":"THURSDAY 22 – FRIDAY 23 OCTOBER 2026 · FIRST NAMED STORM OF THE 2026/27 SEASON","window":"TIMES ARE JERSEY TIME (BST)","lead":"Storm Austen crossed the English Channel early on Friday 23 October, its centre passing about 120 km north of Jersey around dawn. Jersey Airport recorded an 84 mph gust at 05:50, and the Government logged 174 incidents that day, most of them fallen trees.","kpis":[{"v":"84","u":"MPH","l":"PEAK GUST","s":"Jersey Airport, 05:50 Friday, from the west-south-west","c":"red"},{"v":"58","u":"MPH","l":"STRONGEST MEAN WIND","s":"Storm force 10, at the same moment","c":"orange"},{"v":"982","u":"HPA","l":"LOWEST PRESSURE","s":"05:20–05:50 Friday, 31 hPa below Thursday morning","c":"amber"},{"v":"15.5","u":"HRS","l":"GUSTS OF 58 MPH+","s":"01:50–17:20 Friday, in 29 of 32 reports","c":"red"},{"v":"174","u":"","l":"INCIDENTS ON FRIDAY","s":"Government log, 136 of them trees","c":"green"},{"v":"10","u":"","l":"JWC PUSH ALERTS","s":"Thursday–Friday, each reaching about 940–970 devices by Friday","c":"cyan"}]},"timeline":{"start":"2026-10-22T09:00Z","end":"2026-10-23T23:00Z"},"obs":[["2026-10-22T08:50Z","260",14,null,1013,9999,"","220850Z 26014KT 9999 VCSH FEW016CB SCT030 SCT045 14/09 Q1013"],["2026-10-22T09:20Z","260",15,null,1013,9999,"","220920Z 26015KT 9999 VCSH FEW020CB SCT030 SCT045 14/09 Q1013"],["2026-10-22T09:50Z","240",14,null,1013,9999,"","220950Z 24014KT 9999 VCSH SCT010 SCT015 14/11 Q1013"],["2026-10-22T10:50Z","220",13,null,1013,9999,"","221050Z 22013KT 9999 VCSH FEW014 BKN025 14/11 Q1013"],["2026-10-22T11:20Z","210",13,null,1013,9999,"","221120Z 21013KT 180V240 9999 VCSH FEW015 SCT018 14/11 Q1013"],["2026-10-22T11:50Z","210",13,null,1013,9999,"","221150Z 21013KT 170V230 9999 VCSH FEW014 SCT017 14/11 Q1013"],["2026-10-22T12:20Z","210",12,null,1012,9999,"","221220Z 21012KT 180V240 9999 FEW014 BKN018 14/11 Q1012"],["2026-10-22T12:50Z","190",13,null,1012,9999,"","221250Z 19013KT 9999 FEW014 SCT018 14/11 Q1012"],["2026-10-22T13:20Z","200",14,null,1012,9999,"light rain","221320Z 20014KT 9999 -RA FEW014 SCT018 14/12 Q1012"],["2026-10-22T13:50Z","190",13,null,1011,9999,"","221350Z 19013KT 9999 VCSH FEW012 SCT015 14/12 Q1011"],["2026-10-22T14:20Z","210",14,null,1011,9999,"","221420Z 21014KT 180V240 9999 VCSH FEW012 SCT015 14/11 Q1011"],["2026-10-22T14:50Z","190",14,null,1010,9999,"","221450Z 19014KT 9999 VCSH FEW013 SCT016CB 14/12 Q1010"],["2026-10-22T15:20Z","200",8,null,1009,9999,"light showers","221520Z 20008KT 170V250 9999 8000NE -SHRA FEW016 SCT020CB 13/12 Q1009"],["2026-10-22T15:50Z","250",7,null,1009,9999,"","221550Z 25007KT 210V290 9999 7000NE VCSH FEW005 SCT009 BKN013CB 13/12 Q1009"],["2026-10-22T16:20Z","200",19,31,1008,9999,"","221620Z 20019G31KT 170V230 9999 VCSH FEW009 SCT016CB 14/11 Q1008"],["2026-10-22T16:50Z","190",17,27,1007,9999,"","221650Z 19017G27KT 150V210 9999 VCSH FEW013 SCT020 14/11 Q1007"],["2026-10-22T17:20Z","180",18,28,1007,9999,"","221720Z 18018G28KT 140V220 9999 VCSH FEW016 SCT020 14/11 Q1007"],["2026-10-22T17:50Z","180",16,null,1006,9999,"","221750Z 18016KT 140V210 9999 VCSH FEW016 BKN020 14/11 Q1006"],["2026-10-22T18:20Z","170",16,28,1006,9999,"rain","221820Z 17016G28KT 140V200 9999 RA SCT012 BKN017 14/12 Q1006"],["2026-10-22T18:50Z","170",19,31,1005,6000,"heavy rain","221850Z 17019G31KT 140V220 6000 +RA FEW009 BKN014 14/12 Q1005"],["2026-10-22T19:20Z","160",19,32,1004,9999,"light rain","221920Z 16019G32KT 130V210 9999 -RA FEW008 SCT012 BKN017 13/12 Q1004 RERA"],["2026-10-22T19:50Z","170",22,33,1003,9999,"","221950Z 17022G33KT 9999 VCSH FEW006 BKN014 13/12 Q1003"],["2026-10-22T20:20Z","170",20,31,1002,8000,"heavy rain","222020Z 17020G31KT 8000 +RA FEW009 BKN014 14/12 Q1002"],["2026-10-22T20:50Z","170",25,36,1000,9999,"","222050Z AUTO 17025G36KT 9999 FEW008/// SCT010/// BKN013/// 14/12 Q1000 RERA"],["2026-10-22T21:20Z","190",26,38,1000,550,"rain","222120Z AUTO 19026G38KT 160V220 0550 RA FEW001/// SCT008/// BKN011/// 14/12 Q1000"],["2026-10-22T21:50Z","190",26,39,999,9999,"","222150Z AUTO 19026G39KT 150V220 9999 FEW008/// SCT009/// 14/13 Q0999 RERA"],["2026-10-22T22:20Z","200",23,34,998,9999,"","222220Z AUTO 20023G34KT 170V230 9999 NCD 14/11 Q0998"],["2026-10-22T22:50Z","200",20,32,997,9999,"","222250Z AUTO 20020G32KT 9999 FEW024/// 14/12 Q0997"],["2026-10-22T23:20Z","190",22,33,996,9999,"","222320Z AUTO 19022G33KT 9999 FEW039/// 14/11 Q0996"],["2026-10-22T23:50Z","210",23,42,996,1700,"","222350Z AUTO 21023G42KT 170V240 1700 FEW006/// SCT013/// BKN029/// 13/11 Q0996 REDZ RERA"],["2026-10-23T00:20Z","200",26,46,995,9999,"","230020Z AUTO 20026G46KT 170V230 9999 NCD 14/10 Q0995"],["2026-10-23T00:50Z","200",28,51,995,9999,"","230050Z AUTO 20028G51KT 160V240 9999 FEW030/// 13/09 Q0995"],["2026-10-23T01:20Z","200",28,46,995,9999,"","230120Z AUTO 20028G46KT 170V230 9999 FEW029/// 13/09 Q0995"],["2026-10-23T01:50Z","200",31,51,993,9999,"light rain","230150Z AUTO 20031G51KT 170V230 9999 -RA SCT025/// SCT031/// BKN035/// 13/09 Q0993"],["2026-10-23T02:20Z","200",33,58,988,9999,"","230220Z AUTO 20033G58KT 170V230 9999 FEW024/// SCT031/// 13/09 Q0988 RERA"],["2026-10-23T02:50Z","190",37,59,986,2400,"rain","230250Z AUTO 19037G59KT 2400 RA VV/// 12/10 Q0986"],["2026-10-23T03:20Z","200",33,52,984,1700,"heavy rain","230320Z AUTO 20033G52KT 1700 +RA FEW008/// BKN013/// OVC015/// 12/11 Q0984"],["2026-10-23T03:50Z","210",37,55,983,900,"heavy rain","230350Z AUTO 21037G55KT 0900 +RA FEW007/// SCT010/// BKN013/// 13/12 Q0983"],["2026-10-23T04:20Z","240",44,64,982,1100,"heavy rain","230420Z AUTO 24044G64KT 210V270 1100 +RA FEW004/// SCT008/// BKN010/// 13/13 Q0982"],["2026-10-23T04:50Z","250",50,73,982,9999,"rain","230450Z 25050G73KT 9999 RA SCT007 SCT009 BKN011 14/13 Q0982"],["2026-10-23T05:20Z","260",46,66,984,9999,"","230520Z 26046G66KT 9999 VCSH FEW009 SCT015CB BKN015 14/12 Q0984 RERA"],["2026-10-23T05:50Z","270",43,64,986,9999,"","230550Z 27043G64KT 240V300 9999 VCSH FEW007 SCT011 SCT014CB BKN015 14/12 Q0986"],["2026-10-23T06:20Z","280",37,56,988,9999,"","230620Z 28037G56KT 9999 VCSH FEW012 SCT015CB BKN020 14/12 Q0988"],["2026-10-23T06:50Z","280",37,60,990,9999,"","230650Z 28037G60KT 9999 VCSH FEW013 SCT016CB BKN019 14/11 Q0990"],["2026-10-23T07:20Z","280",40,62,992,9999,"light showers","230720Z 28040G62KT 250V310 9999 -SHRA FEW003 SCT010 FEW014CB BKN015 13/11 Q0992 RESHRA"],["2026-10-23T07:50Z","290",38,62,994,7000,"light drizzle","230750Z AUTO 29038G62KT 7000 -DZ SCT012/// BKN014/// OVC018/// 13/10 Q0994 RERA"],["2026-10-23T08:20Z","290",37,60,996,6000,"drizzle","230820Z AUTO 29037G60KT 6000 DZ FEW014/// BKN016/// BKN019/// 12/09 Q0996 RERA"],["2026-10-23T08:50Z","290",38,59,997,9000,"light showers","230850Z 29038G59KT 9000 -SHRA FEW013 SCT015 BKN017 12/09 Q0997"],["2026-10-23T09:20Z","290",39,63,999,8000,"light showers","230920Z 29039G63KT 8000 -SHRA FEW015 SCT018 BKN021 12/09 Q0999"],["2026-10-23T09:50Z","290",38,59,1001,8000,"light showers","230950Z 29038G59KT 8000 -SHRA FEW015 SCT022 BKN026 12/08 Q1001"],["2026-10-23T10:20Z","290",35,58,1002,9000,"light showers","231020Z 29035G58KT 270V330 9000 -SHRA FEW015 SCT021 BKN026 12/08 Q1002 RERA"],["2026-10-23T10:50Z","290",41,59,1004,9999,"light showers","231050Z 29041G59KT 250V310 9999 -SHRA FEW022 SCT028 BKN034 12/06 Q1004"],["2026-10-23T11:20Z","290",33,54,1005,9999,"","231120Z 29033G54KT 9999 VCSH FEW020 SCT028 BKN033 12/06 Q1005"],["2026-10-23T11:50Z","290",32,54,1006,9999,"","231150Z 29032G54KT 260V330 9999 VCSH FEW024 SCT029 BKN033 12/06 Q1006"],["2026-10-23T12:20Z","290",32,56,1007,9999,"light showers","231220Z 29032G56KT 9999 -SHRA FEW023 BKN030 13/06 Q1007"],["2026-10-23T12:50Z","290",35,55,1008,9999,"","231250Z 29035G55KT 9999 VCSH FEW029 SCT033 12/06 Q1008"],["2026-10-23T13:20Z","280",32,48,1008,9999,"","231320Z 28032G48KT 9999 VCSH FEW026 SCT029 12/06 Q1008"],["2026-10-23T13:50Z","290",32,51,1009,9999,"","231350Z 29032G51KT 260V320 9999 VCSH FEW026 SCT030 12/05 Q1009"],["2026-10-23T14:20Z","300",29,49,1011,9999,"","231420Z 30029G49KT 260V340 9999 4000E VCSH FEW014 SCT029CB 10/06 Q1011 RESHRA"],["2026-10-23T14:50Z","290",31,50,1011,9999,"light showers","231450Z 29031G50KT 260V320 9999 -SHRA FEW013 SCT027CB 12/05 Q1011"],["2026-10-23T15:20Z","290",31,51,1012,9999,"","231520Z 29031G51KT 250V310 9999 VCSH FEW014 SCT028CB 12/05 Q1012"],["2026-10-23T15:50Z","290",33,51,1013,9999,"","231550Z 29033G51KT 9999 VCSH FEW018 FEW030CB 12/03 Q1013"],["2026-10-23T16:20Z","280",34,66,1013,9999,"","231620Z 28034G66KT 260V320 9999 VCSH FEW018 SCT030CB 11/05 Q1013 RESHRA"],["2026-10-23T16:50Z","280",27,45,1014,9999,"","231650Z 28027G45KT 260V320 9999 VCSH FEW018 SCT030CB 11/05 Q1014"],["2026-10-23T17:20Z","300",18,43,1014,9999,"","231720Z 30018G43KT 270V340 9999 VCSH FEW018 FEW030CB SCT040 11/06 Q1014 RESHRA"],["2026-10-23T17:50Z","290",28,42,1014,9999,"","231750Z 29028G42KT 260V320 9999 VCSH FEW030CB SCT045 12/04 Q1014"],["2026-10-23T18:20Z","290",27,42,1014,9999,"","231820Z 29027G42KT 250V320 9999 VCSH FEW030CB SCT045 12/05 Q1014"],["2026-10-23T18:50Z","290",25,42,1015,9999,"","231850Z 29025G42KT 9999 FEW025CB SCT037 13/07 Q1015"],["2026-10-23T19:20Z","280",25,40,1016,9999,"","231920Z 28025G40KT 9999 VCSH FEW025 SCT036 13/07 Q1016"],["2026-10-23T20:50Z","280",24,36,1017,9999,"","232050Z AUTO 28024G36KT 250V310 9999 FEW031/// SCT035/// BKN040/// 12/07 Q1017"],["2026-10-23T21:20Z","280",21,34,1017,9999,"","232120Z AUTO 28021G34KT 9999 FEW029/// SCT033/// BKN042/// 13/07 Q1017"],["2026-10-23T21:50Z","280",21,37,1017,9999,"","232150Z AUTO 28021G37KT 9999 SCT024/// BKN027/// BKN034/// 12/08 Q1017"],["2026-10-23T22:20Z","280",22,32,1017,9999,"","232220Z AUTO 28022G32KT 250V310 9999 FEW020/// SCT023/// BKN027/// 12/08 Q1017 REDZ RERA"],["2026-10-23T22:50Z","280",21,34,1017,9999,"","232250Z AUTO 28021G34KT 260V320 9999 SCT026/// BKN030/// BKN034/// 12/08 Q1017 RERA"],["2026-10-23T23:20Z","280",22,37,1017,9999,"","232320Z AUTO 28022G37KT 9999 SCT025/// BKN030/// BKN034/// 12/08 Q1017"],["2026-10-23T23:50Z","290",21,35,1017,9999,"","232350Z AUTO 29021G35KT 250V320 9999 FEW028/// SCT031/// 12/07 Q1017"],["2026-10-24T00:20Z","290",22,34,1017,9999,"","240020Z AUTO 29022G34KT 260V320 9999 FEW027/// SCT030/// 12/08 Q1017"],["2026-10-24T00:50Z","290",22,33,1017,9999,"","240050Z AUTO 29022G33KT 9999 SCT028/// SCT033/// 12/07 Q1017"]],"warnings":[{"id":"sea","colour":"orange","from":"2026-10-21T20:34Z","to":"2026-10-22T02:44Z","label":"ORANGE wind warning, Channel Islands shipping area (at sea)"},{"id":"sea","colour":"red","from":"2026-10-22T02:44Z","to":"2026-10-23T11:58Z","label":"RED wind warning, Channel Islands shipping area (at sea)"},{"id":"sea","colour":"orange","from":"2026-10-23T11:58Z","to":"2026-10-25T08:23Z","label":"ORANGE wind warning, Channel Islands shipping area (at sea)"},{"id":"thunder","colour":"yellow","from":"2026-10-22T20:03Z","to":"2026-10-23T12:19Z","label":"YELLOW thunderstorm warning, Jersey"}],"warnLog":[["2026-10-21T20:34Z","orange","Channel Islands shipping area wind warning raised to ORANGE (from yellow)"],["2026-10-22T02:44Z","red","Shipping area wind warning raised to RED: S severe gale 9, gusts to 60 kt, veering W to NW storm 10, gusts to 70 kt"],["2026-10-22T20:03Z","yellow","Jersey thunderstorm warning: YELLOW (re-issued 22:22)"],["2026-10-23T08:51Z","red","RED re-issued: W to NW severe gale 9, gusts to 65 kt, continuing"],["2026-10-23T11:58Z","orange","Shipping area wind warning lowered to ORANGE: W to NW severe gale 9, gusts to 60 kt"],["2026-10-23T12:19Z","clear","Thunderstorm warning cleared"],["2026-10-23T14:52Z","orange","ORANGE re-issued: W to NW gale 8, gusts to 50 kt, backing SW 7 later"]],"alerts":[{"at":"2026-10-22T02:50Z","kind":"warning","title":"Jersey Met wind warning upgraded to RED (at sea)","body":"Automated relay of the Jersey Met warning for the Channel Islands shipping area.","sent":null},{"at":"2026-10-22T20:20Z","kind":"warning","title":"Jersey Met YELLOW thunderstorm warning","body":"Automated relay of the Jersey Met warning for Jersey.","sent":null},{"at":"2026-10-22T21:27Z","kind":"special","title":"Pressure falling very rapidly","body":"Pressure at Jersey Airport has fallen 6 hPa in 3 hours, a sign of a deepening storm nearby. Check gov.je for official Jersey Met warnings.","sent":null},{"at":"2026-10-23T01:14Z","kind":"special","title":"Damaging gusts expected soon","body":"3 of 5 weather models show gusts of 71-82 mph in Jersey within the next 3 hours. Take care outdoors. Check gov.je for official Jersey Met warnings.","sent":939},{"at":"2026-10-23T01:18Z","kind":"special","title":"Waves over sea walls likely at high tide","body":"High tide at 05:05 (9.2 m) comes with large waves and strong SW winds (gusts up to about 74 mph). Waves and spray over sea walls are likely on the south coast - take care on coast roads and promenades. Check gov.je for official Jersey Met warnings.","sent":939},{"at":"2026-10-23T04:08Z","kind":"special","title":"Damaging gusts expected soon","body":"3 of 5 weather models show gusts of 78-84 mph in Jersey within the next 3 hours. Take care outdoors. Check gov.je for official Jersey Met warnings.","sent":942},{"at":"2026-10-23T04:36Z","kind":"special","title":"Gusts 74 mph at Jersey Airport","body":"Gusts of 74 mph recorded at Jersey Airport at 05:20. Take care outdoors. Check gov.je for official Jersey Met warnings.","sent":947},{"at":"2026-10-23T05:09Z","kind":"special","title":"Gusts 84 mph at Jersey Airport","body":"Gusts of 84 mph recorded at Jersey Airport at 05:50. Take care outdoors. Check gov.je for official Jersey Met warnings.","sent":946},{"at":"2026-10-23T09:30Z","kind":"special","title":"Gusts 72 mph at Jersey Airport","body":"Gusts of 72 mph recorded at Jersey Airport at 10:20. Take care outdoors. Check gov.je for official Jersey Met warnings.","sent":970},{"at":"2026-10-23T20:50Z","kind":"warning","title":"Jersey Met ORANGE wind warning updated (at sea)","body":"Channel Islands Shipping Area - at sea, not a land warning. W to NW wind F7 backing SW gale F8 with gusts to 50kt later. Issued 20:35 UTC Friday 23 October. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.","sent":973}],"ewx":{"asOf":"2026-10-29T12:54Z","event":"Storm Austen / Boelo","total":179,"friday":174,"fridaySameDay":143,"trees":140,"blocked":51,"severe":34,"firstLocal":"05:37","peakHour":["2026-10-23T08:00Z",48,39],"hourly":[["2026-10-23T03:00Z",0,0],["2026-10-23T04:00Z",2,2],["2026-10-23T05:00Z",3,1],["2026-10-23T06:00Z",16,14],["2026-10-23T07:00Z",38,32],["2026-10-23T08:00Z",48,39],["2026-10-23T09:00Z",24,18],["2026-10-23T10:00Z",20,13],["2026-10-23T11:00Z",3,3],["2026-10-23T12:00Z",13,10],["2026-10-23T13:00Z",2,2],["2026-10-23T14:00Z",0,0],["2026-10-23T15:00Z",0,0],["2026-10-23T16:00Z",3,1],["2026-10-23T17:00Z",0,0],["2026-10-23T18:00Z",0,0],["2026-10-23T19:00Z",1,0],["2026-10-23T20:00Z",0,0],["2026-10-23T21:00Z",0,0],["2026-10-23T22:00Z",0,0]],"byType":[["Trees",140],["Water",17],["Debris",14],["Infrastructure Damage",4],["Other",3],["Building Damage",1]],"byParish":[["St Saviour",38],["St Brelade",28],["Grouville",19],["St Martin",16],["St Peter",14],["St Lawrence",14],["St Helier",12],["Trinity",11],["St Ouen",10],["St John",9],["St Mary",7],["St Clement",1]],"byTeam":[["Government Forestry",71],["Parish roads teams",49],["Government cleaning crews",28],["Government Drainage",16],["Government Highways",11],["Other / not assigned",4]],"access":[["Partial access",67],["Full Access",61],["Blocked - no access",51]],"severity":[["Medium",95],["Low",50],["Severe",34]],"roads":[["La Grande Route de St Martin","St Saviour",6],["La Route Orange","St Brelade",4],["La Route de la Cote","St Martin",4],["La Grande Route de St Brelade","St Brelade",3],["Le Mont Felard","St Lawrence",3],["La Rue de la Freminerie","St Saviour",3],["Mont du Grouet","St Brelade",3],["Les Grands Vaux","St Saviour",3],["La Rue du Boulivot","Grouville",3],["La Grande Route des Sablons","Grouville",3]],"laterDays":{"Sat 24 Oct":1,"Mon 26 Oct":4},"goretti":268,"kpis":[{"v":"174","l":"INCIDENTS ON FRIDAY","s":"179 for Austen and Boelo by 29 October","c":"green"},{"v":"140","l":"INVOLVED TREES","s":"78% of all incidents","c":"green"},{"v":"51","l":"BLOCKING A ROAD","s":"no access when logged, 49 of them trees","c":"red"},{"v":"82%","l":"CLEARED BY MIDNIGHT","s":"143 of Friday’s 174 marked resolved","c":"cyan"}],"attribution":"Incident counts from the Government of Jersey&rsquo;s <b>Severe Incident Reporting<\/b> map (Emergencyworx), event &ldquo;Storm Austen / Boelo&rdquo;, as it stood at 12:54 on 29 October 2026. We show counts only: no locations, descriptions or personal details. For comparison, Storm Goretti in January 2026 logged 268 incidents on the same system.<br><b>Seen a fallen tree, flooding or debris on a road?<\/b> Report it to the Government on <a href=\"https://roadworks.gov.je/EWXPublic/\" target=\"_blank\" rel=\"noopener\">roadworks.gov.je &rarr;<\/a> so the right team is sent."},"reports":[{"t":"2026-10-22T21:40Z","type":"Observation","parish":"St Helier","sev":"Observation","text":"Nasty squall line with extremely gusty winds and torrential rain.","by":"Matthew M","media":""},{"t":"2026-10-23T05:28Z","type":"Storm Damage","parish":"Grouville","sev":"Moderate","text":"Two trees down on Grouville hill top end after Grouville Arsenal. Another tree blocking the road from Boulivot football pitch towards L’Emeraude hotel","by":"Christa","media":""},{"t":"2026-10-23T06:53Z","type":"Storm Damage","parish":"St Helier","sev":"Minor","text":"Downed tree West Hill County Hotel not blocking road.","by":"Matthew M","media":"https://photos.app.goo.gl/e6Uaom4J3cQBM854A"},{"t":"2026-10-23T07:14Z","type":"Storm Damage","parish":"St Helier","sev":"Minor","text":"Small tree limb down blocked path.","by":"Matthew M","media":"https://photos.app.goo.gl/rvEyaFet1PWDxmrC6"},{"t":"2026-10-23T07:26Z","type":"Storm Damage","parish":"St Helier","sev":"Minor","text":"The Look Out. Damage to fencing.","by":"Matthew M","media":"https://photos.app.goo.gl/ZLmfGdhV1H3xhSqK9"},{"t":"2026-10-24T16:29Z","type":"Flooding","parish":"St Helier","sev":"Minor","text":"Over topping of sea wall.","by":"Matthew M","media":"https://photos.app.goo.gl/vAaEkTA1jQrnQBro8"}],"track":{"points":[["2026-10-21T18:00Z",46.67,-32.37,1004.7,"a"],["2026-10-22T00:00Z",47.25,-25.45,1000.7,"a"],["2026-10-22T06:00Z",47.88,-19.35,991.8,"a"],["2026-10-22T12:00Z",49.0,-13.95,981.1,"a",{"dir":"right","off":[8,13]}],["2026-10-22T18:00Z",49.71,-9.61,973.8,"a",{"dir":"top","note":"DEEPEST"}],["2026-10-23T00:00Z",50.0,-5.75,976.1,"a"],["2026-10-23T06:00Z",50.38,-1.45,977.1,"a",{"dir":"right","mdir":"top","mob":true}],["2026-10-23T18:00Z",52.93,5.16,981.6,"f",{"dir":"top"}],["2026-10-24T06:00Z",55.01,7.44,988.9,"f",{"dir":"left"}]],"view":[[46.3,-16.5],[56.2,9.8]],"cycles":[["2026-10-19T06:00Z",969.4,379,"2026-10-19T11:03Z"],["2026-10-19T12:00Z",971.0,323,"2026-10-19T17:38Z"],["2026-10-19T18:00Z",971.7,295,"2026-10-20T01:58Z"],["2026-10-20T00:00Z",973.6,255,"2026-10-20T10:15Z"],["2026-10-20T06:00Z",973.5,254,"2026-10-20T15:43Z"],["2026-10-20T12:00Z",974.3,280,"2026-10-20T20:46Z"],["2026-10-20T18:00Z",975.3,175,"2026-10-21T01:49Z"],["2026-10-21T00:00Z",975.3,133,"2026-10-21T10:25Z"],["2026-10-21T06:00Z",974.9,115,"2026-10-21T16:01Z"],["2026-10-21T12:00Z",974.8,165,"2026-10-21T20:47Z"],["2026-10-21T18:00Z",975.0,149,"2026-10-22T01:40Z"],["2026-10-22T00:00Z",974.5,115,"2026-10-22T10:24Z"],["2026-10-22T06:00Z",974.4,130,"2026-10-22T15:56Z"],["2026-10-22T12:00Z",972.9,158,"2026-10-22T20:41Z"],["2026-10-22T18:00Z",973.8,148,"2026-10-23T01:43Z"],["2026-10-23T00:00Z",976.1,146,"2026-10-23T10:21Z"],["2026-10-23T06:00Z",977.1,142,"2026-10-23T15:48Z"]],"caption":"Austen deepened quickly over the Atlantic, its centre falling from about 1001 hPa to 974 hPa in the 18 hours to Thursday evening, then ran along the English Channel. It passed about 120 km north of Jersey at around 05:40 on Friday, ten minutes before the 84 mph gust.","jersey":[49.21,-2.13],"closest":{"lat":50.3,"lon":-2.36,"km":120,"t":"2026-10-23T04:40Z"},"peakAt":"2026-10-23T04:50Z"},"fc":{"models":[["ECMWF",51],["GFS",31],["ICON",40],["UK MET OFFICE",18]],"det":["GFS","ECMWF","ICON","UK MET OFFICE","MÉTÉO-FRANCE"],"observed":84,"frames":[{"t":"2026-10-22T10:52Z","q10":66.7,"q50":78.6,"q90":90.4,"ch":[99,84,43,11],"b":[70,90],"sc":[["BEST CASE",16,"50–69",23],["MOST COMMON",73,"70–89",101],["WORST CASE",11,"90+",16]],"det":[70.7,84.8,90.2,73.4,84.8],"head":"ABOUT 8 IN 10 RUNS GIVE JERSEY GUSTS OF 70+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[72.9,84.6,79.2,75.8,81.7,83.2,78.7,71.1,66.7,74.0,86.8,82.5,81.0,86.1,90.8,68.2,82.3,71.8,86.3,75.2,75.2,73.8,70.5,80.8,83.0,77.4,79.4,73.6,79.0,84.8,76.5,73.8,77.8,67.8,77.8,81.4,86.1,72.7,76.3,75.8,79.2,73.6,75.8,70.0,80.1,76.1,77.6,75.8,89.3,71.8,71.1,68.5,71.1,54.8,69.8,65.8,67.6,71.4,70.7,64.6,72.7,66.0,78.5,65.5,62.0,64.9,59.7,65.8,83.4,64.4,61.1,73.6,65.8,68.7,67.8,65.3,69.6,70.5,72.9,66.4,72.9,71.6,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T10:59Z","q10":66.7,"q50":78.6,"q90":90.4,"ch":[99,84,43,11],"b":[70,90],"sc":[["BEST CASE",16,"50–69",23],["MOST COMMON",73,"70–89",101],["WORST CASE",11,"90+",16]],"det":[70.7,84.8,90.2,73.4,84.8],"head":"ABOUT 8 IN 10 RUNS GIVE JERSEY GUSTS OF 70+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[72.9,84.6,79.2,75.8,81.7,83.2,78.7,71.1,66.7,74.0,86.8,82.5,81.0,86.1,90.8,68.2,82.3,71.8,86.3,75.2,75.2,73.8,70.5,80.8,83.0,77.4,79.4,73.6,79.0,84.8,76.5,73.8,77.8,67.8,77.8,81.4,86.1,72.7,76.3,75.8,79.2,73.6,75.8,70.0,80.1,76.1,77.6,75.8,89.3,71.8,71.1,68.5,71.1,54.8,69.8,65.8,67.6,71.4,70.7,64.6,72.7,66.0,78.5,65.5,62.0,64.9,59.7,65.8,83.4,64.4,61.1,73.6,65.8,68.7,67.8,65.3,69.6,70.5,72.9,66.4,72.9,71.6,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T11:29Z","q10":66.7,"q50":78.6,"q90":90.4,"ch":[99,84,43,11],"b":[70,90],"sc":[["BEST CASE",16,"50–69",23],["MOST COMMON",73,"70–89",101],["WORST CASE",11,"90+",16]],"det":[70.7,84.8,90.2,73.4,80.3],"head":"ABOUT 8 IN 10 RUNS GIVE JERSEY GUSTS OF 70+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[72.9,84.6,79.2,75.8,81.7,83.2,78.7,71.1,66.7,74.0,86.8,82.5,81.0,86.1,90.8,68.2,82.3,71.8,86.3,75.2,75.2,73.8,70.5,80.8,83.0,77.4,79.4,73.6,79.0,84.8,76.5,73.8,77.8,67.8,77.8,81.4,86.1,72.7,76.3,75.8,79.2,73.6,75.8,70.0,80.1,76.1,77.6,75.8,89.3,71.8,71.1,68.5,71.1,54.8,69.8,65.8,67.6,71.4,70.7,64.6,72.7,66.0,78.5,65.5,62.0,64.9,59.7,65.8,83.4,64.4,61.1,73.6,65.8,68.7,67.8,65.3,69.6,70.5,72.9,66.4,72.9,71.6,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T11:59Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[70.7,84.8,91.3,73.4,80.3],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T12:29Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[70.7,84.8,91.3,73.4,80.3],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T12:59Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[70.7,84.8,91.3,73.4,80.3],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T13:29Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[70.7,84.8,91.3,73.4,89.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T13:59Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[69.6,86.1,91.3,72.3,89.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T14:29Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[69.6,86.1,91.3,72.3,89.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T15:00Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[69.6,86.1,91.3,72.3,89.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T15:30Z","q10":69.5,"q50":80.5,"q90":91.0,"ch":[100,89,56,13],"b":[70,90],"sc":[["BEST CASE",11,"60–69",15],["MOST COMMON",76,"70–89",107],["WORST CASE",13,"90+",18]],"det":[69.6,86.1,91.3,72.3,89.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,81.2,73.4,74.0,87.5,79.0,72.5,80.1,80.8,77.2,72.5,81.2,78.5,81.7,75.6,75.6,81.7,79.2,80.1]},{"t":"2026-10-22T15:59Z","q10":69.5,"q50":80.7,"q90":91.0,"ch":[100,89,58,13],"b":[80,90],"sc":[["BEST CASE",42,"60–79",59],["MOST COMMON",45,"80–89",63],["WORST CASE",13,"90+",18]],"det":[69.6,86.1,87.9,72.3,89.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[84.8,74.0,89.3,80.5,84.1,86.1,79.4,79.4,75.2,88.4,73.4,70.9,81.0,79.6,89.0,74.9,81.7,80.1,85.7,86.3,87.0,83.4,79.2,88.6,83.7,92.6,75.4,78.1,81.7,84.1,93.3,82.8,84.6,91.7,80.1,87.9,81.7,78.3,70.5,79.4,80.5,78.5,81.4,87.0,80.1,87.2,86.8,89.5,78.7,85.5,80.1,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T16:29Z","q10":69.5,"q50":81.9,"q90":91.0,"ch":[100,89,62,14],"b":[80,90],"sc":[["BEST CASE",38,"60–79",53],["MOST COMMON",48,"80–89",68],["WORST CASE",14,"90+",19]],"det":[69.6,86.1,87.9,72.3,78.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH · ABOUT 1 IN 10 GIVE 90+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,91.7,79.9,92.2,89.9,88.6,84.8,91.7,78.1,87.9,89.7,79.9,91.7,84.6,91.9,90.6,91.0,78.1,80.1,98.7,85.2,90.2,80.8,90.4,89.3,91.0,80.8,89.5,79.2,87.2,76.5,87.7,92.6,92.6,85.2,82.5,95.3,86.6,84.1,92.4,85.5,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T17:00Z","q10":69.5,"q50":81.8,"q90":88.8,"ch":[100,89,64,6],"b":[75,85],"sc":[["BEST CASE",19,"60–74",27],["MOST COMMON",47,"75–84",65],["WORST CASE",34,"85+",48]],"det":[69.6,86.1,87.9,74.5,78.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T17:29Z","q10":69.5,"q50":81.8,"q90":88.8,"ch":[100,89,64,6],"b":[75,85],"sc":[["BEST CASE",19,"60–74",27],["MOST COMMON",47,"75–84",65],["WORST CASE",34,"85+",48]],"det":[69.6,86.1,87.9,74.5,78.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.4,65.1,74.0,68.5,70.2,83.7,75.2,66.7,79.2,71.8,74.0,64.4,68.0,60.0,71.6,80.1,72.9,77.0,75.2,69.6,76.5,68.2,74.0,62.9,72.7,64.0,67.8,63.5,63.1,62.9,67.8,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T17:59Z","q10":70.9,"q50":81.7,"q90":88.8,"ch":[100,94,62,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[null,null,null,null,null],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T18:29Z","q10":70.9,"q50":81.7,"q90":88.8,"ch":[100,94,62,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[69.6,86.1,89.5,74.5,78.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T18:59Z","q10":70.9,"q50":81.7,"q90":88.8,"ch":[100,94,62,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[69.6,86.1,89.5,74.5,78.5],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T19:29Z","q10":70.9,"q50":81.7,"q90":88.8,"ch":[100,94,62,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[72.3,86.1,89.5,74.5,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T19:59Z","q10":70.9,"q50":81.7,"q90":88.8,"ch":[100,94,62,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[72.3,86.1,89.5,74.5,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,82.3,85.7,80.3,81.4,80.3,79.6,82.3,80.5,78.3,77.0,79.2,80.8,80.8,78.1,79.0,81.4,79.6,79.4]},{"t":"2026-10-22T20:29Z","q10":70.9,"q50":81.8,"q90":88.8,"ch":[100,94,61,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[72.3,86.1,89.5,75.6,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T20:59Z","q10":70.9,"q50":81.8,"q90":88.8,"ch":[100,94,61,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[72.3,86.1,89.5,75.6,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T21:29Z","q10":70.9,"q50":81.8,"q90":88.8,"ch":[100,94,61,6],"b":[75,85],"sc":[["BEST CASE",20,"65–74",28],["MOST COMMON",46,"75–84",64],["WORST CASE",34,"85+",48]],"det":[72.3,86.1,89.5,75.6,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,87.5,82.3,89.5,91.0,87.5,81.9,87.0,75.6,91.9,87.5,81.7,77.4,83.4,94.4,87.7,85.9,80.5,83.9,89.3,80.8,85.0,88.1,88.8,84.3,88.1,80.8,83.2,76.5,87.0,73.8,84.6,87.9,88.1,85.9,81.7,94.2,88.4,80.8,94.4,85.2,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T21:59Z","q10":70.9,"q50":81.1,"q90":87.9,"ch":[100,94,59,5],"b":[75,85],"sc":[["BEST CASE",21,"65–74",29],["MOST COMMON",48,"75–84",68],["WORST CASE",31,"85+",43]],"det":[72.3,83.9,88.6,75.6,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T22:29Z","q10":70.9,"q50":81.1,"q90":87.9,"ch":[100,94,59,5],"b":[75,85],"sc":[["BEST CASE",21,"65–74",29],["MOST COMMON",48,"75–84",68],["WORST CASE",31,"85+",43]],"det":[72.3,83.9,88.6,71.1,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T22:59Z","q10":70.9,"q50":81.1,"q90":87.9,"ch":[100,94,59,5],"b":[75,85],"sc":[["BEST CASE",21,"65–74",29],["MOST COMMON",48,"75–84",68],["WORST CASE",31,"85+",43]],"det":[72.3,83.9,88.6,71.1,78.7],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[86.1,85.7,81.0,89.7,85.9,87.9,79.6,84.1,83.9,85.5,82.5,90.8,80.3,92.2,81.9,79.6,85.5,77.8,82.1,87.2,86.3,82.3,76.3,86.3,91.7,89.0,78.3,69.6,83.0,74.7,81.0,79.2,88.8,83.0,85.2,80.3,87.7,86.8,81.4,79.2,87.7,77.4,86.3,81.9,85.9,84.6,93.3,88.6,84.8,85.5,81.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T23:29Z","q10":70.9,"q50":80.9,"q90":87.9,"ch":[100,95,61,4],"b":[75,85],"sc":[["BEST CASE",19,"65–74",27],["MOST COMMON",57,"75–84",79],["WORST CASE",24,"85+",34]],"det":[72.3,83.9,88.6,71.1,78.1],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,71.6,74.0,75.4,66.7,69.6,70.2,73.6,75.2,76.1,66.2,72.3,70.9,70.9,66.7,70.7,70.2,77.4,71.6,74.0,65.8,71.4,73.8,70.7,70.5,74.7,70.0,75.8,68.5,72.5,77.0,67.3,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-22T23:59Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[72.3,83.9,88.4,71.1,78.1],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T00:29Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[72.3,83.9,88.4,70.7,78.1],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T00:59Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,88.4,70.7,78.1],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T01:26Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,88.4,70.7,80.8],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T01:59Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,88.4,68.9,80.8],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T02:29Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,88.4,68.5,80.8],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T02:59Z","q10":71.4,"q50":80.9,"q90":87.9,"ch":[100,94,61,4],"b":[75,85],"sc":[["BEST CASE",18,"60–74",25],["MOST COMMON",58,"75–84",81],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,88.4,68.5,79.4],"head":"ABOUT 6 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,89.9,80.3,86.3,85.7,79.0,80.1,84.6,80.5,81.2,84.6,83.2,84.8,91.0,77.6,83.0,82.1,86.1,85.0,83.0,82.8,79.9,89.5,90.4,89.0,83.0,80.8,81.9,82.5,78.7,81.7,84.1,78.5,76.7,85.7,78.5,82.1,85.0,89.9,82.5,91.0,80.8,84.3,78.1,86.8,82.8,80.5,83.0,80.8,81.4,87.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,81.7,78.1,76.3,83.0,78.3,75.8,80.8,79.4,78.1,76.1,83.7,79.2,86.1,77.0,80.5,82.3,80.3,80.8]},{"t":"2026-10-23T03:29Z","q10":71.4,"q50":80.2,"q90":87.5,"ch":[100,94,54,3],"b":[75,85],"sc":[["BEST CASE",20,"60–74",28],["MOST COMMON",56,"75–84",78],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,88.4,67.6,79.4],"head":"ABOUT 5 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,81.0,84.8,87.9,83.9,85.7,87.2,88.6,85.0,76.3,89.0,85.0,83.0,84.6,71.4,77.8,81.2,81.9,80.8,80.3,78.5,83.0,84.3,86.1,87.0,85.5,83.2,73.6,77.2,82.8,84.1,85.0,86.3,77.4,81.4,80.8,80.1,79.4,84.1,81.7,85.5,76.7,85.0,74.0,94.8,79.2,78.1,86.3,77.2,75.4,83.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,78.5,80.3,78.3,80.5,75.8,82.3,80.1,77.0,76.3,80.1,78.3,76.3,76.3,77.0,80.1,77.0,77.4,79.6]},{"t":"2026-10-23T03:59Z","q10":71.4,"q50":80.2,"q90":87.5,"ch":[100,94,54,3],"b":[75,85],"sc":[["BEST CASE",20,"60–74",28],["MOST COMMON",56,"75–84",78],["WORST CASE",24,"85+",34]],"det":[67.1,83.9,84.8,67.6,80.5],"head":"ABOUT 5 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,81.0,84.8,87.9,83.9,85.7,87.2,88.6,85.0,76.3,89.0,85.0,83.0,84.6,71.4,77.8,81.2,81.9,80.8,80.3,78.5,83.0,84.3,86.1,87.0,85.5,83.2,73.6,77.2,82.8,84.1,85.0,86.3,77.4,81.4,80.8,80.1,79.4,84.1,81.7,85.5,76.7,85.0,74.0,94.8,79.2,78.1,86.3,77.2,75.4,83.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,86.1,80.1,89.7,98.2,84.8,80.1,86.1,79.4,87.7,84.6,81.9,77.2,81.2,93.3,86.8,86.6,74.3,82.1,87.5,78.1,88.1,80.5,84.6,87.9,85.9,80.5,81.0,77.0,88.8,74.5,83.4,84.3,87.5,85.0,77.8,91.5,87.5,82.3,85.2,81.4,78.5,80.3,78.3,80.5,75.8,82.3,80.1,77.0,76.3,80.1,78.3,76.3,76.3,77.0,80.1,77.0,77.4,79.6]},{"t":"2026-10-23T04:29Z","q10":71.4,"q50":80.1,"q90":86.3,"ch":[100,94,52,2],"b":[75,85],"sc":[["BEST CASE",19,"60–74",27],["MOST COMMON",61,"75–84",85],["WORST CASE",20,"85+",28]],"det":[67.1,83.9,84.8,68.9,80.5],"head":"ABOUT 5 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,81.0,84.8,87.9,83.9,85.7,87.2,88.6,85.0,76.3,89.0,85.0,83.0,84.6,71.4,77.8,81.2,81.9,80.8,80.3,78.5,83.0,84.3,86.1,87.0,85.5,83.2,73.6,77.2,82.8,84.1,85.0,86.3,77.4,81.4,80.8,80.1,79.4,84.1,81.7,85.5,76.7,85.0,74.0,94.8,79.2,78.1,86.3,77.2,75.4,83.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,87.5,78.5,85.2,90.4,86.3,78.5,87.0,83.0,84.6,80.8,80.8,73.1,80.3,86.1,86.6,83.9,76.5,84.6,85.2,79.0,91.7,80.3,84.8,81.4,86.3,78.5,82.3,77.8,85.9,77.6,81.7,83.7,85.0,81.0,77.4,84.3,83.9,79.9,84.3,81.9,78.5,80.3,78.3,80.5,75.8,82.3,80.1,77.0,76.3,80.1,78.3,76.3,76.3,77.0,80.1,77.0,77.4,79.6]},{"t":"2026-10-23T04:59Z","q10":71.4,"q50":80.1,"q90":86.3,"ch":[100,94,52,2],"b":[75,85],"sc":[["BEST CASE",19,"60–74",27],["MOST COMMON",61,"75–84",85],["WORST CASE",20,"85+",28]],"det":[67.1,83.9,84.8,68.9,83.4],"head":"ABOUT 5 IN 10 RUNS GIVE JERSEY GUSTS OF 80+ MPH","runs":[83.9,81.0,84.8,87.9,83.9,85.7,87.2,88.6,85.0,76.3,89.0,85.0,83.0,84.6,71.4,77.8,81.2,81.9,80.8,80.3,78.5,83.0,84.3,86.1,87.0,85.5,83.2,73.6,77.2,82.8,84.1,85.0,86.3,77.4,81.4,80.8,80.1,79.4,84.1,81.7,85.5,76.7,85.0,74.0,94.8,79.2,78.1,86.3,77.2,75.4,83.9,72.0,75.6,75.4,74.0,66.4,71.8,77.4,71.4,70.2,72.3,66.2,66.0,73.1,74.9,62.6,67.6,77.2,70.9,75.2,70.7,71.8,70.0,69.6,74.3,65.5,70.2,66.7,69.1,75.4,77.0,77.0,87.5,78.5,85.2,90.4,86.3,78.5,87.0,83.0,84.6,80.8,80.8,73.1,80.3,86.1,86.6,83.9,76.5,84.6,85.2,79.0,91.7,80.3,84.8,81.4,86.3,78.5,82.3,77.8,85.9,77.6,81.7,83.7,85.0,81.0,77.4,84.3,83.9,79.9,84.3,81.9,78.5,80.3,78.3,80.5,75.8,82.3,80.1,77.0,76.3,80.1,78.3,76.3,76.3,77.0,80.1,77.0,77.4,79.6]}],"verdict":{"title":"VERDICT: THE FORECAST WAS CLOSE","text":["Every half-hourly snapshot from midday on Thursday put the middle of the 140 model runs at 79–82 mph for Friday’s strongest gust. From 18:00 on Thursday the “most common” scenario was 75–84 mph, carried by 46–61% of the runs. Jersey Airport recorded 84 mph: the top of that range.","Between a quarter and four in ten of the runs (27–38%) went to 84 mph or more. The ECMWF and ICON ensembles centred on about 83 mph; in the last forecast before the peak no UK Met Office or GFS run reached 84 (their highest were 82 and 77 mph). The Storm Tracker on Live Ops had picked Austen up almost four days ahead, already heading for the English Channel."]}},"sea":{"waves":[["2026-10-22T11:29Z",1.6,272],["2026-10-22T12:29Z",1.6,271],["2026-10-22T13:29Z",1.5,269],["2026-10-22T14:29Z",1.5,267],["2026-10-22T15:30Z",1.4,262],["2026-10-22T16:29Z",1.4,257],["2026-10-22T17:29Z",1.5,250],["2026-10-22T18:29Z",1.5,242],["2026-10-22T19:29Z",1.5,230],["2026-10-22T20:29Z",1.6,219],["2026-10-22T21:29Z",1.6,210],["2026-10-22T22:29Z",1.7,208],["2026-10-22T23:29Z",1.8,206],["2026-10-23T00:29Z",1.9,203],["2026-10-23T01:26Z",2.2,205],["2026-10-23T02:29Z",2.5,207],["2026-10-23T03:29Z",2.8,213],["2026-10-23T04:29Z",3.2,230],["2026-10-23T05:29Z",3.6,247],["2026-10-23T06:27Z",4.0,261],["2026-10-23T07:29Z",4.5,266],["2026-10-23T08:29Z",4.9,271],["2026-10-23T09:29Z",5.2,275],["2026-10-23T10:29Z",4.9,277],["2026-10-23T11:29Z",4.7,279],["2026-10-23T12:29Z",4.4,279],["2026-10-23T13:29Z",4.1,279],["2026-10-23T14:29Z",3.9,280],["2026-10-23T15:29Z",3.7,280],["2026-10-23T16:29Z",3.6,280],["2026-10-23T17:29Z",3.5,280],["2026-10-23T18:29Z",3.4,280],["2026-10-23T19:29Z",3.2,280],["2026-10-23T20:22Z",3.1,279],["2026-10-23T21:29Z",3.0,279],["2026-10-23T22:29Z",2.9,279],["2026-10-23T23:27Z",2.7,279],["2026-10-24T00:29Z",2.6,279],["2026-10-24T01:29Z",2.4,278],["2026-10-24T02:29Z",2.3,278],["2026-10-24T03:29Z",2.2,277],["2026-10-24T04:29Z",2.1,275],["2026-10-24T05:29Z",2.1,274],["2026-10-24T06:29Z",2.0,272],["2026-10-24T07:29Z",1.9,269],["2026-10-24T08:29Z",1.9,266],["2026-10-24T09:29Z",1.8,263],["2026-10-24T10:29Z",1.9,260],["2026-10-24T11:29Z",1.9,257],["2026-10-24T12:29Z",1.9,252],["2026-10-24T13:29Z",1.9,249],["2026-10-24T14:29Z",1.9,246],["2026-10-24T15:29Z",2.0,245],["2026-10-24T16:29Z",2.1,248],["2026-10-24T17:29Z",2.2,251],["2026-10-24T18:29Z",2.3,254],["2026-10-24T19:29Z",2.5,256],["2026-10-24T20:29Z",2.8,258],["2026-10-24T21:29Z",3.0,259],["2026-10-24T22:29Z",3.0,261],["2026-10-24T23:29Z",3.1,263],["2026-10-25T00:29Z",3.0,265],["2026-10-25T01:29Z",2.9,267],["2026-10-25T02:29Z",2.9,269],["2026-10-25T03:29Z",2.9,270],["2026-10-25T04:29Z",2.9,272],["2026-10-25T05:29Z",3.0,274],["2026-10-25T06:29Z",3.0,275],["2026-10-25T07:29Z",3.0,276],["2026-10-25T08:29Z",3.0,277],["2026-10-25T09:22Z",3.0,278],["2026-10-25T10:29Z",2.9,278],["2026-10-25T11:29Z",2.9,279]],"tides":[["2026-10-23T04:05Z",9.2,"HIGH","south coast"],["2026-10-23T16:24Z",9.7,"HIGH","west coast"],["2026-10-24T04:46Z",9.9,"LOW",""],["2026-10-24T17:04Z",10.3,"ELEVATED","south coast"],["2026-10-25T05:25Z",10.5,"ELEVATED","west coast"]],"caption":"Model wave height just off Jersey (as on the Sea & Tides page), with each high tide and the sea-wall overtopping risk the site worked out for it at the time. Friday’s 05:05 high tide came as the strongest winds arrived, so the site rated it HIGH and sent a special alert at 02:18. Waves offshore peaked at about 5 m from the west late on Friday morning. Saturday evening’s bigger 10.3 m tide, during Storm Boelo, brought the one member report of waves over the sea wall, in St Helier.","report":["2026-10-24T16:29Z","Member report: waves over the sea wall, St Helier, 17:29 Saturday"]},"news":[{"text":"Government schools and colleges, the three main parks, sports centres and all Jersey Heritage sites closed on Friday, and the libraries stayed shut for the morning. The Harbour closed at 6pm on Thursday and stayed shut all Friday; the Airport cancelled flights until late afternoon.","src":[["gov.je, 22 Oct","https://www.gov.je/News/2026/pages/stormaustenupdates.aspx"],["Jersey Evening Post, 23 Oct","https://jerseyeveningpost.com/news/2026/10/23/airport-harbour-and-other-closures-as-storm-austen-sweeps-over-jersey/"]]},{"text":"Jersey Electricity reported 17 incidents and around 70 customers without power at midday on Friday. On Saturday 133 customers were affected across 20 incidents, and the last were back on by Sunday.","src":[["Parish of St Helier, 23 Oct","https://sthelier.je/storm-austen-hazards-remain-as-clean-up-continues-across-st-helier/"],["Jersey Evening Post, 27 Oct","https://jerseyeveningpost.com/news/2026/10/27/island-returns-to-normal-after-storm-disruption/"]]},{"text":"In St Helier a fallen tree caught on cables at Snow Hill, fallen roofing closed Seale Street, the Parade Gardens footpath was shut and a kiosk was damaged in Liberation Square.","src":[["Parish of St Helier, 23 Oct","https://sthelier.je/storm-austen-hazards-remain-as-clean-up-continues-across-st-helier/"]]},{"text":"Large branches blocked the Five Mile Road in St Ouen. The Government’s head of highways said the worst came during the morning rush hour, but the red warning and school closures kept the roads quieter, which helped the crews.","src":[["Jersey Evening Post, 27 Oct","https://jerseyeveningpost.com/news/2026/10/27/island-returns-to-normal-after-storm-disruption/"]]},{"text":"A 75 mph gust was recorded at St Helier Harbour, and Guernsey’s strongest was 76 mph at 05:41. Jersey Met’s head of meteorology said Austen was not as strong as Storm Ciarán in 2023 or Storm Goretti in January.","src":[["Jersey Evening Post, 23 & 27 Oct","https://jerseyeveningpost.com/news/2026/10/27/island-returns-to-normal-after-storm-disruption/"],["ITV Channel, 24 Oct","https://www.itv.com/news/channel/2026-10-23/storm-arwen-fells-trees-and-blocks-roads-in-channel-islands"]]},{"text":"Queen’s Valley and Val de la Mare reservoirs closed over the weekend for safety checks. The first St Malo ferries were due back on Monday evening and the three main parks were due to reopen on Tuesday 27 October.","src":[["Channel 103, 24 Oct","https://www.channel103.com/news/jersey/storm-austen-clean-up-continues/"],["Jersey Evening Post, 27 Oct","https://jerseyeveningpost.com/news/2026/10/27/island-returns-to-normal-after-storm-disruption/"]]}],"story":["Storm Austen, the first named storm of the 2026/27 season, crossed the English Channel early on Friday 23 October. Its centre passed about 120 km north of Jersey at around 05:40, and the island had its strongest winds as it went by: Jersey Airport recorded a gust of 84 mph at 05:50, with a mean wind of 58 mph, storm force 10.","Jersey Met issued a red wind warning for the Channel Islands at 03:44 on Thursday 22 October and kept it in force until 12:58 on Friday. Government schools and colleges, the main parks, sports centres and Jersey Heritage sites closed for Friday; the Harbour shut from 6pm on Thursday and the Airport cancelled flights until late afternoon.","Thursday evening brought bands of heavy rain and a squall line through St Helier at about 22:40, under a yellow thunderstorm warning. Pressure at the airport fell from 1013 hPa on Thursday morning to 982 hPa by 05:20 on Friday, 11 hPa of it in the last two and a half hours; JWC’s Storm Watch flagged the fall at 22:27 on Thursday. Southerly gusts reached 59 mph by 01:50 and 68 mph by 03:50, before the wind swung west-south-westerly for the 84 mph peak. St Helier Harbour recorded 75 mph, and Guernsey had 76 mph at 05:41.","Behind the storm, west-north-westerly gusts of 60–72 mph went on through the morning, a squally shower brought a 76 mph gust at 17:20, and the wind eased through the evening as pressure rose 26 hPa in eight hours.","The Government’s severe incident reporting system logged 174 incidents on Friday, and 179 in all for Austen and the follow-up Storm Boelo by 29 October; 140 of those involved trees, and St Saviour (38) and St Brelade (28) were the busiest parishes. The first was logged at 05:37, the busiest hour was 09:00 to 10:00 with 48 as daylight showed the damage, and by midnight 143 of Friday’s incidents were already marked resolved. Jersey Electricity reported 17 incidents and about 70 customers without power at midday.","JWC members filed five reports during Austen, from the squall line on Thursday night to trees down on Grouville Hill and at West Hill and damaged fencing at The Look Out. JWC sent ten push alerts from Thursday to Friday night: three automatic relays of Jersey Met warnings and seven special alerts, covering the pressure fall, damaging gusts, waves over sea walls and the 74, 84 and 72 mph gusts measured at the airport. By Friday morning each alert was reaching about 940 to 970 devices.","On the forecasts: from midday on Thursday, every half-hourly snapshot of the Storm Scenarios page put the middle of the 140 model runs at 79–82 mph for Friday’s strongest gust, and from 18:00 the “most common” scenario was 75–84 mph. The recorded 84 mph sat at the top of that range. The Storm Tracker on Live Ops had picked Austen up almost four days ahead, already on course for the English Channel.","Storm Boelo followed on Saturday 24 October with a south-westerly gale at sea, an orange tide warning and a 67 mph gust at the airport in the evening. A member reported waves over the sea wall in St Helier ahead of the 10.3 m high tide, and Jersey Met recorded 34.7 mm of rain at Maison St Louis in the 24 hours to 9am on Sunday."],"sources":[["Jersey Airport observations","Half-hourly METAR reports from Jersey Airport (EGJJ), recorded every 30 minutes by the JWC snapshot logger from aviationweather.gov. Speeds converted from knots.","",""],["Jersey Met warnings","The gov.je warning feed, as relayed by JWC warning alerts. Warning text © States of Jersey.","https://www.gov.je/weather/","gov.je/weather"],["Government incidents","Government of Jersey Severe Incident Reporting (Emergencyworx), event “Storm Austen / Boelo”, counted at 12:54 on 29 October 2026. Counts only. Some times on that system are typed in by hand, so the hour-by-hour bars may place a few incidents an hour out.","https://roadworks.gov.je/EWXPublic/","roadworks.gov.je"],["Forecasts","The JWC Storm Scenarios page, recorded every 30 minutes by the snapshot logger: 140 ensemble runs (ECMWF 51, GFS 31, ICON 40, UK Met Office 18) and five main model runs, via Open-Meteo.","jersey-storm-scenarios.html","Storm Scenarios"],["Storm track","The Live Ops Storm Tracker (NOAA GFS 0.5°, a new run every six hours). The closest pass is worked out from the six-hourly positions, so it is approximate.","index.html","Live Ops"],["Sea and tides","Model wave height and the sea-wall overtopping rating from the Sea & Tides page (Open-Meteo Marine, gov.je tide times), recorded every 30 minutes.","jersey-sea-tides.html","Sea & Tides"],["Community reports","Storm reports filed by members on the JWC Storm Reports page (one accidental duplicate left out).","jersey-storm-reports.html","Storm Reports"],["News","gov.je Storm Austen updates (22 Oct), Jersey Evening Post (23 and 27 Oct), ITV Channel (22 and 24 Oct), Parish of St Helier (23 Oct), Channel 103 (24 Oct): linked in “What else was reported” above.","",""]]};
+
+/* ---------------- small helpers ---------------- */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+const TZ = 'Europe/London';
+const F_HM = new Intl.DateTimeFormat('en-GB', { timeZone:TZ, hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const F_DAY = new Intl.DateTimeFormat('en-GB', { timeZone:TZ, weekday:'short' });
+const F_DATE = new Intl.DateTimeFormat('en-GB', { timeZone:TZ, weekday:'short', day:'numeric', month:'short' });
+const F_H = new Intl.DateTimeFormat('en-GB', { timeZone:TZ, hour:'2-digit', hourCycle:'h23' });
+const ms = s => Date.parse(s);
+const hm = t => F_HM.format(new Date(t));
+const day = t => F_DAY.format(new Date(t)).toUpperCase();
+const dayDate = t => F_DATE.format(new Date(t)).replace(',', '').toUpperCase();
+const when = t => day(t) + ' ' + hm(t);
+const localHour = t => Number(F_H.format(new Date(t))) % 24;
+const KT = 1.15078;
+const mph = kt => kt == null ? null : Math.round(kt * KT);
+function compass(d){ if(d == null || d === 'VRB') return 'variable'; const n = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return n[Math.round(Number(d) / 22.5) % 16]; }
+function beaufort(kt){ const b = [[64,'hurricane force 12'],[56,'violent storm 11'],[48,'storm force 10'],[41,'severe gale 9'],[34,'gale 8'],[28,'near gale 7'],[22,'strong breeze 6'],[17,'fresh breeze 5'],[11,'moderate breeze 4'],[7,'gentle breeze 3'],[4,'light breeze 2'],[1,'light air 1']]; for(const x of b) if(kt >= x[0]) return x[1]; return 'calm'; }
+function txt(x, y, s, o){ o = o || {}; return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + (o.fill || '#6f8d99') + '" font-size="' + (o.size || 10) + '" font-family="JetBrains Mono, monospace"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : '') + (o.weight ? ' font-weight="' + o.weight + '"' : '') + (o.extra || '') + '>' + s + '</text>'; }
+function widthOf(el){ return Math.max(300, Math.round(el.getBoundingClientRect().width || el.clientWidth || 600)); }
+/* sunrise / sunset in Jersey (the same NOAA-style formula as jwc-settings.js; good to a minute or two) */
+function sunTimes(date){
+  const rad = Math.PI / 180, dayMs = 86400000, J1970 = 2440588, J2000 = 2451545, J0 = 0.0009, lat = 49.21, lon = -2.13;
+  const lw = rad * -lon, phi = rad * lat, e = rad * 23.4397;
+  const d = date.valueOf() / dayMs - 0.5 + J1970 - J2000;
+  const n = Math.round(d - J0 - lw / (2 * Math.PI));
+  const ds = J0 + lw / (2 * Math.PI) + n;
+  const M = rad * (357.5291 + 0.98560028 * ds);
+  const C = rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  const L = M + C + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(L) * Math.sin(e));
+  const Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const w = Math.acos((Math.sin(-0.833 * rad) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+  const Jset = J2000 + (J0 + (w + lw) / (2 * Math.PI) + n) + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const toMs = j => (j + 0.5 - J1970) * dayMs;
+  return { rise:toMs(Jnoon - (Jset - Jnoon)), set:toMs(Jset) };
+}
+/* gust levels used across the site (same shading as the Storm Scenarios page) */
+const BANDS = [[39, 47, 'rgba(255,176,32,0.06)', 'GALE'], [47, 58, 'rgba(255,176,32,0.12)', 'STRONG'], [58, 70, 'rgba(255,75,92,0.10)', 'DAMAGING'],
+               [70, 80, 'rgba(255,75,92,0.20)', '70+'], [80, 90, 'rgba(255,47,168,0.20)', '80+'], [90, 100, 'rgba(192,77,255,0.22)', '90+'], [100, 400, 'rgba(255,255,255,0.14)', '100+']];
+const WARN_COL = { red:'#ff4b5c', orange:'#ff8a3d', yellow:'#ffd23f' };
+const MODEL_COL = ['#4cd3ff', '#b48cff', '#ffd166', '#ff8fab'];            // ECMWF, GFS, ICON, UK MET OFFICE (as on the Storm Scenarios page)
+const DET_COL = ['#b48cff', '#4cd3ff', '#ffd166', '#ff8fab', '#ff9f43'];    // GFS, ECMWF, ICON, UK MET OFFICE, METEO-FRANCE
+
+/* ---------------- clock ---------------- */
+function tick(){ const o = { timeZone:TZ, hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23' }; $('clock').textContent = new Intl.DateTimeFormat('en-GB', o).format(new Date()) + ' GMT/BST'; }
+tick(); setInterval(tick, 1000);
+
+/* ---------------- derived numbers ---------------- */
+const OBS = RECAP.obs.map(o => ({ t:ms(o[0]), dir:o[1], kt:o[2], gkt:o[3], q:o[4], vis:o[5], wx:o[6], raw:o[7] }));
+const PEAK = OBS.reduce((a, b) => (b.gkt || 0) > (a.gkt || 0) ? b : a, OBS[0]);
+const QMIN = OBS.reduce((a, b) => (b.q || 9999) < (a.q || 9999) ? b : a, OBS[0]);
+
+/* ================= HERO ================= */
+function renderHero(){
+  const H = RECAP.hero;
+  $('heroName').textContent = RECAP.name.toUpperCase();
+  $('heroSub').textContent = H.sub;
+  $('heroPub').textContent = 'PUBLISHED ' + RECAP.published.toUpperCase() + ' · ' + H.window;
+  $('heroLead').textContent = H.lead;
+  $('heroKpis').innerHTML = H.kpis.map(k => '<div class="kpi c-' + esc(k.c || 'red') + '"><div class="v">' + esc(k.v) + (k.u ? '<small>' + esc(k.u) + '</small>' : '') + '</div><div class="l">' + esc(k.l) + '</div><div class="s">' + esc(k.s) + '</div></div>').join('');
+}
+
+/* ================= 1. TIMELINE ================= */
+const TL = { geo:null };
+function renderTimeline(){
+  const box = $('tlChart'), W = widthOf(box), mob = W < 640;
+  const t0 = ms(RECAP.timeline.start), t1 = ms(RECAP.timeline.end);
+  const L = mob ? 30 : 42, R = mob ? 8 : 14;
+  const X = t => L + (t - t0) * (W - L - R) / (t1 - t0);
+  const fs = mob ? 9 : 10;
+  /* rows, top to bottom */
+  const wy = 4, wh = mob ? 13 : 15;                       // red / orange wind warning
+  const ty = wy + wh + 4, th = mob ? 9 : 10;               // thunderstorm warning
+  const ay = ty + th + 12;                                 // JWC alerts (diamonds)
+  const gT = ay + 16, gH = mob ? 200 : 240, gB = gT + gH;  // wind panel
+  const pT = gB + 30, pH = mob ? 70 : 84, pB = pT + pH;    // pressure panel
+  const iT = pB + 30, iH = mob ? 54 : 64, iB = iT + iH;     // incidents panel
+  const H = iB + 30;
+  const gMax = 90, Yg = v => gB - Math.max(0, Math.min(gMax, v)) * gH / gMax;
+  const qs = OBS.filter(o => o.q).map(o => o.q), qLo = Math.floor((Math.min.apply(null, qs) - 3) / 5) * 5, qHi = Math.ceil((Math.max.apply(null, qs) + 3) / 5) * 5;
+  const Yq = v => pB - (v - qLo) * pH / (qHi - qLo);
+  const hr = RECAP.ewx.hourly, iMax = Math.max.apply(null, hr.map(h => h[1])) || 1;
+  const Yi = v => iB - v * iH / iMax;
+  const OW = OBS.filter(o => o.t >= t0 && o.t <= t1);       // only the reports inside the chart window
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Wind gusts, mean wind, pressure and incidents through Storm ' + esc(RECAP.name) + '">';
+  /* night shading */
+  for(let d = t0 - 86400000; d < t1 + 86400000; d += 86400000){
+    const a = sunTimes(new Date(d)), b = sunTimes(new Date(d + 86400000));
+    const n0 = Math.max(t0, a.set), n1 = Math.min(t1, b.rise);
+    if(n1 > n0) s += '<rect x="' + X(n0).toFixed(1) + '" y="' + gT + '" width="' + (X(n1) - X(n0)).toFixed(1) + '" height="' + (iB - gT) + '" fill="rgba(110,140,255,0.07)"/>' + (X(n1) - X(n0) > 40 ? txt(X(n0) + 4, gB - 5, 'NIGHT', { size:fs - 1, fill:'#55638a' }) : '');
+  }
+  /* warning strips */
+  RECAP.warnings.forEach(w => {
+    const a = Math.max(t0, ms(w.from)), b = Math.min(t1, ms(w.to));
+    if(b <= a) return;
+    const y = w.id === 'thunder' ? ty : wy, h = w.id === 'thunder' ? th : wh;
+    s += '<rect x="' + X(a).toFixed(1) + '" y="' + y + '" width="' + (X(b) - X(a)).toFixed(1) + '" height="' + h + '" rx="3" fill="' + WARN_COL[w.colour] + '" fill-opacity="0.9"><title>' + esc(w.label) + ': ' + when(ms(w.from)) + ' to ' + when(ms(w.to)) + '</title></rect>';
+    const lab = w.id === 'thunder' ? 'THUNDERSTORM (YELLOW)' : (w.colour.toUpperCase() + ' WIND WARNING' + (mob ? '' : ' · CHANNEL ISLANDS'));
+    if(X(b) - X(a) > lab.length * (fs - 2) * 0.62 + 10) s += txt(X(a) + 5, y + h - (w.id === 'thunder' ? 1.5 : 3.5), lab, { size:w.id === 'thunder' ? fs - 2.5 : fs - 1.5, fill:'#05080d', weight:800 });
+  });
+  /* gust level shading in the wind panel */
+  BANDS.forEach(b => { if(b[0] >= gMax) return; s += '<rect x="' + L + '" y="' + Yg(Math.min(b[1], gMax)).toFixed(1) + '" width="' + (W - L - R) + '" height="' + (Yg(b[0]) - Yg(Math.min(b[1], gMax))).toFixed(1) + '" fill="' + b[2] + '"/>'; if(!mob) s += txt(W - R - 4, Yg(b[0]) - 3, b[3], { size:8.5, fill:'#55707c', anchor:'end' }); });
+  /* grid + axes */
+  [0, 20, 40, 60, 80].forEach(v => { s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Yg(v) + '" y2="' + Yg(v) + '" stroke="#3a4e58" stroke-opacity="' + (v ? 0.35 : 0.8) + '"/>' + txt(L - 5, Yg(v) + 3.5, v, { size:fs, anchor:'end' }); });
+  s += txt(L, gT - 4, 'WIND, MPH', { size:fs - 1, fill:'#6f8d99', weight:700 });
+  for(let v = qLo; v <= qHi; v += (mob ? 20 : 10)){ s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Yq(v) + '" y2="' + Yq(v) + '" stroke="#3a4e58" stroke-opacity="0.35"/>' + txt(L - 5, Yq(v) + 3.5, v, { size:fs, anchor:'end' }); }
+  s += txt(L, pT - 6, 'PRESSURE, HPA', { size:fs - 1, fill:'#6f8d99', weight:700 });
+  s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + iB + '" y2="' + iB + '" stroke="#3a4e58"/>';
+  s += txt(L, iT - 6, mob ? 'GOVT INCIDENTS / HOUR' : 'GOVERNMENT INCIDENTS LOGGED PER HOUR', { size:fs - 1, fill:'#6f8d99', weight:700 });
+  /* time axis: every 3 hours (6 on phones), day names at midnight */
+  const step = (mob ? 6 : 3) * 3600000;
+  for(let t = Math.ceil(t0 / 3600000) * 3600000; t <= t1; t += 3600000){
+    const h = localHour(t);
+    if(h % (mob ? 6 : 3)) continue;
+    const x = X(t);
+    s += '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + gT + '" y2="' + iB + '" stroke="#3a4e58" stroke-opacity="' + (h === 0 ? 0.9 : 0.3) + '"' + (h === 0 ? '' : ' stroke-dasharray="2 4"') + '/>';
+    s += txt(x, iB + 14, h === 0 ? day(t) : String(h).padStart(2, '0') + ':00', { size:fs, anchor:'middle', fill:h === 0 ? '#e9f6f5' : '#6f8d99', weight:h === 0 ? 700 : 400 });
+  }
+  /* incidents (bars per local hour) */
+  hr.forEach(h => {
+    const a = ms(h[0]), b = a + 3600000;
+    if(b <= t0 || a >= t1 || !h[1]) return;
+    const x0 = X(Math.max(a, t0)) + 1, x1 = X(Math.min(b, t1)) - 1;
+    s += '<rect x="' + x0.toFixed(1) + '" y="' + Yi(h[1]).toFixed(1) + '" width="' + Math.max(1, x1 - x0).toFixed(1) + '" height="' + (iB - Yi(h[1])).toFixed(1) + '" fill="#2de1a0" fill-opacity="0.85"/>';
+  });
+  const pk = RECAP.ewx.peakHour;
+  s += txt(X(ms(pk[0]) + 3600000) + 3, Yi(pk[1]) + 9, pk[1], { size:fs, fill:'#2de1a0', weight:800 });
+  /* pressure line */
+  let pd = '';
+  OW.forEach((o, i) => { if(!o.q) return; const gap = i > 0 && o.t - OW[i - 1].t > 50 * 60000; pd += (pd && !gap ? 'L' : 'M') + X(o.t).toFixed(1) + ',' + Yq(o.q).toFixed(1); });
+  s += '<path d="' + pd + '" fill="none" stroke="#ffb020" stroke-width="2"/>';
+  s += '<circle cx="' + X(QMIN.t).toFixed(1) + '" cy="' + Yq(QMIN.q).toFixed(1) + '" r="3.5" fill="#ffb020"/>' + txt(X(QMIN.t) + 6, Yq(QMIN.q) + 4, QMIN.q + ' HPA', { size:fs, fill:'#ffb020', weight:800 });
+  /* mean wind and gusts (a report with no gust given is drawn at its mean wind: gusts were not significant) */
+  let md = '', gd = '';
+  OW.forEach((o, i) => {
+    if(o.kt == null) return;
+    const gap = i > 0 && o.t - OW[i - 1].t > 50 * 60000;
+    md += (md && !gap ? 'L' : 'M') + X(o.t).toFixed(1) + ',' + Yg(o.kt * KT).toFixed(1);
+  });
+  s += '<path d="' + md + '" fill="none" stroke="#4cd3ff" stroke-width="2"/>';
+  OW.forEach((o, i) => {
+    const g = o.gkt != null ? o.gkt * KT : (o.kt != null ? o.kt * KT : null);
+    if(g == null) return;
+    const gap = i > 0 && o.t - OW[i - 1].t > 50 * 60000;
+    gd += (gd && !gap ? 'L' : 'M') + X(o.t).toFixed(1) + ',' + Yg(g).toFixed(1);
+  });
+  s += '<path d="' + gd + '" fill="none" stroke="#ff4b5c" stroke-width="2"/>';
+  OW.forEach(o => { if(o.gkt != null) s += '<circle cx="' + X(o.t).toFixed(1) + '" cy="' + Yg(o.gkt * KT).toFixed(1) + '" r="' + (mob ? 1.8 : 2.2) + '" fill="#ff4b5c"/>'; });
+  /* the peak */
+  const px = X(PEAK.t), py = Yg(PEAK.gkt * KT);
+  s += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="6" fill="none" stroke="#ffffff" stroke-width="2"/>';
+  const right = px < W - 150;
+  s += txt(px + (right ? 10 : -10), py + 4, mph(PEAK.gkt) + ' MPH · ' + hm(PEAK.t), { size:fs + 1, fill:'#ffffff', weight:800, anchor:right ? 'start' : 'end' });
+  /* JWC alerts */
+  s += txt(L - 5, ay + 4, 'JWC', { size:fs - 2, anchor:'end', fill:'#6f8d99', weight:700 });
+  RECAP.alerts.forEach(a => {
+    const t = ms(a.at); if(t < t0 || t > t1) return;
+    const x = X(t), c = a.kind === 'special' ? '#4cd3ff' : '#ffb020';
+    s += '<path d="M' + x.toFixed(1) + ',' + (ay - 5) + 'l5,5l-5,5l-5,-5z" fill="' + c + '"><title>' + esc(when(t) + ' · ' + a.title) + '</title></path>';
+  });
+  /* cursor (moved by the pointer) */
+  s += '<line id="tlCur" x1="0" x2="0" y1="' + gT + '" y2="' + iB + '" stroke="#ffffff" stroke-opacity="0.6" stroke-width="1" style="display:none"/>';
+  s += '</svg>';
+  box.innerHTML = s;
+  TL.geo = { X, t0, t1, L, R, W, gT, iB, OW };
+  showObs(PEAK);
+  $('tlLegend').innerHTML =
+    '<span><i style="background:#ff4b5c"></i>GUSTS</span><span><i style="background:#4cd3ff"></i>MEAN WIND</span><span><i style="background:#ffb020"></i>PRESSURE</span>' +
+    '<span><i class="box" style="background:#2de1a0"></i>INCIDENTS LOGGED / HOUR</span>' +
+    '<span><i class="box" style="background:' + WARN_COL.red + '"></i>JERSEY MET WIND WARNING</span><span><i class="box" style="background:' + WARN_COL.yellow + '"></i>THUNDERSTORM WARNING</span>' +
+    '<span><i class="dot" style="background:#4cd3ff;border-radius:2px;transform:rotate(45deg)"></i>JWC SPECIAL ALERT</span><span><i class="dot" style="background:#ffb020;border-radius:2px;transform:rotate(45deg)"></i>JWC WARNING ALERT</span>' +
+    '<span><i class="box" style="background:rgba(110,140,255,0.35)"></i>NIGHT</span>';
+}
+function showObs(o){
+  const t = o.t, g = o.gkt != null ? mph(o.gkt) : null, w = mph(o.kt);
+  const hour = RECAP.ewx.hourly.find(h => ms(h[0]) <= t && t < ms(h[0]) + 3600000);
+  const warns = RECAP.warnings.filter(x => ms(x.from) <= t && t < ms(x.to)).map(x => x.colour.toUpperCase() + (x.id === 'thunder' ? ' THUNDERSTORM' : ' WIND'));
+  const near = RECAP.alerts.filter(a => Math.abs(ms(a.at) - t) <= 20 * 60000);
+  let h = '<b>' + when(t) + '</b> &middot; GUST <span class="hot">' + (g != null ? g + ' MPH' : 'NONE REPORTED') + '</span> &middot; MEAN <b>' + w + ' MPH</b> (' + beaufort(o.kt) + ') &middot; FROM <b>' + compass(o.dir) + '</b> &middot; <b>' + (o.q || '?') + ' HPA</b>';
+  if(o.vis && o.vis < 5000) h += ' &middot; VISIBILITY <b>' + o.vis + ' M</b>';
+  if(o.wx) h += ' &middot; ' + esc(o.wx.toUpperCase());
+  h += '<br>' + (warns.length ? 'IN FORCE: ' + warns.join(', ') : 'NO WARNINGS IN FORCE') + (hour && hour[1] ? ' &middot; INCIDENTS LOGGED THAT HOUR: <b>' + hour[1] + '</b>' : '');
+  if(near.length) h += '<br>JWC ALERT: <b>' + near.map(a => hm(ms(a.at)) + ' ' + esc(a.title)).join(' · ') + '</b>';
+  $('tlRead').innerHTML = h;
+}
+function tlPointer(e){
+  if(!TL.geo) return;
+  const svg = $('tlChart').querySelector('svg'); if(!svg) return;
+  const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * TL.geo.W / r.width;
+  const t = TL.geo.t0 + (x - TL.geo.L) * (TL.geo.t1 - TL.geo.t0) / (TL.geo.W - TL.geo.L - TL.geo.R);
+  const list = TL.geo.OW;
+  let best = list[0];
+  list.forEach(o => { if(Math.abs(o.t - t) < Math.abs(best.t - t)) best = o; });
+  const cur = $('tlCur');
+  if(cur){ const cx = TL.geo.X(best.t).toFixed(1); cur.setAttribute('x1', cx); cur.setAttribute('x2', cx); cur.style.display = ''; }
+  showObs(best);
+}
+$('tlChart').addEventListener('pointermove', tlPointer);
+$('tlChart').addEventListener('pointerdown', tlPointer);
+
+/* ================= 2. TRACK ================= */
+function renderTrack(){
+  const T = RECAP.track, pts = T.points;
+  $('trackCap').innerHTML = esc(T.caption) + ' <b>Solid line:</b> the storm&rsquo;s analysed position; <b>dashed:</b> where it was forecast to go next.';
+  if(typeof L === 'undefined'){ $('trackMap').innerHTML = '<div class="note" style="padding:20px;">The map could not load. ' + esc(T.caption) + '</div>'; return; }
+  const map = L.map('trackMap', { zoomControl:false, dragging:false, touchZoom:false, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, attributionControl:true, zoomSnap:0.25 });
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri &middot; track: NOAA GFS via JWC Storm Tracker' }).addTo(map);
+  const ana = pts.filter(p => p[4] === 'a').map(p => [p[1], p[2]]), fc = pts.filter((p, i) => p[4] === 'f' || (pts[i + 1] && pts[i + 1][4] === 'f' && p[4] === 'a')).map(p => [p[1], p[2]]);
+  L.polyline(ana, { color:'#ff4b5c', weight:3, opacity:0.95 }).addTo(map);
+  if(fc.length > 1) L.polyline(fc, { color:'#ff4b5c', weight:2, opacity:0.8, dashArray:'6 6' }).addTo(map);
+  const mob = window.innerWidth < 640;
+  const OFF = { top:[0, -7], bottom:[0, 7], left:[-7, 0], right:[7, 0] };
+  pts.forEach((p, i) => {
+    const m = L.circleMarker([p[1], p[2]], { radius:p[4] === 'a' ? 5 : 4, color:'#ff4b5c', weight:2, fillColor:p[4] === 'a' ? '#ff4b5c' : '#05080d', fillOpacity:1 }).addTo(map);
+    const label = day(ms(p[0])) + ' ' + hm(ms(p[0])) + ' · ' + Math.round(p[3]) + ' HPA' + (p[4] === 'f' ? ' (FORECAST)' : '') + (p[5] && p[5].note ? ' · ' + p[5].note : '');
+    const lab = p[5] || null, show = lab && (!mob || lab.mob);
+    const dir = show ? ((mob && lab.mdir) || lab.dir) : 'top';
+    m.bindTooltip(label, { permanent:!!show, direction:dir, className:'trk-label', offset:(show && lab.off) || OFF[dir] });
+  });
+  const J = T.jersey, C = T.closest;
+  L.polyline([J, [C.lat, C.lon]], { color:'#ffffff', weight:1.5, opacity:0.8, dashArray:'3 5' }).addTo(map);
+  L.circleMarker([C.lat, C.lon], { radius:3, color:'#ffffff', weight:1, fillColor:'#ffffff', fillOpacity:1 }).addTo(map)
+    .bindTooltip('CENTRE&rsquo;S CLOSEST PASS, ~' + hm(ms(C.t)), { direction:'top', className:'trk-label near', offset:[0, -6] });
+  L.circleMarker(J, { radius:6, color:'#4cd3ff', weight:2, fillColor:'#4cd3ff', fillOpacity:0.9 }).addTo(map)
+    .bindTooltip(mob ? 'JERSEY · CENTRE ~' + C.km + ' KM N' : 'JERSEY · CENTRE PASSED ~' + C.km + ' KM NORTH, ~' + hm(ms(C.t)), { permanent:true, direction:'bottom', className:'trk-label jsy', offset:[0, 7] });
+  const fit = () => map.fitBounds(L.latLngBounds(T.view), { padding:[10, 10] });
+  fit();
+  let rt = null; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { map.invalidateSize(); fit(); }, 200); });
+  $('trackLegend').innerHTML = '<span><i style="background:#ff4b5c"></i>ANALYSED TRACK</span><span><i style="background:repeating-linear-gradient(90deg,#ff4b5c 0 5px,transparent 5px 9px)"></i>FORECAST ONWARDS</span><span><i class="dot" style="background:#4cd3ff"></i>JERSEY</span><span><i style="background:repeating-linear-gradient(90deg,#fff 0 3px,transparent 3px 7px)"></i>CLOSEST APPROACH</span>';
+}
+const CY = { geo:null };
+function renderCycles(){
+  const box = $('cyChart'), W = widthOf(box), mob = W < 520;
+  /* x = when each run reached the site (its data arrive some hours after the model's own start time) */
+  const cy = RECAP.track.cycles.map(c => ({ run:ms(c[0]), t:ms(c[3]), p:c[1], km:c[2] }));
+  const t0 = cy[0].t - 9 * 3600000, t1 = Math.max(ms(RECAP.track.peakAt), cy[cy.length - 1].t) + 4 * 3600000;
+  const L = mob ? 36 : 44, R = 12, T = 14, H = mob ? 230 : 250, B = H - 34;
+  const kmMax = Math.ceil(Math.max.apply(null, cy.map(c => c.km)) / 100) * 100;
+  const X = t => L + (t - t0) * (W - L - R) / (t1 - t0), Y = k => B - k * (B - T) / kmMax;
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Forecast closest approach of the storm, run by run">';
+  for(let k = 0; k <= kmMax; k += 100){ s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(k) + '" y2="' + Y(k) + '" stroke="#3a4e58" stroke-opacity="' + (k ? 0.35 : 0.8) + '"/>' + txt(L - 5, Y(k) + 3.5, k, { size:9.5, anchor:'end' }); }
+  s += txt(L, T - 3, 'FORECAST CLOSEST PASS, KM', { size:9, fill:'#6f8d99', weight:700 });
+  for(let t = Math.ceil(t0 / 86400000) * 86400000; t <= t1; t += 86400000){ const x = X(t - 3600000); if(x < L) continue; s += '<line x1="' + x + '" x2="' + x + '" y1="' + T + '" y2="' + B + '" stroke="#3a4e58" stroke-opacity="0.4" stroke-dasharray="2 4"/>' + txt(x + 3, B + 14, dayDate(t), { size:9, fill:'#6f8d99' }); }
+  const pkx = X(ms(RECAP.track.peakAt));
+  s += '<line x1="' + pkx + '" x2="' + pkx + '" y1="' + T + '" y2="' + B + '" stroke="#ff4b5c" stroke-width="1.5"/>' + txt(pkx - 4, T + 10, 'PEAK', { size:9, fill:'#ff4b5c', anchor:'end', weight:800 });
+  s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(RECAP.track.closest.km) + '" y2="' + Y(RECAP.track.closest.km) + '" stroke="#ffffff" stroke-opacity="0.5" stroke-dasharray="3 5"/>';
+  s += '<path d="' + cy.map((c, i) => (i ? 'L' : 'M') + X(c.t).toFixed(1) + ',' + Y(c.km).toFixed(1)).join('') + '" fill="none" stroke="#4cd3ff" stroke-width="1.5" stroke-opacity="0.6"/>';
+  cy.forEach((c, i) => { s += '<circle data-i="' + i + '" cx="' + X(c.t).toFixed(1) + '" cy="' + Y(c.km).toFixed(1) + '" r="' + (mob ? 4 : 4.5) + '" fill="#4cd3ff"/>'; });
+  s += txt(X(cy[0].t) + 12, Y(cy[0].km) + 4, cy[0].km + ' KM', { size:9.5, fill:'#e9f6f5', weight:700 });
+  s += '<circle id="cyCur" r="8" fill="none" stroke="#ffffff" stroke-width="1.5" style="display:none"/></svg>';
+  box.innerHTML = s;
+  CY.geo = { X, Y, W, cy };
+  showCycle(0);
+}
+function showCycle(i){
+  const c = CY.geo.cy[i];
+  const lead = Math.round((ms(RECAP.track.peakAt) - c.t) / 3600000);
+  $('cyRead').innerHTML = 'ON THE SITE FROM <b>' + dayDate(c.t) + ' ' + hm(c.t) + '</b> ' + (lead > 0 ? '(<b>' + lead + ' HOURS</b> BEFORE THE PEAK)' : '(AFTER THE PEAK)') +
+    ' &middot; CLOSEST PASS <b>' + c.km + ' KM</b> &middot; LOWEST PRESSURE <b>' + Math.round(c.p) + ' HPA</b>';
+  const cur = $('cyCur'); if(cur){ cur.setAttribute('cx', CY.geo.X(c.t)); cur.setAttribute('cy', CY.geo.Y(c.km)); cur.style.display = ''; }
+}
+function cyPointer(e){
+  if(!CY.geo) return;
+  const svg = $('cyChart').querySelector('svg'); if(!svg) return;
+  const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * CY.geo.W / r.width;
+  let bi = 0; CY.geo.cy.forEach((c, i) => { if(Math.abs(CY.geo.X(c.t) - x) < Math.abs(CY.geo.X(CY.geo.cy[bi].t) - x)) bi = i; });
+  showCycle(bi);
+}
+$('cyChart').addEventListener('pointermove', cyPointer);
+$('cyChart').addEventListener('pointerdown', cyPointer);
+
+/* ================= 3. FORECAST REPLAY ================= */
+const FC = RECAP.fc, FR = FC.frames;
+const RP = { i:0, timer:null, geo:null };
+const MAXSTACK = Math.max.apply(null, FR.map(f => { const c = {}; f.runs.forEach(v => { const b = Math.round(v); c[b] = (c[b] || 0) + 1; }); return Math.max.apply(null, Object.values(c)); }));
+const MODEL_OF = (() => { const a = []; FC.models.forEach((m, mi) => { for(let k = 0; k < m[1]; k++) a.push(mi); }); return a; })();
+function renderVerdict(){ $('verdict').innerHTML = '<div class="ttl">' + esc(FC.verdict.title) + '</div>' + FC.verdict.text.map(p => '<p>' + esc(p) + '</p>').join(''); }
+function buildReplay(){
+  const box = $('rpChart'), W = widthOf(box), mob = W < 640;
+  const lo = 50, hi = 100, L = mob ? 14 : 30, R = mob ? 14 : 24;
+  const step = mob ? 6.5 : 9, rad = mob ? 2.9 : 3.8;
+  const top = mob ? 78 : 50, base = top + MAXSTACK * step + 10, H = base + 44;
+  const X = v => L + (Math.max(lo, Math.min(hi, v)) - lo) * (W - L - R) / (hi - lo);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Each model run\'s peak gust for Friday, snapshot by snapshot">';
+  BANDS.forEach(b => { const a = Math.max(b[0], lo), c = Math.min(b[1], hi); if(c <= a) return; s += '<rect x="' + X(a).toFixed(1) + '" y="' + (top - 22) + '" width="' + (X(c) - X(a)).toFixed(1) + '" height="' + (base - top + 22) + '" fill="' + b[2] + '"/>'; if(!mob || b[3].length < 5) s += txt(X(a) + 4, top - 10, b[3], { size:mob ? 8 : 9.5, fill:'#6f8d99' }); });
+  s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + base + '" y2="' + base + '" stroke="#3a4e58"/>';
+  for(let v = lo; v <= hi; v += 10) s += txt(X(v), base + 16, v, { size:mob ? 9.5 : 10, anchor:'middle' });
+  s += txt(L, base + 34, mob ? 'PEAK GUST, MPH' : 'EACH RUN’S PEAK GUST FOR FRIDAY, MPH', { size:9.5 });
+  /* the recorded peak */
+  const ox = X(FC.observed);
+  s += '<line x1="' + ox.toFixed(1) + '" x2="' + ox.toFixed(1) + '" y1="' + (top - 24) + '" y2="' + (base + 22) + '" stroke="#ffffff" stroke-width="2.5"/>';
+  s += txt(ox, base + 34, '▲ RECORDED ' + FC.observed + ' MPH', { size:mob ? 9.5 : 11, fill:'#ffffff', weight:800, anchor:'middle' });
+  /* scenario dividers and labels (moved each frame) */
+  s += '<line id="rpB1" x1="0" x2="0" y1="' + (top - 26) + '" y2="' + base + '" stroke="#e9f6f5" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="6 4" class="rp-move"/>';
+  s += '<line id="rpB2" x1="0" x2="0" y1="' + (top - 26) + '" y2="' + base + '" stroke="#e9f6f5" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="6 4" class="rp-move"/>';
+  ['#2de1a0', '#ffb020', '#ff4b5c'].forEach((c, k) => { s += '<text id="rpL' + k + '" x="0" y="' + (mob ? 16 + k * 20 : top - 30) + '" fill="' + c + '" font-size="' + (mob ? 10 : 11) + '" font-weight="700" text-anchor="middle" font-family="JetBrains Mono, monospace"></text>'; });
+  /* one dot per run; each dot keeps its run from frame to frame, so you can watch the runs move */
+  for(let k = 0; k < FR[0].runs.length; k++) s += '<circle id="rpD' + k + '" class="rp-dot" cx="0" cy="0" r="' + rad + '" fill="' + MODEL_COL[MODEL_OF[k]] + '" fill-opacity="0.92"/>';
+  s += '</svg>';
+  box.innerHTML = s;
+  RP.geo = { X, base, step, top, mob, lo, hi, W, L, R };
+  showFrame(RP.i, true);
+  $('rpLegend').innerHTML = FC.models.map((m, i) => '<span><i class="dot" style="background:' + MODEL_COL[i] + '"></i>' + esc(m[0]) + ' (' + m[1] + ' RUNS)</span>').join('') +
+    '<span><i style="background:#ffffff"></i>RECORDED AT JERSEY AIRPORT</span><span><i style="background:repeating-linear-gradient(90deg,#e9f6f5 0 5px,transparent 5px 9px)"></i>SCENARIO DIVIDERS</span>';
+}
+function showFrame(i, instant){
+  RP.i = Math.max(0, Math.min(FR.length - 1, i));
+  const f = FR[RP.i], g = RP.geo;
+  if(!g) return;
+  /* stack the dots per whole mph, models in a fixed order so the colours stay together */
+  const order = f.runs.map((v, k) => k).sort((a, b) => (Math.round(f.runs[a]) - Math.round(f.runs[b])) || (MODEL_OF[a] - MODEL_OF[b]) || (a - b));
+  const count = {};
+  order.forEach(k => {
+    const b = Math.round(f.runs[k]); const n = count[b] = (count[b] || 0) + 1;
+    const el = document.getElementById('rpD' + k); if(!el) return;
+    const x = g.X(b), y = g.base - 6 - (n - 1) * g.step;
+    if(instant){ el.style.transition = 'none'; }
+    el.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+    el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    if(instant){ void el.getBoundingClientRect(); el.style.transition = ''; }
+  });
+  [f.b[0], f.b[1]].forEach((b, k) => { const el = $('rpB' + (k + 1)); const x = g.X(b).toFixed(1); el.setAttribute('x1', x); el.setAttribute('x2', x); el.style.display = (b > g.lo && b < g.hi) ? '' : 'none'; });
+  const edges = [[g.lo, f.b[0]], [f.b[0], f.b[1]], [f.b[1], g.hi]];
+  f.sc.forEach((sc, k) => {
+    const el = $('rpL' + k);
+    const label = (g.mob ? sc[0].replace('MOST ', '').replace(' CASE', '') : sc[0]) + ' ' + sc[2] + ' ' + sc[1] + '%';
+    const half = label.length * (g.mob ? 6.1 : 6.7) / 2;   // keep the label inside the chart
+    let cx = (g.X(Math.max(g.lo, edges[k][0])) + g.X(Math.min(g.hi, edges[k][1]))) / 2;
+    cx = Math.max(g.L + half, Math.min(g.W - g.R - half, cx));
+    el.setAttribute('x', cx.toFixed(1));
+    el.textContent = label;
+  });
+  const t = ms(f.t), toPeak = Math.round((PEAK.t - t) / 3600000);
+  $('rpWhen').textContent = 'FORECAST AS AT ' + when(t);
+  $('rpAgo').textContent = t >= PEAK.t ? 'THE ' + mph(PEAK.gkt) + ' MPH GUST CAME AT ' + hm(PEAK.t)
+    : toPeak > 0 ? toPeak + (toPeak === 1 ? ' HOUR' : ' HOURS') + ' BEFORE THE ' + mph(PEAK.gkt) + ' MPH GUST' : 'MINUTES BEFORE THE ' + mph(PEAK.gkt) + ' MPH GUST';
+  $('rpHead').innerHTML = esc(f.head) + '<br>MIDDLE RUN <b>' + Math.round(f.q50) + ' MPH</b> &middot; 8 IN 10 RUNS BETWEEN <b>' + Math.round(f.q10) + '</b> AND <b>' + Math.round(f.q90) + ' MPH</b> &middot; CHANCE OF 80+ <b>' + f.ch[2] + '%</b>';
+  $('rpDet').innerHTML = '<span style="letter-spacing:1.5px">MAIN RUNS:</span>' + FC.det.map((d, k) => '<span><i style="background:' + DET_COL[k] + '"></i>' + esc(d) + ' <b>' + (f.det[k] == null ? '&mdash;' : Math.round(f.det[k])) + '</b></span>').join('');
+  $('rpRange').value = RP.i;
+  markFc();
+}
+function play(){
+  if(RP.timer){ stop(); return; }
+  if(RP.i >= FR.length - 1) showFrame(0, true);
+  $('rpPlay').innerHTML = '&#10074;&#10074; PAUSE';
+  RP.timer = setInterval(() => { if(RP.i >= FR.length - 1){ stop(); return; } showFrame(RP.i + 1); }, 550);
+}
+function stop(){ clearInterval(RP.timer); RP.timer = null; $('rpPlay').innerHTML = '&#9654; ' + (RP.i >= FR.length - 1 ? 'PLAY AGAIN' : 'PLAY'); }
+$('rpPlay').addEventListener('click', play);
+$('rpPrev').addEventListener('click', () => { stop(); showFrame(RP.i - 1); });
+$('rpNext').addEventListener('click', () => { stop(); showFrame(RP.i + 1); });
+$('rpRange').addEventListener('input', e => { stop(); showFrame(Number(e.target.value)); });
+/* summary chart: the forecast over the whole replay */
+const FCG = { geo:null };
+function renderFcChart(){
+  const box = $('fcChart'), W = widthOf(box), mob = W < 640;
+  const t0 = ms(FR[0].t), t1 = ms(FR[FR.length - 1].t);
+  const L = mob ? 30 : 40, R = mob ? 12 : 92, T = 12, H = mob ? 240 : 270, B = H - 30;
+  const lo = 60, hi = 95;
+  const X = t => L + (t - t0) * (W - L - R) / (t1 - t0), Y = v => B - (Math.max(lo, Math.min(hi, v)) - lo) * (B - T) / (hi - lo);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Forecast peak gust for Friday through the replay">';
+  BANDS.forEach(b => { const a = Math.max(b[0], lo), c = Math.min(b[1], hi); if(c <= a) return; s += '<rect x="' + L + '" y="' + Y(c).toFixed(1) + '" width="' + (W - L - R) + '" height="' + (Y(a) - Y(c)).toFixed(1) + '" fill="' + b[2] + '"/>'; });
+  for(let v = lo; v <= hi; v += 5) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#3a4e58" stroke-opacity="0.3"/>' + (v % 10 ? '' : txt(L - 5, Y(v) + 3.5, v, { size:9.5, anchor:'end' }));
+  for(let t = Math.ceil(t0 / 3600000) * 3600000; t <= t1; t += 3600000){ const h = localHour(t); if(h % (mob ? 6 : 3)) continue; const x = X(t); s += '<line x1="' + x + '" x2="' + x + '" y1="' + T + '" y2="' + B + '" stroke="#3a4e58" stroke-opacity="0.35" stroke-dasharray="2 4"/>' + txt(x, B + 14, h === 0 ? day(t) : String(h).padStart(2, '0') + ':00', { size:9.5, anchor:'middle', fill:h === 0 ? '#e9f6f5' : '#6f8d99' }); }
+  const band = 'M' + FR.map(f => X(ms(f.t)).toFixed(1) + ',' + Y(f.q90).toFixed(1)).join('L') + 'L' + FR.slice().reverse().map(f => X(ms(f.t)).toFixed(1) + ',' + Y(f.q10).toFixed(1)).join('L') + 'Z';
+  s += '<path d="' + band + '" fill="#ffb020" fill-opacity="0.16"/>';
+  const ends = [];
+  FC.det.forEach((d, k) => {
+    let p = ''; FR.forEach((f, i) => { const v = f.det[k]; if(v == null){ return; } const prevNull = i > 0 && FR[i - 1].det[k] == null; p += (p && !prevNull ? 'L' : 'M') + X(ms(f.t)).toFixed(1) + ',' + Y(v).toFixed(1); });
+    s += '<path d="' + p + '" fill="none" stroke="' + DET_COL[k] + '" stroke-width="1.4" stroke-opacity="0.85"/>';
+    const last = FR[FR.length - 1].det[k];
+    if(last != null) ends.push({ y:Y(last), t:(d === 'MÉTÉO-FRANCE' ? 'MÉTÉO-FR' : d === 'UK MET OFFICE' ? 'UKMO' : d) + ' ' + Math.round(last), c:DET_COL[k] });
+  });
+  /* labels at the right-hand end, nudged apart so they don't overlap */
+  if(!mob){
+    ends.sort((a, b) => a.y - b.y);
+    for(let i = 1; i < ends.length; i++) if(ends[i].y < ends[i - 1].y + 11) ends[i].y = ends[i - 1].y + 11;
+    const over = ends.length ? ends[ends.length - 1].y - (B - 2) : 0;
+    if(over > 0) ends.forEach(e => { e.y -= over; });
+    ends.forEach(e => { s += txt(W - R + 6, e.y + 3.5, esc(e.t), { size:9, fill:e.c }); });
+  }
+  s += '<path d="M' + FR.map(f => X(ms(f.t)).toFixed(1) + ',' + Y(f.q50).toFixed(1)).join('L') + '" fill="none" stroke="#ffb020" stroke-width="2.5"/>';
+  s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(FC.observed) + '" y2="' + Y(FC.observed) + '" stroke="#ffffff" stroke-width="2"/>' + txt(L + 6, Y(FC.observed) - 5, 'RECORDED ' + FC.observed + ' MPH', { size:10, fill:'#ffffff', weight:800 });
+  s += '<line id="fcCur" x1="0" x2="0" y1="' + T + '" y2="' + B + '" stroke="#ffffff" stroke-opacity="0.7" stroke-dasharray="3 3"/>';
+  s += '</svg>';
+  box.innerHTML = s;
+  FCG.geo = { X, W, L, R, t0, t1 };
+  markFc();
+  $('fcLegend').innerHTML = '<span><i class="box" style="background:rgba(255,176,32,0.35)"></i>8 IN 10 RUNS</span><span><i style="background:#ffb020"></i>MIDDLE RUN</span>' + FC.det.map((d, k) => '<span><i style="background:' + DET_COL[k] + '"></i>' + esc(d) + ' MAIN RUN</span>').join('') + '<span><i style="background:#ffffff"></i>RECORDED</span>';
+}
+function markFc(){ const c = $('fcCur'); if(!c || !FCG.geo) return; const x = FCG.geo.X(ms(FR[RP.i].t)).toFixed(1); c.setAttribute('x1', x); c.setAttribute('x2', x); }
+$('fcChart').addEventListener('pointerdown', e => {
+  if(!FCG.geo) return;
+  const svg = $('fcChart').querySelector('svg'), r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * FCG.geo.W / r.width;
+  let bi = 0; FR.forEach((f, i) => { if(Math.abs(FCG.geo.X(ms(f.t)) - x) < Math.abs(FCG.geo.X(ms(FR[bi].t)) - x)) bi = i; });
+  stop(); showFrame(bi);
+  const rp = $('replay'); if(rp && rp.getBoundingClientRect().top < 0) rp.scrollIntoView({ behavior:'smooth', block:'start' });
+});
+function renderModelTable(){
+  const f = FR[FR.length - 1], obs = FC.observed;
+  let start = 0;
+  const rows = FC.models.map((m, mi) => {
+    const runs = f.runs.slice(start, start + m[1]); start += m[1];
+    const sorted = runs.slice().sort((a, b) => a - b), med = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const hit = runs.filter(v => v >= obs).length;
+    const detIdx = FC.det.indexOf(m[0]);
+    return '<tr><td><i style="background:' + MODEL_COL[mi] + '"></i>' + esc(m[0]) + ' <span class="sub">(' + m[1] + ')</span></td><td class="num"><b>' + Math.round(med) + '</b></td><td class="num">' + Math.round(sorted[0]) + '&ndash;' + Math.round(sorted[sorted.length - 1]) + '</td><td class="num">' + hit + '/' + m[1] + '</td><td class="num">' + (detIdx >= 0 && f.det[detIdx] != null ? Math.round(f.det[detIdx]) : '&mdash;') + '</td></tr>';
+  });
+  const mfi = FC.det.indexOf('MÉTÉO-FRANCE');
+  rows.push('<tr><td><i style="background:' + DET_COL[4] + '"></i>MÉTÉO-FRANCE <span class="sub">(main run only)</span></td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">' + (f.det[mfi] != null ? Math.round(f.det[mfi]) : '&mdash;') + '</td></tr>');
+  $('mtTable').innerHTML = '<table class="mt"><thead><tr><th>MODEL <span class="sub">(RUNS)</span></th><th class="num">MIDDLE</th><th class="num">RANGE</th><th class="num">AT ' + obs + '+</th><th class="num">MAIN RUN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>' +
+    '<p class="note" style="margin-top:10px;">Each run&rsquo;s strongest gust for Jersey on Friday 23 October, in mph: the middle run, the lowest to highest, and how many runs reached ' + obs + ' mph or more. The main run is the single run most weather apps show. Recorded at Jersey Airport: <b>' + obs + ' mph</b> at ' + hm(PEAK.t) + '.</p>';
+}
+
+/* ================= 4. INCIDENTS ================= */
+function bars(id, list, max, fmt, col){
+  const m = max || Math.max.apply(null, list.map(x => x[1]));
+  $(id).innerHTML = list.map(x => '<div class="bar-row"><span class="k" title="' + esc(fmt ? fmt(x[0]) : x[0]) + '">' + esc(fmt ? fmt(x[0]) : x[0]) + '</span><span class="t"><i style="width:' + (100 * x[1] / m).toFixed(1) + '%' + (col ? ';background:' + col(x[0]) : '') + '"></i></span><span class="n">' + x[1] + '</span></div>').join('');
+}
+function renderEwx(){
+  const E = RECAP.ewx;
+  $('ewxKpis').innerHTML = E.kpis.map(k => '<div class="kpi c-' + esc(k.c || 'green') + '"><div class="v">' + esc(k.v) + '</div><div class="l">' + esc(k.l) + '</div><div class="s">' + esc(k.s) + '</div></div>').join('');
+  const typeName = { 'Trees':'Trees', 'Water':'Water / flooding', 'Debris':'Debris', 'Infrastructure Damage':'Infrastructure damage', 'Other':'Other', 'Building Damage':'Building damage' };
+  bars('ewxType', E.byType, null, k => typeName[k] || k);
+  bars('ewxParish', E.byParish);
+  bars('ewxTeam', E.byTeam);
+  const accName = { 'Blocked - no access':'Blocked, no access', 'Partial access':'Partly open', 'Full Access':'Still open' };
+  bars('ewxAccess', ['Blocked - no access', 'Partial access', 'Full Access'].map(k => [k, (E.access.find(a => a[0] === k) || [k, 0])[1]]), null, k => accName[k] || k,
+       k => k.indexOf('Blocked') === 0 ? 'var(--red)' : k.indexOf('Partial') === 0 ? 'var(--amber)' : 'var(--green)');
+  $('ewxRoads').innerHTML = E.roads.map(r => '<li><span>' + esc(r[0]) + '<small>' + esc(r[1]) + '</small></span><span>' + r[2] + '</span></li>').join('');
+  $('govBox').innerHTML = E.attribution;
+  $('newsList').innerHTML = RECAP.news.map(n => '<li>' + esc(n.text) + '<span class="src">' + n.src.map(x => '<a href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + esc(x[0]) + '</a>').join(' &middot; ') + '</span></li>').join('');
+}
+
+/* ================= 5. COMMUNITY REPORTS ================= */
+function renderReports(){
+  const icon = { 'Observation':'🌡️', 'Storm Damage':'🌳', 'Flooding':'🌊', 'Damaging Wind':'💨', 'Hail':'🧊', 'Lightning Strike':'⚡' };
+  $('repFeed').innerHTML = RECAP.reports.map(r => {
+    const t = ms(r.t);
+    return '<div class="report-card sev-' + esc(r.sev) + '"><div class="rc-top"><div><div class="rc-type-name">' + (icon[r.type] || '📍') + ' ' + esc(r.type === 'Observation' ? 'Weather observation' : r.type) + '</div><div class="rc-parish">' + esc(r.parish.toUpperCase()) + '</div></div>' +
+      '<div class="rc-meta">' + esc(dayDate(t)) + ' &middot; ' + hm(t) + '<br><span class="rc-sev-badge">' + esc(r.sev.toUpperCase()) + '</span></div></div>' +
+      '<div class="rc-desc">' + esc(r.text) + '</div><div class="rc-bottom"><span>Filed by ' + esc(r.by) + '</span>' + (r.media ? '<a href="' + esc(r.media) + '" target="_blank" rel="noopener">View photo &rarr;</a>' : '') + '</div></div>';
+  }).join('');
+}
+
+/* ================= 6. WARNINGS AND ALERTS LOG ================= */
+function renderLog(){
+  const items = RECAP.warnLog.map(w => ({ t:ms(w[0]), cls:'c-' + w[1], who:'<span class="who met">JERSEY MET</span>', text:esc(w[2]), sent:'' }))
+    .concat(RECAP.alerts.map(a => ({ t:ms(a.at), cls:a.kind === 'special' ? 'c-jwc' : 'c-jwcw', who:'<span class="who jwc">JWC ' + (a.kind === 'special' ? 'SPECIAL ALERT' : 'WARNING ALERT') + '</span>',
+      text:'<b>' + esc(a.title) + '</b><br>' + esc(a.body), sent:a.sent ? 'Sent to ' + a.sent + ' devices' : '' })))
+    .sort((a, b) => a.t - b.t);
+  $('logList').innerHTML = items.map(x => '<li class="' + x.cls + '"><span class="when">' + esc(dayDate(x.t)) + ' &middot; ' + hm(x.t) + '</span>' + x.who + x.text + (x.sent ? '<br><span class="sent">' + x.sent + '</span>' : '') + '</li>').join('');
+}
+
+/* ================= 7. SEA ================= */
+function renderSea(){
+  const S = RECAP.sea, box = $('seaChart'), W = widthOf(box), mob = W < 640;
+  $('seaCap').innerHTML = esc(S.caption);
+  const wv = S.waves.map(w => ({ t:ms(w[0]), m:w[1], d:w[2] }));
+  const t0 = wv[0].t, t1 = wv[wv.length - 1].t;
+  const L = mob ? 28 : 36, R = 12, T = mob ? 62 : 44, H = mob ? 250 : 240, B = H - 30, hiM = 6;
+  const X = t => L + (t - t0) * (W - L - R) / (t1 - t0), Y = v => B - v * (B - T) / hiM;
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Wave height and high tides">';
+  for(let v = 0; v <= hiM; v += 2) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#3a4e58" stroke-opacity="' + (v ? 0.35 : 0.8) + '"/>' + txt(L - 5, Y(v) + 3.5, v + 'm', { size:9.5, anchor:'end' });
+  for(let t = Math.ceil(t0 / 3600000) * 3600000; t <= t1; t += 3600000){ const h = localHour(t); if(h % (mob ? 12 : 6)) continue; const x = X(t); s += '<line x1="' + x + '" x2="' + x + '" y1="' + T + '" y2="' + B + '" stroke="#3a4e58" stroke-opacity="' + (h === 0 ? 0.8 : 0.3) + '"' + (h ? ' stroke-dasharray="2 4"' : '') + '/>' + txt(x, B + 14, h === 0 ? day(t) : String(h).padStart(2, '0') + ':00', { size:9.5, anchor:'middle', fill:h === 0 ? '#e9f6f5' : '#6f8d99' }); }
+  const RC = { HIGH:'#ff4b5c', ELEVATED:'#ffb020', LOW:'#2de1a0' };
+  S.tides.forEach((td, k) => {
+    const x = X(ms(td[0])); if(x < L || x > W - R) return;
+    s += '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + (T - 6) + '" y2="' + B + '" stroke="' + RC[td[2]] + '" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    const yl = mob ? 12 + (k % 3) * 16 : T - 22 + (k % 2) * 12;
+    s += txt(x, yl, 'HW ' + hm(ms(td[0])) + ' ' + td[1] + 'm · ' + td[2], { size:mob ? 8.5 : 9.5, fill:RC[td[2]], anchor:'middle', weight:700 });
+  });
+  s += '<path d="M' + wv.map(w => X(w.t).toFixed(1) + ',' + Y(w.m).toFixed(1)).join('L') + 'L' + X(t1).toFixed(1) + ',' + B + 'L' + X(t0).toFixed(1) + ',' + B + 'Z" fill="#4cd3ff" fill-opacity="0.12"/>';
+  s += '<path d="M' + wv.map(w => X(w.t).toFixed(1) + ',' + Y(w.m).toFixed(1)).join('L') + '" fill="none" stroke="#4cd3ff" stroke-width="2"/>';
+  const top = wv.reduce((a, b) => b.m > a.m ? b : a, wv[0]);
+  s += '<circle cx="' + X(top.t).toFixed(1) + '" cy="' + Y(top.m).toFixed(1) + '" r="3.5" fill="#4cd3ff"/>' + txt(X(top.t) + 6, Y(top.m) - 4, top.m + 'm from ' + compass(top.d), { size:10, fill:'#e9f6f5', weight:700 });
+  if(S.report){ const x = X(ms(S.report[0])); s += '<path d="M' + x.toFixed(1) + ',' + (B - 2) + 'l6,-10h-12z" fill="#ffffff"><title>' + esc(S.report[1]) + '</title></path>'; }
+  s += '</svg>';
+  box.innerHTML = s;
+  $('seaLegend').innerHTML = '<span><i style="background:#4cd3ff"></i>WAVE HEIGHT (MODEL, OFF JERSEY)</span><span><i style="background:repeating-linear-gradient(90deg,#ff4b5c 0 4px,transparent 4px 7px)"></i>HIGH TIDE: SEA-WALL RISK HIGH</span><span><i style="background:repeating-linear-gradient(90deg,#ffb020 0 4px,transparent 4px 7px)"></i>ELEVATED</span><span><i style="background:repeating-linear-gradient(90deg,#2de1a0 0 4px,transparent 4px 7px)"></i>LOW</span>' + (S.report ? '<span><i class="dot" style="background:#fff;border-radius:0;clip-path:polygon(0 0,100% 0,50% 100%)"></i>MEMBER REPORT: WAVES OVER THE SEA WALL</span>' : '');
+}
+
+/* ================= 8-9. TEXT ================= */
+function renderText(){
+  $('storyText').innerHTML = RECAP.story.map(p => '<p>' + esc(p) + '</p>').join('');
+  $('srcList').innerHTML = RECAP.sources.map(x => '<li><b>' + esc(x[0]) + '</b> &mdash; ' + esc(x[1]) + (x[2] ? ' <a href="' + esc(x[2]) + '" target="_blank" rel="noopener">' + esc(x[3] || 'link') + ' &rarr;</a>' : '') + '</li>').join('');
+}
+
+/* ================= start ================= */
+function drawAll(){ renderTimeline(); renderCycles(); buildReplay(); renderFcChart(); renderSea(); }
+renderHero(); renderVerdict(); renderModelTable(); renderEwx(); renderReports(); renderLog(); renderText();
+drawAll();
+try{ renderTrack(); }catch(e){ console.warn('track map', e); }
+$('rpRange').max = FR.length - 1;
+/* play the replay once when it first comes into view (not with Calm display switched on) */
+try{
+  if('IntersectionObserver' in window){
+    const io = new IntersectionObserver(es => {
+      es.forEach(e => {
+        if(!e.isIntersecting) return;
+        io.disconnect();
+        if(document.documentElement.getAttribute('data-motion') !== 'calm' && !RP.timer && RP.i === 0) setTimeout(play, 600);
+      });
+    }, { threshold:0.6 });
+    io.observe($('rpChart'));
+  }
+}catch(e){}
+let lastW = window.innerWidth, rz = null;
+window.addEventListener('resize', () => { if(window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(drawAll, 180); });
+})();
+</script>
+</body>
+</html>
