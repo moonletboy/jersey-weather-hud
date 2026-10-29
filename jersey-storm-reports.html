@@ -223,6 +223,10 @@ transition:all .2s ease;
   .rl-new{ font-size:9px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:#ff6b35; border-radius:4px; padding:3px 7px; }
   .rl-body{ padding:14px 16px 16px; border-top:1px solid var(--line); }
   .rl-window{ font-size:10px; color:var(--dim); letter-spacing:1px; margin-bottom:12px; }
+  /* a recap with its own full page (charts, replay...) gets a button to it */
+  .rl-open{ display:inline-block; margin:0 0 14px; font-size:10.5px; font-weight:800; letter-spacing:1.5px; line-height:1.5; color:#05080d; background:var(--cyan); text-decoration:none; padding:10px 14px; border-radius:8px; }
+  .rl-open:hover{ filter:brightness(1.1); }
+  #recaps, details.recap-line{ scroll-margin-top:64px; }
   details.recap-archive{ margin-top:18px; }
   details.recap-archive > summary{ list-style:none; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; color:var(--dim); padding:10px 14px; border:1px dashed var(--line); border-radius:10px; }
   details.recap-archive > summary::-webkit-details-marker{ display:none; }
@@ -364,6 +368,7 @@ html[data-theme="light"] .rl-type, html[data-theme="light"] .recap-tab.active[da
 html[data-theme="light"] .rl-new, html[data-theme="light"] .recap-tab-badge{ color:#0c1a22; background:var(--orange-fill); }
 html[data-theme="light"] .recap-tab-badge{ border-color:var(--bg-panel); }
 html[data-theme="light"] .rc2-title{ color:var(--orange); }
+html[data-theme="light"] .rl-open{ color:#ffffff; }
 /* the report form */
 html[data-theme="light"] :is(.field input, .field textarea)::placeholder{ color:var(--dim); opacity:1; }
 html[data-theme="light"] .sev-btn[data-sev="Severe"].active{ background:rgba(240,124,34,0.14); border-color:var(--orange); color:var(--orange); }
@@ -416,7 +421,7 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
     </div>
   </div>
 
-  <section>
+  <section id="recaps">
     <div class="sec-head">
       <h3>STORM RECAP</h3>
       <div class="bar"></div>
@@ -647,8 +652,32 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
 
      type: 'event' or 'monthly'
      body: array of paragraph strings (each renders as its own <p>)
+     id (optional):   short name, so jersey-storm-reports.html#recap-<id> opens that recap straight away
+     link (optional): a page with the full recap (charts etc.) - shows an OPEN button at the top of the recap
      ============================================================ */
   const RECAPS = [
+    {
+      type: 'event',
+      id: 'storm-austen-2026',
+      title: 'STORM AUSTEN — 22–23 OCTOBER 2026',
+      period: 'Thu 22 Oct 10:00 – Sat 24 Oct 00:00 BST, plus the Storm Boelo follow-up on Sat 24 Oct',
+      reportCount: 6,
+      sources: 'Jersey Airport (METAR), Jersey Met, Government of Jersey Emergencyworx, JWC storm reports and site snapshots, Jersey Evening Post, ITV Channel, gov.je, Parish of St Helier, Channel 103',
+      link: 'jersey-storm-austen-recap.html',
+      linkText: 'OPEN THE FULL RECAP: CHARTS, FORECAST REPLAY & INCIDENT COUNTS',
+      body: [
+        'Storm Austen, the first named storm of the 2026/27 season, crossed the English Channel early on Friday 23 October. Its centre passed about 120 km north of Jersey at around 05:40, and the island had its strongest winds as it went by: Jersey Airport recorded a gust of 84 mph at 05:50, with a mean wind of 58 mph, storm force 10.',
+        'Jersey Met issued a red wind warning for the Channel Islands at 03:44 on Thursday 22 October and kept it in force until 12:58 on Friday. Government schools and colleges, the main parks, sports centres and Jersey Heritage sites closed for Friday; the Harbour shut from 6pm on Thursday and the Airport cancelled flights until late afternoon.',
+        'Thursday evening brought bands of heavy rain and a squall line through St Helier at about 22:40, under a yellow thunderstorm warning. Pressure at the airport fell from 1013 hPa on Thursday morning to 982 hPa by 05:20 on Friday, 11 hPa of it in the last two and a half hours; JWC’s Storm Watch flagged the fall at 22:27 on Thursday. Southerly gusts reached 59 mph by 01:50 and 68 mph by 03:50, before the wind swung west-south-westerly for the 84 mph peak. St Helier Harbour recorded 75 mph, and Guernsey had 76 mph at 05:41.',
+        'Behind the storm, west-north-westerly gusts of 60–72 mph went on through the morning, a squally shower brought a 76 mph gust at 17:20, and the wind eased through the evening as pressure rose 26 hPa in eight hours.',
+        'The Government’s severe incident reporting system logged 174 incidents on Friday, and 179 in all for Austen and the follow-up Storm Boelo by 29 October; 140 of those involved trees, and St Saviour (38) and St Brelade (28) were the busiest parishes. The first was logged at 05:37, the busiest hour was 09:00 to 10:00 with 48 as daylight showed the damage, and by midnight 143 of Friday’s incidents were already marked resolved. Jersey Electricity reported 17 incidents and about 70 customers without power at midday.',
+        'JWC members filed five reports during Austen, from the squall line on Thursday night to trees down on Grouville Hill and at West Hill and damaged fencing at The Look Out. JWC sent ten push alerts from Thursday to Friday night: three automatic relays of Jersey Met warnings and seven special alerts, covering the pressure fall, damaging gusts, waves over sea walls and the 74, 84 and 72 mph gusts measured at the airport. By Friday morning each alert was reaching about 940 to 970 devices.',
+        'On the forecasts: from midday on Thursday, every half-hourly snapshot of the Storm Scenarios page put the middle of the 140 model runs at 79–82 mph for Friday’s strongest gust, and from 18:00 the “most common” scenario was 75–84 mph. The recorded 84 mph sat at the top of that range. The Storm Tracker on Live Ops had picked Austen up almost four days ahead, already on course for the English Channel.',
+        'Storm Boelo followed on Saturday 24 October with a south-westerly gale at sea, an orange tide warning and a 67 mph gust at the airport in the evening. A member reported waves over the sea wall in St Helier ahead of the 10.3 m high tide, and Jersey Met recorded 34.7 mm of rain at Maison St Louis in the 24 hours to 9am on Sunday.'
+      ],
+      published: '29 Oct 2026',
+      publishedISO: '2026-10-29'
+    },
     {
       type: 'monthly',
       title: 'MONTHLY RECAP — SEPTEMBER 2026',
@@ -717,7 +746,7 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
   function recapLineHtml(r){
     const kind = r.type === 'event' ? 'event' : 'monthly';
     return `
-      <details class="recap-line">
+      <details class="recap-line"${r.id ? ` id="recap-${escapeHtml(r.id)}"` : ''}>
         <summary>
           <span class="rl-chev" aria-hidden="true">&#9654;</span>
           <span class="rl-type ${kind}">${kind === 'event' ? 'EVENT' : 'MONTHLY'}</span>
@@ -727,6 +756,7 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
         </summary>
         <div class="rl-body">
           <div class="rl-window">ANALYSIS WINDOW: ${escapeHtml(r.period)}</div>
+          ${r.link ? `<a class="rl-open" href="${escapeHtml(r.link)}">${escapeHtml(r.linkText || 'OPEN THE FULL RECAP')} &rarr;</a>` : ''}
           ${(r.body || []).map(p => `<p class="rc2-p">${escapeHtml(p)}</p>`).join('')}
           <div class="rc2-foot">
             <span>${typeof r.reportCount === 'number' ? `${r.reportCount} STORM REPORT${r.reportCount === 1 ? '' : 'S'} REFERENCED &middot; ` : ''}SOURCES: ${escapeHtml(r.sources)}</span>
@@ -752,6 +782,18 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
               archive.map(recapLineHtml).join('') + '</details>';
     }
     container.innerHTML = html;
+    // a link straight to one recap (jersey-storm-reports.html#recap-<id>) opens it, inside the archive if need be
+    let want = '';
+    try{ want = decodeURIComponent(location.hash || '').slice(1); }catch(e){}
+    if(want.indexOf('recap-') === 0){
+      const line = document.getElementById(want);
+      if(line){
+        const arch = line.closest('details.recap-archive');
+        if(arch) arch.open = true;
+        line.open = true;
+        setTimeout(() => line.scrollIntoView({ block:'start' }), 60);
+      }
+    }
   }
 
   /* ============================================================
