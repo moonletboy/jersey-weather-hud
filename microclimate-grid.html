@@ -244,6 +244,55 @@ transition:all .2s ease;
   footer b{ color:var(--dim); }
 
 .seo-intro{font-size:11px;line-height:1.6;color:var(--dim);letter-spacing:0.3px;max-width:760px;margin:0 0 16px;padding:0 2px}
+  /* ADD MY STATION (station owners) + STATION REQUEST REVIEW (JWC team, opened from the email link) */
+  .add-link{ display:inline-block; margin-top:20px; font-size:10.5px; letter-spacing:1.5px; font-weight:700; color:var(--cyan); text-decoration:none; border-bottom:1px dashed currentColor; padding-bottom:2px; }
+  .add-link:hover{ color:var(--text); }
+  #add-station, #review-sec{ scroll-margin-top:64px; }
+  #review-sec[hidden], #rvActions[hidden]{ display:none !important; }
+  .add-panel{ position:relative; background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); border:1px solid var(--line); border-radius:14px; padding:24px; }
+  .add-intro{ font-size:12px; color:var(--dim); line-height:1.75; max-width:760px; margin-bottom:18px; }
+  .add-intro b{ color:var(--text); }
+  .add-form{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  .add-field{ display:flex; flex-direction:column; gap:8px; flex:1 1 220px; max-width:340px; }
+  .add-field label{ font-size:10px; letter-spacing:2px; color:var(--dim); }
+  .add-field input{ width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text); font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:1px; padding:11px 12px; border-radius:7px; outline:none; transition:border-color .2s ease; }
+  .add-field input:focus{ border-color:var(--cyan); }
+  .add-btn{ font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; font-weight:700; color:#05080d; background:linear-gradient(120deg, var(--green), var(--cyan)); border:none; padding:13px 22px; border-radius:8px; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
+  .add-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(45,225,160,0.3); }
+  .add-btn:disabled{ opacity:0.5; cursor:default; transform:none; box-shadow:none; }
+  .add-hp{ position:absolute; left:-9999px; top:0; width:1px; height:1px; overflow:hidden; opacity:0; }
+  .add-status{ display:none; margin-top:14px; padding:12px 16px; border-radius:8px; font-size:12px; line-height:1.65; letter-spacing:0.3px; border:1px solid var(--dim2); color:var(--dim); max-width:760px; }
+  .add-status.busy{ display:block; color:var(--amber); border-color:rgba(255,176,32,0.5); background:rgba(255,176,32,0.08); }
+  .add-status.good{ display:block; color:var(--green); border-color:rgba(45,225,160,0.6); background:rgba(45,225,160,0.1); }
+  .add-status.info{ display:block; color:var(--cyan); border-color:rgba(76,211,255,0.5); background:rgba(76,211,255,0.08); }
+  .add-status.bad{ display:block; color:var(--red); border-color:rgba(255,75,92,0.6); background:rgba(255,75,92,0.1); }
+  .add-note{ font-size:10px; color:var(--dim2); letter-spacing:0.5px; margin-top:14px; line-height:1.6; }
+  details.add-tips{ margin-top:18px; border-top:1px dashed var(--line); padding-top:14px; }
+  details.add-tips > summary{ list-style:none; cursor:pointer; font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; color:var(--dim); }
+  details.add-tips > summary::-webkit-details-marker{ display:none; }
+  details.add-tips > summary:hover, details.add-tips[open] > summary{ color:var(--text); }
+  .add-chev{ display:inline-block; margin-right:8px; transition:transform .15s ease; }
+  details.add-tips[open] .add-chev{ transform:rotate(90deg); }
+  .tips-body{ margin-top:14px; font-size:12px; color:var(--dim); line-height:1.75; max-width:760px; }
+  .tips-body ul{ margin:0 0 4px 18px; padding:0; }
+  .tips-body li{ margin-bottom:8px; }
+  .tips-body b{ color:var(--text); }
+  .sec-head .tag.tag-team{ background:var(--amber); }
+  .review-panel{ border-color:rgba(255,176,32,0.45); }
+  .rv-id{ font-family:'Orbitron',sans-serif; font-size:20px; font-weight:800; letter-spacing:1px; color:var(--text); margin:0 90px 6px 0; }
+  .rv-lines{ font-size:12px; color:var(--dim); line-height:1.8; }
+  .rv-lines b{ color:var(--text); }
+  .rv-lines a{ color:var(--cyan); }
+  .rv-flag{ margin-top:10px; padding:9px 12px; border-left:3px solid var(--amber); background:rgba(255,176,32,0.08); color:var(--amber); line-height:1.6; }
+  .rv-near{ margin-top:10px; font-size:11px; line-height:1.7; }
+  .rv-actions{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-top:18px; }
+  .rv-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .rv-close{ position:absolute; top:14px; right:14px; background:none; border:1px solid var(--line); border-radius:6px; color:var(--dim); font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:1.5px; cursor:pointer; padding:6px 9px; }
+  .rv-close:hover{ color:var(--text); border-color:var(--cyan); }
+  /* NEW stations: for their first 7 days on the map */
+  .pws-new{ margin-left:auto; margin-right:8px; font-size:9px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:#ff6b35; border-radius:4px; padding:2px 6px; }
+  .pp-new{ font-size:9px; font-weight:800; letter-spacing:1.5px; color:#05080d; background:#ff6b35; border-radius:4px; padding:1px 5px; margin-left:5px; }
+
 /* ================= LIGHT MODE (Settings > Display) =================
    Used only when jwc-settings.js puts data-theme="light" on <html>; dark mode never matches anything below.
    The shared daylight colours (--bg, --text, --green ...) live in jwc-settings.js; these are this page's own
@@ -270,7 +319,17 @@ html[data-theme="light"] .banner.err{ background:linear-gradient(90deg, rgba(224
 html[data-theme="light"] .pws-card{ box-shadow:var(--card-shadow); }
 html[data-theme="light"] .metric-value{ color:color-mix(in oklab, var(--tc, var(--text)) 50%, #0c1a22) !important; }
 html[data-theme="light"] .dot{ box-shadow:none; }
-html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2); border-style:dashed; box-shadow:none; }   /* offline cards: flat and dashed rather than see-through, so they stay readable */
+html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2); border-style:dashed; box-shadow:none; }
+/* add my station + review panel (the map's popups stay dark, so .pp-new keeps its dark look) */
+html[data-theme="light"] .add-panel{ box-shadow:var(--card-shadow); }
+html[data-theme="light"] .add-btn{ background:linear-gradient(120deg, var(--green-fill), var(--cyan-fill)); color:#0c1a22; }
+html[data-theme="light"] .add-btn:hover{ box-shadow:0 8px 24px rgba(0,118,79,0.22); }
+html[data-theme="light"] .add-field input::placeholder{ color:var(--dim); opacity:1; }
+html[data-theme="light"] .add-status.busy, html[data-theme="light"] .rv-flag{ background:rgba(240,161,0,0.1); }
+html[data-theme="light"] .add-status.good{ background:rgba(19,165,116,0.1); }
+html[data-theme="light"] .add-status.info{ background:rgba(14,152,204,0.08); }
+html[data-theme="light"] .add-status.bad{ background:rgba(224,56,76,0.08); }
+html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill); }   /* offline cards: flat and dashed rather than see-through, so they stay readable */
 </style>
 </head>
 <body>
@@ -310,9 +369,35 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
       <div><div class="val" id="stSpread">&mdash;</div><div class="lbl">ISLAND SPREAD</div><div class="sub">HIGHEST MINUS LOWEST</div></div>
       <div><div class="val" id="stOnline">&mdash;</div><div class="lbl">STATIONS REPORTING</div><div class="sub" id="stOnlineSub">&nbsp;</div></div>
     </div>
+    <a class="add-link" href="#add-station">GOT A WEATHER STATION? ADD IT TO THE MAP &rarr;</a>
   </div>
 
   <div class="banner" id="banner"></div>
+
+  <!-- STATION REQUEST REVIEW: only appears when the JWC team opens the link from the "waiting for your OK" email -->
+  <section id="review-sec" hidden>
+    <div class="sec-head">
+      <h3>STATION REQUEST</h3>
+      <div class="bar"></div>
+      <div class="tag tag-team">JWC TEAM</div>
+    </div>
+    <div class="add-panel review-panel">
+      <button type="button" class="rv-close" id="rvClose">CLOSE &times;</button>
+      <div class="rv-lines" id="rvBody">Loading the request&hellip;</div>
+      <div class="rv-actions" id="rvActions" hidden>
+        <div class="add-field">
+          <label for="rvName">NAME ON THE MAP</label>
+          <input id="rvName" type="text" maxlength="40" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="rv-btns">
+          <button type="button" class="add-btn" id="rvAdd">ADD TO MAP</button>
+          <button type="button" class="tgl" id="rvIgnore">IGNORE</button>
+          <button type="button" class="tgl" id="rvShow">SHOW ON MAP</button>
+        </div>
+      </div>
+      <div class="add-status" id="rvStatus" role="status" aria-live="polite"></div>
+    </div>
+  </section>
 
   <section id="map-sec">
     <div class="sec-head">
@@ -359,6 +444,39 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
       <div class="tag" id="gridTag">0 STATIONS</div>
     </div>
     <div id="matrix"></div>
+  </section>
+
+  <section id="add-station">
+    <div class="sec-head">
+      <h3>GOT A WEATHER STATION?</h3>
+      <div class="bar"></div>
+      <div class="tag">ADD IT TO THE MAP</div>
+    </div>
+    <div class="add-panel">
+      <p class="add-intro">If your home weather station sends its readings to Weather Underground, it can join this map. Type in its <b>Station ID</b> &mdash; it&rsquo;s on your Weather Underground dashboard and looks like <b>ISAINT12345</b>. We&rsquo;ll check straight away that it&rsquo;s sending readings from Jersey, and the JWC team will take a quick look before it goes on the map.</p>
+      <form class="add-form" id="addForm" novalidate>
+        <div class="add-field">
+          <label for="addId">STATION ID</label>
+          <input id="addId" name="id" type="text" maxlength="30" placeholder="e.g. ISAINT12345" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        </div>
+        <div class="add-hp" aria-hidden="true"><label for="addWebsite">Leave this empty</label><input id="addWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button type="submit" class="add-btn" id="addBtn">CHECK &amp; SEND</button>
+      </form>
+      <div class="add-status" id="addStatus" role="status" aria-live="polite"></div>
+      <p class="add-note">Only the Station ID is sent. We look at the station&rsquo;s public Weather Underground readings and nothing else.</p>
+      <details class="add-tips">
+        <summary><span class="add-chev">&#9656;</span>THINKING OF GETTING A WEATHER STATION?</summary>
+        <div class="tips-body">
+          <ul>
+            <li><b>Any home weather station that can send its readings to Weather Underground will do.</b> Most can, either directly or through the maker&rsquo;s app or hub.</li>
+            <li><b>Temperature:</b> the sensor needs a ventilated radiation shield, about 1.25 to 2&nbsp;m above grass and out in the open, away from walls, paving, sheds and roofs that soak up heat. A sensor in the sun or against a house wall can read several degrees too warm.</li>
+            <li><b>Wind:</b> as high and as clear as you can get it, ideally on a pole above the roofline, well away from trees and buildings. A low, sheltered wind sensor reads far too light.</li>
+            <li><b>Rain gauge:</b> level and in the open, at least twice as far from trees, fences and buildings as they are tall.</li>
+            <li><b>Then:</b> register the station on Weather Underground (it&rsquo;s free) and connect it. You&rsquo;ll get a Station ID like ISAINT12345; once it&rsquo;s sending readings, enter it above.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
   </section>
 
   <footer>
@@ -584,6 +702,9 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
   const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   function compass(d){ return (d === null || d === undefined) ? '' : COMPASS[Math.round(d / 22.5) % 16]; }
   function usable(o){ return o.status === 'ok' || o.status === 'demo'; }
+  // NEW for the first week after a station is added (the Added date in the JWC Stations sheet)
+  const NEW_DAYS = 7;
+  function isNewStation(o){ return !!(o && o.added && o.added <= Date.now() + 86400000 && (Date.now() - o.added) < NEW_DAYS * 86400000); }
   function hhmm(ms){
     if(!ms) return '--:--';
     return new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date(ms));
@@ -674,6 +795,7 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
       o.temp = num(r.temp); o.wind = num(r.wind); o.gust = num(r.gust); o.rain = num(r.rain);
       o.hum = num(r.hum); o.press = num(r.press); o.dir = num(r.dir);
       o.time = isNaN(t) ? null : t;
+      if(typeof r.added === 'number' && isFinite(r.added)) o.added = r.added;
       list.push(o);
     });
     const info = Array.isArray(j) ? {} : {
@@ -981,7 +1103,7 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
   function popupHtml(o){
     const link = 'https://www.wunderground.com/dashboard/pws/' + encodeURIComponent(o.id);
     const age = o.time ? hhmm(o.time) : '--:--';
-    return '<b>' + escapeHtml(o.name) + '</b><br>' +
+    return '<b>' + escapeHtml(o.name) + '</b>' + (isNewStation(o) ? '<span class="pp-new">NEW</span>' : '') + '<br>' +
       '<span style="color:#6f8d99">' + escapeHtml(o.id) + '</span><br>' +
       'Temp: ' + fmt(o.temp, 1) + '°C<br>' +
       'Wind: ' + fmt(o.wind, 0) + ' mph ' + compass(o.dir) + ' (gust ' + fmt(o.gust, 0) + ')<br>' +
@@ -1029,6 +1151,9 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
       mk.bindPopup(popupHtml(o));
       mk.addTo(markerLayer);
       markerById[o.id] = mk;
+      if(isNewStation(o)){   // a dashed orange ring marks a NEW station
+        L.circleMarker([o.lat, o.lng], { radius:12, color:'#ff6b35', weight:2, dashArray:'4 3', fill:false, interactive:false }).addTo(markerLayer);
+      }
     });
     updateFlow();
   }
@@ -1188,7 +1313,7 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
         const val = good ? (fmt(o[m.key], m.dec) + '<small>' + escapeHtml(m.unit.trim()) + '</small>') : '&mdash;';
         const age = usable(o) ? ('READING ' + hhmm(o.time)) : ('OFFLINE' + (o.why ? ' &middot; ' + escapeHtml(o.why).toUpperCase() : ''));
         html += '<div class="pws-card' + cardCls + '" data-id="' + escapeHtml(o.id) + '">' +
-          '<div class="pws-top"><span class="pws-id">' + escapeHtml(o.id) + '</span><span class="dot' + dotCls + '"></span></div>' +
+          '<div class="pws-top"><span class="pws-id">' + escapeHtml(o.id) + '</span>' + (isNewStation(o) ? '<span class="pws-new">NEW</span>' : '') + '<span class="dot' + dotCls + '"></span></div>' +
           '<div class="pws-name">' + escapeHtml(o.name) + '</div>' +
           '<div class="metric-value" style="color:' + col + ';--tc:' + col + '">' + val + '</div>' +   /* light mode reads --tc (see LIGHT MODE in the styles) */
           '<div class="pws-meta"><span>T ' + fmt(o.temp, 1) + '°</span><span>W ' + fmt(o.wind, 0) + '/' + fmt(o.gust, 0) + ' ' + compass(o.dir) + '</span><span>R ' + fmt(o.rain, 1) + '</span><span>H ' + fmt(o.hum, 0) + '%</span></div>' +
@@ -1246,8 +1371,199 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
     updateFlow();
   });
 
+  /* ============================================================
+     ADD MY STATION (station owners) + STATION REQUEST REVIEW (JWC team)
+     The JWC Stations script checks a Station ID on Weather Underground
+     (real? in Jersey? sending readings?) and, if it passes, emails the
+     team a link to this page ending #review=ID&t=TOKEN, which opens the
+     review panel. Nothing goes on the map without the team's OK.
+     ============================================================ */
+  const STATION_ID_RE = /^[A-Z0-9_-]{3,30}$/;
+  function setStatus(el, kind, text){ el.className = 'add-status' + (kind ? ' ' + kind : ''); el.textContent = text || ''; }
+  async function postStation(params){
+    const ctl = new AbortController();
+    const to = setTimeout(function(){ ctl.abort(); }, 30000);
+    try{
+      const res = await fetch(CONFIG.PROXY_URL, { method:'POST', body:new URLSearchParams(params), signal:ctl.signal });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } finally {
+      clearTimeout(to);
+    }
+  }
+  function agoText(min){
+    if(min === null || min === undefined) return 'a long time ago';
+    if(min < 90) return min + ' minutes ago';
+    if(min < 48 * 60) return Math.round(min / 60) + ' hours ago';
+    return Math.round(min / 1440) + ' days ago';
+  }
+  function addMessage(r, id){
+    const nm = r.wuName ? ' (' + r.wuName + ')' : '';
+    switch(r.result){
+      case 'sent': return ['good', 'Thanks! ' + id + nm + ' is sending readings from Jersey, so it has passed our checks. It will appear on the map once the JWC team has had a quick look.'];
+      case 'listed': return ['info', r.hidden ? (id + ' is already on our list.') : ('Good news: ' + id + ' is already on the map.')];
+      case 'waiting': return ['info', 'Thanks, ' + id + ' is already waiting for a quick look by the JWC team.'];
+      case 'notfound': return ['bad', 'We couldn’t find any current readings for ' + id + ' on Weather Underground. Check the Station ID, and that your station is online and sending its readings, then try again.'];
+      case 'outside': return ['bad', id + ' is on Weather Underground, but its location isn’t in Jersey. If that’s wrong, correct the location in your station’s settings on Weather Underground, then try again.'];
+      case 'silent': return ['busy', 'We found ' + id + nm + ', but its last reading was ' + agoText(r.lastMin) + '. Once it’s sending readings again, please try again.'];
+      case 'invalid': return ['bad', 'That doesn’t look like a Weather Underground Station ID. You’ll find it on your Weather Underground dashboard; it looks like ISAINT12345.'];
+      case 'busy': return ['busy', 'We’ve had a lot of station checks today. Please try again tomorrow.'];
+      default: return ['bad', 'We couldn’t check with Weather Underground just now. Please try again in a few minutes.'];
+    }
+  }
+  (function(){
+    const form = document.getElementById('addForm');
+    const inp = document.getElementById('addId'), btn = document.getElementById('addBtn'), out = document.getElementById('addStatus');
+    form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      if(btn.disabled) return;
+      const id = inp.value.toUpperCase().replace(/\s+/g, '');
+      inp.value = id;
+      if(!STATION_ID_RE.test(id)){ const m = addMessage({ result:'invalid' }, id); setStatus(out, m[0], m[1]); inp.focus(); return; }
+      if(!CONFIG.PROXY_URL){ setStatus(out, 'busy', 'Station checks only work on the live site.'); return; }
+      btn.disabled = true;
+      setStatus(out, 'busy', 'Checking ' + id + ' with Weather Underground…');
+      try{
+        const r = await postStation({ action:'request_station', id:id, website:document.getElementById('addWebsite').value });
+        if(!r || r.status !== 'ok') throw new Error((r && r.message) || 'error');
+        const m = addMessage(r, id);
+        setStatus(out, m[0], m[1]);
+      }catch(e){
+        setStatus(out, 'bad', 'We couldn’t reach the station checker just now. Please try again in a few minutes.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+
+  let rv = null, rvLayer = null;
+  function reviewParams(){
+    const hs = location.hash || '';
+    if(hs.indexOf('#review=') !== 0) return null;
+    const q = new URLSearchParams(hs.slice(1));
+    const id = String(q.get('review') || '').toUpperCase().replace(/\s+/g, '');
+    const t = String(q.get('t') || '').trim();
+    return (STATION_ID_RE.test(id) && /^[A-Za-z0-9-]{8,80}$/.test(t)) ? { id:id, t:t } : null;
+  }
+  function whenText(ms){
+    return ms ? new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date(ms)) : '—';
+  }
+  function clearReviewHash(){
+    if((location.hash || '').indexOf('#review=') === 0){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
+  }
+  function closeReview(){
+    document.getElementById('review-sec').hidden = true;
+    if(rvLayer) rvLayer.clearLayers();
+    clearReviewHash();
+    rv = null;
+  }
+  async function openReview(){
+    const p = reviewParams();
+    if(!p) return;
+    const sec = document.getElementById('review-sec'), body = document.getElementById('rvBody');
+    rv = null;
+    sec.hidden = false;
+    document.getElementById('rvActions').hidden = true;
+    document.getElementById('rvName').value = '';
+    setStatus(document.getElementById('rvStatus'), '', '');
+    body.textContent = 'Loading the request for ' + p.id + '…';
+    sec.scrollIntoView({ block:'start' });
+    if(!CONFIG.PROXY_URL){ body.textContent = 'Reviews only work on the live site.'; return; }
+    try{
+      const sep = CONFIG.PROXY_URL.indexOf('?') >= 0 ? '&' : '?';
+      let j = null;
+      try{
+        const res = await fetch(CONFIG.PROXY_URL + sep + 'action=request&id=' + encodeURIComponent(p.id) + '&t=' + encodeURIComponent(p.t));
+        j = await res.json();
+      }catch(e){ throw new Error('Couldn’t load the request just now. Try the link again in a minute.'); }
+      if(!j || j.status !== 'ok' || !j.request) throw new Error((j && j.message) || 'This link isn’t valid any more.');
+      rv = j.request;
+      rv.t = p.t;
+      renderReview();
+    }catch(e){
+      body.textContent = e.message;
+    }
+  }
+  function renderReview(){
+    const r = rv, rd = r.reading;
+    const body = document.getElementById('rvBody'), acts = document.getElementById('rvActions'), out = document.getElementById('rvStatus');
+    const hasPos = typeof r.lat === 'number' && typeof r.lng === 'number';
+    const parish = hasPos ? parishOf({ lat:r.lat, lng:r.lng }) : null;
+    let x = '<div class="rv-id">' + escapeHtml(r.id) + '</div>';
+    x += '<div>On Weather Underground as <b>' + escapeHtml(r.wuName || '—') + '</b> &middot; <a href="https://www.wunderground.com/dashboard/pws/' + encodeURIComponent(r.id) + '" target="_blank" rel="noopener">its Weather Underground page &rarr;</a></div>';
+    if(hasPos) x += '<div>Position ' + r.lat.toFixed(4) + ', ' + r.lng.toFixed(4) + (parish ? ' &middot; in <b>' + escapeHtml(parish) + '</b>' : '') + '</div>';
+    x += '<div>Asked ' + escapeHtml(whenText(r.received)) + '</div>';
+    if(rd){
+      const age = rd.time ? Math.max(0, Math.round((Date.now() - rd.time) / 60000)) : null;
+      x += '<div>Latest reading' + (age !== null ? ' (' + age + ' min old)' : '') + ': <b>' + fmt(rd.temp, 1) + '°C</b> &middot; wind ' + fmt(rd.wind, 0) + ' mph ' + compass(rd.dir) + ' (gust ' + fmt(rd.gust, 0) + ') &middot; ' + fmt(rd.hum, 0) + '% &middot; ' + fmt(rd.press, 0) + ' hPa &middot; rain today ' + fmt(rd.rain, 1) + ' mm</div>';
+    } else if(r.readingWhenChecked){
+      x += '<div>Reading when it was checked: ' + escapeHtml(r.readingWhenChecked) + '</div>';
+    }
+    if(r.compare) x += '<div class="' + (/worth a look|much lighter/.test(r.compare) ? 'rv-flag' : 'rv-near') + '">' + escapeHtml(r.compare) + '</div>';
+    if(r.nearby && r.nearby.length){
+      x += '<div class="rv-near">Nearest stations on the map: ' + r.nearby.map(function(n){
+        return escapeHtml(n.name) + ' ' + n.km + ' km, ' + fmt(n.temp, 1) + '°C, wind ' + fmt(n.wind, 0) + ' mph';
+      }).join(' &middot; ') + '</div>';
+    }
+    body.innerHTML = x;
+    if(r.state === 'waiting'){
+      acts.hidden = false;
+      const nm = document.getElementById('rvName');
+      if(!nm.value) nm.value = r.suggestedName || parish || '';
+      setStatus(out, '', '');
+    } else {
+      acts.hidden = true;
+      setStatus(out, 'info', r.state === 'added' ? ('Already added' + (r.nameOnMap ? ' as ' + r.nameOnMap : '') + ', ' + whenText(r.decided) + '.')
+        : r.state === 'ignored' ? ('Already ignored, ' + whenText(r.decided) + '.') : ('This request is marked: ' + r.state + '.'));
+    }
+  }
+  async function decideReview(decision){
+    if(!rv) return;
+    const out = document.getElementById('rvStatus'), acts = document.getElementById('rvActions');
+    const btns = acts.querySelectorAll('button');
+    btns.forEach(function(b){ b.disabled = true; });
+    setStatus(out, 'busy', decision === 'add' ? 'Adding ' + rv.id + '…' : 'Saving…');
+    try{
+      const r = await postStation({ action:'decide_station', id:rv.id, t:rv.t, decision:decision, name:document.getElementById('rvName').value.trim() });
+      if(!r || r.status !== 'ok') throw new Error((r && r.message) || 'error');
+      acts.hidden = true;
+      if(r.result === 'added'){
+        setStatus(out, 'good', 'Added. ' + rv.id + ' (' + (r.name || rv.id) + ') will appear on the map within a few minutes. You can rename or hide it any time in the Stations tab.');
+        setTimeout(function(){ load(true); }, 4000);
+      } else if(r.result === 'ignored'){
+        setStatus(out, 'info', 'Ignored. Nothing was added; it’s noted in the Requests tab.');
+      } else {
+        setStatus(out, 'info', 'This request was already ' + (r.state || 'dealt with') + '.');
+      }
+      clearReviewHash();
+    }catch(e){
+      setStatus(out, 'bad', 'That didn’t go through (' + (e && e.message ? e.message : 'error') + '). Please try again.');
+    } finally {
+      btns.forEach(function(b){ b.disabled = false; });
+    }
+  }
+  function showReviewOnMap(){
+    if(!rv || typeof rv.lat !== 'number' || typeof rv.lng !== 'number' || !map) return;
+    if(!rvLayer) rvLayer = L.layerGroup().addTo(map);
+    rvLayer.clearLayers();
+    const rd = rv.reading;
+    const pin = L.circleMarker([rv.lat, rv.lng], { radius:9, color:'#ffb020', weight:3, dashArray:'4 3', fillColor:'#ffb020', fillOpacity:0.35 });
+    pin.bindPopup('<b>' + escapeHtml(rv.id) + '</b><span class="pp-new">REQUEST</span><br>' + escapeHtml(rv.wuName || '') +
+      (rd ? '<br>Temp: ' + fmt(rd.temp, 1) + '°C<br>Wind: ' + fmt(rd.wind, 0) + ' mph ' + compass(rd.dir) + ' (gust ' + fmt(rd.gust, 0) + ')' : ''));
+    pin.addTo(rvLayer);
+    document.getElementById('map-sec').scrollIntoView({ behavior:'smooth' });
+    map.setView([rv.lat, rv.lng], Math.max(map.getZoom(), 13));
+    pin.openPopup();
+  }
+  document.getElementById('rvAdd').addEventListener('click', function(){ decideReview('add'); });
+  document.getElementById('rvIgnore').addEventListener('click', function(){ decideReview('ignore'); });
+  document.getElementById('rvShow').addEventListener('click', showReviewOnMap);
+  document.getElementById('rvClose').addEventListener('click', closeReview);
+  window.addEventListener('hashchange', openReview);
+
   load(false);
   setInterval(function(){ if(!document.hidden){ quickTries = 0; load(true); } }, CONFIG.REFRESH_MIN * 60000);
+  openReview();
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) load(false); });
 
 /* nav strip: on a phone the row scrolls sideways, so make sure the current page's tab is in view */
