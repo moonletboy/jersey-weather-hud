@@ -751,6 +751,62 @@ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);
 .li-bar{ background:linear-gradient(90deg, #ff4b5c 0%, #ffb020 40%, #2de1a0 100%); }
 .dp-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 48%, #ffb020 72%, #ffb020 100%); }
 .cin-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 25%, #ffb020 75%, #ff4b5c 95%, #ff4b5c 100%); }
+.shear-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 30%, #ffb020 36%, #ffb020 54%, #ff4b5c 60%, #ff4b5c 80%, #b98aff 86%, #b98aff 100%); }
+/* WIND WITH HEIGHT (wind shear) card under the convective tiles: a simple arrow ladder, or a hodograph in TECHNICAL */
+.wh-card{ margin-top:16px; background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:18px; }
+.wh-card [hidden]{ display:none !important; }
+.wh-head{ display:flex; justify-content:space-between; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-bottom:14px; }
+.wh-head .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); }
+.wh-chips{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.wh-chip{
+font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; font-weight:700;
+color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:5px;
+padding:6px 10px; cursor:pointer; transition:all .15s ease;
+}
+.wh-chip:hover{ border-color:var(--cyan); }
+.wh-chip.active{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
+.wh-hours{ margin:-4px 0 14px; }
+.wh-hours-lbl{ font-size:9px; letter-spacing:2px; color:var(--dim); margin-right:4px; }
+.wh-body{ display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:18px 28px; align-items:center; }
+@media (max-width:760px){ .wh-body{ grid-template-columns:1fr; } }
+.wh-rows{ display:flex; flex-direction:column; gap:4px; }
+.wh-row{ display:grid; grid-template-columns:50px 28px minmax(0,1fr) 78px; align-items:center; gap:8px; min-height:34px; }
+.wh-h{ font-size:9.5px; letter-spacing:1.5px; color:var(--dim); text-align:right; white-space:nowrap; }
+.wh-dial{ width:28px; height:28px; display:block; }
+.wh-dial circle{ fill:none; stroke:var(--line); stroke-width:1.5; }
+.wh-dial path{ fill:var(--cyan); }
+.wh-dial .calm{ fill:var(--dim); stroke:none; }
+.wh-bar{ height:8px; border-radius:4px; background:rgba(255,255,255,0.06); overflow:hidden; }
+.wh-bar i{ display:block; height:100%; border-radius:4px; background:var(--cyan); transition:width .4s ease; }
+.wh-v{ text-align:right; line-height:1.15; white-space:nowrap; }
+.wh-v b{ font-family:'Orbitron',sans-serif; font-size:15px; font-weight:800; }
+.wh-v small{ font-size:9px; color:var(--dim); letter-spacing:1px; }
+.wh-v em{ display:block; font-style:normal; font-size:9px; letter-spacing:1px; color:var(--dim); }
+.wh-side .lbl2{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:6px; }
+.wh-side .val{ font-family:'Orbitron',sans-serif; font-size:30px; font-weight:800; }
+.wh-side .unit{ font-size:11px; color:var(--dim); margin-left:4px; }
+.wh-side .verdict{ margin-top:8px; font-size:10px; letter-spacing:1px; padding:3px 8px; border-radius:4px; display:inline-block; font-weight:700; }
+.wh-say{ margin-top:12px; font-size:12px; line-height:1.6; color:var(--text); }
+.wh-say p{ margin:0 0 8px; }
+.wh-msg{ font-size:10.5px; letter-spacing:1px; color:var(--dim); padding:18px 0; }
+.wh-tech{ display:grid; grid-template-columns:minmax(0,270px) minmax(0,1fr); gap:18px 28px; align-items:start; }
+@media (max-width:760px){ .wh-tech{ grid-template-columns:1fr; } .wh-hodo{ max-width:300px; margin:0 auto; } }
+.wh-hodo{ width:100%; height:auto; display:block; }
+.wh-ring{ fill:none; stroke:var(--line); stroke-width:1; }
+.wh-axis{ stroke:var(--line); stroke-width:1; }
+.wh-ring-lbl{ fill:var(--dim); font-size:8.5px; font-family:'JetBrains Mono',monospace; }
+.wh-trace{ fill:none; stroke:var(--amber); stroke-width:2.2; stroke-linejoin:round; stroke-linecap:round; }
+.wh-bulk{ stroke:var(--red); stroke-width:1.3; stroke-dasharray:4 3; fill:none; }
+.wh-pt{ fill:var(--cyan); }
+.wh-pt-lbl{ fill:var(--text); font-size:9px; font-family:'JetBrains Mono',monospace; }
+.wh-table{ width:100%; border-collapse:collapse; font-size:10.5px; }
+.wh-table th{ text-align:left; font-weight:400; font-size:9px; letter-spacing:1.5px; color:var(--dim); padding:4px 6px; border-bottom:1px solid var(--line); }
+.wh-table td{ padding:5px 6px; border-bottom:1px solid var(--line); color:var(--text); white-space:nowrap; }
+.wh-table td+td, .wh-table th+th{ text-align:right; }
+.wh-stats{ margin-top:12px; display:grid; gap:6px; font-size:10.5px; letter-spacing:0.5px; }
+.wh-stats div{ display:flex; justify-content:space-between; gap:10px; color:var(--dim); }
+.wh-stats b{ color:var(--text); text-align:right; }
+.wh-foot{ margin-top:14px; font-size:9.5px; line-height:1.55; color:var(--dim); letter-spacing:0.3px; }
 .skewt-card{ background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:14px; grid-row:span 1; display:flex; flex-direction:column; }
 .skewt-card .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
 .skewt-img-wrap{ flex:1; display:flex; align-items:center; justify-content:center; background:#04070a; border-radius:6px; min-height:220px; overflow:hidden; position:relative; }
@@ -1150,6 +1206,11 @@ html[data-theme="light"] .cape-bar{ background:linear-gradient(90deg, #13a574 0%
 html[data-theme="light"] .li-bar{ background:linear-gradient(90deg, #e0384c 0%, #f0a100 40%, #13a574 100%); }
 html[data-theme="light"] .dp-bar{ background:linear-gradient(90deg, #13a574 0%, #0e98cc 48%, #f0a100 72%, #f0a100 100%); }
 html[data-theme="light"] .cin-bar{ background:linear-gradient(90deg, #13a574 0%, #0e98cc 25%, #f0a100 75%, #e0384c 95%, #e0384c 100%); }
+html[data-theme="light"] .shear-bar{ background:linear-gradient(90deg, #13a574 0%, #13a574 30%, #f0a100 36%, #f0a100 54%, #e0384c 60%, #e0384c 80%, #9b6cf0 86%, #9b6cf0 100%); }
+html[data-theme="light"] .wh-card{ border-color:rgba(153,87,0,0.18); box-shadow:var(--card-shadow); }
+html[data-theme="light"] .wh-chip.active{ color:#ffffff; }
+html[data-theme="light"] .wh-bar{ background:rgba(12,26,34,0.09); }
+html[data-theme="light"] .wh-bar i{ background:var(--cyan-fill); }
 html[data-theme="light"] .now-head .now-temp{ text-shadow:none; }
 </style>
 </head>
@@ -1476,6 +1537,37 @@ html[data-theme="light"] .now-head .now-temp{ text-shadow:none; }
 <div class="tip-scale"><span>-200 (capped)</span><span>0 (no cap)</span></div>
 </div>
 </div>
+</div>
+<!-- WIND WITH HEIGHT: how the wind changes from the ground to ~5.5 km (wind shear); drawn by whRender() -->
+<div class="wh-card" id="windHeight">
+<div class="wh-head">
+<div class="lbl tip-wrap" tabindex="0">WIND WITH HEIGHT &middot; <span id="whWhen">NOW</span> <span class="info-dot">?</span>
+<div class="tip">
+<div class="tip-title">Wind Shear &middot; How the Wind Changes With Height</div>
+<div class="tip-text">Storms need fuel (CAPE) to form; shear decides what they do next. With little change in the wind going up, storms pop up and fade. A big change in speed and direction lets them organise into lines or, rarely, rotating supercells. Shear alone doesn't make storms &mdash; windy winter days often have plenty of it and no storms at all.</div>
+<div class="tip-bar shear-bar"><span class="tip-marker" id="mk-shear"></span></div>
+<div class="tip-scale"><span>0</span><span>35</span><span>70+ mph</span></div>
+</div>
+</div>
+<div class="wh-chips" id="whView" role="group" aria-label="Choose the simple or technical view">
+<button type="button" class="wh-chip active" data-v="simple" aria-pressed="true">SIMPLE</button>
+<button type="button" class="wh-chip" data-v="tech" aria-pressed="false">TECHNICAL</button>
+</div>
+</div>
+<div class="wh-chips wh-hours" id="whHours" hidden></div>
+<div id="whSimple">
+<div class="wh-body">
+<div class="wh-rows" id="whRows"><div class="wh-msg">LOADING MODEL WINDS&hellip;</div></div>
+<div class="wh-side">
+<div class="lbl2">WIND CHANGE, GROUND &rarr; 5.5 KM</div>
+<div><span class="val" id="whShear">--</span><span class="unit">MPH</span><span class="unit" id="whShearKt"></span></div>
+<div class="verdict" id="whVerdict">&mdash;</div>
+<div class="wh-say" id="whSay"></div>
+</div>
+</div>
+</div>
+<div id="whTech" hidden><div class="wh-tech" id="whTechBody"></div></div>
+<div class="wh-foot">Model winds over Jersey (Open-Meteo) at the ground, ~750&nbsp;m, 1.5&nbsp;km, 3&nbsp;km and 5.5&nbsp;km. A guide to how storms might behave, not a warning.</div>
 </div>
 </div>
 <div style="text-align:center; margin-top:16px;">
@@ -2211,7 +2303,9 @@ const u1 = -speed1 * Math.sin(dir1 * Math.PI/180), v1 = -speed1 * Math.cos(dir1 
 const u2 = -speed2 * Math.sin(dir2 * Math.PI/180), v2 = -speed2 * Math.cos(dir2 * Math.PI/180);
 return Math.hypot(u2-u1, v2-v1);
 }
-function classifyStormMode(cape, cin, shearMph){
+// lowShearMph / lowTurn (optional): change and clockwise turning (degrees) from the ground to ~1.5 km;
+// they only change the wording of the supercell tier.
+function classifyStormMode(cape, cin, shearMph, lowShearMph, lowTurn){
 if(cape < 300 || (cin <= -100 && cape < 1500)){
 return { tier:0, label:'STORMS UNLIKELY', color:GREEN,
 desc:'Not enough instability (or too strong a cap) for storms to develop in the current environment.' };
@@ -2228,27 +2322,83 @@ if(shearMph < 58 || cape < 1500){
 return { tier:3, label:'ORGANISED MULTICELL / SQUALL LINE POSSIBLE', color:RED,
 desc:'Strong shear can organise storms into longer-lived clusters or a squall line. Watch for damaging wind gusts, heavier hail, and frequent lightning.' };
 }
+let rot = '';
+if(lowShearMph != null){
+rot = (lowShearMph >= 23 && lowTurn >= 20)
+? ' The wind also turns sharply in the lowest 1.5 km, which raises the (still small) chance of a tornado.'
+: ' The lowest winds don’t turn much, so a tornado is unlikely.';
+}
 return { tier:4, label:'ISOLATED SUPERCELL POTENTIAL', color:RED,
-desc:'Strong instability combined with strong shear can support isolated rotating storms (supercells) — the greatest risk of large hail, damaging gusts, and (rarely, in this setup) a tornado. This is an approximate read without full directional wind-turning data, so treat as indicative rather than certain.' };
+desc:'Strong instability combined with strong shear can support isolated rotating storms (supercells) — the greatest risk of large hail and damaging gusts.' + rot + ' Treat this as indicative: it is read from five model heights.' };
 }
-// Scans forward through today's remaining hourly data for the best chance
-// of storms actually firing — the hour with the highest CAPE among hours
-// where the cap (CIN) isn't too strong to prevent initiation.
-function findStormTiming(hourlyTimes, hourlyCape, hourlyCin, startIdx){
-let bestIdx = -1, bestCape = -1;
-const todayStr = hourlyTimes[startIdx].slice(0,10);
-for(let i = startIdx; i < hourlyTimes.length && i < startIdx + 18; i++){
-if(hourlyTimes[i].slice(0,10) !== todayStr) break; // stop at day change
-const c = hourlyCape[i], cin = hourlyCin[i];
-if(c === null || cin === null) continue;
-if(cin <= -100) continue; // too capped for initiation
-if(c > bestCape){ bestCape = c; bestIdx = i; }
+// ---------- WIND WITH HEIGHT (wind shear) ----------
+// Open-Meteo model winds over Jersey at five heights: 10 m, 925 hPa (~750 m), 850 hPa (~1.5 km),
+// 700 hPa (~3 km) and 500 hPa (~5.5 km). Speeds come in mph (wind_speed_unit=mph in loadWeather).
+const WH_LEVELS = [
+{ key:'500hPa', lbl:'5.5 KM', tech:'500 hPa · ~5.5 km', pt:'5.5' },
+{ key:'700hPa', lbl:'3 KM',   tech:'700 hPa · ~3 km',   pt:'3' },
+{ key:'850hPa', lbl:'1.5 KM', tech:'850 hPa · ~1.5 km', pt:'1.5' },
+{ key:'925hPa', lbl:'750 M',  tech:'925 hPa · ~750 m',  pt:'0.75' },
+{ key:'10m',    lbl:'GROUND', tech:'10 m · surface',    pt:'SFC' }
+];
+const MPH_TO_KT = 0.868976;
+// (compass16() further down gives the 16-point name of a direction)
+// the five winds for hour i, highest first ([0] = 5.5 km ... [4] = ground); null if any is missing
+function whProfile(h, i){
+const out = [];
+for(const L of WH_LEVELS){
+const sa = h['wind_speed_' + L.key], da = h['wind_direction_' + L.key];
+const s = sa ? sa[i] : null, d = da ? da[i] : null;
+if(s == null || d == null) return null;
+out.push({ lbl:L.lbl, tech:L.tech, pt:L.pt, s:s, d:d });
 }
-return { idx: bestIdx, cape: bestCape };
+return out;
 }
-function renderStormOutlook(cape, cin, cur, hourlyTimes, hourlyCape, hourlyCin, nowIdx, shearDir500, shearSpeed500){
-const shear = windShearMph(cur.wind_direction_10m, cur.wind_speed_10m, shearDir500, shearSpeed500);
-const mode = classifyStormMode(cape, cin, shear);
+// how far the wind turns going up from direction a to direction b: + = clockwise (veering), - = anticlockwise (backing)
+function whTurn(a, b){ return ((b - a + 540) % 360) - 180; }
+// one scale for the card, the tip bar and the outlook box (same steps as classifyStormMode)
+function shearTier(mph){
+if(mph < 23) return { label:'WEAK SHEAR', color:GREEN };
+if(mph < 40) return { label:'MODERATE SHEAR', color:AMBER };
+if(mph < 58) return { label:'STRONG SHEAR', color:RED };
+return { label:'VERY STRONG SHEAR', color:VIOLET };
+}
+// everything the outlook needs for hour i (CAPE, CIN, shear, storm type); null if data is missing
+function stormHourAt(h, i){
+const cape = h.cape[i], cin = h.convective_inhibition[i];
+const p = whProfile(h, i);
+if(cape == null || cin == null || !p) return null;
+const g = p[4], top = p[0], low = p[2];
+const shear = windShearMph(g.d, g.s, top.d, top.s);
+const lowShear = windShearMph(g.d, g.s, low.d, low.s);
+const lowTurn = (g.s >= 5 && low.s >= 5) ? whTurn(g.d, low.d) : 0;
+return { i:i, cape:cape, cin:cin, shear:shear, prof:p, mode:classifyStormMode(cape, cin, shear, lowShear, lowTurn) };
+}
+// The outlook box judges the REST OF TODAY (up to 18 hours), not just this hour: each hour is classified with its
+// own CAPE, CIN and shear, and the box shows the most significant storm type (then the most fuel) with its time.
+// A morning with little CAPE no longer hides an afternoon with plenty. Returns the hour index it describes.
+function renderStormOutlook(data, cur, nowIdx){
+const h = data.hourly;
+let now = stormHourAt(h, nowIdx);
+if(!now){ // a height is missing: this hour's CAPE/CIN with the current ground wind against 500 hPa, as before
+const c = h.cape[nowIdx] || 0, cin = h.convective_inhibition[nowIdx] || 0;
+const s5 = h.wind_speed_500hPa[nowIdx], d5 = h.wind_direction_500hPa[nowIdx];
+const shear = (s5 == null || d5 == null) ? 0 : windShearMph(cur.wind_direction_10m, cur.wind_speed_10m, d5, s5);
+now = { i:nowIdx, cape:c, cin:cin, shear:shear, prof:null, mode:classifyStormMode(c, cin, shear) };
+}
+let best = now;
+const today = h.time[nowIdx].slice(0,10);
+for(let i = nowIdx + 1; i < h.time.length && i < nowIdx + 18; i++){
+if(h.time[i].slice(0,10) !== today) break; // stop at midnight
+const x = stormHourAt(h, i);
+if(!x) continue;
+if(x.mode.tier > best.mode.tier || (x.mode.tier === best.mode.tier && x.cape > best.cape)) best = x;
+}
+// a later hour of the same type only counts if it clearly has more fuel
+if(best !== now && best.mode.tier === now.mode.tier && best.cape <= now.cape + 200) best = now;
+const isOngoing = [95,96,99].includes(cur.weather_code);
+const show = isOngoing ? now : best;
+const mode = show.mode;
 const titleEl = document.getElementById('stormOutlookTitle');
 const descEl = document.getElementById('stormOutlookDesc');
 const timingEl = document.getElementById('stormOutlookTiming');
@@ -2256,27 +2406,161 @@ const panel = document.getElementById('stormOutlook');
 titleEl.textContent = mode.label; titleEl.style.color = mode.color;
 descEl.textContent = mode.desc;
 panel.style.borderColor = mode.color;
-
-const isOngoing = [95,96,99].includes(cur.weather_code);
 if(isOngoing){
 timingEl.textContent = 'THUNDERSTORMS ARE CURRENTLY ONGOING AT THIS LOCATION.';
 timingEl.style.color = RED;
 } else if(mode.tier === 0){
 timingEl.textContent = 'No storm development expected for the rest of today based on current data.';
 timingEl.style.color = GREEN;
-} else {
-const timing = findStormTiming(hourlyTimes, hourlyCape, hourlyCin, nowIdx);
-if(timing.idx >= 0 && timing.cape > cape + 200){
-const t = new Date(hourlyTimes[timing.idx]);
-const timeStr = t.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/London'});
-timingEl.textContent = 'Best chance of storms forming later today: around ' + timeStr + ', when instability peaks.';
-timingEl.style.color = AMBER;
-} else {
+} else if(show === now){
 timingEl.textContent = 'Conditions are already near their most favourable for today — any storms are most likely around now.';
 timingEl.style.color = AMBER;
+} else {
+timingEl.textContent = 'Best chance later today: around ' + h.time[show.i].slice(11,16) + ' (CAPE ' + Math.round(show.cape).toLocaleString('en-GB') +
+' J/kg, wind change ' + Math.round(show.shear) + ' mph up to 5.5 km).' +
+(now.mode.tier < mode.tier ? ' Right now: ' + now.mode.label.toLowerCase() + '.' : '');
+timingEl.style.color = AMBER;
 }
+return show.i;
 }
+// ---- the WIND WITH HEIGHT card ----
+const WHC = { h:null, nowIdx:0, outIdx:0, sel:0, view:'simple' };
+try{ if(localStorage.getItem('jwc-wind-view') === 'tech') WHC.view = 'tech'; }catch(e){}
+function whVec(s, d){ return [-s * Math.sin(d * Math.PI / 180), -s * Math.cos(d * Math.PI / 180)]; } // toward the east, toward the north
+function whDial(d, s){
+if(s < 2) return '<svg class="wh-dial" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12"/><circle class="calm" cx="14" cy="14" r="2.5"/></svg>';
+return '<svg class="wh-dial" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12"/>' +
+'<g transform="rotate(' + ((d + 180) % 360).toFixed(0) + ' 14 14)"><path d="M14 4 L19.5 13 L15.6 13 L15.6 23.5 L12.4 23.5 L12.4 13 L8.5 13 Z"/></g></svg>';
 }
+function whInit(data, nowIdx, outIdx){
+WHC.h = data.hourly; WHC.nowIdx = nowIdx; WHC.outIdx = outIdx; WHC.sel = outIdx;
+const hrs = document.getElementById('whHours');
+if(outIdx !== nowIdx){
+hrs.innerHTML = '<span class="wh-hours-lbl">SHOW</span>' +
+'<button type="button" class="wh-chip" data-i="' + outIdx + '">' + WHC.h.time[outIdx].slice(11,16) + ' &middot; OUTLOOK HOUR</button>' +
+'<button type="button" class="wh-chip" data-i="' + nowIdx + '">NOW</button>';
+hrs.hidden = false;
+} else {
+hrs.innerHTML = ''; hrs.hidden = true;
+}
+whRender();
+}
+function whFail(){
+if(WHC.h) return; // keep the last good reading
+document.getElementById('whRows').innerHTML = '<div class="wh-msg">MODEL WINDS UNAVAILABLE RIGHT NOW &mdash; TRYING AGAIN SHORTLY</div>';
+}
+function whRender(){
+const i = WHC.sel;
+document.querySelectorAll('#whView .wh-chip').forEach(function(b){
+const on = b.dataset.v === WHC.view;
+b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+});
+document.querySelectorAll('#whHours .wh-chip').forEach(function(b){ b.classList.toggle('active', Number(b.dataset.i) === i); });
+document.getElementById('whSimple').hidden = WHC.view !== 'simple';
+document.getElementById('whTech').hidden = WHC.view !== 'tech';
+if(!WHC.h) return;
+document.getElementById('whWhen').textContent = i === WHC.nowIdx ? 'NOW' : WHC.h.time[i].slice(11,16) + ' TODAY';
+const p = whProfile(WHC.h, i);
+if(!p){
+document.getElementById('whRows').innerHTML = '<div class="wh-msg">MODEL WINDS AT HEIGHT ARE MISSING FOR THIS HOUR</div>';
+document.getElementById('whTechBody').innerHTML = '<div class="wh-msg">MODEL WINDS AT HEIGHT ARE MISSING FOR THIS HOUR</div>';
+return;
+}
+const g = p[4], top = p[0];
+const shear = windShearMph(g.d, g.s, top.d, top.s);
+const tier = shearTier(shear);
+// SIMPLE: one row per height, highest at the top; the arrow points the way the wind is blowing
+const maxS = Math.max(60, Math.max.apply(null, p.map(function(x){ return x.s; })));
+document.getElementById('whRows').innerHTML = p.map(function(x){
+return '<div class="wh-row"><span class="wh-h">' + x.lbl + '</span>' + whDial(x.d, x.s) +
+'<span class="wh-bar"><i style="width:' + (x.s / maxS * 100).toFixed(1) + '%"></i></span>' +
+'<span class="wh-v"><b>' + Math.round(x.s) + '</b><small> MPH</small><em>' + (x.s < 2 ? 'CALM' : 'FROM ' + compass16(x.d)) + '</em></span></div>';
+}).join('');
+document.getElementById('whShear').textContent = Math.round(shear);
+document.getElementById('whShearKt').textContent = '(' + Math.round(shear * MPH_TO_KT) + ' KT)';
+const st = stormHourAt(WHC.h, i);
+// no storm fuel (or a strong cap) at this hour: the shear can't do anything on its own, so its label stays neutral
+// rather than red or purple - a windy winter day should not look like a storm threat
+const vColor = (st && st.mode.tier === 0) ? CYAN : tier.color;
+const vEl = document.getElementById('whVerdict');
+vEl.textContent = tier.label; vEl.style.color = vColor; vEl.style.border = '1px solid ' + vColor;
+setTipMarker('mk-shear', shear, 0, 70);
+let s1 = 'The wind goes from ' + Math.round(g.s) + ' mph at the ground to ' + Math.round(top.s) + ' mph at 5.5 km';
+if(g.s >= 5 && top.s >= 5){
+const tr = whTurn(g.d, top.d);
+if(tr >= 30) s1 += ', turning clockwise (from the ' + compass16(g.d) + ' to the ' + compass16(top.d) + ').';
+else if(tr <= -30) s1 += ', turning anticlockwise (from the ' + compass16(g.d) + ' to the ' + compass16(top.d) + ').';
+else s1 += ', blowing from much the same direction.';
+} else s1 += '.';
+let s2 = '';
+if(st){
+if(st.cape < 300) s2 = 'Little storm fuel at this hour (CAPE ' + Math.round(st.cape) + ' J/kg), so this won’t set storms off on its own.';
+else if(st.mode.tier === 0) s2 = 'A strong cap is holding storms back at this hour.';
+else s2 = ['', 'If storms form, they’re likely to be brief pop-up storms that fade quickly.',
+'If storms form, they could group into clusters, with gusty winds and some small hail.',
+'If storms form, they could organise into lines or long-lived clusters, with damaging gusts possible.',
+'There’s enough fuel and shear for rotating storms (supercells) — rare here, but the strongest kind.'][st.mode.tier];
+}
+document.getElementById('whSay').innerHTML = '<p>' + s1 + '</p>' + (s2 ? '<p>' + s2 + '</p>' : '');
+// TECHNICAL: hodograph (wind vectors joined from the ground up, in knots) plus the numbers
+document.getElementById('whTechBody').innerHTML = whHodo(p) + whTechTable(p);
+}
+function whHodo(p){
+const C = 135, R = 116;
+const pts = p.slice().reverse().map(function(x){ const v = whVec(x.s * MPH_TO_KT, x.d); return { u:v[0], v:v[1], pt:x.pt }; }); // ground first
+const maxKt = Math.max(10, Math.max.apply(null, pts.map(function(q){ return Math.hypot(q.u, q.v); })));
+const step = maxKt <= 30 ? 10 : maxKt <= 60 ? 20 : maxKt <= 120 ? 40 : 60;
+const rMax = Math.ceil(maxKt / step) * step, k = R / rMax;
+const X = function(q){ return (C + q.u * k).toFixed(1); }, Y = function(q){ return (C - q.v * k).toFixed(1); };
+let s = '<svg class="wh-hodo" viewBox="0 0 270 270" role="img" aria-label="Hodograph: the wind at each height drawn as a point, joined from the ground up">';
+s += '<line class="wh-axis" x1="' + (C - R) + '" y1="' + C + '" x2="' + (C + R) + '" y2="' + C + '"/><line class="wh-axis" x1="' + C + '" y1="' + (C - R) + '" x2="' + C + '" y2="' + (C + R) + '"/>';
+for(let r = step; r <= rMax; r += step){
+s += '<circle class="wh-ring" cx="' + C + '" cy="' + C + '" r="' + (r * k).toFixed(1) + '"/>';
+s += '<text class="wh-ring-lbl" x="' + (C + 3) + '" y="' + (C + r * k - 3).toFixed(1) + '">' + r + ' kt</text>';
+}
+s += '<line class="wh-bulk" x1="' + X(pts[0]) + '" y1="' + Y(pts[0]) + '" x2="' + X(pts[4]) + '" y2="' + Y(pts[4]) + '"/>';
+s += '<polyline class="wh-trace" points="' + pts.map(function(q){ return X(q) + ',' + Y(q); }).join(' ') + '"/>';
+pts.forEach(function(q){
+// each label sits just outside its dot, pushed away from the centre so it stays clear of the line
+const px = Number(X(q)), py = Number(Y(q));
+let ux = px - C, uy = py - C;
+const n = Math.hypot(ux, uy);
+if(n < 4){ ux = 0.7; uy = 0.7; } else { ux /= n; uy /= n; }
+s += '<circle class="wh-pt" cx="' + px + '" cy="' + py + '" r="3.4"/>';
+s += '<text class="wh-pt-lbl" text-anchor="' + (ux < -0.3 ? 'end' : ux > 0.3 ? 'start' : 'middle') + '" dominant-baseline="central" x="' +
+(px + ux * 9).toFixed(1) + '" y="' + (py + uy * 9).toFixed(1) + '">' + q.pt + '</text>';
+});
+return s + '</svg>';
+}
+function whTechTable(p){
+const g = p[4], top = p[0], low = p[2], mid = p[1];
+const kt = function(v){ return Math.round(v * MPH_TO_KT); };
+const bulk = windShearMph(g.d, g.s, top.d, top.s), lowSh = windShearMph(g.d, g.s, low.d, low.s);
+let turn = '—';
+if(g.s >= 5 && mid.s >= 5){
+const t = whTurn(g.d, mid.d);
+turn = (t > 0 ? '+' : '') + Math.round(t) + '° ' + (Math.abs(t) < 20 ? 'LITTLE TURNING' : t > 0 ? 'VEERING' : 'BACKING');
+}
+let s = '<div><table class="wh-table"><thead><tr><th>LEVEL</th><th>FROM</th><th>SPEED</th></tr></thead><tbody>';
+p.forEach(function(x){ s += '<tr><td>' + x.tech + '</td><td>' + Math.round(x.d) + '°</td><td>' + kt(x.s) + ' kt</td></tr>'; });
+s += '</tbody></table><div class="wh-stats">';
+s += '<div><span>0–6 KM BULK SHEAR</span><b>' + kt(bulk) + ' KT</b></div>';
+s += '<div><span>0–1.5 KM SHEAR</span><b>' + kt(lowSh) + ' KT</b></div>';
+s += '<div><span>TURNING, GROUND → 3 KM</span><b>' + turn + '</b></div>';
+s += '</div><div class="wh-foot">Hodograph: each dot is the wind at one height (SFC = ground, then km), joined from the ground up. A line curving clockwise means the wind veers with height, which favours storms that rotate; the dashed line is the 0–6 km bulk shear. Five model levels only, so treat it as a sketch.</div></div>';
+return s;
+}
+document.getElementById('whView').addEventListener('click', function(e){
+const b = e.target.closest('.wh-chip'); if(!b) return;
+WHC.view = b.dataset.v === 'tech' ? 'tech' : 'simple';
+try{ localStorage.setItem('jwc-wind-view', WHC.view); }catch(err){}
+whRender();
+});
+document.getElementById('whHours').addEventListener('click', function(e){
+const b = e.target.closest('.wh-chip'); if(!b) return;
+WHC.sel = Number(b.dataset.i); whRender();
+});
+whRender();
 // ---------- WEATHER FETCH ----------
 const LAT=49.1805, LON=-2.1058;
 const TEST_MODE = false;
@@ -3021,13 +3305,13 @@ const cinLabel = cin >= -10 ? 'NO CAP \u2014 UNRESTRICTED' : cin >= -50 ? 'WEAK 
 const cinColor = cin >= -10 ? RED : cin >= -50 ? AMBER : cin >= -150 ? CYAN : GREEN;
 cinEl.textContent = cinLabel; cinEl.style.color = cinColor; cinEl.style.border = '1px solid '+cinColor;
 
-renderStormOutlook(cape, cin, cur, hTimes, data.hourly.cape, data.hourly.convective_inhibition, idx,
-data.hourly.wind_direction_500hPa[idx], data.hourly.wind_speed_500hPa[idx]);
+const outIdx = renderStormOutlook(data, cur, idx);
+whInit(data, idx, outIdx);
 }
 async function loadWeather(){
 const base = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&wind_speed_unit=mph&timezone=auto`;
 const urlFast = base + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,uv_index,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl,cloud_cover,is_day&hourly=temperature_2m,pressure_msl,relative_humidity_2m,apparent_temperature,uv_index,wind_speed_10m,wind_gusts_10m&past_hours=12&forecast_hours=2';
-const urlStorm = base + '&hourly=cape,lifted_index,dew_point_2m,convective_inhibition,wind_speed_500hPa,wind_direction_500hPa&past_hours=12';
+const urlStorm = base + '&hourly=cape,lifted_index,dew_point_2m,convective_inhibition,wind_speed_10m,wind_direction_10m,wind_speed_925hPa,wind_direction_925hPa,wind_speed_850hPa,wind_direction_850hPa,wind_speed_700hPa,wind_direction_700hPa,wind_speed_500hPa,wind_direction_500hPa&past_hours=12';
 const fastP = fetchJsonRetry(urlFast, 20000, 2);
 const stormP = fetchJsonRetry(urlStorm, 40000, 2);
 stormP.catch(function(){});
@@ -3048,6 +3332,7 @@ const sd = await stormP;
 wxRenderStorm(sd, cur);
 }catch(e){
 console.error('storm-index fetch failed', e);
+whFail();
 }
 }
 async function loadAirQuality(){
