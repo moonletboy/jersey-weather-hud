@@ -752,7 +752,7 @@ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);
 .dp-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 48%, #ffb020 72%, #ffb020 100%); }
 .cin-bar{ background:linear-gradient(90deg, #2de1a0 0%, #4cd3ff 25%, #ffb020 75%, #ff4b5c 95%, #ff4b5c 100%); }
 .shear-bar{ background:linear-gradient(90deg, #2de1a0 0%, #2de1a0 30%, #ffb020 36%, #ffb020 54%, #ff4b5c 60%, #ff4b5c 80%, #b98aff 86%, #b98aff 100%); }
-/* WIND WITH HEIGHT (wind shear) card under the convective tiles: a simple arrow ladder, or a hodograph in TECHNICAL */
+/* WIND WITH HEIGHT (wind shear) card under the convective tiles: an arrow ladder (BASIC VIEW), or a hodograph (TECHNICAL VIEW) */
 .wh-card{ margin-top:16px; background:var(--bg-panel); border:1px solid rgba(255,176,32,0.18); border-radius:10px; padding:18px; }
 .wh-card [hidden]{ display:none !important; }
 .wh-head{ display:flex; justify-content:space-between; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-bottom:14px; }
@@ -1549,9 +1549,9 @@ html[data-theme="light"] .now-head .now-temp{ text-shadow:none; }
 <div class="tip-scale"><span>0</span><span>35</span><span>70+ mph</span></div>
 </div>
 </div>
-<div class="wh-chips" id="whView" role="group" aria-label="Choose the simple or technical view">
-<button type="button" class="wh-chip active" data-v="simple" aria-pressed="true">SIMPLE</button>
-<button type="button" class="wh-chip" data-v="tech" aria-pressed="false">TECHNICAL</button>
+<div class="wh-chips" id="whView" role="group" aria-label="Choose the basic or technical view">
+<button type="button" class="wh-chip active" data-v="simple" aria-pressed="true">BASIC VIEW</button>
+<button type="button" class="wh-chip" data-v="tech" aria-pressed="false">TECHNICAL VIEW</button>
 </div>
 </div>
 <div class="wh-chips wh-hours" id="whHours" hidden></div>
