@@ -364,6 +364,7 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
   <footer>
     <div>JERSEY WEATHER CHAT &middot; MICROCLIMATE GRID</div>
     <div>DATA: WEATHER UNDERGROUND PERSONAL WEATHER STATIONS &middot; OWNER-OPERATED, UNOFFICIAL AND UNCALIBRATED &middot; SHADING BETWEEN STATIONS IS ESTIMATED</div>
+    <div id="refreshNote"></div>
     <div>PARISH BOUNDARIES &copy; OPENSTREETMAP CONTRIBUTORS (ODbL)</div>
   </footer>
 
@@ -372,77 +373,32 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
 <script>
   /* ============================================================
      CONFIG — the only block you normally need to touch.
-     WU_API_KEY : your Weather Underground API key (free for people
-                  with a registered station). Leave '' for demo mode.
-     PROXY_URL  : OPTIONAL. If you later route the data through your
-                  Google Apps Script, put its /exec URL here instead
-                  (the page then asks it for ?action=pws).
-     REFRESH_MIN: how often to refresh (minutes). Each refresh costs
-                  one API call per station, and Weather Underground
-                  limits calls per day, so keep this fairly high.
+     PROXY_URL  : the JWC Stations web app (the Apps Script inside the
+                  "JWC Stations" Google Sheet); the page asks it for
+                  ?action=pws. The Weather Underground key lives in that
+                  script now, not in this public page. Leave '' to see
+                  made-up DEMO data.
+     REFRESH_MIN: how often an open page asks the script for the latest
+                  copy (minutes). This is cheap: the script fetches from
+                  Weather Underground on everyone's behalf and paces
+                  itself to stay within the free allowance.
      STALE_MIN  : a reading older than this is treated as stale and
                   left out of the contour map.
      ============================================================ */
   const CONFIG = {
-    WU_API_KEY: 'cea50f19e5f84daca50f19e5f83dac0a',
-    PROXY_URL: '',
-    REFRESH_MIN: 15,
+    PROXY_URL: 'https://script.google.com/macros/s/AKfycbwcrXFVEYz8g12ZJ0JzUvXIW2wL5FUoz1jbCFdJTvMVF3ALV1xl_-wwJ43vGW__Pyns4w/exec',
+    REFRESH_MIN: 5,
     STALE_MIN: 90
   };
 
   /* ============================================================
-     STATION LIST — formerly stations-data.json, now built in.
-     These are the real Jersey stations found by wu-test.html.
-     Only id, name, lat and lng are needed; live readings come from
-     Weather Underground (a station's own position and name from
-     Weather Underground are used once its reading arrives).
+     STATION LIST — kept in the "JWC Stations" Google Sheet
+     (Stations tab) since 29 Oct 2026. Add, rename or hide stations
+     there; this page picks the changes up by itself.
      ============================================================ */
-  const STATIONS = [
-    { id:"ITRINITY2", name:"Trinity", lat:49.24363, lng:-2.10493 },
-    { id:"ISAINT6315", name:"Saint Ouen", lat:49.24329, lng:-2.24037 },
-    { id:"ITRINI32", name:"Trinity", lat:49.233, lng:-2.1 },
-    { id:"IJERSEY24", name:"Jersey", lat:49.2315, lng:-2.15543 },
-    { id:"ISAINT5096", name:"Saint Mary", lat:49.22744, lng:-2.16972 },
-    { id:"ISAINT7628", name:"Saint John", lat:49.22061, lng:-2.11386 },
-    { id:"ISAINT7711", name:"Saint Saviour", lat:49.21832, lng:-2.06517 },
-    { id:"ISAINT5503", name:"Saint Helier", lat:49.21679, lng:-2.11501 },
-    { id:"ISTPET54", name:"St Peter's", lat:49.21412, lng:-2.19014 },
-    { id:"ISAINT7013", name:"Saint Martin", lat:49.21136, lng:-2.03877 },
-    { id:"ISAINTLA156", name:"Saint Lawrence", lat:49.20944, lng:-2.14197 },
-    { id:"ISAINT9517", name:"Saint Martin", lat:49.20931, lng:-2.05347 },
-    { id:"ISAINT10791", name:"Saint Martin", lat:49.205, lng:-2.028 },
-    { id:"ISTPET53", name:"St Peters", lat:49.204, lng:-2.161 },
-    { id:"ISAINT10594", name:"Saint Saviour", lat:49.20292, lng:-2.04609 },
-    { id:"IJERSE26", name:"Jersey", lat:49.20048, lng:-2.15482 },
-    { id:"ISAINT9683", name:"Saint Brelade", lat:49.20019, lng:-2.19417 },
-    { id:"ISAINT8998", name:"Saint Brelade", lat:49.19896, lng:-2.1799 },
-    { id:"ISAINT11214", name:"Saint Saviour", lat:49.1989, lng:-2.06948 },
-    { id:"ISTSAV1", name:"St. Saviour", lat:49.19886, lng:-2.07031 },
-    { id:"ISAINT8993", name:"Saint Brelade", lat:49.19867, lng:-2.18017 },
-    { id:"ISAINT9928", name:"Saint Helier", lat:49.19866, lng:-2.13155 },
-    { id:"ISAINT11417", name:"Saint Lawrence", lat:49.19754, lng:-2.14576 },
-    { id:"IGROUVIL2", name:"Gorey", lat:49.19717, lng:-2.0339 },
-    { id:"ICHANNEL3", name:"Jersey", lat:49.19482, lng:-2.03484 },
-    { id:"ISAINT1019", name:"Saint Helier", lat:49.19289, lng:-2.10979 },
-    { id:"ISAINT9664", name:"Saint Helier", lat:49.192, lng:-2.123 },
-    { id:"IMAISO24", name:"Maison St.Louis", lat:49.191, lng:-2.094 },
-    { id:"IGROUV4", name:"Grouville", lat:49.18857, lng:-2.06451 },
-    { id:"ISAINT5592", name:"Saint Brelade", lat:49.18776, lng:-2.22403 },
-    { id:"IJERSE35", name:"Jersey", lat:49.18272, lng:-2.21561 },
-    { id:"ISAINT4222", name:"Saint Helier", lat:49.17914, lng:-2.10181 },
-    { id:"ISAINT7913", name:"Saint Saviour", lat:49.17866, lng:-2.0927 },
-    { id:"ISAINT10533", name:"Saint Helier", lat:49.17804, lng:-2.11435 },
-    { id:"ISAINT11726", name:"Saint Helier", lat:49.178, lng:-2.104 },
-    { id:"ISAINT7380", name:"Saint Clement", lat:49.17501, lng:-2.08693 },
-    { id:"ISAINT5415", name:"Saint Brelade", lat:49.175, lng:-2.177 },
-    { id:"ISAINT6802", name:"Saint Clement", lat:49.174, lng:-2.089 },
-    { id:"ISAINT6768", name:"Saint Clement", lat:49.17354, lng:-2.08767 },
-    { id:"IGROUV2", name:"Grouville", lat:49.16937, lng:-2.03028 },
-    { id:"ISAINT947", name:"Saint Clement", lat:49.16529, lng:-2.08027 }
-  ];
 
-  // Demo mode (no API key / proxy) invents a plausible gradient from each
-  // station's position. Optional per-ID overrides: [temp °C, wind mph, gust mph, rain mm].
+  // Demo mode (no PROXY_URL) puts a made-up station in the middle of each
+  // parish and invents a plausible gradient from its position. Optional per-ID overrides: [temp °C, wind mph, gust mph, rain mm].
   const DEMO = {};
 
   /* ============================================================
@@ -672,124 +628,132 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
     return o;
   }
 
-  function fromWU(s, j){
-    const ob = j && j.observations && j.observations[0];
-    if(!ob) return blank(s, 'offline', 'no data');
-    const m = ob.metric;
-    if(!m) return blank(s, 'offline', 'unexpected format');
-    const t = ob.obsTimeUtc ? Date.parse(ob.obsTimeUtc) : NaN;
-    const time = isNaN(t) ? null : t;
-    const wind = num(m.windSpeed), gust = num(m.windGust);
-    const o = {
-      id: s.id,
-      name: s.name || ob.neighborhood || s.id,
-      lat: num(ob.lat) !== null ? ob.lat : s.lat,
-      lng: num(ob.lon) !== null ? ob.lon : s.lng,
-      temp: num(m.temp),
-      wind: wind === null ? null : wind * KMH_TO_MPH,
-      gust: gust === null ? null : gust * KMH_TO_MPH,
-      rain: num(m.precipTotal),
-      hum: num(ob.humidity),
-      press: num(m.pressure),
-      dir: num(ob.winddir),
-      time: time,
-      status: 'ok',
-      why: ''
-    };
-    if(time !== null && (Date.now() - time) > CONFIG.STALE_MIN * 60000){ o.status = 'stale'; o.why = 'stale reading'; }
-    return o;
-  }
-
-  async function fetchOne(s){
-    const url = 'https://api.weather.com/v2/pws/observations/current?stationId=' + encodeURIComponent(s.id) +
-                '&format=json&units=m&numericPrecision=decimal&apiKey=' + encodeURIComponent(CONFIG.WU_API_KEY);
-    const ctl = new AbortController();
-    const to = setTimeout(function(){ ctl.abort(); }, 12000);
-    try{
-      const res = await fetch(url, { signal: ctl.signal });
-      if(res.status === 204) return blank(s, 'offline', 'no data');
-      if(!res.ok) return blank(s, 'offline', 'HTTP ' + res.status);
-      const j = await res.json();
-      return fromWU(s, j);
-    }catch(e){
-      return blank(s, 'offline', e && e.name === 'AbortError' ? 'timeout' : 'blocked / network');
-    }finally{
-      clearTimeout(to);
-    }
-  }
-
-  async function fetchDirect(){
-    const out = new Array(STATIONS.length);
-    let next = 0, done = 0;
-    async function worker(){
-      while(next < STATIONS.length){
-        const i = next++;
-        out[i] = await fetchOne(STATIONS[i]);
-        done++;
-        document.getElementById('modeText').textContent = 'FETCHING ' + done + '/' + STATIONS.length;
-      }
-    }
-    await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
-    return out;
-  }
-
-  // The proxy must return a JSON array of objects shaped like:
-  // { id, name, lat, lng, temp (°C), wind (mph), gust (mph), rain (mm), hum (%), press (hPa), dir (wind FROM, degrees), time (ms or ISO), status ('ok'|'stale'|'offline') }
-  async function fetchProxy(){
-    const sep = CONFIG.PROXY_URL.indexOf('?') >= 0 ? '&' : '?';
-    const res = await fetch(CONFIG.PROXY_URL + sep + 'action=pws');
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const arr = await res.json();
-    if(!Array.isArray(arr)) throw new Error('unexpected format');
-    return arr.map(function(r){
-      const t = (typeof r.time === 'number') ? r.time : Date.parse(r.time);
-      const o = blank({ id:String(r.id), name:r.name || String(r.id), lat:Number(r.lat), lng:Number(r.lng) }, r.status || 'ok', r.why || '');
-      o.temp = num(r.temp); o.wind = num(r.wind); o.gust = num(r.gust); o.rain = num(r.rain);
-      o.hum = num(r.hum); o.press = num(r.press); o.dir = num(r.dir);
-      o.time = isNaN(t) ? null : t;
-      if(o.status === 'ok' && o.time !== null && (Date.now() - o.time) > CONFIG.STALE_MIN * 60000){ o.status = 'stale'; }
-      return o;
+  // made-up stations for DEMO mode: one in the middle of each parish
+  function demoStations(){
+    return PARISH_LIST.map(function(pr, i){
+      return { id:'DEMO' + (i + 1), name:pr.name, lat:pr.label[0], lng:pr.label[1] };
     });
   }
 
-  const CACHE_KEY = 'jwc_pws_cache_v2';
-  function readCache(){
+  // a reading that has aged past STALE_MIN since it was saved
+  function restale(list){
+    const now = Date.now();
+    list.forEach(function(o){
+      if(o.status === 'ok' && o.time !== null && (now - o.time) > CONFIG.STALE_MIN * 60000){ o.status = 'stale'; o.why = 'stale reading'; }
+    });
+    return list;
+  }
+
+  // The JWC Stations Apps Script answers ?action=pws with
+  // { status, updated, refreshMin, pending, retrySec, paused, note, stations:[...] }
+  // where each station is
+  // { id, name, lat, lng, temp (°C), wind (mph), gust (mph), rain (mm), hum (%), press (hPa), dir (wind FROM, degrees), time (ms or ISO), status ('ok'|'stale'|'offline'), why }
+  // (a bare array of stations is accepted too).
+  async function fetchProxy(){
+    const sep = CONFIG.PROXY_URL.indexOf('?') >= 0 ? '&' : '?';
+    const ctl = new AbortController();
+    const to = setTimeout(function(){ ctl.abort(); }, 25000);
+    let j;
+    try{
+      const res = await fetch(CONFIG.PROXY_URL + sep + 'action=pws', { signal: ctl.signal });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      j = await res.json();
+    } finally {
+      clearTimeout(to);
+    }
+    const arr = Array.isArray(j) ? j : (j && j.status !== 'error' && Array.isArray(j.stations) ? j.stations : null);
+    if(!arr) throw new Error((j && j.message) ? String(j.message) : 'unexpected format');
+    const list = [];
+    arr.forEach(function(r){
+      if(!r || r.id === undefined || r.id === null) return;
+      const lat = num(typeof r.lat === 'number' ? r.lat : parseFloat(r.lat));
+      const lng = num(typeof r.lng === 'number' ? r.lng : parseFloat(r.lng));
+      if(lat === null || lng === null) return;                 // can't place it on the map
+      const t = (typeof r.time === 'number') ? r.time : Date.parse(r.time);
+      const o = blank({ id:String(r.id), name:r.name || String(r.id), lat:lat, lng:lng }, r.status || 'ok', r.why || '');
+      o.temp = num(r.temp); o.wind = num(r.wind); o.gust = num(r.gust); o.rain = num(r.rain);
+      o.hum = num(r.hum); o.press = num(r.press); o.dir = num(r.dir);
+      o.time = isNaN(t) ? null : t;
+      list.push(o);
+    });
+    const info = Array.isArray(j) ? {} : {
+      refreshMin: num(j.refreshMin), pending: num(j.pending) || 0, retrySec: num(j.retrySec) || 0,
+      paused: j.paused === true, note: j.note ? String(j.note) : ''
+    };
+    return { list: restale(list), info: info };
+  }
+
+  // The last copy that arrived is kept on this device: it makes a quick
+  // return visit instant, and it is shown (with a note) if the script can't
+  // be reached.
+  const CACHE_KEY = 'jwc_pws_cache_v3';
+  try{ localStorage.removeItem('jwc_pws_cache_v2'); }catch(e){}
+  function readSaved(){
     try{
       const raw = localStorage.getItem(CACHE_KEY);
       if(!raw) return null;
       const c = JSON.parse(raw);
-      if(!c || !Array.isArray(c.data)) return null;
-      if((Date.now() - c.t) > CONFIG.REFRESH_MIN * 60000) return null;
+      if(!c || !Array.isArray(c.data) || typeof c.t !== 'number') return null;
       return c;
     }catch(e){ return null; }
   }
-  function writeCache(list){
-    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: list })); }catch(e){}
+  function writeSaved(list, info){
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: list, info: info })); }catch(e){}
+  }
+
+  let feedInfo = {};          // refreshMin, pending, retrySec, paused, note from the script
+  let feedDown = false;       // true while the script can't be reached (a saved copy is shown)
+  let quickTimer = null, quickTries = 0;
+
+  // The script fetches at most 25 stations a minute (Weather Underground's
+  // limit), so after a quiet spell it may say more are on the way: ask again
+  // once they should be ready (up to 3 times in a row).
+  function scheduleQuick(info){
+    clearTimeout(quickTimer);
+    quickTimer = null;
+    if(info && info.pending > 0 && info.retrySec > 0){
+      if(quickTries < 3){
+        quickTries++;
+        quickTimer = setTimeout(function(){ quickTimer = null; if(!document.hidden) load(true); }, (info.retrySec + 3) * 1000);
+      }
+    } else {
+      quickTries = 0;
+    }
   }
 
   async function load(force){
     if(loading) return;
     loading = true;
     try{
-      if(!CONFIG.WU_API_KEY && !CONFIG.PROXY_URL){
+      if(!CONFIG.PROXY_URL){
         mode = 'demo';
-        obs = STATIONS.map(demoObs);
+        obs = demoStations().map(demoObs);
         fetchedAt = Date.now();
+        feedInfo = {};
+        feedDown = false;
       } else {
         mode = 'live';
-        const cached = force ? null : readCache();
-        if(cached){
-          obs = cached.data;
-          fetchedAt = cached.t;
+        const saved = readSaved();
+        if(!force && saved && (Date.now() - saved.t) < CONFIG.REFRESH_MIN * 60000){
+          obs = restale(saved.data);
+          fetchedAt = saved.t;
+          feedInfo = saved.info || {};
+          feedDown = false;
         } else {
           document.getElementById('modeText').textContent = 'FETCHING';
           try{
-            obs = CONFIG.PROXY_URL ? await fetchProxy() : await fetchDirect();
+            const got = await fetchProxy();
+            obs = got.list;
+            feedInfo = got.info;
+            feedDown = false;
+            fetchedAt = Date.now();
+            writeSaved(obs, feedInfo);
+            scheduleQuick(feedInfo);
           }catch(e){
-            obs = STATIONS.map(function(s){ return blank(s, 'offline', 'feed error'); });
+            feedDown = true;
+            if(saved){ obs = restale(saved.data); fetchedAt = saved.t; feedInfo = saved.info || {}; }
+            else { obs = []; fetchedAt = null; feedInfo = {}; }
           }
-          fetchedAt = Date.now();
-          if(obs.some(usable)) writeCache(obs);
         }
       }
     } finally {
@@ -806,7 +770,27 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
     b.className = 'banner';
     if(mode === 'demo'){
       b.className = 'banner warn';
-      b.innerHTML = 'DEMO DATA &mdash; these figures are placeholders so you can check the layout. Add a Weather Underground API key (or a proxy URL) in the CONFIG block at the top of this page&rsquo;s script to show live readings.';
+      b.innerHTML = 'DEMO DATA &mdash; these figures are placeholders so you can check the layout. Put the JWC Stations web app address in PROXY_URL in the CONFIG block at the top of this page&rsquo;s script to show live readings.';
+      return;
+    }
+    if(feedDown){
+      if(obs.length){
+        b.className = 'banner warn';
+        b.innerHTML = 'STATION FEED NOT ANSWERING &mdash; showing the readings saved at ' + hhmm(fetchedAt) + '. They&rsquo;ll update by themselves once it&rsquo;s back.';
+      } else {
+        b.className = 'banner err';
+        b.innerHTML = 'STATION FEED NOT ANSWERING &mdash; please try again in a few minutes.';
+      }
+      return;
+    }
+    if(feedInfo && feedInfo.paused && feedInfo.note){
+      b.className = 'banner warn';
+      b.innerHTML = 'READINGS PAUSED &mdash; ' + escapeHtml(feedInfo.note);
+      return;
+    }
+    if(!obs.length){
+      b.className = 'banner warn';
+      b.innerHTML = 'NO STATIONS TO SHOW AT THE MOMENT.';
       return;
     }
     const ok = obs.filter(usable).length;
@@ -815,8 +799,17 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
       obs.forEach(function(o){ whys[o.why || 'unknown'] = (whys[o.why || 'unknown'] || 0) + 1; });
       const parts = Object.keys(whys).map(function(k){ return escapeHtml(k) + ' &times;' + whys[k]; });
       b.className = 'banner err';
-      b.innerHTML = 'NO STATIONS RESPONDED &mdash; ' + parts.join(', ') + '. Check the API key and the station IDs (the test page can help).';
+      b.innerHTML = 'NO STATIONS RESPONDED &mdash; ' + parts.join(', ') + '. Weather Underground may be having problems; the readings will update by themselves.';
     }
+  }
+
+  // footer line: how often the shared readings refresh at the moment
+  function renderRefreshNote(){
+    const el = document.getElementById('refreshNote');
+    if(!el) return;
+    const m = feedInfo && feedInfo.refreshMin;
+    el.textContent = (mode === 'live' && !feedDown && m) ?
+      'READINGS REFRESH ABOUT EVERY ' + m + ' MIN AT THE MOMENT, SHARED BY ALL VISITORS TO STAY WITHIN WEATHER UNDERGROUND’S FREE ALLOWANCE' : '';
   }
 
   function renderPill(){
@@ -1220,6 +1213,7 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
   function renderAll(){
     renderPill();
     renderBanner();
+    renderRefreshNote();
     renderStats();
     renderMap();
     renderCards();
@@ -1253,7 +1247,8 @@ html[data-theme="light"] .pws-card.off{ opacity:1; background:var(--bg-panel-2);
   });
 
   load(false);
-  setInterval(function(){ load(false); }, CONFIG.REFRESH_MIN * 60000);
+  setInterval(function(){ if(!document.hidden){ quickTries = 0; load(true); } }, CONFIG.REFRESH_MIN * 60000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) load(false); });
 
 /* nav strip: on a phone the row scrolls sideways, so make sure the current page's tab is in view */
 (function(){
