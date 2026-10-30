@@ -1113,7 +1113,7 @@ function swScore(p){
   var fC = Math.max(fModel, fCu);
   var noCloud = fC < 0.3;
   var raw = (A + B) / 2;
-  var score = Math.round(100 * raw * fC);
+  var score = windOff ? 0 : Math.round(100 * raw * fC);           // switched off by strong winds aloft = 0
   var level, why;
   if(windOff){ level = 0; why = 'Too windy aloft (850 hPa wind ' + Math.round(p.w850) + ' kt) - funnels get torn apart.'; }
   else if(noCloud){ level = 0; why = raw >= 0.3 ? 'Some ingredients are there, but no cloud is expected - a funnel needs a cumulus or shower cloud above it.' : 'Ingredients are missing, and no cloud is expected.'; }
