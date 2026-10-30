@@ -643,12 +643,12 @@ background:rgba(255,176,32,0.08); border:1px solid rgba(255,176,32,0.35); displa
 .sp-demo{ border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:0 0 28px; background:var(--bg-panel-2); }
 .sp-demo-lbl{ font-size:9.5px; letter-spacing:2px; color:var(--violet); font-weight:700; }
 .sp-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.sp-chip, .sp-btn{
+.sp-chip{
 font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; font-weight:700;
 color:var(--cyan); background:transparent; border:1px solid var(--line); border-radius:5px;
 padding:6px 10px; cursor:pointer; transition:all .15s ease;
 }
-.sp-chip:hover, .sp-btn:hover{ border-color:var(--cyan); }
+.sp-chip:hover{ border-color:var(--cyan); }
 .sp-chip.active{ color:#05080d; background:var(--cyan); border-color:var(--cyan); }
 .sp-demo-note{ margin-top:8px; font-size:11px; color:var(--dim); line-height:1.5; }
 .sp-pad{ padding:20px; }
@@ -727,20 +727,20 @@ section{ margin-bottom:34px; }
 .sp-chart-side p{ font-size:11.5px; line-height:1.65; color:var(--text); margin-bottom:12px; }
 .sp-zone-now{ font-family:'Orbitron',sans-serif; font-weight:800; font-size:15px; letter-spacing:1px; color:var(--cyan); margin-bottom:10px; }
 .sp-note{ font-size:10px; color:var(--dim); line-height:1.55; margin-top:10px; }
-/* try it yourself */
-.sp-sand{ display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:26px; align-items:center; }
-@media (max-width:860px){ .sp-sand{ grid-template-columns:1fr; } }
-.sp-sliders{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 22px; }
-@media (max-width:560px){ .sp-sliders{ grid-template-columns:1fr; } }
-.sp-slider{ margin-bottom:14px; }
-.sp-slider label{ display:flex; justify-content:space-between; gap:8px; font-size:9.5px; letter-spacing:1.5px; color:var(--dim); margin-bottom:6px; }
-.sp-slider label b{ color:var(--text); font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px; white-space:nowrap; }
-.sp-slider input[type=range]{ width:100%; accent-color:var(--cyan); }
-.sp-sand-out{ text-align:center; border:1px solid var(--line); border-radius:12px; padding:20px; background:var(--bg-panel-2); }
-.sp-sand-when{ font-size:9.5px; letter-spacing:2px; color:var(--dim); margin-bottom:8px; }
-.sp-sand-score{ font-family:'Orbitron',sans-serif; font-weight:900; font-size:52px; line-height:1; }
-.sp-sand-lvl{ font-family:'Orbitron',sans-serif; font-weight:800; letter-spacing:2px; font-size:14px; margin-top:8px; }
-.sp-sand-why{ font-size:11px; color:var(--dim); margin-top:8px; line-height:1.5; }
+/* pop-up cards on the score and the two methods (uses the page's .tip-wrap / .tip, opening downwards) */
+.sp-hero-panel{ overflow:visible; }
+.sp-gauge-wrap{ outline:none; }
+.sp-how{ text-align:center; font-size:9px; letter-spacing:1.5px; color:var(--dim); margin-top:4px; }
+.sp-m{ border-radius:8px; padding:6px 8px; margin:-6px -8px; transition:background .15s ease; }
+.sp-m:hover, .sp-m:focus, .sp-m:focus-within, .sp-gauge-wrap:focus-visible{ background:rgba(76,211,255,0.06); }
+.tip-wrap .tip.sp-tip{ top:calc(100% + 10px); bottom:auto; left:auto; right:0; width:340px; max-width:86vw; transform:translateY(-6px); }
+.tip-wrap .tip.sp-tip.sp-tip-left{ left:0; right:auto; }
+.tip-wrap:hover .tip.sp-tip, .tip-wrap:focus .tip.sp-tip, .tip-wrap:focus-within .tip.sp-tip{ transform:translateY(0); }
+.sp-tip .tip-text{ margin-bottom:0; font-size:11px; line-height:1.65; }
+@media (max-width:560px){
+.tip-wrap .tip.sp-tip.sp-tip-left{ left:50%; transform:translateX(-50%) translateY(-6px); }
+.tip-wrap:hover .tip.sp-tip.sp-tip-left, .tip-wrap:focus .tip.sp-tip.sp-tip-left, .tip-wrap:focus-within .tip.sp-tip.sp-tip-left{ transform:translateX(-50%) translateY(0); }
+}
 /* sightings */
 .sp-sight-row{ display:grid; grid-template-columns:140px minmax(0,1fr) 190px 150px; gap:12px; align-items:center; padding:11px 0; border-bottom:1px solid var(--line); font-size:11px; }
 @media (max-width:760px){ .sp-sight-row{ grid-template-columns:1fr 1fr; } }
@@ -810,6 +810,8 @@ html[data-theme="light"] .sp-exp{ background:linear-gradient(90deg, rgba(240,161
 html[data-theme="light"] .sp-n-now{ stroke:#ffffff; }
 html[data-theme="light"] :is(.sp-ing-card, .sp-sand-out){ box-shadow:var(--card-shadow); }
 html[data-theme="light"] .sp-demo{ background:var(--bg-panel); }
+html[data-theme="light"] .tip.sp-tip{ background:var(--bg-panel); box-shadow:0 12px 30px rgba(12,40,55,0.25); }
+html[data-theme="light"] :is(.sp-m:hover, .sp-m:focus, .sp-m:focus-within){ background:rgba(0,109,150,0.06); }
 </style>
 </head>
 <body>
@@ -857,11 +859,18 @@ html[data-theme="light"] .sp-demo{ background:var(--bg-panel); }
 <div class="bar"></div>
 <div class="tag">EXPERIMENTAL</div>
 </div>
-<div class="panel">
+<div class="panel sp-hero-panel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="sp-pad">
 <div class="sp-hero">
+<div class="tip-wrap sp-gauge-wrap" tabindex="0">
 <svg class="sp-gauge" id="spGauge" viewBox="0 0 200 172" role="img" aria-label="Spout score gauge"></svg>
+<div class="sp-how">HOW THE SCORE WORKS <span class="info-dot">?</span></div>
+<div class="tip sp-tip sp-tip-left" role="tooltip">
+<div class="tip-title">SPOUT SCORE &middot; How the Blend Works</div>
+<div class="tip-text">Jersey Weather Chat's own experimental blend of two published methods, the waterspout chart and the North Sea index. Each one rates the hour from 0 to 100%, and the spout score is the average of the two. FAVOURABLE needs a score of 60 or more with both methods at 45% or better, so neither can carry it alone. WATCH THE SKY needs 35 or more, or one method very keen (65%+) &mdash; that catches fair-weather cumulus days that only one method spots. If the wind at 1.5&nbsp;km reaches 40 knots, the whole thing is switched off: strong winds tear funnels apart.</div>
+</div>
+</div>
 <div>
 <div class="sp-level" id="spLevel">&mdash;</div>
 <div class="sp-when" id="spWhen">&mdash;</div>
@@ -869,15 +878,23 @@ html[data-theme="light"] .sp-demo{ background:var(--bg-panel); }
 <div class="sp-agree" id="spAgree"></div>
 </div>
 <div class="sp-methods">
-<div>
-<div class="sp-m-lbl"><span>WATERSPOUT CHART &middot; SZILAGYI</span><b id="spA">--</b></div>
+<div class="tip-wrap sp-m" tabindex="0">
+<div class="sp-m-lbl"><span>WATERSPOUT CHART &middot; SZILAGYI <span class="info-dot">?</span></span><b id="spA">--</b></div>
 <div class="sp-m-bar"><i id="spABar"></i></div>
 <div class="sp-m-sub">Cold air over warm sea, and how tall the shower clouds can grow.</div>
+<div class="tip sp-tip" role="tooltip">
+<div class="tip-title">WATERSPOUT CHART &middot; Szilagyi Waterspout Index</div>
+<div class="tip-text">Built by forecaster Wade Szilagyi from 172 waterspouts over the Great Lakes, and since tested in the Mediterranean and Adriatic. It looks at two things. First, how much colder the air is at 1.5&nbsp;km than the sea surface: the bigger the gap, the more readily air warmed by the sea keeps rising. Second, how tall the shower clouds can grow, from cloud base to cloud top. Plotted against each other, waterspouts cluster in a few zones (see The Waterspout Chart further down). One rule overrides the rest: no waterspouts if the wind at 1.5&nbsp;km is 40 knots or more. The original was only published as a drawing, so here we rate how far into its favourable ranges the hour sits, from 0 to 100%. In a 2011 Adriatic test it caught 14 of 19 waterspout days.</div>
 </div>
-<div>
-<div class="sp-m-lbl"><span>NORTH SEA INDEX &middot; KNMI</span><b id="spB">--</b></div>
+</div>
+<div class="tip-wrap sp-m" tabindex="0">
+<div class="sp-m-lbl"><span>NORTH SEA INDEX &middot; KNMI <span class="info-dot">?</span></span><b id="spB">--</b></div>
 <div class="sp-m-bar"><i id="spBBar"></i></div>
 <div class="sp-m-sub">Light winds, a sharp chill in the lowest 500&nbsp;m and moist air near the ground.</div>
+<div class="tip sp-tip" role="tooltip">
+<div class="tip-title">NORTH SEA INDEX &middot; KHS (KNMI)</div>
+<div class="tip-text">Created by Kuiper and Van der Haven at KNMI, the Dutch weather service, for waterspouts off the Dutch coast, and run every day in their forecast model. It checks four things: a light wind at the surface; little change in wind speed from the ground up to 3&nbsp;km, because changing winds tear a young spin apart; a sharp drop in temperature through the lowest 500&nbsp;m, which makes the air bubbly and buoyant; and moist air in the lowest kilometre. It's good at the fair-weather funnel days with shallow cumulus that the waterspout chart can miss. KNMI never published its exact weights, so here each ingredient gets its own rating and all four need to be in place for a high score. In the same 2011 Adriatic test it caught 13 of 19 waterspout days.</div>
+</div>
 </div>
 </div>
 </div>
@@ -935,33 +952,6 @@ html[data-theme="light"] .sp-demo{ background:var(--bg-panel); }
 <p id="spZoneText"></p>
 <p>Each dot is one hour of the day you've picked, joined in order; the bright dot is the hour you've selected. Tap a dot to jump to it. The coloured areas are where waterspouts have been seen before, in Szilagyi's study of 172 Great Lakes events.</p>
 <div class="sp-note">Zones are approximate, redrawn from the published ranges (the original chart was only published as a drawing). If the wind at 1.5&nbsp;km is 40 knots or more, the chart is switched off: strong winds tear funnels apart.</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-
-<!-- TRY IT YOURSELF -->
-<section>
-<div class="sec-head storm">
-<h3>TRY IT YOURSELF</h3>
-<div class="bar"></div>
-<div class="tag">SANDBOX</div>
-</div>
-<div class="panel">
-<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
-<div class="sp-pad">
-<p class="sp-intro">Change the ingredients and watch the whole page react. What would it take to turn today into a spout day?</p>
-<div class="sp-sand">
-<div>
-<div class="sp-sliders" id="spSliders"></div>
-<button type="button" class="sp-btn" id="spReset">RESET TO THE EXAMPLE DAY</button>
-</div>
-<div class="sp-sand-out">
-<div class="sp-sand-when" id="spSandWhen">&mdash;</div>
-<div class="sp-sand-score" id="spSandScore">--</div>
-<div class="sp-sand-lvl" id="spSandLvl">&mdash;</div>
-<div class="sp-sand-why" id="spSandWhy"></div>
 </div>
 </div>
 </div>
@@ -1135,20 +1125,18 @@ var SW_EXAMPLES = [
     days:[{}, { t850:-1, w:4 }, { t850:-3, w:-6 }] }
 ];
 function swDiurnal(h){ var x = Math.sin(Math.PI * (h - 6) / 16); return h >= 6 && h <= 22 ? Math.max(0, x) : 0; }
-// one hour's profile for example s; ov = optional overrides from the sandbox sliders
-function swExampleProfile(s, hour, dayOffset, ov){
-  ov = ov || {};
+// one hour's profile for example s on day dayOffset (0-2)
+function swExampleProfile(s, hour, dayOffset){
   var d = (s.days && s.days[dayOffset]) || {};               // how each of the three days differs from the first
   var heat = swDiurnal(hour);
-  var sst = ov.sst != null ? ov.sst : s.sst;
-  var t850 = (ov.t850 != null ? ov.t850 : s.t850) + (d.t850 || 0);
+  var sst = s.sst;
+  var t850 = s.t850 + (d.t850 || 0);
   var t2 = s.t2min + (s.t2max - s.t2min) * heat;
-  if(ov.t2 != null) t2 = ov.t2;
   var td2 = Math.min(t2, s.td2);
-  var rhLow = ov.rhLow != null ? ov.rhLow : s.rhLow;
-  var w10 = Math.max(0, (ov.w10 != null ? ov.w10 : s.w10) + (d.w || 0) * 0.5) * (0.85 + 0.3 * heat);
-  var w700 = Math.max(0, (ov.w700 != null ? ov.w700 : s.w700) + (d.w || 0));
-  var w850 = Math.max(0, (ov.w850 != null ? ov.w850 : s.w850) + (d.w || 0));
+  var rhLow = s.rhLow;
+  var w10 = Math.max(0, s.w10 + (d.w || 0) * 0.5) * (0.85 + 0.3 * heat);
+  var w700 = Math.max(0, s.w700 + (d.w || 0));
+  var w850 = Math.max(0, s.w850 + (d.w || 0));
   var zml = Math.max(250, 1400 * heat);                       // the sun-warmed mixed layer near the ground
   var tml = t2 - 9.5 * zml / 1000;
   var lv = {};
@@ -1172,7 +1160,7 @@ var SP_DAYS = (function(){
   return out;
 })();
 var SP_DAY_NAMES = ['TODAY', 'TOMORROW', 'DAY 3'];
-var ST = { ex:0, day:0, hour:15, ov:{}, res:null };
+var ST = { ex:0, day:0, hour:15, res:null };
 function spEsc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
 function spHH(h){ return (h < 10 ? '0' : '') + h + ':00'; }
 function spIsNight(h){ return h < 6 || h >= 20; }
@@ -1180,7 +1168,7 @@ function spCompute(){
   var s = SW_EXAMPLES[ST.ex];
   ST.res = [0, 1, 2].map(function(d){
     var row = [];
-    for(var h = 0; h < 24; h++) row.push(swScore(swExampleProfile(s, h, d, ST.ov)));
+    for(var h = 0; h < 24; h++) row.push(swScore(swExampleProfile(s, h, d)));
     return row;
   });
 }
@@ -1275,7 +1263,7 @@ function spRenderTimeline(){
 // ---- the five ingredients for the selected hour ----
 function spMark(v){ return v >= 0.7 ? { m:'✓', c:'var(--green)' } : v >= 0.3 ? { m:'~', c:'var(--amber)' } : { m:'✗', c:'var(--dim)' }; }
 function spRenderIngredients(){
-  var r = ST.res[ST.day][ST.hour], p = swExampleProfile(SW_EXAMPLES[ST.ex], ST.hour, ST.day, ST.ov), P = r.parts;
+  var r = ST.res[ST.day][ST.hour], p = swExampleProfile(SW_EXAMPLES[ST.ex], ST.hour, ST.day), P = r.parts;
   document.getElementById('spIngTitle').textContent = 'THE INGREDIENTS — ' + SP_DAY_NAMES[ST.day] + ' ' + spHH(ST.hour);
   var wind = Math.min(P.fW, P.fS) * (r.windOff ? 0 : 1);
   var cards = [
@@ -1341,30 +1329,6 @@ function spRenderNomo(){
   if(cur.zone === 'OUTSIDE THE ZONES' && cur.A >= 0.3) zt = 'Just outside the published zones, in the area where later North Sea and Mediterranean studies also found waterspouts, so the chart still gives it partial credit (' + Math.round(cur.A * 100) + '%).';
   document.getElementById('spZoneText').textContent = cur.windOff ? 'The wind at 1.5 km is ' + Math.round(cur.w850) + ' knots. Above 40 knots the waterspout chart says no, wherever the dot sits.' : zt;
 }
-// ---- sandbox ----
-var SP_SLIDERS = [
-  { k:'sst', lbl:'SEA TEMPERATURE', min:5, max:25, step:0.5, u:'°C' },
-  { k:'t850', lbl:'AIR AT 1.5 KM', min:-15, max:20, step:0.5, u:'°C' },
-  { k:'rhLow', lbl:'HUMIDITY, LOWEST 1 KM', min:20, max:100, step:1, u:'%' },
-  { k:'w10', lbl:'GROUND WIND', min:0, max:40, step:1, u:'KT' },
-  { k:'w850', lbl:'WIND AT 1.5 KM', min:0, max:60, step:1, u:'KT' },
-  { k:'w700', lbl:'WIND AT 3 KM', min:0, max:70, step:1, u:'KT' }
-];
-function spSliderVal(k){ return ST.ov[k] != null ? ST.ov[k] : SW_EXAMPLES[ST.ex][k]; }
-function spBuildSliders(){
-  document.getElementById('spSliders').innerHTML = SP_SLIDERS.map(function(c){
-    var v = spSliderVal(c.k);
-    return '<div class="sp-slider"><label for="sl-' + c.k + '"><span>' + c.lbl + '</span><b id="sv-' + c.k + '">' + v + ' ' + c.u + '</b></label>' +
-      '<input type="range" id="sl-' + c.k + '" data-k="' + c.k + '" min="' + c.min + '" max="' + c.max + '" step="' + c.step + '" value="' + v + '"></div>';
-  }).join('');
-}
-function spRenderSandbox(){
-  var r = ST.res[ST.day][ST.hour];
-  document.getElementById('spSandWhen').textContent = SP_DAY_NAMES[ST.day] + ' ' + spHH(ST.hour) + (Object.keys(ST.ov).length ? ' · WITH YOUR CHANGES' : '');
-  var sc = document.getElementById('spSandScore'); sc.textContent = r.score; sc.style.color = SP_COL[r.level];
-  var lv = document.getElementById('spSandLvl'); lv.textContent = SW_LEVEL_NAMES[r.level]; lv.style.color = SP_COL[r.level];
-  document.getElementById('spSandWhy').textContent = r.why + ' Waterspout chart ' + Math.round(r.A * 100) + '% · North Sea index ' + Math.round(r.B * 100) + '%.';
-}
 // ---- sightings (made-up sample rows) ----
 var SP_SIGHT = [
   { t:'SAT 13 SEP · 10:40', place:'St Aubin’s Bay', kind:'WATERSPOUT · TOUCHED DOWN', level:2, score:84 },
@@ -1379,28 +1343,31 @@ function spRenderSightings(){
   }).join('');
 }
 // ---- wiring ----
-function spRenderAll(){ spRenderHero(); spRenderTimeline(); spRenderIngredients(); spRenderNomo(); spRenderSandbox(); }
+function spRenderAll(){ spRenderHero(); spRenderTimeline(); spRenderIngredients(); spRenderNomo(); }
 function spSelect(d, h){ ST.day = d; ST.hour = h; spRenderAll(); }
 function spPickExample(i){
-  ST.ex = i; ST.ov = {}; spCompute();
+  ST.ex = i; spCompute();
   ST.day = 0; ST.hour = spBest(0);
   document.querySelectorAll('#spEx .sp-chip').forEach(function(b){ b.classList.toggle('active', Number(b.dataset.i) === i); });
   document.getElementById('spExNote').textContent = SW_EXAMPLES[i].note;
-  spBuildSliders(); spRenderAll();
+  spRenderAll();
 }
 document.getElementById('spEx').innerHTML = SW_EXAMPLES.map(function(s, i){ return '<button type="button" class="sp-chip" data-i="' + i + '">' + s.name + '</button>'; }).join('');
 document.getElementById('spEx').addEventListener('click', function(e){ var b = e.target.closest('.sp-chip'); if(b) spPickExample(Number(b.dataset.i)); });
 document.getElementById('spDays').addEventListener('click', function(e){ var b = e.target.closest('.sp-day'); if(b){ var d = Number(b.dataset.d); spSelect(d, spBest(d)); } });
 document.getElementById('spTimeline').addEventListener('click', function(e){ var b = e.target.closest('.sp-tl-bar'); if(b) spSelect(Number(b.dataset.d), Number(b.dataset.h)); });
 document.getElementById('spNomo').addEventListener('click', function(e){ var b = e.target.closest('.sp-n-pt'); if(b) spSelect(ST.day, Number(b.dataset.h)); });
-document.getElementById('spSliders').addEventListener('input', function(e){
-  var el = e.target; if(!el.dataset || !el.dataset.k) return;
-  var c = SP_SLIDERS.filter(function(x){ return x.k === el.dataset.k; })[0];
-  ST.ov[c.k] = Number(el.value);
-  document.getElementById('sv-' + c.k).textContent = el.value + ' ' + c.u;
-  spCompute(); spRenderAll();
+// pop-up cards on the score and the two methods: hover on a computer; on a phone, tap to open, and tap the card
+// (or the same spot again, or press Escape) to close it so it never sits over the page
+document.querySelectorAll('.sp-hero .tip-wrap').forEach(function(w){
+  w.addEventListener('pointerdown', function(){ w._wasOpen = document.activeElement === w; });
+  w.addEventListener('click', function(e){
+    if(e.target.closest('.tip') || w._wasOpen){ w.blur(); w._wasOpen = false; }
+  });
 });
-document.getElementById('spReset').addEventListener('click', function(){ ST.ov = {}; spCompute(); spBuildSliders(); spRenderAll(); });
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && document.activeElement && document.activeElement.classList.contains('tip-wrap')) document.activeElement.blur();
+});
 spRenderSightings();
 spPickExample(0);
 // clock in the header
