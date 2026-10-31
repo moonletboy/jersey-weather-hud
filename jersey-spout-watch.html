@@ -877,7 +877,7 @@ html[data-theme="light"] :is(.sp-m:hover, .sp-m:focus, .sp-m:focus-within){ back
 <div class="sp-how">HOW THE SCORE WORKS <span class="info-dot">?</span></div>
 <div class="tip sp-tip sp-tip-left" role="tooltip">
 <div class="tip-title">SPOUT SCORE &middot; How the Blend Works</div>
-<div class="tip-text">Jersey Weather Chat's own experimental blend of two published methods, the waterspout chart and the North Sea index. Each one rates the hour from 0 to 100%, and the spout score is the average of the two, scaled by a cloud check: a funnel needs a cumulus or shower cloud above it, so if the model shows no low cloud or showers and no cumulus can grow, the score drops to zero. FAVOURABLE needs a score of 60 or more with both methods at 45% or better, so neither can carry it alone. WATCH THE SKY needs 35 or more, or one method very keen &mdash; that catches fair-weather cumulus days that only one method spots. If the wind at 1.5&nbsp;km reaches 40 knots, the whole thing is switched off: strong winds tear funnels apart.</div>
+<div class="tip-text">Jersey Weather Chat's own experimental blend of two published methods, the waterspout chart and the North Sea index. Each one rates the hour from 0 to 100%, and the spout score is the average of the two, scaled by a cloud check: a funnel needs a cumulus or shower cloud above it, so if the model shows no low cloud or showers and no cumulus can grow, the score drops to zero. FAVOURABLE needs a score of 60 or more with both methods at 45% or better, so neither can carry it alone, and a ground wind below Force 5 (17 knots) &mdash; spouts can form in a stronger breeze, but they are less likely and shorter-lived. WATCH THE SKY needs 35 or more, or one method very keen &mdash; that catches fair-weather cumulus days that only one method spots. If the wind at 1.5&nbsp;km reaches 40 knots, the whole thing is switched off: strong winds tear funnels apart.</div>
 </div>
 </div>
 <div>
@@ -1028,6 +1028,8 @@ html[data-theme="light"] :is(.sp-m:hover, .sp-m:focus, .sp-m:focus-within){ back
    CLOUD CHECK (our addition): a funnel needs a cumulus or shower cloud above it. The check passes if the model
    shows low cloud or showers at that hour, OR if air rising off the sea can build cumulus. It scales the whole
    score, so a cloudless hour scores 0 whatever the two methods say.
+   WIND CAP (our addition): FAVOURABLE also needs the ground wind below Force 5 (17 kt); above that the hour is
+   held at WATCH THE SKY (the North Sea side marks wind down, but averaging hides one weak ingredient).
    Heights: Open-Meteo gives pressure-level heights above sea level, so everything near the ground is measured
    from the model's ground height (p.elev). Levels below the ground in deep lows are skipped.
    Input: one hour's profile, built by swLiveProfile() on the page. Plain ES5 so it runs everywhere. */
@@ -1114,10 +1116,16 @@ function swScore(p){
   var noCloud = fC < 0.3;
   var raw = (A + B) / 2;
   var score = windOff ? 0 : Math.round(100 * raw * fC);           // switched off by strong winds aloft = 0
+  var windCap = Math.round(p.w10) >= 17, held = false;
   var level, why;
   if(windOff){ level = 0; why = 'Too windy aloft (850 hPa wind ' + Math.round(p.w850) + ' kt) - funnels get torn apart.'; }
   else if(noCloud){ level = 0; why = raw >= 0.3 ? 'Some ingredients are there, but no cloud is expected - a funnel needs a cumulus or shower cloud above it.' : 'Ingredients are missing, and no cloud is expected.'; }
-  else if(score >= 60 && A >= 0.45 && B >= 0.45){ level = 2; why = 'Both methods see the right ingredients, with cloud about.'; }
+  else if(score >= 60 && A >= 0.45 && B >= 0.45){
+    // FAVOURABLE also needs the ground wind below Force 5 (17 kt, judged on the rounded figure the page shows):
+    // spouts can still form in a moderate breeze, but they are less likely and shorter-lived
+    if(windCap){ level = 1; held = true; score = Math.min(score, 59); why = 'The air is right, but the wind near the ground is Force 5 or more (' + Math.round(p.w10) + ' kt), so spouts are less likely and shorter-lived. FAVOURABLE needs lighter winds.'; }
+    else { level = 2; why = 'Both methods see the right ingredients, with cloud about.'; }
+  }
   else if(score >= 35 || Math.max(A, B) * fC >= 0.65){
     level = 1;
     why = (A >= B + 0.3) ? 'The waterspout chart likes it more than the North Sea index.' : (B >= A + 0.3) ? 'The North Sea index likes it more than the waterspout chart.' : 'Some ingredients are in place.';
@@ -1126,7 +1134,7 @@ function swScore(p){
   return {
     score:score, level:level, why:why, A:A, B:B, agree:Math.abs(A - B) < 0.3,
     dT:dT, depthFt:depthFt, base:cloud.base, top:cloud.top, zone:swSzilagyiZone(dT, depthFt), windOff:windOff,
-    shear:shear, lapse:lapse, rh:rh, w10:p.w10, w850:p.w850, cl:cl, sh:sh, noCloud:noCloud, raw:raw,
+    shear:shear, lapse:lapse, rh:rh, w10:p.w10, w850:p.w850, cl:cl, sh:sh, noCloud:noCloud, raw:raw, windCap:held,
     parts:{ fT:fT, fZ:fZ, fS:fS, fL:fL, fH:fH, fW:fW, fC:fC, fModel:fModel, fCu:fCu }
   };
 }
@@ -1273,6 +1281,7 @@ function spRenderHero(){
   document.getElementById('spWhy').textContent = r.why;
   var ag = document.getElementById('spAgree');
   if(r.noCloud && !r.windOff){ ag.textContent = 'NO CLOUD EXPECTED'; ag.style.color = 'var(--dim)'; }
+  else if(r.windCap){ ag.textContent = 'HELD BACK BY FORCE 5+ WINDS'; ag.style.color = 'var(--amber)'; }
   else if(r.windOff){ ag.textContent = 'SWITCHED OFF BY STRONG WINDS ALOFT'; ag.style.color = 'var(--dim)'; }
   else if(r.agree){ ag.textContent = 'BOTH METHODS AGREE'; ag.style.color = 'var(--green)'; }
   else { ag.textContent = 'THE METHODS DISAGREE'; ag.style.color = 'var(--amber)'; }
@@ -1329,6 +1338,8 @@ function spRenderTimeline(){
   document.getElementById('spTimeline').innerHTML = s;
 }
 // ---- the six ingredients for the selected hour ----
+// Beaufort force from knots (as the page rounds them)
+function spForce(kt){ var k = Math.round(kt), lim = [1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64]; for(var f = 0; f < lim.length; f++) if(k < lim[f]) return f; return 12; }
 function spMark(v){ return v >= 0.7 ? { m:'✓', c:'var(--green)' } : v >= 0.3 ? { m:'~', c:'var(--amber)' } : { m:'✗', c:'var(--dim)' }; }
 function spRenderIngredients(){
   var r = ST.res[ST.day][ST.hour], p = ST.prof[ST.day][ST.hour];
@@ -1348,7 +1359,7 @@ function spRenderIngredients(){
     { lbl:'MOIST AIR NEAR THE GROUND', v:String(Math.round(r.rh)), u:'%', rate:P.fH,
       sub:'Average humidity in the lowest 1 km. 80% or more is ideal.' },
     { lbl:'LIGHT WINDS', v:String(Math.round(r.w10)), u:'KT', rate:wind,
-      sub:r.windOff ? 'Too windy at 1.5 km (' + Math.round(r.w850) + ' kt): funnels get torn apart.' : 'Ground wind; it changes by ' + Math.round(r.shear) + ' kt up to 3 km. Calm all the way up is best.' }
+      sub:r.windOff ? 'Too windy at 1.5 km (' + Math.round(r.w850) + ' kt): funnels get torn apart.' : 'Ground wind (Force ' + spForce(r.w10) + '); it changes by ' + Math.round(r.shear) + ' kt up to 3 km. Calm all the way up is best; FAVOURABLE needs below Force 5.' }
   ];
   document.getElementById('spIng').innerHTML = cards.map(function(c){
     var m = spMark(c.rate);
