@@ -1,8 +1,9 @@
 {
   "about": "What's New lines for the Settings panel, newest first. Add or remove lines with the 'Add What's New line' form: GitHub > Actions > Add What's New line > Run workflow.",
-  "next_id": 14,
-  "updated": "2026-10-31T13:56:59Z",
+  "next_id": 15,
+  "updated": "2026-10-31T15:30:41Z",
   "items": [
+    {"id": 14, "date": "2026-10-31", "text": "New and experimental: SPOUT WATCH, a funnel cloud and waterspout outlook for Jersey, now in the tab bar."},
     {"id": 13, "date": "2026-10-31", "text": "New Personal Weather Station ISTPET64 (St Peter's) added."},
     {"id": 12, "date": "2026-10-30", "text": "Thunderstorm outlook - looks ahead through the day, and a new Wind with height card shows how the wind changes from the ground to 5.5 km."},
     {"id": 11, "date": "2026-10-30", "text": "Got a weather station? You can now add it to the Microclimate map: enter its Weather Underground Station ID at the bottom of the page."},
