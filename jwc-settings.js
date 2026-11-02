@@ -6,14 +6,17 @@
  *      Privacy & cookies, Systems check, step-by-step help, Report a problem and the Facebook group;
  *   3. keeps a quiet note of the data this page fetches, for the Systems check (it never leaves the device);
  *   4. on the Storm Reports page, can remember your name and parish on this device;
- *   5. in the installed app, opens on the start page you picked.
+ *   5. in the installed app, opens on the start page you picked;
+ *   6. keeps the latest Open-Meteo forecasts on this device, so if Open-Meteo stops answering the page can show
+ *      the last saved forecast (with a strip under the tab bar saying when it was saved) instead of empty panels.
  *
  * Every page loads it near the top of <head>, WITHOUT defer:
  *     <script src="jwc-settings.js"></script>
  * It has to start before the page's own scripts so the Systems check sees every data request,
  * and so the app can switch to your start page before anything is drawn.
  *
- * Settings and saved report details are kept in this browser only (localStorage). Nothing here is sent to us.
+ * Settings and saved report details are kept in this browser only (localStorage), and the saved forecasts in its
+ * Cache Storage. Nothing here is sent to us.
  *
  * WHAT'S NEW: the lines live in data/whats-new.json. Add one (or remove the newest) with the form on GitHub:
  * Actions tab > Add What's New line > Run workflow. No need to edit this file. Anyone who hasn't seen the
@@ -220,42 +223,49 @@
     }catch(e){}
     return out;
   }
+  /* notes how one request turned out (p is the browser's own answer, before any saved copy is handed over) */
+  function watchFeed(info, p){
+    var before = FEEDS[info.key];
+    noteFeed(info, { state: before && before.lastOk ? before.state : 'loading' });
+    p.then(function(res){
+      var r = FEEDS[info.key];
+      if(res && res.ok){
+        var prevOk = r.lastOk;
+        noteFeed(info, { state:'ok', lastOk:Date.now(), status:res.status, okN:r.okN + 1, problem:'', saved:0 });
+        if(r.read){
+          try{
+            res.clone().json().then(function(j){
+              var x = inspect(r, j), patch = {};
+              if(x.t) patch.dataTime = x.t;
+              /* the request worked but the data says it failed: count it as a failure, not a success */
+              if(x.problem){ patch.state = 'fail'; patch.problem = x.problem; patch.lastFail = Date.now(); patch.lastOk = prevOk; patch.okN = Math.max(0, r.okN - 1); patch.failN = r.failN + 1; }
+              noteFeed(info, patch);
+            }, function(){});
+          }catch(e){}
+        }
+      } else {
+        noteFeed(info, { state:'fail', lastFail:Date.now(), status:res ? res.status : 0, failN:r.failN + 1, problem:'' });
+      }
+    }, function(){
+      var r = FEEDS[info.key];
+      noteFeed(info, { state:'fail', lastFail:Date.now(), status:0, failN:r.failN + 1, problem:'' });
+    });
+  }
   if(typeof window.fetch === 'function'){
     var pageFetch = window.fetch;
     window.fetch = function(input, init){
       var p = pageFetch.apply(window, arguments);
+      var info = null, url = '';
       try{
-        var url = (typeof input === 'string') ? input : (input && input.url) ? input.url : String(input);
+        url = (typeof input === 'string') ? input : (input && input.url) ? input.url : String(input);
         var method = (init && init.method) || (input && typeof input === 'object' && input.method) || 'GET';
-        var info = classify(url, method);
-        if(info){
-          var before = FEEDS[info.key];
-          noteFeed(info, { state: before && before.lastOk ? before.state : 'loading' });
-          p.then(function(res){
-            var r = FEEDS[info.key];
-            if(res && res.ok){
-              var prevOk = r.lastOk;
-              noteFeed(info, { state:'ok', lastOk:Date.now(), status:res.status, okN:r.okN + 1, problem:'' });
-              if(r.read){
-                try{
-                  res.clone().json().then(function(j){
-                    var x = inspect(r, j), patch = {};
-                    if(x.t) patch.dataTime = x.t;
-                    /* the request worked but the data says it failed: count it as a failure, not a success */
-                    if(x.problem){ patch.state = 'fail'; patch.problem = x.problem; patch.lastFail = Date.now(); patch.lastOk = prevOk; patch.okN = Math.max(0, r.okN - 1); patch.failN = r.failN + 1; }
-                    noteFeed(info, patch);
-                  }, function(){});
-                }catch(e){}
-              }
-            } else {
-              noteFeed(info, { state:'fail', lastFail:Date.now(), status:res ? res.status : 0, failN:r.failN + 1, problem:'' });
-            }
-          }, function(){
-            var r = FEEDS[info.key];
-            noteFeed(info, { state:'fail', lastFail:Date.now(), status:0, failN:r.failN + 1, problem:'' });
-          });
-        }
+        info = classify(url, method);
+        if(info) watchFeed(info, p);
       }catch(e){}
+      /* Open-Meteo: keep a copy of what loads, and hand the saved copy over if Open-Meteo doesn't answer (section 2c) */
+      if(info && /^om(-|$)/.test(info.key)){
+        try{ return omGuard(p, url, input, init, info); }catch(e){}
+      }
       return p;
     };
   }
@@ -275,6 +285,7 @@
       parts.push('Not loading ' + (r.problem ? '(' + r.problem + ')' : (r.status ? '(error ' + r.status + ')' : '(no connection or blocked)')));
       parts.push('last tried ' + ago(r.lastFail));
       if(r.lastOk) parts.push('last worked ' + ago(r.lastOk));
+      if(r.saved) parts.push('showing the copy saved on this device ' + ago(r.saved));
     } else {
       parts.push('Loaded ' + ago(r.lastOk));
       if(r.dataTime){
@@ -299,6 +310,227 @@
     if(stale) return { text:stale + ' running late \u00B7 ' + ok + ' up to date', level:'stale' };
     if(loading) return { text:'Checking ' + total + ' data feeds\u2026', level:'loading' };
     return { text:'All ' + total + ' data feeds working', level:'ok' };
+  }
+
+  /* ================= 2c. Saved forecasts: when Open-Meteo is down =================
+     Open-Meteo supplies the forecast numbers on Live Ops, Sea & Tides, Storm Scenarios and SPOUT WATCH.
+     Every forecast that loads is kept on this device (the browser's Cache Storage; nothing is sent anywhere),
+     one copy per request, replaced each time it loads again. If Open-Meteo then stops answering (busy, error 429
+     or 5xx, no connection, or the page's own time limit runs out), there is one more try 2 seconds later, and if
+     that fails too the page is handed the copy saved for the same request, as long as it is no more than
+     SAVED_MAX_H hours old. A strip under the tab bar says so and when the copy was saved, and while Open-Meteo is
+     down a tiny request checks every PROBE_MIN minutes whether it's back. A page can tell it was given a saved copy
+     from the X-JWC-Saved header (the time it was saved, in ms). Anything Open-Meteo turns down for another reason
+     (a mistake in the request, error 400) reaches the page unchanged, as before. */
+  var SAVED_CACHE = 'jwc-saved-forecasts-v1', SAVED_MAX_H = 12, SAVED_KEEP_H = 72, PROBE_MIN = 3, BACK_SHOW_MIN = 10;
+  var PROBES = {
+    'api.open-meteo.com':'https://api.open-meteo.com/v1/forecast?latitude=49.18&longitude=-2.11&current=temperature_2m',
+    'marine-api.open-meteo.com':'https://marine-api.open-meteo.com/v1/marine?latitude=49.18&longitude=-2.11&current=wave_height',
+    'air-quality-api.open-meteo.com':'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=49.18&longitude=-2.11&current=us_aqi',
+    'ensemble-api.open-meteo.com':'https://ensemble-api.open-meteo.com/v1/ensemble?latitude=49.18&longitude=-2.11&hourly=temperature_2m&models=icon_seamless&forecast_days=1'
+  };
+  /* down: Open-Meteo addresses not answering right now; behind: requests on this page that got a saved copy
+     (the time it was saved) or nothing at all (0) and haven't loaded fresh since; backAt: when it came back */
+  var OM = { down:{}, behind:{}, backAt:0, hidden:false, ready:false, el:null, probeT:null, tickT:null }, omCacheP = null;
+  function own(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
+  function omKey(url){ try{ return new URL(url, location.href).href; }catch(e){ return String(url); } }
+  function omHost(key){ try{ return new URL(key).hostname; }catch(e){ return ''; } }
+  function omAnyDown(){ for(var h in OM.down){ if(own(OM.down, h)) return true; } return false; }
+  function omWait(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  /* the browser's Cache Storage (missing in some private windows: then nothing is saved and pages behave as before) */
+  function omStore(){
+    if(omCacheP) return omCacheP;
+    try{
+      if(typeof caches !== 'undefined' && caches && typeof caches.open === 'function') omCacheP = caches.open(SAVED_CACHE).then(null, function(){ return null; });
+    }catch(e){ omCacheP = null; }
+    if(!omCacheP) omCacheP = Promise.resolve(null);
+    return omCacheP;
+  }
+  function omSave(key, res){
+    try{
+      res.clone().text().then(function(txt){
+        var j; try{ j = JSON.parse(txt); }catch(e){ return; }
+        if(!j || typeof j !== 'object' || j.error) return;
+        return omStore().then(function(c){
+          if(c) return c.put(key, new Response(txt, { headers:{ 'Content-Type':'application/json', 'X-JWC-Saved':String(Date.now()) } }));
+        });
+      }).then(null, function(){});
+    }catch(e){}
+  }
+  function omLoad(key){
+    return omStore().then(function(c){ return c ? c.match(key) : null; }).then(function(r){
+      if(!r) return null;
+      var t = Number(r.headers.get('X-JWC-Saved')) || 0, now = Date.now();
+      if(!t || now - t > SAVED_MAX_H * 3600000 || t > now + 60000) return null;
+      return { res:r, t:t };
+    }).then(null, function(){ return null; });
+  }
+  /* busy, overloaded, rate-limited or broken on Open-Meteo's side (a 400 means the request itself was wrong) */
+  function omOutage(res){ return !res || res.status === 429 || res.status >= 500; }
+  function omFresh(key, res){
+    delete OM.behind[key];
+    var h = omHost(key);
+    if(OM.down[h]){ delete OM.down[h]; OM.hidden = false; if(!omAnyDown()) OM.backAt = Date.now(); }
+    omSave(key, res);
+    omRender();
+  }
+  function omGuard(p, url, input, init, info){
+    var key = omKey(url);
+    return p.then(function(res){
+      if(res && res.ok){ omFresh(key, res); return res; }
+      if(!omOutage(res)) return res;
+      return omRescue(key, input, init, info, res, null);
+    }, function(err){
+      return omRescue(key, input, init, info, null, err);
+    });
+  }
+  function omRescue(key, input, init, info, res, err){
+    var h = omHost(key);
+    if(!OM.down[h]){ OM.down[h] = true; OM.hidden = false; }
+    OM.backAt = 0;
+    return omLoad(key).then(function(copy){
+      if(!copy){
+        /* nothing saved (or too old): the page gets the failure exactly as before, and the strip explains it */
+        OM.behind[key] = OM.behind[key] || 0;
+        omRender(); omProbe();
+        if(res) return res;
+        throw err;
+      }
+      /* one more try first, so a brief blip doesn't leave old numbers on screen (not if the page already gave up waiting) */
+      var signal = init && init.signal;
+      var again = (signal && signal.aborted) ? Promise.reject(err) : omWait(2000).then(function(){
+        if(signal && signal.aborted) throw err;
+        var q = pageFetch.apply(window, [input, init]);
+        watchFeed(info, q);
+        return q;
+      });
+      return again.then(function(r2){
+        if(r2 && r2.ok){ omFresh(key, r2); return r2; }
+        throw new Error('still not answering');
+      }).then(null, function(){
+        OM.behind[key] = copy.t;
+        noteFeed(info, { saved:copy.t });
+        omRender(); omProbe();
+        return copy.res;
+      });
+    });
+  }
+  /* while Open-Meteo is down: a tiny request every few minutes (and straight away when the page comes back
+     into view or the device comes back online) to see whether it's answering again */
+  function omProbe(delay){
+    if(!omAnyDown()) return;
+    if(OM.probeT){ if(delay === undefined) return; clearTimeout(OM.probeT); }
+    OM.probeT = setTimeout(omProbeNow, delay === undefined ? PROBE_MIN * 60000 : delay);
+  }
+  function omProbeNow(){
+    OM.probeT = null;
+    if(!omAnyDown()) return;
+    if(document.visibilityState === 'hidden'){ omProbe(); return; }
+    var hosts = [];
+    for(var h in OM.down){ if(own(OM.down, h)) hosts.push(h); }
+    var left = hosts.length;
+    function done(){ if(--left > 0) return; omRender(); omProbe(); }
+    for(var i = 0; i < hosts.length; i++){
+      (function(host){
+        if(!PROBES[host]){ delete OM.down[host]; done(); return; }
+        pageFetch.call(window, PROBES[host], { cache:'no-store' }).then(function(r){
+          if(r && r.ok){ delete OM.down[host]; OM.hidden = false; if(!omAnyDown()) OM.backAt = Date.now(); }
+        }, function(){}).then(done, done);
+      })(hosts[i]);
+    }
+  }
+  /* "13:10", or "22:40 yesterday" (Jersey time) */
+  function omClock(ms){
+    try{
+      var t = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+      var d = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', year:'numeric', month:'2-digit', day:'2-digit' });
+      return t.format(new Date(ms)) + (d.format(new Date(ms)) !== d.format(new Date()) ? ' yesterday' : '');
+    }catch(e){ var x = new Date(ms); return ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); }
+  }
+  var OM_ICON_BUSY = '<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.6"/><path d="M12 17.3v.2"/>';
+  var OM_ICON_BACK = '<circle cx="12" cy="12" r="9"/><path d="m8 12.4 2.8 2.8 5.4-5.6"/>';
+  function omBuild(){
+    if(!document.body) return null;
+    var el = document.createElement('div');
+    el.className = 'jwcs-om';
+    el.setAttribute('role', 'status');
+    el.hidden = true;
+    el.innerHTML = '<svg class="jwcs-om-ico" viewBox="0 0 24 24" aria-hidden="true">' + OM_ICON_BUSY + '</svg>' +
+      '<div class="jwcs-om-msg"><b class="jwcs-om-tag"></b> <span class="jwcs-om-text"></span></div>' +
+      '<button type="button" class="jwcs-om-act"></button>' +
+      '<button type="button" class="jwcs-om-x" aria-label="Hide this message">\u00D7</button>';
+    /* just under the tab bar (and the gear), or at the very top on a page without one */
+    var bar = document.querySelector('.jwcs-navbar') || document.querySelector('nav.tabs');
+    if(bar && bar.parentNode) bar.parentNode.insertBefore(el, bar.nextSibling);
+    else document.body.insertBefore(el, document.body.firstChild);
+    el.querySelector('.jwcs-om-act').addEventListener('click', function(){ location.reload(); });
+    el.querySelector('.jwcs-om-x').addEventListener('click', function(){ OM.hidden = true; omRender(); });
+    OM.el = el;
+    return el;
+  }
+  function omRender(){
+    if(!OM.ready) return;
+    var saved = 0, empty = false, any = false;
+    for(var k in OM.behind){
+      if(!own(OM.behind, k)) continue;
+      any = true;
+      if(OM.behind[k]){ if(!saved || OM.behind[k] < saved) saved = OM.behind[k]; } else empty = true;
+    }
+    var down = omAnyDown();
+    var mode = (down && any) ? 'busy' : (any && OM.backAt && Date.now() - OM.backAt < BACK_SHOW_MIN * 60000) ? 'back' : '';
+    var el = OM.el;
+    if(!mode || OM.hidden){
+      if(el) el.hidden = true;
+      if(OM.tickT){ clearInterval(OM.tickT); OM.tickT = null; }
+      return;
+    }
+    if(!el){ el = omBuild(); if(!el) return; }
+    var offline = navigator.onLine === false, tag, text, btn;
+    if(mode === 'busy'){
+      tag = offline ? 'YOU\u2019RE OFFLINE' : 'FORECAST FEED BUSY';
+      var why = offline ? 'You seem to be offline' : 'Open-Meteo, which supplies our forecast numbers, isn\u2019t answering';
+      var until = offline ? 'until you\u2019re back online' : 'until it\u2019s back';
+      text = saved
+        ? why + ', so this page is showing the forecast saved on this device at <b>' + esc(omClock(saved)) + '</b> (' + esc(ago(saved)) + ').' +
+          (empty ? ' Some panels may be empty ' + until + '.' : '')
+        : why + ', so some forecast panels may be empty ' + until + '. They\u2019ll fill in by themselves.';
+      btn = 'TRY AGAIN';
+    } else {
+      tag = 'FORECAST FEED BACK';
+      text = 'Open-Meteo is answering again. This page catches up at its next refresh, or tap REFRESH now.';
+      btn = 'REFRESH';
+    }
+    if(el.className !== 'jwcs-om ' + mode) el.querySelector('.jwcs-om-ico').innerHTML = mode === 'back' ? OM_ICON_BACK : OM_ICON_BUSY;
+    el.className = 'jwcs-om ' + mode;
+    el.querySelector('.jwcs-om-tag').textContent = tag;
+    el.querySelector('.jwcs-om-text').innerHTML = text;
+    el.querySelector('.jwcs-om-act').textContent = btn;
+    el.hidden = false;
+    if(!OM.tickT) OM.tickT = setInterval(omRender, 60000);   /* keeps "x min ago" current, and hides BACK after a while */
+  }
+  /* saved copies older than SAVED_KEEP_H hours are thrown away */
+  function omPrune(){
+    omStore().then(function(c){
+      if(!c) return;
+      return c.keys().then(function(keys){
+        for(var i = 0; i < keys.length; i++){
+          (function(k){
+            c.match(k).then(function(r){
+              var t = r ? Number(r.headers.get('X-JWC-Saved')) || 0 : 0;
+              if(!t || Date.now() - t > SAVED_KEEP_H * 3600000) return c['delete'](k);
+            }).then(null, function(){});
+          })(keys[i]);
+        }
+      });
+    }).then(null, function(){});
+  }
+  function omStart(){
+    OM.ready = true;
+    omRender();
+    window.addEventListener('online', function(){ omRender(); omProbe(1000); });
+    window.addEventListener('offline', omRender);
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible'){ omRender(); omProbe(1500); } });
+    setTimeout(omPrune, 20000);
   }
 
   /* ================= 2b. What's new: the list lives in data/whats-new.json =================
@@ -463,6 +695,23 @@
     '.jwcs-seg svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}',
     '.jwcs-seg svg .f{fill:currentColor;stroke:none}',
     '.jwcs-look-help{min-height:36px;margin-top:10px}',
+    /* the strip under the tab bar when Open-Meteo isn't answering (section 2c) */
+    '.jwcs-om{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 14px;padding:9px 8px 9px 12px;border:1px solid rgba(255,176,32,.5);border-radius:8px;background:rgba(255,176,32,.06);color:var(--text,#e9f6f5);font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.55;letter-spacing:.2px;text-align:left}',
+    '.jwcs-om[hidden]{display:none}',
+    '.jwcs-om.back{border-color:rgba(76,211,255,.45);background:rgba(76,211,255,.05)}',
+    '.jwcs-om-ico{width:20px;height:20px;flex:0 0 auto;fill:none;stroke:var(--amber,#ffb020);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}',
+    '.jwcs-om.back .jwcs-om-ico{stroke:var(--cyan,#4cd3ff)}',
+    '.jwcs-om-msg{flex:1 1 260px;min-width:0;margin:0}',
+    '.jwcs-om-tag{font-family:"Orbitron",sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--amber,#ffb020);margin-right:6px;white-space:nowrap}',
+    '.jwcs-om.back .jwcs-om-tag{color:var(--cyan,#4cd3ff)}',
+    '.jwcs-om-text b{font-weight:700;color:inherit}',
+    '.jwcs-om-act{flex:0 0 auto;min-height:36px;margin:0 0 0 auto;padding:0 14px;border:1px solid var(--amber,#ffb020);border-radius:6px;background:transparent;color:var(--amber,#ffb020);font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:800;letter-spacing:1.5px;line-height:1;cursor:pointer;box-shadow:none;text-transform:none}',
+    '.jwcs-om-act:hover{background:rgba(255,176,32,.12)}',
+    '.jwcs-om.back .jwcs-om-act{border-color:var(--cyan,#4cd3ff);color:var(--cyan,#4cd3ff)}',
+    '.jwcs-om.back .jwcs-om-act:hover{background:rgba(76,211,255,.1)}',
+    '.jwcs-om-x{flex:0 0 auto;width:36px;height:36px;min-height:0;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--dim,#6f8d99);font-family:inherit;font-size:20px;line-height:1;cursor:pointer;box-shadow:none}',
+    '.jwcs-om-x:hover{color:var(--text,#e9f6f5)}',
+    '.jwcs-om button:focus-visible{outline:2px solid var(--cyan,#4cd3ff);outline-offset:2px}',
     /* Calm display: no pulsing, spinning or scrolling effects (works on every page) */
     'html[data-motion="calm"] *,html[data-motion="calm"] *::before,html[data-motion="calm"] *::after{animation:none!important;transition:none!important}',
     'html[data-motion="calm"]{scroll-behavior:auto!important}',
@@ -486,6 +735,10 @@
     'html[data-theme="light"] .jwcs-news li.is-new time::after{color:var(--amber)}',
     'html[data-theme="light"] .jwcs-talk{border-color:rgba(0,109,150,.25);background:rgba(0,109,150,.04)}',
     'html[data-theme="light"] .jwcs-status.on i{box-shadow:none}',
+    'html[data-theme="light"] .jwcs-om{border-color:rgba(153,87,0,.45);background:linear-gradient(rgba(240,161,0,.09),rgba(240,161,0,.09)),var(--bg-panel);box-shadow:var(--card-shadow)}',
+    'html[data-theme="light"] .jwcs-om.back{border-color:rgba(0,109,150,.35);background:linear-gradient(rgba(14,152,204,.07),rgba(14,152,204,.07)),var(--bg-panel)}',
+    'html[data-theme="light"] .jwcs-om-act:hover{background:rgba(153,87,0,.08)}',
+    'html[data-theme="light"] .jwcs-om.back .jwcs-om-act:hover{background:rgba(0,109,150,.08)}',
     /* the cookie banner (cookie-consent.js), in light mode */
     'html[data-theme="light"] #jwc-cc{background:#fbfcfd;border-color:rgba(0,109,150,.35);box-shadow:0 14px 40px rgba(12,40,55,.28);color:#0c1a22}',
     'html[data-theme="light"] #jwc-cc .jwc-cc-title,html[data-theme="light"] #jwc-cc a{color:#006d96}',
@@ -531,7 +784,7 @@
   var PRIVACY_HTML =
     '<div class="jwcs-prose" style="padding-top:16px">' +
     '<p><b>Privacy.</b> Jersey Weather Chat is registered with the Jersey Office of the Information Commissioner (<a href="https://portal.jerseyoic.org/Registrations/RegistrySearch/Index" target="_blank" rel="noopener">registration no. 104194</a>). We hold very little personal data, and only to run this site: the notification address, browser type and sign-up time for alerts (TURN OFF deletes them); the name, report and optional email you give with a storm report; and visit counts through Google Analytics. It is kept in our Google account and passes through GitHub and your browser maker&rsquo;s notification service, so it may be held outside Jersey. We never sell or share it. To see, correct or delete your data, email ' + EMAIL + '; you can also complain to the <a href="https://jerseyoic.org" target="_blank" rel="noopener">Jersey Office of the Information Commissioner</a>.</p>' +
-    '<p><b>On this device.</b> Your settings, and your storm report name and parish if you choose to keep them, are saved in this browser only. They are never sent to us.</p>' +
+    '<p><b>On this device.</b> Your settings, the latest forecasts (so pages still work if our forecast provider goes down), and your storm report name and parish if you choose to keep them, are saved in this browser only. They are never sent to us.</p>' +
     '</div>' +
     '<div class="jwcs-row"><div class="jwcs-txt"><span class="jwcs-label">Analytics cookies</span><p class="jwcs-desc" id="jwcs-cookie-state">Not chosen yet</p></div><button type="button" class="jwcs-btn" data-cookie-settings>COOKIE CHOICES</button></div>' +
     '<div class="jwcs-row"><div class="jwcs-txt"><span class="jwcs-label" id="jwcs-rem-lbl">Remember my storm report details</span><p class="jwcs-desc">Fills in your name and parish on the Storm Reports form next time.</p></div><button type="button" class="jwcs-switch" role="switch" aria-checked="true" aria-labelledby="jwcs-rem-lbl" id="jwcs-rem"></button></div>' +
@@ -1333,6 +1586,8 @@
     /* another tab changed the look: follow it */
     try{ window.addEventListener('storage', function(e){ if(e.key === K_THEME || e.key === K_CALM || e.key === K_PREVIEW) applyDisplay(); }); }catch(e){}
     try{ wireReportForm(); }catch(e){}
+    /* the "forecast feed busy" strip (section 2c), now the tab bar and gear are in place */
+    try{ omStart(); }catch(e){}
     /* the Live Ops bars work even if the panel couldn't be built */
     try{ wireAlertStrip(); }catch(e){}
     try{ wireAppStrip(); }catch(e){}

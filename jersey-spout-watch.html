@@ -659,6 +659,8 @@ section{ margin-bottom:34px; }
 .sp-src.load .dot{ background:var(--amber); box-shadow:0 0 6px var(--amber); animation:pulse 1.4s ease-in-out infinite; }
 .sp-src.err{ border-color:rgba(255,75,92,0.45); }
 .sp-src.err .dot{ background:var(--red); box-shadow:0 0 6px var(--red); }
+.sp-src.saved{ border-color:rgba(255,176,32,0.45); }
+.sp-src.saved .dot{ background:var(--amber); box-shadow:0 0 6px var(--amber); }
 .sp-msg{ font-size:10.5px; letter-spacing:1.5px; color:var(--dim); padding:14px 2px; }
 /* hero: the day's verdict */
 .sp-hero{ display:grid; grid-template-columns:190px minmax(0,1fr) minmax(0,270px); gap:26px; align-items:center; }
@@ -823,6 +825,7 @@ html[data-theme="light"] .sp-n-now{ stroke:#ffffff; }
 html[data-theme="light"] :is(.sp-ing-card, .sp-sand-out){ box-shadow:var(--card-shadow); }
 html[data-theme="light"] :is(.sp-demo, .sp-src){ background:var(--bg-panel); box-shadow:var(--card-shadow); }
 html[data-theme="light"] :is(.sp-src .dot){ box-shadow:none; }
+html[data-theme="light"] .sp-src.saved{ border-color:rgba(153,87,0,0.45); }
 html[data-theme="light"] .tip.sp-tip{ background:var(--bg-panel); box-shadow:0 12px 30px rgba(12,40,55,0.25); }
 html[data-theme="light"] :is(.sp-m:hover, .sp-m:focus, .sp-m:focus-within){ background:rgba(0,109,150,0.06); }
 </style>
@@ -1426,7 +1429,9 @@ function spFetch(url, ms){
   return fetch(url, ctl ? { signal:ctl.signal, cache:'no-store' } : { cache:'no-store' }).then(function(res){
     clearTimeout(t);
     if(!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
+    // jwc-settings.js hands over the copy saved on this device when Open-Meteo isn't answering, marked with when it was saved
+    var saved = Number(res.headers && res.headers.get('X-JWC-Saved')) || 0;
+    return res.json().then(function(j){ if(j && saved) j._savedAt = saved; return j; });
   }, function(e){ clearTimeout(t); throw e; }).then(function(j){
     if(j && j.error) throw new Error(j.reason || 'model error');
     return j;
@@ -1442,14 +1447,26 @@ function spLoad(){
     var b = swBuild(out[0], out[1]);
     if(!b.days.length) throw new Error('no hours');
     var keep = ST.days && ST.days.join() === b.days.join();
-    ST.days = b.days; ST.res = b.res; ST.prof = b.prof; ST.updated = Date.now();
+    // a saved copy (Open-Meteo not answering): the oldest of the two, so the page never claims to be newer than it is
+    var savedAt = 0;
+    out.forEach(function(o){ if(o && o._savedAt && (!savedAt || o._savedAt < savedAt)) savedAt = o._savedAt; });
+    ST.days = b.days; ST.res = b.res; ST.prof = b.prof; ST.updated = savedAt || Date.now();
     spApplyNow();
     SP_DAYS = ST.days.map(function(x){ return spDayLabel(x, false); });
     SP_DAY_NAMES = ST.days.map(function(x, i){ return i === ST.today ? 'TODAY' : i === ST.today + 1 ? 'TOMORROW' : spDayLabel(x, true); });
     if(!keep || !ST.res[ST.day] || !ST.res[ST.day][ST.hour]){ ST.day = Math.max(0, ST.today); ST.hour = Math.max(spBest(ST.day), spStart(ST.day)); }
-    var when = SP_HHMM.format(new Date());
-    spSetStatus('', 'LIVE &middot; OPEN-METEO MODEL DATA FOR JERSEY + SEA TEMPERATURE &middot; UPDATED <b>' + when + '</b> &middot; REFRESHES EVERY 30 MIN');
-    document.getElementById('lastRefresh').textContent = when;
+    clearTimeout(ST.retryT);
+    if(savedAt){
+      var savedWhen = SP_HHMM.format(new Date(savedAt));
+      spSetStatus('saved', (navigator.onLine === false ? 'YOU SEEM TO BE OFFLINE' : 'OPEN-METEO ISN&rsquo;T ANSWERING') +
+        ' &middot; SHOWING THE FORECAST SAVED ON THIS DEVICE AT <b>' + savedWhen + '</b> &middot; TRYING AGAIN EVERY MINUTE');
+      document.getElementById('lastRefresh').textContent = savedWhen + ' (SAVED COPY)';
+      ST.retryT = setTimeout(spLoad, 60000);
+    } else {
+      var when = SP_HHMM.format(new Date());
+      spSetStatus('', 'LIVE &middot; OPEN-METEO MODEL DATA FOR JERSEY + SEA TEMPERATURE &middot; UPDATED <b>' + when + '</b> &middot; REFRESHES EVERY 30 MIN');
+      document.getElementById('lastRefresh').textContent = when;
+    }
     spRenderAll();
   }).catch(function(e){
     console.error('spout watch data failed', e);
@@ -1459,7 +1476,8 @@ function spLoad(){
       document.getElementById('spLevel').textContent = 'NO DATA YET';
       document.getElementById('spWhen').textContent = 'COULDN\u2019T REACH THE MODEL DATA \u00b7 TRYING AGAIN IN A MINUTE';
     }
-    setTimeout(spLoad, 60000);
+    clearTimeout(ST.retryT);
+    ST.retryT = setTimeout(spLoad, 60000);
   }).then(function(){ ST.loading = false; });
 }
 // which of the three days is today, and the current hour (re-checked on every redraw so "now" keeps moving)
