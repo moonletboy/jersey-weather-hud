@@ -433,7 +433,7 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
     <div id="recapContent"></div>
   </section>
 
-  <section>
+  <section id="submit-report">
     <div class="sec-head">
       <h3>SUBMIT REPORT</h3>
       <div class="bar"></div>
@@ -957,6 +957,15 @@ async function submitReport(report){
     document.getElementById('damageDetailsField').style.display = 'none';
     document.getElementById('f-damage').value = 'No damage';
   });
+  // a link from SPOUT WATCH (jersey-storm-reports.html?type=funnel#submit-report) opens the form with
+  // Funnel Cloud / Waterspout already chosen
+  (function(){
+    let want = '';
+    try{ want = (new URLSearchParams(location.search).get('type') || '').toLowerCase(); }catch(e){}
+    const TYPE_LINKS = { funnel:'Funnel Cloud / Waterspout', waterspout:'Funnel Cloud / Waterspout' };
+    const sel = document.getElementById('f-type');
+    if(TYPE_LINKS[want] && sel){ sel.value = TYPE_LINKS[want]; sel.dispatchEvent(new Event('change')); }
+  })();
 
   document.getElementById('f-damage').addEventListener('change', function(){
     document.getElementById('damageDetailsField').style.display = (this.value === 'No damage') ? 'none' : '';

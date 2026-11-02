@@ -756,10 +756,18 @@ section{ margin-bottom:34px; }
 .tip-wrap:hover .tip.sp-tip.sp-tip-left, .tip-wrap:focus .tip.sp-tip.sp-tip-left, .tip-wrap:focus-within .tip.sp-tip.sp-tip-left{ transform:translateX(-50%) translateY(0); }
 }
 /* sightings */
-.sp-sight-row{ display:grid; grid-template-columns:140px minmax(0,1fr) 190px 150px; gap:12px; align-items:center; padding:11px 0; border-bottom:1px solid var(--line); font-size:11px; }
-@media (max-width:760px){ .sp-sight-row{ grid-template-columns:1fr 1fr; } }
-.sp-sight-row .t{ color:var(--dim); letter-spacing:1px; font-size:10px; }
+.sp-sight-row{ display:grid; grid-template-columns:120px minmax(0,1fr) 180px 160px; grid-template-areas:"when text hour day"; gap:12px; align-items:start; padding:13px 0; border-bottom:1px solid var(--line); font-size:11px; }
+.sp-sight-row:last-child{ border-bottom:none; }
+.sp-s-when{ grid-area:when; } .sp-s-text{ grid-area:text; } .sp-s-hour{ grid-area:hour; } .sp-s-day{ grid-area:day; }
+@media (max-width:760px){ .sp-sight-row{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"when hour" "text text" "day day"; gap:8px 12px; } }
+.sp-sight-row .t{ color:var(--dim); letter-spacing:1px; font-size:10px; line-height:1.5; }
 .sp-sight-row .k{ font-weight:700; letter-spacing:1px; }
+.sp-sight-row .d{ color:var(--text); line-height:1.55; margin:3px 0 4px; overflow-wrap:anywhere; }
+.sp-sight-row a{ color:var(--cyan); text-decoration:none; }
+.sp-sight-row a:hover{ text-decoration:underline; }
+.sp-day em.sp-day-spot{ display:block; font-style:normal; font-size:9.5px; letter-spacing:1.5px; color:var(--cyan); margin-top:4px; font-weight:700; }
+.sp-tl-spot line{ stroke:var(--cyan); stroke-width:1; stroke-dasharray:2 2; pointer-events:none; }
+.sp-tl-spot text{ font-size:10px; cursor:default; }
 .sp-badge{ display:inline-block; font-size:9px; letter-spacing:1px; padding:3px 7px; border-radius:4px; border:1px solid currentColor; font-weight:700; }
 .sp-sample{ display:inline-block; font-size:9px; letter-spacing:2px; color:var(--violet); border:1px dashed var(--violet); padding:2px 6px; border-radius:3px; margin-left:8px; vertical-align:2px; }
 .sp-report{ display:inline-block; margin-top:18px; font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; font-weight:800; color:#05080d; background:var(--cyan); padding:11px 15px; border-radius:6px; text-decoration:none; }
@@ -980,8 +988,9 @@ html[data-theme="light"] :is(.sp-m:hover, .sp-m:focus, .sp-m:focus-within){ back
 <div class="panel">
 <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div class="sp-pad">
-<p class="sp-intro">Coming soon: a "Funnel cloud / waterspout" report type on the Storm Reports page. Every sighting will be checked against SPOUT WATCH for that hour, so over time Jersey builds its own record of how well it works. Until then, share your photos in the group.</p>
+<p class="sp-intro">Seen a funnel cloud or waterspout? Report it on the Storm Reports page as <b>Funnel Cloud / Waterspout</b>. Each report shows here with what SPOUT WATCH said for that hour and that day, and a 🌪️ marks it on the timeline above, so over time Jersey builds its own record of how well this works. The hour is when the report was sent, so a report made later on may not match the exact moment of the sighting.</p>
 <div id="spSightings"></div>
+<a class="sp-report" href="jersey-storm-reports.html?type=funnel#submit-report">SEEN ONE? REPORT IT &rarr;</a>
 </div>
 </div>
 </section>
@@ -1298,7 +1307,7 @@ function spRenderHero(){
     var bi = spBest(i), ri = bi < 0 ? null : ST.res[i][bi];
     return '<button type="button" class="sp-day' + (i === d ? ' active' : '') + '" data-d="' + i + '"><small>' + SP_DAY_NAMES[i] + ' · ' + SP_DAYS[i] + '</small>' +
       (ri ? '<b style="color:' + SP_COL[ri.level] + '">' + SW_LEVEL_NAMES[ri.level] + '</b><span>' + (ri.level ? 'BEST ' + spHH(bi) + ' · SCORE ' + ri.score : ri.score > 0 ? 'PEAK SCORE ' + ri.score : 'NO SPOUT WINDOW') + '</span>'
-          : '<b>NO DATA</b><span>&nbsp;</span>') + '</button>';
+          : '<b>NO DATA</b><span>&nbsp;</span>') + spSpotTag(day) + '</button>';
   }).join('');
 }
 // ---- 72-hour timeline ----
@@ -1336,6 +1345,13 @@ function spRenderTimeline(){
     s += '<line class="sp-tl-now" x1="' + nx + '" x2="' + nx + '" y1="20" y2="' + (BASE + 18) + '"/>';
     s += '<text class="sp-tl-nowlbl" x="' + nx + '" y="' + (BASE + 29) + '" text-anchor="middle">NOW</text>';
   }
+  (SG.list || []).forEach(function(sg){
+    var sd = ST.days.indexOf(sg.date);
+    if(sd < 0) return;
+    var mx = X0 + (sd * 24 + sg.hour) * W + W / 2;
+    s += '<g class="sp-tl-spot"><line x1="' + mx + '" x2="' + mx + '" y1="31" y2="' + BASE + '"/><text x="' + mx + '" y="29" text-anchor="middle">\ud83c\udf2a\ufe0f<title>SPOTTED: ' +
+      spEsc(String(sg.r.parish || '').toUpperCase()) + ', ' + spDayLabel(sg.date, false) + ' ' + sg.hm + '</title></text></g>';
+  });
   var sx = X0 + (ST.day * 24 + ST.hour) * W;
   s += '<rect class="sp-tl-sel" x="' + (sx - 0.5) + '" y="18" width="' + (W + 1) + '" height="' + (BASE - 16) + '" rx="2"/>';
   document.getElementById('spTimeline').innerHTML = s;
@@ -1487,12 +1503,159 @@ function spApplyNow(){
   ST.nowH = n.hour;
   if(ST.today < 0){ ST.today = -1; ST.nowH = 0; }
 }
-// ---- sightings ----
+// ---- sightings: Funnel Cloud / Waterspout reports from the Storm Reports page ----
+// Read from the same feed as the Storm Reports page. Each one is checked against SPOUT WATCH for the hour it was
+// reported and for that whole day: from the live forecast for the three days shown, and for earlier days from
+// Open-Meteo's model data for those dates (the same two requests with start/end dates; Open-Meteo keeps about three
+// months, and its ground-level values for less, so older days may say "no model data").
+var SP_REPORTS_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+var SP_SPOT_TYPE = 'Funnel Cloud / Waterspout';
+var SP_SPOT_SHOW = 20;            // newest sightings listed here; the rest are on the Storm Reports page
+var SP_HIST_DAYS = 90;            // how far back Open-Meteo is asked for model data
+var SP_SPOT_REFRESH_MS = 10 * 60000;
+var SG = { list:null, failed:false, loading:false, loaded:0, hist:{}, histKey:'', histDone:'', histFailed:false };
+var SP_LOCALF = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+function spLocalOf(d){
+  var p = {};
+  SP_LOCALF.formatToParts(d).forEach(function(x){ p[x.type] = x.value; });
+  return { date:p.year + '-' + p.month + '-' + p.day, hour:Number(p.hour), hm:p.hour + ':' + p.minute };
+}
+function spDateAdd(ymd, n){ var t = new Date(ymd + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+function spLoadSightings(){
+  if(SG.loading) return;
+  SG.loading = true;
+  spFetch(SP_REPORTS_URL + '?t=' + Date.now(), 25000).then(function(rows){
+    var list = [];
+    (Array.isArray(rows) ? rows : []).forEach(function(r){
+      if(!r || r.type !== SP_SPOT_TYPE || !r.timestamp) return;
+      var d = new Date(r.timestamp);
+      if(isNaN(d.getTime())) return;
+      var L = spLocalOf(d);
+      list.push({ r:r, t:d.getTime(), date:L.date, hour:L.hour, hm:L.hm });
+    });
+    list.sort(function(a, b){ return b.t - a.t; });
+    SG.list = list; SG.failed = false; SG.loaded = Date.now();
+    spLoadHistory();
+    if(ST.res){ spRenderHero(); spRenderTimeline(); }
+    spRenderSightings();
+  }).catch(function(e){
+    console.error('spout watch sightings failed', e);
+    SG.failed = true;
+    spRenderSightings();
+  }).then(function(){ SG.loading = false; });
+}
+// model data for sightings before the first day shown (one request for the whole span)
+function spLoadHistory(){
+  if(!SG.list || !ST.days) return;
+  var first = ST.days[0], oldest = spDateAdd(first, -SP_HIST_DAYS), min = '';
+  SG.list.forEach(function(s){ if(s.date < first && s.date >= oldest && (!min || s.date < min)) min = s.date; });
+  if(!min) return;
+  var end = spDateAdd(first, -1), key = min + '/' + end;
+  if(SG.histKey === key) return;
+  SG.histKey = key; SG.histFailed = false;
+  var fc = SP_FC_URL.replace('&forecast_days=3', '') + '&start_date=' + min + '&end_date=' + end;
+  var sea = SP_SEA_URL.replace('&forecast_days=3', '') + '&start_date=' + min + '&end_date=' + end;
+  Promise.all([spFetchRetry(fc), spFetchRetry(sea)]).then(function(out){
+    if(SG.histKey !== key) return;
+    SG.hist = spScoreDays(out[0], out[1]); SG.histDone = key;
+    spRenderSightings();
+  }).catch(function(e){
+    console.error('spout watch past model data failed', e);
+    if(SG.histKey === key){ SG.histFailed = true; SG.histKey = ''; }
+    spRenderSightings();
+  });
+}
+// every hour of every day in a past-dates answer, scored with the page's own engine: { '2026-10-27': [24 results] }
+function spScoreDays(fc, sea){
+  var out = {}, h = fc && fc.hourly;
+  if(!h || !h.time) return out;
+  var elev = swNum(fc.elevation) || 0, seaBy = {}, lastSst = null;
+  if(sea && sea.hourly && sea.hourly.time){
+    sea.hourly.time.forEach(function(t, k){ var v = swNum(sea.hourly.sea_surface_temperature[k]); if(v != null) seaBy[t] = v; });
+  }
+  h.time.forEach(function(t, i){
+    var day = t.slice(0, 10), hr = Number(t.slice(11, 13));
+    if(!out[day]) out[day] = new Array(24).fill(null);
+    if(seaBy[t] != null) lastSst = seaBy[t];
+    if(out[day][hr]) return;                     // the repeated hour when the clocks go back: keep the first
+    var p = swLiveProfile(h, i, seaBy[t] != null ? seaBy[t] : lastSst, elev);
+    out[day][hr] = p ? swScore(p) : null;
+  });
+  return out;
+}
+// the day's strongest hour: highest level, then highest score
+function spDayPeak(res){
+  var best = -1;
+  for(var h = 0; h < 24; h++){
+    var x = res[h]; if(!x) continue;
+    var y = best < 0 ? null : res[best];
+    if(!y || x.level > y.level || (x.level === y.level && x.score > y.score)) best = h;
+  }
+  return best;
+}
+// what SPOUT WATCH says for a sighting: { state:'ok', hour, peakH } or another state
+function spSightCheck(s){
+  var res = null;
+  if(ST.days && ST.res){ var d = ST.days.indexOf(s.date); if(d >= 0) res = ST.res[d]; }
+  if(!res && SG.hist[s.date]) res = SG.hist[s.date];
+  if(!res){
+    if(!ST.days) return { state:'wait' };
+    if(s.date >= ST.days[0]) return { state:'none' };
+    if(s.date < spDateAdd(ST.days[0], -SP_HIST_DAYS)) return { state:'old' };
+    if(SG.histFailed) return { state:'fail' };
+    if(SG.histDone !== SG.histKey || !SG.histKey) return { state:'wait' };
+    return { state:'none' };
+  }
+  var pk = spDayPeak(res);
+  if(pk < 0 && !res[s.hour]) return { state:'none' };
+  return { state:'ok', hour:res[s.hour], peakH:pk, peak:pk < 0 ? null : res[pk] };
+}
+function spSpotTag(day){
+  if(!SG.list) return '';
+  var n = SG.list.filter(function(s){ return s.date === day; }).length;
+  return n ? '<em class="sp-day-spot">\ud83c\udf2a\ufe0f ' + (n > 1 ? n + ' SIGHTINGS' : 'SPOTTED') + '</em>' : '';
+}
 function spRenderSightings(){
-  document.getElementById('spSightings').innerHTML = '<div class="sp-msg">NO SIGHTINGS LOGGED YET</div>';
+  var el = document.getElementById('spSightings');
+  if(!SG.list){
+    el.innerHTML = '<div class="sp-msg">' + (SG.failed ? 'COULDN&rsquo;T LOAD THE SIGHTINGS RIGHT NOW &middot; TRYING AGAIN SOON' : 'LOADING SIGHTINGS&hellip;') + '</div>';
+    return;
+  }
+  if(!SG.list.length){
+    el.innerHTML = '<div class="sp-msg">NO SIGHTINGS REPORTED YET &middot; BE THE FIRST</div>';
+    return;
+  }
+  var WHY = { wait:'CHECKING SPOUT WATCH&hellip;', old:'TOO LONG AGO TO CHECK', none:'NO MODEL DATA FOR THAT DAY', fail:'COULDN&rsquo;T REACH THE MODEL DATA' };
+  el.innerHTML = SG.list.slice(0, SP_SPOT_SHOW).map(function(s){
+    var r = s.r, c = spSightCheck(s);
+    var desc = String(r.description || '').trim();
+    if(desc.length > 280) desc = desc.slice(0, 277) + '\u2026';
+    var media = /^https?:\/\//i.test(String(r.media || '')) ? ' &middot; <a href="' + spEsc(r.media) + '" target="_blank" rel="noopener">PHOTO / VIDEO &rarr;</a>' : '';
+    var hourCell, dayCell;
+    if(c.state === 'ok'){
+      hourCell = c.hour
+        ? '<span class="sp-badge" style="color:' + SP_COL[c.hour.level] + '">' + SW_LEVEL_NAMES[c.hour.level] + ' &middot; ' + c.hour.score + '</span><div class="t">THAT HOUR (' + spHH(s.hour) + ')</div>'
+        : '<div class="t">NO MODEL DATA FOR THAT HOUR</div>';
+      dayCell = c.peak
+        ? '<div class="k" style="color:' + SP_COL[c.peak.level] + '">' + SW_LEVEL_NAMES[c.peak.level] + '</div><div class="t">THAT DAY &middot; ' + (c.peak.score > 0 ? 'PEAK ' + c.peak.score + ' AT ' + spHH(c.peakH) : 'SCORE 0 ALL DAY') + '</div>'
+        : '';
+    } else {
+      hourCell = '<div class="t">' + WHY[c.state] + '</div>';
+      dayCell = '';
+    }
+    return '<div class="sp-sight-row">' +
+      '<div class="sp-s-when"><div class="k">' + spDayLabel(s.date, false) + '</div><div class="t">' + s.hm + '</div></div>' +
+      '<div class="sp-s-text"><div class="k">\ud83c\udf2a\ufe0f ' + spEsc(String(r.parish || '').toUpperCase()) + '</div>' +
+        (desc ? '<div class="d">' + spEsc(desc) + '</div>' : '') +
+        '<div class="t">' + (r.reporter ? 'REPORTED BY ' + spEsc(String(r.reporter).toUpperCase()) : 'REPORTED') + media + '</div></div>' +
+      '<div class="sp-s-hour">' + hourCell + '</div>' +
+      '<div class="sp-s-day">' + dayCell + '</div>' +
+    '</div>';
+  }).join('') +
+  (SG.list.length > SP_SPOT_SHOW ? '<div class="sp-msg">+ ' + (SG.list.length - SP_SPOT_SHOW) + ' EARLIER SIGHTINGS ON THE <a href="jersey-storm-reports.html" style="color:var(--cyan)">STORM REPORTS</a> PAGE</div>' : '');
 }
 // ---- wiring ----
-function spRenderAll(){ if(!ST.res) return; spRenderHero(); spRenderTimeline(); spRenderIngredients(); spRenderNomo(); }
+function spRenderAll(){ if(!ST.res) return; spRenderHero(); spRenderTimeline(); spRenderIngredients(); spRenderNomo(); spRenderSightings(); spLoadHistory(); }
 function spSelect(d, h){ ST.day = d; ST.hour = h; spRenderAll(); }
 document.getElementById('spDays').addEventListener('click', function(e){ var b = e.target.closest('.sp-day'); if(b){ var d = Number(b.dataset.d); var h = spBest(d); spSelect(d, h < 0 ? spStart(d) : h); } });
 document.getElementById('spTimeline').addEventListener('click', function(e){ var b = e.target.closest('.sp-tl-bar'); if(b) spSelect(Number(b.dataset.d), Number(b.dataset.h)); });
@@ -1511,6 +1674,9 @@ document.addEventListener('keydown', function(e){
 // refresh every 30 minutes, when the page comes back into view after a while, and move "now" on each hour
 setInterval(spLoad, SP_REFRESH_MS);
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && ST.updated && Date.now() - ST.updated > SP_REFRESH_MS) spLoad(); });
+// sightings: every 10 minutes, and when the page comes back into view after a while
+setInterval(spLoadSightings, SP_SPOT_REFRESH_MS);
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && Date.now() - SG.loaded > SP_SPOT_REFRESH_MS) spLoadSightings(); });
 setInterval(function(){
   if(!ST.res) return;
   var before = ST.nowH, bt = ST.today;
@@ -1518,6 +1684,7 @@ setInterval(function(){
   if(ST.nowH !== before || ST.today !== bt){ if(ST.today < 0) spLoad(); else spRenderAll(); }
 }, 60000);
 spRenderSightings();
+spLoadSightings();
 document.getElementById('spGauge').innerHTML = spGauge(null, 0);
 document.getElementById('spIng').innerHTML = '<div class="sp-msg">WAITING FOR LIVE MODEL DATA&hellip;</div>';
 spLoad();
