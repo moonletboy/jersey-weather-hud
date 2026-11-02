@@ -766,8 +766,11 @@ section{ margin-bottom:34px; }
 .sp-sight-row a{ color:var(--cyan); text-decoration:none; }
 .sp-sight-row a:hover{ text-decoration:underline; }
 .sp-day em.sp-day-spot{ display:block; font-style:normal; font-size:9.5px; letter-spacing:1.5px; color:var(--cyan); margin-top:4px; font-weight:700; }
-.sp-tl-spot line{ stroke:var(--cyan); stroke-width:1; stroke-dasharray:2 2; pointer-events:none; }
-.sp-tl-spot text{ font-size:10px; cursor:default; }
+/* a sighting on the timeline: a solid pin in the text colour (white on dark, near-black on light) with a funnel drawn in */
+.sp-tl-spot{ cursor:default; }
+.sp-tl-spot line{ stroke:var(--text); stroke-width:1.3; opacity:0.8; pointer-events:none; }
+.sp-tl-spot circle{ fill:var(--text); stroke:var(--bg-panel); stroke-width:1.5; }
+.sp-tl-spot path{ fill:none; stroke:var(--bg-panel); stroke-width:1.5; stroke-linecap:round; pointer-events:none; }
 .sp-badge{ display:inline-block; font-size:9px; letter-spacing:1px; padding:3px 7px; border-radius:4px; border:1px solid currentColor; font-weight:700; }
 .sp-sample{ display:inline-block; font-size:9px; letter-spacing:2px; color:var(--violet); border:1px dashed var(--violet); padding:2px 6px; border-radius:3px; margin-left:8px; vertical-align:2px; }
 .sp-report{ display:inline-block; margin-top:18px; font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:2px; font-weight:800; color:#05080d; background:var(--cyan); padding:11px 15px; border-radius:6px; text-decoration:none; }
@@ -1349,8 +1352,10 @@ function spRenderTimeline(){
     var sd = ST.days.indexOf(sg.date);
     if(sd < 0) return;
     var mx = X0 + (sd * 24 + sg.hour) * W + W / 2;
-    s += '<g class="sp-tl-spot"><line x1="' + mx + '" x2="' + mx + '" y1="31" y2="' + BASE + '"/><text x="' + mx + '" y="29" text-anchor="middle">\ud83c\udf2a\ufe0f<title>SPOTTED: ' +
-      spEsc(String(sg.r.parish || '').toUpperCase()) + ', ' + spDayLabel(sg.date, false) + ' ' + sg.hm + '</title></text></g>';
+    var fx = function(dx){ return (mx + dx).toFixed(1); };
+    s += '<g class="sp-tl-spot"><title>SPOTTED: ' + spEsc(String(sg.r.parish || '').toUpperCase()) + ', ' + spDayLabel(sg.date, false) + ' ' + sg.hm + '</title>' +
+      '<line x1="' + mx + '" x2="' + mx + '" y1="31" y2="' + BASE + '"/><circle cx="' + mx + '" cy="23" r="8"/>' +
+      '<path d="M' + fx(-4.5) + ' 19.4H' + fx(4.5) + 'M' + fx(-3.2) + ' 21.8H' + fx(3.6) + 'M' + fx(-1.6) + ' 24.2H' + fx(2.4) + 'M' + fx(-0.3) + ' 26.6H' + fx(1.1) + '"/></g>';
   });
   var sx = X0 + (ST.day * 24 + ST.hour) * W;
   s += '<rect class="sp-tl-sel" x="' + (sx - 0.5) + '" y="18" width="' + (W + 1) + '" height="' + (BASE - 16) + '" rx="2"/>';
