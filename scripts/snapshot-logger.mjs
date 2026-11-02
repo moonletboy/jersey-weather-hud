@@ -1,4 +1,4 @@
-// Jersey Weather Chat - snapshot logger (Stages 1, 2 and 3)
+// Jersey Weather Chat - snapshot logger (Stages 1 to 4)
 // ------------------------------------------------
 // Every 30 minutes (GitHub Actions: .github/workflows/snapshot-logger.yml) this records what the site was
 // showing, and posts it to the "JWC Snapshots" Google Sheet through its own small receiver script, so that
@@ -6,7 +6,8 @@
 //
 // "Snapshots" tab (one row per run): Live Ops "now" conditions and storm indices, rain since midnight,
 // the five-model gust forecast, the Jersey Airport report (METAR), the Jersey Met warnings, and the sea state,
-// tides and coastal flood / sea-wall ratings from the Sea & Tides page.
+// tides and coastal flood / sea-wall ratings from the Sea & Tides page, and SPOUT WATCH (this hour's spout score
+// with its ingredients, and each day's level, score and best hour, as the page shows them).
 // "Forecast Snapshots" tab (one row per forecast day): the storm scenarios page's numbers, worked out with
 // the page's own code. The receiver also emails Matthew when new model runs change the scenarios.
 // Each data source is fetched separately with retries; if one fails the row is still written, with blanks
@@ -166,7 +167,10 @@ async function metar(row){                               // direct from aviation
     metar_flight_cat: m.fltCat || '',
     // thunder only from the weather codes (TS, VCTS, TSRA, +TSRA, RETS...); CB clouds are recorded separately
     metar_thunder: /TS/.test(wxs) || /(^|\s)(\+|-|VC|RE)?TS[A-Z]*(?=\s|$)/.test(raw) ? 'Y' : 'N',
-    metar_cb: /\d{3}CB\b|(^|\s)CB(?=\s|$)/.test(raw) ? 'Y' : 'N'
+    metar_cb: /\d{3}CB\b|(^|\s)CB(?=\s|$)/.test(raw) ? 'Y' : 'N',
+    // funnel cloud or waterspout reported (FC; +FC = a well-developed one; VCFC = seen nearby). Only the observed
+    // part counts: anything after TEMPO / BECMG (the airport's forecast) or RMK is ignored
+    metar_funnel: /(^|\s)(\+|-|VC|RE)?FC(?=\s|$)/.test(wxs + ' ' + raw.split(/ (?:TEMPO|BECMG|RMK)\b/)[0]) ? 'Y' : 'N'
   });
 }
 
@@ -681,6 +685,263 @@ return false;
 return { ENS, DET, THRESH, SC, DAYF, nc, dayDate, med, hh, loadEnsemble, loadDet, dayStats, detPeaks, headText, sigOf };
 })();
 
+// ================= SPOUT WATCH (Stage 4) =================
+// Everything inside SPOUT is copied WORD FOR WORD from jersey-spout-watch.html: the engine (swScore and its
+// helpers), the live-data code (the page's two Open-Meteo requests and swBuild) and the page's own choice of
+// "now" and of each day's best hour (spNowLocal, spApplyNow, spStart, spBest, spWindow), so the scores and
+// levels logged are exactly the ones the page shows. If the page's maths changes, copy it again.
+const SPOUT = (function(){
+var SW_LEVELS = [975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300];
+// all winds are in knots
+
+function swRamp(v, lo, hi){ return v <= lo ? 0 : v >= hi ? 1 : (v - lo) / (hi - lo); }
+function swSvp(T){ return 6.112 * Math.exp(17.67 * T / (T + 243.5)); }              // saturation vapour pressure, hPa
+function swMix(T, p){ var e = swSvp(T); return 0.622 * e / (p - e); }                // saturation mixing ratio, kg/kg
+function swMoistLapse(T, p){                                                          // moist adiabatic lapse rate, degC per m
+  var g = 9.81, cp = 1004, Lv = 2.5e6, Rd = 287, Tk = T + 273.15, r = swMix(T, p);
+  return g * (1 + Lv * r / (Rd * Tk)) / (cp + Lv * Lv * r * 0.622 / (Rd * Tk * Tk));
+}
+/* profile p: { sst, t2, td2, rh2, w10, w850, w700, sfcP, elev, cl, sh, lv:{ 975:{t,rh,z}, ... } }
+   temps degC, heights m above sea level, winds kt, cl = low cloud %, sh = showers mm */
+function swGround(p){ return (p.elev || 0) + 2; }
+function swAbove(p, L){ var x = p.lv[L]; return !!x && x.t != null && x.z != null && x.z > swGround(p) + 10 && L < (p.sfcP || 1013); }
+function swColumn(p){
+  // heights (m) and temperatures from the ground up, used to read the environment at any height
+  var col = [{ z:swGround(p), t:p.t2, pr:p.sfcP || 1013 }];
+  SW_LEVELS.forEach(function(L){ if(swAbove(p, L)) col.push({ z:p.lv[L].z, t:p.lv[L].t, pr:L }); });
+  return col;
+}
+function swEnvAt(col, z){
+  if(z <= col[0].z) return { t:col[0].t, pr:col[0].pr };
+  for(var i = 1; i < col.length; i++){
+    if(z <= col[i].z){
+      var a = col[i - 1], b = col[i], f = (z - a.z) / (b.z - a.z);
+      return { t:a.t + (b.t - a.t) * f, pr:Math.exp(Math.log(a.pr) + (Math.log(b.pr) - Math.log(a.pr)) * f) };
+    }
+  }
+  return null; // above the top level
+}
+// cloud base and top for a parcel of air lifted off the sea (or the warmer ground)
+function swCloud(p, col){
+  var t0 = Math.max(p.sst, p.t2), td0 = Math.min(p.td2, t0);
+  var base = Math.max(0, 125 * (t0 - td0));                // lifted condensation level, m above the ground (rule of thumb)
+  var g = col[0].z, zb = g + base;
+  var env = swEnvAt(col, zb);
+  if(!env) return { base:base, top:base, depth:0 };
+  var tp = t0 - 0.0098 * base;                             // dry ascent to cloud base
+  // model profiles are coarse near the ground, so allow 1 degC of slack at cloud base before calling it capped
+  if(tp < env.t - 1.0) return { base:base, top:base, depth:0 };
+  var z = zb, step = 50, top = zb;
+  while(true){
+    var e = swEnvAt(col, z + step);
+    if(!e) { top = z; break; }
+    tp -= swMoistLapse(tp, e.pr) * step;
+    z += step;
+    if(tp < e.t - 0.3){ top = z; break; }                  // parcel now colder than its surroundings: cloud top
+  }
+  return { base:base, top:top - g, depth:Math.max(0, top - zb) };
+}
+function swSzilagyiZone(dT, depthFt){
+  if(dT >= 24 && depthFt >= 2250 && depthFt <= 9750) return 'WINTER TYPE';
+  if(dT >= 11 && dT <= 19 && depthFt >= 5000 && depthFt <= 32500) return 'LAND-BREEZE TYPE';
+  if(dT >= 9 && dT <= 19 && depthFt >= 6500 && depthFt <= 36500) return 'UPPER-LOW TYPE';
+  if(depthFt >= 20000 && dT >= 0) return 'THUNDERSTORM-RELATED';
+  return 'OUTSIDE THE ZONES';
+}
+function swScore(p){
+  var col = swColumn(p), cloud = swCloud(p, col);
+  var depthFt = cloud.depth * 3.2808;
+  var dT = p.sst - p.lv[850].t;
+  // A: Szilagyi-style (both instability measures needed; switched off by 850 hPa wind of 40 kt or more)
+  var fT = swRamp(dT, 7, 11);
+  var fZ = dT >= 20 ? swRamp(depthFt, 1000, 2250) : swRamp(depthFt, 1500, 5000);
+  var windOff = p.w850 >= 40;
+  var A = windOff ? 0 : Math.sqrt(fT * fZ);
+  // B: KHS-style (all four ingredients matter; a geometric mean so one missing ingredient pulls it right down)
+  var shear = Math.abs(p.w700 - p.w10);                                    // 0-3 km, speed only
+  var e500 = swEnvAt(col, col[0].z + 500);
+  var bottom = Math.max(p.t2, p.sst);
+  var lapse = e500 ? (bottom - e500.t) / 0.5 : 0;                          // degC per km, lowest 500 m
+  var rhs = [p.rh2]; [975, 950, 925, 900].forEach(function(L){ if(swAbove(p, L) && p.lv[L].rh != null) rhs.push(p.lv[L].rh); });
+  var rh = rhs.reduce(function(a, b){ return a + b; }, 0) / rhs.length;    // lowest ~1 km
+  var fS = 1 - swRamp(shear, 10, 25), fL = swRamp(lapse, 6, 9), fH = swRamp(rh, 55, 80), fW = 1 - swRamp(p.w10, 12, 22);
+  var B = Math.pow(fS * fL * fH * fW, 0.25);
+  // cloud check: model low cloud or showers at this hour, or cumulus able to grow (missing model cloud counts as
+  // none, so the cumulus test still decides)
+  var cl = p.cl == null ? 0 : p.cl, sh = p.sh == null ? 0 : p.sh;
+  var fModel = Math.max(swRamp(cl, 5, 30), swRamp(sh, 0, 0.2)), fCu = swRamp(depthFt, 500, 2500);
+  var fC = Math.max(fModel, fCu);
+  var noCloud = fC < 0.3;
+  var raw = (A + B) / 2;
+  var score = windOff ? 0 : Math.round(100 * raw * fC);           // switched off by strong winds aloft = 0
+  var windCap = Math.round(p.w10) >= 17, held = false;
+  var level, why;
+  if(windOff){ level = 0; why = 'Too windy aloft (850 hPa wind ' + Math.round(p.w850) + ' kt) - funnels get torn apart.'; }
+  else if(noCloud){ level = 0; why = raw >= 0.3 ? 'Some ingredients are there, but no cloud is expected - a funnel needs a cumulus or shower cloud above it.' : 'Ingredients are missing, and no cloud is expected.'; }
+  else if(score >= 60 && A >= 0.45 && B >= 0.45){
+    // FAVOURABLE also needs the ground wind below Force 5 (17 kt, judged on the rounded figure the page shows):
+    // spouts can still form in a moderate breeze, but they are less likely and shorter-lived
+    if(windCap){ level = 1; held = true; score = Math.min(score, 59); why = 'The air is right, but the wind near the ground is Force 5 or more (' + Math.round(p.w10) + ' kt), so spouts are less likely and shorter-lived. FAVOURABLE needs lighter winds.'; }
+    else { level = 2; why = 'Both methods see the right ingredients, with cloud about.'; }
+  }
+  else if(score >= 35 || Math.max(A, B) * fC >= 0.65){
+    level = 1;
+    why = (A >= B + 0.3) ? 'The waterspout chart likes it more than the North Sea index.' : (B >= A + 0.3) ? 'The North Sea index likes it more than the waterspout chart.' : 'Some ingredients are in place.';
+  }
+  else { level = 0; why = 'Ingredients are missing.'; }
+  return {
+    score:score, level:level, why:why, A:A, B:B, agree:Math.abs(A - B) < 0.3,
+    dT:dT, depthFt:depthFt, base:cloud.base, top:cloud.top, zone:swSzilagyiZone(dT, depthFt), windOff:windOff,
+    shear:shear, lapse:lapse, rh:rh, w10:p.w10, w850:p.w850, cl:cl, sh:sh, noCloud:noCloud, raw:raw, windCap:held,
+    parts:{ fT:fT, fZ:fZ, fS:fS, fL:fL, fH:fH, fW:fW, fC:fC, fModel:fModel, fCu:fCu }
+  };
+}
+var SW_LEVEL_NAMES = ['LOW', 'WATCH THE SKY', 'FAVOURABLE'];
+
+var SP_LAT = 49.1805, SP_LON = -2.1058;
+var SP_FC_VARS = ['temperature_2m', 'dew_point_2m', 'relative_humidity_2m', 'wind_speed_10m', 'surface_pressure',
+  'cloud_cover_low', 'showers', 'wind_speed_850hPa', 'wind_speed_700hPa'];
+SW_LEVELS.forEach(function(L){ SP_FC_VARS.push('temperature_' + L + 'hPa', 'geopotential_height_' + L + 'hPa'); });
+[975, 950, 925, 900].forEach(function(L){ SP_FC_VARS.push('relative_humidity_' + L + 'hPa'); });
+var SP_FC_URL = 'https://api.open-meteo.com/v1/forecast?latitude=' + SP_LAT + '&longitude=' + SP_LON +
+  '&timezone=Europe%2FLondon&forecast_days=3&wind_speed_unit=kn&hourly=' + SP_FC_VARS.join(',');
+var SP_SEA_URL = 'https://marine-api.open-meteo.com/v1/marine?latitude=' + SP_LAT + '&longitude=' + SP_LON +
+  '&hourly=sea_surface_temperature&forecast_days=3&timezone=Europe%2FLondon';
+
+function swNum(v){ return (v === null || v === undefined || isNaN(v)) ? null : Number(v); }
+// one hour's profile from the forecast arrays (index i) and the sea temperature; null if a key value is missing
+function swLiveProfile(h, i, sst, elev){
+  function g(k){ return h[k] ? swNum(h[k][i]) : null; }
+  var p = { sst:sst, t2:g('temperature_2m'), td2:g('dew_point_2m'), rh2:g('relative_humidity_2m'), w10:g('wind_speed_10m'),
+    w850:g('wind_speed_850hPa'), w700:g('wind_speed_700hPa'), sfcP:g('surface_pressure'), cl:g('cloud_cover_low'), sh:g('showers'),
+    elev:elev || 0, lv:{} };
+  SW_LEVELS.forEach(function(L){
+    p.lv[L] = { t:g('temperature_' + L + 'hPa'), z:g('geopotential_height_' + L + 'hPa'), rh:g('relative_humidity_' + L + 'hPa') };
+  });
+  if(p.sst == null || p.t2 == null || p.td2 == null || p.rh2 == null || p.w10 == null || p.w850 == null || p.w700 == null ||
+     p.lv[850].t == null || p.lv[850].z == null) return null;
+  if(p.sfcP == null) p.sfcP = 1013;
+  return p;
+}
+// fc, sea: the two Open-Meteo responses. Returns { days:['2026-10-30', ...], prof:[[24]...], res:[[24]...] }
+function swBuild(fc, sea){
+  var h = fc.hourly, times = h.time, elev = swNum(fc.elevation) || 0;
+  // sea temperature by timestamp, gaps filled from the nearest hour that has one
+  var seaBy = {};
+  if(sea && sea.hourly && sea.hourly.time){
+    sea.hourly.time.forEach(function(t, k){ var v = swNum(sea.hourly.sea_surface_temperature[k]); if(v != null) seaBy[t] = v; });
+  }
+  var sstArr = times.map(function(t){ return seaBy[t] != null ? seaBy[t] : null; });
+  for(var i = 0; i < sstArr.length; i++){
+    if(sstArr[i] != null) continue;
+    for(var dd = 1; dd < sstArr.length; dd++){
+      if(i - dd >= 0 && seaBy[times[i - dd]] != null){ sstArr[i] = seaBy[times[i - dd]]; break; }
+      if(i + dd < times.length && seaBy[times[i + dd]] != null){ sstArr[i] = seaBy[times[i + dd]]; break; }
+    }
+  }
+  var days = [], prof = [], res = [];
+  times.forEach(function(t, i){
+    var day = t.slice(0, 10), hr = Number(t.slice(11, 13)), d = days.indexOf(day);
+    if(d < 0){
+      if(days.length >= 3) return;
+      days.push(day); d = days.length - 1;
+      prof.push(new Array(24).fill(null)); res.push(new Array(24).fill(null));
+    }
+    if(prof[d][hr]) return;                      // the repeated hour when the clocks go back: keep the first
+    var p = swLiveProfile(h, i, sstArr[i], elev);
+    prof[d][hr] = p;
+    res[d][hr] = p ? swScore(p) : null;
+  });
+  return { days:days, prof:prof, res:res };
+}
+
+var SP_DAYS = ['', '', ''], SP_DAY_NAMES = ['TODAY', 'TOMORROW', 'DAY 3'];
+var ST = { day:0, hour:14, res:null, prof:null, days:null, today:0, nowH:0, updated:0, loading:false };
+function spNowLocal(){
+  var parts = {};
+  new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', hourCycle:'h23' })
+    .formatToParts(new Date()).forEach(function(x){ parts[x.type] = x.value; });
+  return { date:parts.year + '-' + parts.month + '-' + parts.day, hour:Number(parts.hour) };
+}
+function spDayLabel(ymd, long){
+  var dt = new Date(ymd + 'T12:00:00Z');
+  return new Intl.DateTimeFormat('en-GB', long ? { timeZone:'UTC', weekday:'long' } : { timeZone:'UTC', weekday:'short', day:'numeric', month:'short' })
+    .format(dt).toUpperCase().replace(',', '');
+}
+function spStart(d){ return d === ST.today ? ST.nowH : 0; }
+function spHH(h){ return (h < 10 ? '0' : '') + h + ':00'; }
+function spBest(d){
+  var best = -1, r = ST.res[d];
+  function pref(h){ return Math.abs(h - 14); }
+  for(var h = spStart(d); h < 24; h++){
+    var x = r[h]; if(!x) continue;
+    var y = best < 0 ? null : r[best];
+    if(!y || x.level > y.level || (x.level === y.level && (x.score > y.score || (x.score === y.score && pref(h) < pref(best))))) best = h;
+  }
+  return best;
+}
+function spWindow(d){
+  var r = ST.res[d], b = spBest(d), lvl = r[b].level, a = b, z = b, s0 = spStart(d);
+  while(a > s0 && r[a - 1] && r[a - 1].level === lvl) a--;
+  while(z < 23 && r[z + 1] && r[z + 1].level === lvl) z++;
+  if(a === s0 && z === 23) return d === ST.today && s0 > 0 ? 'FOR THE REST OF TODAY' : 'ALL DAY';
+  return a === z ? 'AROUND ' + spHH(a) : spHH(a) + '–' + spHH(z + 1 > 23 ? 23 : z + 1);
+}
+function spApplyNow(){
+  var n = spNowLocal();
+  ST.today = ST.days ? ST.days.indexOf(n.date) : 0;
+  ST.nowH = n.hour;
+  if(ST.today < 0){ ST.today = -1; ST.nowH = 0; }
+}
+
+return { SP_FC_URL, SP_SEA_URL, SW_LEVEL_NAMES, ST, swBuild, spApplyNow, spBest, spWindow, spHH };
+})();
+
+// the words under the page's gauge (same rules as spRenderHero, without the colours)
+function spoutNote(r){
+  if(r.noCloud && !r.windOff) return 'NO CLOUD EXPECTED';
+  if(r.windCap) return 'HELD BACK BY FORCE 5+ WINDS';
+  if(r.windOff) return 'SWITCHED OFF BY STRONG WINDS ALOFT';
+  if(r.agree) return 'BOTH METHODS AGREE';
+  return 'THE METHODS DISAGREE';
+}
+const r2 = v => (v === null || v === undefined || isNaN(v)) ? '' : Math.round(v * 100) / 100;
+
+async function spout(row){
+  const S = SPOUT, ST = S.ST, NAMES = S.SW_LEVEL_NAMES;
+  const [fc, sea] = await Promise.all([getJson(S.SP_FC_URL, 'spout watch forecast'), getJson(S.SP_SEA_URL, 'spout watch sea temperature')]);
+  if(!fc || !fc.hourly || !sea) return;                    // the page also needs both before it shows anything
+  const b = S.swBuild(fc, sea);                            // what the page's spLoad() does with the two answers
+  if(!b.days.length){ errors.push('spout watch: no hours'); return; }
+  ST.days = b.days; ST.res = b.res; ST.prof = b.prof;
+  S.spApplyNow();
+  // this hour: the score and the ingredients behind it
+  if(ST.today >= 0){
+    const r = ST.res[ST.today][ST.nowH], p = ST.prof[ST.today][ST.nowH];
+    row.spout_now_hour = ST.days[ST.today] + ' ' + S.spHH(ST.nowH);
+    if(r){
+      Object.assign(row, {
+        spout_now_score: r.score, spout_now_level: NAMES[r.level], spout_now_a_pct: Math.round(r.A * 100),
+        spout_now_b_pct: Math.round(r.B * 100), spout_now_note: spoutNote(r), spout_now_zone: r.zone,
+        spout_now_sst_c: r1(p.sst), spout_now_t850_c: r1(p.lv[850].t), spout_now_sea_minus_850_c: r1(r.dT),
+        spout_now_cloud_depth_ft: r0(r.depthFt), spout_now_wind_10m_kt: r1(r.w10), spout_now_wind_850_kt: r1(r.w850),
+        spout_now_shear_kt: r1(r.shear), spout_now_lapse_c_per_km: r1(r.lapse), spout_now_humidity_pct: r0(r.rh),
+        spout_now_low_cloud_pct: r0(r.cl), spout_now_showers_mm: r2(r.sh)
+      });
+    } else row.spout_now_score = '';
+  }
+  // each day as the page's day buttons show it (today counts only the hours still to come)
+  ['today', 'tomorrow', 'day3'].forEach(function(key, i){
+    if(i >= ST.days.length) return;
+    const bi = S.spBest(i), r = bi < 0 ? null : ST.res[i][bi];
+    row['spout_' + key + '_date'] = ST.days[i];
+    row['spout_' + key + '_level'] = r ? NAMES[r.level] : 'NO DATA';
+    row['spout_' + key + '_score'] = r ? r.score : '';
+    row['spout_' + key + '_best_hour'] = r && (r.level || r.score > 0) ? S.spHH(bi) : '';   // the page names no hour when it's all 0
+    row['spout_' + key + '_window'] = r && r.level ? S.spWindow(i) : '';
+  });
+}
+
 const plain = t => String(t).replace(/&mdash;/g, '\u2014').replace(/&middot;/g, '\u00b7').replace(/&ndash;/g, '\u2013').replace(/&amp;/g, '&');
 
 async function scenarios(){
@@ -750,10 +1011,11 @@ async function scenarios(){
 async function main(){
   const now = new Date();
   // each section fills its own object, then they are joined in a fixed order so the sheet's columns never shuffle
-  const parts = [{}, {}, {}, {}, {}, {}];
+  const parts = [{}, {}, {}, {}, {}, {}, {}];
   let scen = null;
   await Promise.all([liveOps(parts[0]), rainfall(parts[1]), fiveModels(parts[2]), metar(parts[3]), warnings(parts[4]),
                      seaTides(parts[5]).catch(e => { errors.push('sea/tides: ' + e.message); }),
+                     spout(parts[6]).catch(e => { errors.push('spout watch: ' + e.message); }),
                      scenarios().then(r => { scen = r; }).catch(e => { errors.push('scenarios: ' + e.message); })]);
   const stamp = { time_utc: now.toISOString(), time_local: localTime(now), source: SOURCE };
   const ordered = Object.assign({}, stamp, { error: errors.join(' ; ') }, ...parts);
