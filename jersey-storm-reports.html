@@ -750,10 +750,11 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
 
   /* Recaps are shown as collapsed lines (tap to open):
        LATEST MONTHLY RECAP - just the newest monthly recap
-       ARCHIVE              - every storm (event) recap, including the newest, and every older monthly recap,
-                              all together in date order, newest first, behind one line
-     so a storm recap sits between the monthly recaps either side of it. When a newer monthly recap is
-     added, the previous one moves into the archive by itself. Order comes from publishedISO (or the
+       LATEST STORM RECAP   - just the newest storm (event) recap
+       ARCHIVE              - every older recap of both kinds, all together in date order, newest first,
+                              behind one line
+     so a storm recap sits between the monthly recaps either side of it. When a newer recap of either kind
+     is added, the previous one of that kind moves into the archive by itself. Order comes from publishedISO (or the
      published date). A recap published in the last 7 days is marked NEW, and while a NEW storm recap is in
      the archive, the archive line says so, so it isn't missed. */
   const RECAP_NEW_DAYS = 7;
@@ -793,8 +794,10 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
       return;
     }
     const latestMonthly = all.find(r => r.type !== 'event');
-    const archive = all.filter(r => r !== latestMonthly);
+    const latestStorm = all.find(r => r.type === 'event');
+    const archive = all.filter(r => r !== latestMonthly && r !== latestStorm);
     let html = latestMonthly ? '<div class="recap-group-head">LATEST MONTHLY RECAP</div>' + recapLineHtml(latestMonthly) : '';
+    if(latestStorm) html += '<div class="recap-group-head">LATEST STORM RECAP</div>' + recapLineHtml(latestStorm);
     if(archive.length){
       const newStorm = archive.some(r => r.type === 'event' && recapIsNew(r));
       html += `<details class="recap-archive"><summary>&#9656; ARCHIVE &mdash; ${archive.length} RECAP${archive.length === 1 ? '' : 'S'}, STORM &amp; MONTHLY, NEWEST FIRST` +
