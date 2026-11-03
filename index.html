@@ -1062,6 +1062,67 @@ background:var(--bg-panel-2); cursor:pointer; transition:border-color .15s ease;
   .fc-modal.vw-modal{ width:96vw; height:92vh; max-height:none; }
   .vw-frame iframe{ width:125%; height:125%; transform:scale(0.8); }
 }
+/* ---- JET STREAM: a card beside the wind tracker; the moving map opens in a pop-up (index.html#jetstream) ---- */
+.vw-cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(330px, 1fr)); gap:14px; }
+@media (max-width:420px){ .vw-cards{ grid-template-columns:1fr; } }
+.vw-card-art.js-art{ background:repeating-linear-gradient(100deg, rgba(255,255,255,0) 0 13px, rgba(255,255,255,0.38) 13px 14px), radial-gradient(ellipse 140% 34% at 40% 52%, #fbf6ff 0, #c9a6ff 14%, #ec3aa0 28%, #ff5240 38%, #f0dc32 50%, #30cc96 62%, #2a7cc8 76%, #142a5c 100%); background-size:56px 56px, 100% 100%; animation:jsStreak 1.1s linear infinite; }
+@keyframes jsStreak{ from{ background-position:0 0, 0 0; } to{ background-position:-56px 0, 0 0; } }
+@media (prefers-reduced-motion: reduce){ .vw-card-art.js-art{ animation:none; } }
+/* no blur behind this pop-up: re-blurring the busy page behind it on every frame made the moving lines stutter (21 vs 55 frames a second in tests) */
+#jsBackdrop{ backdrop-filter:none; -webkit-backdrop-filter:none; background:rgba(0,0,0,0.86); z-index:1100; }   /* above other maps' zoom buttons (Leaflet puts them at 1000); below Settings (1500) and the cookie banner (2000) */
+html[data-theme="light"] #jsBackdrop{ background:rgba(12,26,34,0.72); }
+.fc-modal.vw-modal.js-modal{ overflow-y:auto; padding:14px 12px 12px; }
+.js-modal .fc-modal-sub{ margin-bottom:6px; }
+.js-modal .sw-controls{ padding:4px 0 8px; gap:8px 20px; }
+.js-body{ display:flex; flex-direction:column; }
+.js-modal .js-frame{ flex:1 0 auto; min-height:46vh; }
+/* computers: the map on the left, filling the pop-up; controls, key and the Jersey box beside it; hours underneath */
+@media (min-width:900px){
+  .js-body{ flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 310px; grid-template-rows:auto auto auto auto 1fr auto; column-gap:16px;
+    grid-template-areas:"frame controls" "frame bar" "frame legend" "frame info" "frame more" "hours hours"; }
+  .js-body > .sw-controls{ grid-area:controls; flex-direction:column; gap:10px; padding-top:0; }
+  .js-body > .js-frame{ grid-area:frame; min-height:0; }
+  .js-body > .js-bar{ grid-area:bar; padding-top:6px; }
+  .js-body > .js-hours{ grid-area:hours; }
+  .js-body > .js-legend{ grid-area:legend; }
+  .js-body > .js-info{ grid-area:info; }
+  .js-body > .st-more{ grid-area:more; align-self:start; }
+  .js-body .js-grad, .js-body .js-gradlbl{ width:100%; max-width:none; }
+  .js-body .js-keybox{ width:100%; }
+}
+.js-frame .st-runbadge, .js-frame .js-up{ z-index:690; }
+#js-map{ position:absolute; inset:0; background:#06222b; cursor:crosshair; }
+#js-map .leaflet-tile-pane{ filter:sepia(1) hue-rotate(148deg) saturate(2.2) brightness(1.15) contrast(1.1); }
+#js-map .leaflet-control-attribution{ background:rgba(5,26,34,0.7); color:var(--dim); font-size:9px; }
+#js-map .leaflet-control-attribution a{ color:var(--dim); }
+#js-map .leaflet-popup-content-wrapper{ background:rgba(5,14,20,0.96); color:var(--text); border:1px solid rgba(201,166,255,0.6); border-radius:8px; box-shadow:0 0 18px rgba(0,0,0,0.7); }
+#js-map .leaflet-popup-tip{ background:rgba(5,14,20,0.96); border:1px solid rgba(201,166,255,0.6); }
+#js-map .leaflet-popup-content{ margin:10px 14px; font:11px/1.75 'JetBrains Mono',monospace; letter-spacing:0.4px; }
+#js-map a.leaflet-popup-close-button{ color:var(--cyan); }
+.js-cv{ position:absolute; left:0; top:0; pointer-events:none; }
+.js-up{ position:absolute; left:10px; bottom:10px; pointer-events:none; padding:6px 10px; border:1px solid rgba(201,166,255,0.65); border-radius:6px; background:rgba(5,8,13,0.86); font:800 10px 'JetBrains Mono',monospace; letter-spacing:1.2px; line-height:1.45; color:#e2d0ff; }
+.js-up small{ display:block; font-size:8.5px; font-weight:500; letter-spacing:0.8px; color:#9fb6bf; }
+@media (max-width:640px){ .js-up{ left:6px; bottom:6px; font-size:9px; padding:5px 8px; } .js-frame .st-runbadge{ font-size:8.5px; padding:6px 8px; column-gap:7px; top:6px; left:6px; } }
+.js-jsy{ position:relative; width:0; height:0; pointer-events:none; }
+.js-jsy i{ position:absolute; left:-6px; top:-6px; width:12px; height:12px; border-radius:50%; background:#ffb020; border:2px solid #05080d; box-shadow:0 0 0 2px #ffffff, 0 0 12px 3px rgba(255,176,32,0.8); }
+.js-jsy span{ position:absolute; left:12px; top:-10px; padding:2px 6px; font:800 10px 'JetBrains Mono',monospace; letter-spacing:1.5px; color:#ffffff; background:rgba(5,8,13,0.9); border:1px solid #ffb020; border-left:3px solid #ffb020; border-radius:3px; white-space:nowrap; }
+.js-low{ position:relative; width:0; height:0; pointer-events:none; }
+.js-low b{ position:absolute; left:-12px; top:-12px; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:900 13px 'Orbitron',sans-serif; color:#05080d; background:var(--c); border:2px solid #05080d; box-shadow:0 0 0 1.5px #ffffff, 0 0 14px 2px var(--c); }
+.js-low span{ position:absolute; left:15px; top:-8px; padding:1px 5px; font:800 10px 'JetBrains Mono',monospace; letter-spacing:0.8px; color:var(--c); background:rgba(5,8,13,0.88); border-radius:3px; white-space:nowrap; }
+.js-bar{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 14px; padding:10px 0 0; }
+.js-valid{ font-family:'Orbitron',sans-serif; font-size:16px; letter-spacing:1px; color:var(--amber); text-shadow:0 0 14px rgba(255,176,32,0.35); }
+.js-valid small{ display:block; margin-top:3px; font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:400; letter-spacing:1px; color:var(--dim); text-shadow:none; }
+.st-hours.js-hours{ flex-wrap:nowrap; overflow-x:auto; padding:8px 0 4px; scrollbar-width:thin; }
+.st-hours.js-hours button{ flex:0 0 auto; }
+.st-hours.js-hours button:disabled{ opacity:0.35; cursor:default; }
+.st-legend.js-legend{ padding:8px 0 0; }
+.js-keybox{ flex-direction:column; align-items:flex-start; gap:3px; }
+.js-grad{ display:inline-block; width:300px; max-width:64vw; height:11px; border-radius:5px; border:1px solid rgba(233,246,245,0.25); }
+.js-gradlbl{ display:inline-flex; justify-content:space-between; width:300px; max-width:64vw; font-size:9px; letter-spacing:0; color:var(--dim); font-style:normal; }
+.js-info{ margin-top:10px; padding:9px 12px; border:1px solid var(--line); border-left:3px solid #c9a6ff; background:rgba(201,166,255,0.06); font-size:11px; line-height:1.65; letter-spacing:0.4px; color:var(--text); }
+.js-info b{ color:#c9a6ff; }
+.js-info .dm{ color:var(--dim); }
+.js-modal .st-more{ margin:10px 0 0; }
 footer{ text-align:center; color:var(--dim2); font-size:10px; letter-spacing:1px; padding-top:20px; border-top:1px solid var(--line); line-height:1.9; }
 .news-panel{ grid-column:1 / -1; }
 .globe-spin{ display:inline-block; animation: spin 6s linear infinite; margin-right:7px; }
@@ -1096,7 +1157,7 @@ footer a:hover{ color:var(--cyan); }
    The shared daylight colours (--bg, --text, --cyan ...) live in jwc-settings.js; these are Live Ops' own
    touches. Maps and live screens (Storm Tracker, radar, satellite, lightning, earthquakes, the wind tracker
    picture) keep the dark look, like screens in a bright room. */
-html[data-theme="light"] :is(#stormWatch .panel, #radar-map, #sat-embed, #lightning-embed, #quake-map, .vw-card-art, .vw-frame, .skewt-img-wrap){
+html[data-theme="light"] :is(#stormWatch .panel, #radar-map, #sat-embed, #lightning-embed, #quake-map, .vw-card-art, .vw-frame, .skewt-img-wrap, .js-modal){
   color-scheme:dark; color:var(--text);
   --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
   --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
@@ -1692,14 +1753,16 @@ Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The
 </details>
 </div>
 </section>
-<!-- CHANNEL ISLANDS WIND TRACKER (VeryWeather): only a card here, so the page scrolls freely;
-     the animated map opens in a pop-up and only loads when opened. index.html#windtracker opens it directly. -->
+<!-- WIND MAPS: two cards, so the page scrolls freely; each map opens in a pop-up and only loads when opened.
+     CHANNEL ISLANDS WIND TRACKER (VeryWeather): index.html#windtracker opens it directly.
+     JET STREAM (our own, from NOAA GFS via the Wind field action): index.html#jetstream opens it directly. -->
 <section id="windTracker">
 <div class="sec-head imagery">
-<h3>WIND TRACKER</h3>
+<h3>WIND MAPS</h3>
 <div class="bar"></div>
-<div class="tag">HARMONIE &middot; VERYWEATHER</div>
+<div class="tag">WIND TRACKER &middot; JET STREAM</div>
 </div>
+<div class="vw-cards">
 <button type="button" class="vw-card" id="vwOpen" aria-haspopup="dialog">
 <span class="vw-card-art" aria-hidden="true"></span>
 <span class="vw-card-text">
@@ -1708,7 +1771,16 @@ Worked out by computer from NOAA's GFS forecast and refreshed every 6 hours. The
 <span class="vw-card-cta">OPEN WIND TRACKER &#9656;</span>
 </span>
 </button>
-<div class="vw-credit">By <a href="https://veryweather.co.uk/ukweathermap.html?mode=channelislands" target="_blank" rel="noopener">VeryWeather</a>, shown with permission &middot; a computer forecast, not an official warning.</div>
+<button type="button" class="vw-card" id="jsOpen" aria-haspopup="dialog">
+<span class="vw-card-art js-art" aria-hidden="true"></span>
+<span class="vw-card-text">
+<b>JET STREAM</b>
+<span>The river of fast air about 10 km up that steers the lows, over the Atlantic and Europe for the next 10 days, with the Storm Tracker&rsquo;s lows riding along it.</span>
+<span class="vw-card-cta">OPEN JET STREAM &#9656;</span>
+</span>
+</button>
+</div>
+<div class="vw-credit">Wind tracker by <a href="https://veryweather.co.uk/ukweathermap.html?mode=channelislands" target="_blank" rel="noopener">VeryWeather</a>, shown with permission &middot; jet stream from NOAA&rsquo;s GFS model, drawn by Jersey Weather Chat &middot; computer forecasts, not official warnings.</div>
 </section>
 <div class="fc-modal-backdrop" id="vwBackdrop">
 <div class="fc-modal vw-modal" role="dialog" aria-modal="true" aria-labelledby="vwTitle">
@@ -1744,6 +1816,534 @@ closeBtn.addEventListener('click', close);
 bd.addEventListener('click', function(e){ if(e.target === bd) close(); });
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && bd.classList.contains('open')) close(); });
 if(location.hash === '#windtracker') open();
+})();
+</script>
+<div class="fc-modal-backdrop" id="jsBackdrop">
+<div class="fc-modal vw-modal js-modal" role="dialog" aria-modal="true" aria-labelledby="jsTitle">
+<button type="button" class="fc-modal-close" id="jsClose" aria-label="Close">&times;</button>
+<div class="fc-modal-title" id="jsTitle">JET STREAM &middot; THE WIND ABOUT 10 KM UP</div>
+<div class="fc-modal-sub">NOAA GFS &middot; 250 hPa &middot; NEXT 10 DAYS &middot; NOT THE WIND YOU FEEL ON THE GROUND</div>
+<div class="js-body">
+<div class="sw-controls">
+<div class="sw-group">
+<span class="sw-lbl">FLOW LINES</span>
+<div class="sw-chips" id="jsFlow">
+<button type="button" class="sw-chip active" data-v="move">MOVING</button>
+<button type="button" class="sw-chip" data-v="still">STILL</button>
+<button type="button" class="sw-chip" data-v="off">OFF</button>
+</div>
+</div>
+<div class="sw-group">
+<span class="sw-lbl">LOWS</span>
+<div class="sw-chips" id="jsLows">
+<button type="button" class="sw-chip active" data-v="1">SHOW</button>
+<button type="button" class="sw-chip" data-v="0">HIDE</button>
+</div>
+</div>
+<div class="sw-group">
+<span class="sw-lbl">UNITS</span>
+<div class="sw-chips" id="jsUnit">
+<button type="button" class="sw-chip active" data-v="mph">MPH</button>
+<button type="button" class="sw-chip" data-v="kmh">KM/H</button>
+<button type="button" class="sw-chip" data-v="kt">KNOTS</button>
+</div>
+</div>
+</div>
+<div class="vw-frame js-frame">
+<div id="js-map"></div>
+<div class="st-runbadge" id="jsBadge"></div>
+<div class="js-up">JET STREAM &middot; ABOUT 10 KM UP<small>NOT THE WIND YOU FEEL ON THE GROUND</small></div>
+<div class="st-msg hide" id="jsMsg"></div>
+</div>
+<div class="js-bar">
+<div class="js-valid" id="jsValid">--<small></small></div>
+<button type="button" class="anim-btn" id="jsPlay">&#9654; PLAY</button>
+</div>
+<div class="st-hours js-hours" id="jsHours"></div>
+<div class="st-legend js-legend" id="jsLegend"></div>
+<div class="js-info" id="jsInfo">&nbsp;</div>
+<details class="st-more"><summary>WHAT AM I LOOKING AT?</summary>
+<div class="sw-note">
+<b>THE JET STREAM</b> is a fast, narrow river of air about 10 km up, where airliners cruise. In winter it often reaches 150&ndash;200 mph. It is <b>not the wind you feel on the ground</b>, but it steers the lows and helps them deepen.<br>
+<b>THE COLOURS</b> show how fast the air is moving at that height (see the key); the jet is the bright purple and white ribbon. <b>The white lines</b> drift the way the air is flowing &mdash; choose STILL if they are slow on your device, or OFF to see just the colours.<br>
+<b>THE LOWS</b> (an L with the storm&rsquo;s number and its pressure in hPa) are the storm centres from the Storm Tracker at the same time; the dotted line is where each goes over the next two days. Lows usually travel along the jet&rsquo;s northern (cold) side. A low sitting right in a dip of the jet is usually mature and filling; the ones to watch are just ahead of a dip, on the cold side where the jet comes out of its fastest stretch &mdash; that is where storms deepen quickly.<br>
+<b>TAP THE MAP</b> for the jet&rsquo;s speed and direction at any spot, and use the row of hours (or PLAY) to look ahead up to 10 days. The further ahead, the less certain. NOAA&rsquo;s GFS model, the same run as the Storm Tracker, updated every 6 hours.
+</div>
+</details>
+</div>
+</div>
+</div>
+<script>
+/* JET STREAM pop-up: the wind about 10 km up (250 hPa) over the North Atlantic and Europe, with
+   white lines drifting along with it and the Storm Tracker's lows on top. The data
+   (jet-stream.json on the "data" branch) is made by the Wind field action from the same NOAA GFS
+   run as the Storm Tracker. Nothing loads or runs until the pop-up is opened; the moving lines stop
+   when it is closed. index.html#jetstream opens it directly. Closes with X, a tap outside it, or Esc. */
+(function(){
+const URL_JET = 'https://raw.githubusercontent.com/moonletboy/jersey-weather-hud/data/jet-stream.json';
+const VIEW = [[31.5, -44], [69.5, 29]];
+const JSY = [49.1805, -2.1058];
+const KT_MPH = 1.15078;
+/* coastlines (Natural Earth 1:50 million, public domain), 4 characters per point: (lat - 22) x 12 and (lon + 60) x 12 in base 36 */
+const COAST = 'h0cjgzcogwcogtcngsclgrclgpckgubzgwbwgzbt|h0bmgxb4gwb7gzbqgvbsgubsgtbmgsbngtbtgnciglckglcogicighcigfcjghckgicogicrgecsgacsg6cug5cpg6cjgacjgacig6chg5cgg5c8g8c0gbbxgdbxgfbtgjbdgkazgjaygiazgibeggbggfbggebfgbb3gcajgbaog8ang5abg6aig5aog6b5g5b6g4b5g3ayg1atg0asg0avg2b0g3bag4big2c4g2clg1cmg0clfzccfzcbfycbfxc2fwc4fvc3fvbwfubxftbwfrbmfqbnfpbhfnbgfkb6fga9fga2fe9yff9rfd9tfd9ofe9jfh98ff9aff98fd9afc9af88yf58uf38uex8nev8lew8jet8ger8aer87et82eq84em7veo7veo7uel7sel7pem7nel7kek7jej7fek7del7cem7eeo7fes7let7aer7feq7cen7aeo76em79el7aek74ej6meg6tef6sed6led6ged6bec6bea6ceb6ge66me46ie46ge36ge36fe465e16ce26hdz6gdx6hdw6fdu6fdu6bdt6bds6adr6bdp67dp62dr5ydp5zdo64dl61dl5pdj5ydi5xdh5yde5wdc5yda5zd95xd95td85wd75wd15scx5rcu5ncv5dct5kcs5mcp5ncn5kco5dcm5gcm5dcm5bcn5bcn57co57cq59cr5acr59co55cq4vcs4wct50cw53ct4vcv4ncx4md14pd34qd14od04hcy4ecx49cy45cy42cx43cx3zcy3xcy3yd043d03vd23vd33pd63nd73ld83md93kdb3jdd3qdd3ndc3kdc3hde3gdf3hdg3d|21vm22vl21vj22vj26vl2jvo2fvl29vj24vh20vh1xvf21v927v32cv22iux2ouv2nuu2muu2kus2guv2buw23v21zv71vv71pvb|1qfj1wfm1zfp22g024g529gb2dgi2mgq2pgs2tgs2xgp35gq39gs3dgw3jgx3rh640hp49hw4li14ni74ni94li84iib4eig4eik4fis4fiv4fiy4hj04ej24djc4ejg4jjn4mjv4mjz4qk44tkc4ukf4vkv4xl04yl64zl94zll4wls4ym151m650m74zmb50mf51me51mh4ymn50my52n254n854na53n952na52nb53nb52ne50ne4yng4xng4xnh4znj51np4ynq4unm4sni4qni4nnj4kno4gnp4fnp48nk43nd41nd3yne3wnh3wnl3unl3unn3wnn3vnp3snq3snr3rnq3pny3mo33mo93nof3loq3iou3hp23ep43cp438p635p833pd33pl2zpy2xq22tq82rqe2uql30qp32qq37qo3aqn3fqp3jqv3lr13mr53nr83nre3jrp3grp3frr3ery3cs23csb3bsc36sf36sh37sn36sx35t333t632ta31tc31ti2ytp2ztt33tz33u335u537ub35u736uc37ud36ui37un34uq36un34ul33uo31up32ur34ur31uv32v231v232vb34ve37vi3bvk3jvn|4xvn4yvm4xvj4vvg4svc4qv84ouy4qut4uuo4yuf4yu84ru54su34qtw4str4wto4xto4wtm4ytg4wtd4wtc4xtd4wt74xt64ytc50tf50t352t452t653t655t357t258t159t35ct35dsz5esw5esv5fsr5gss5gst5jss5kst5jsv5hsv5gsw5hsx5gsy5ht25isz5lsx5nt05osy5psy5rsw5vsz5usp5usp60sq60ss65sx65t364t664t965ta66t966ta66tc64tc65to65tp66tl68tn69ty6ats6btp6ctp6ftq6etz6eu46dua6duf6gui6lus6ov36nvl|83vo82vm7zvn|7mvn7lvi7ivf7hvb7hv87jv57nv77pv77qv57qv27suz7suv7tuu7xv27zv880v881v781v582v281uu83uo83um84ul84uo85uo87uj86us87uv87us88up89un8cun8ful8bun88um88ui89uj88uh87ua83u87yu37xtw7vtv7stx7mtv7ltp7otp7otn7jtm7jtn7gtk7ctk76tj75ti75te72tb6xtb6wt96ut66st86ptc6mtc6jte6ftp6ctn6ctl6dte6ctb6ct668t366sx61sq64sr68sy67sp69so6asm6csd6as96bs669s169rx68rx67rz66ry65ry64s362s464rz64rx61s060s060rz63rw63rt63rt61ru5zrw60rt63rs65rn66rm67rn66rk60rj5yrm5vro5srr5qrs5prq5rrq5srn5rrm5qrn5oro5orp5nrm5mrj5krr5irs5irv5grw5fs05es058s05cru5bro5arq57rq57rt55ru54rq55rp56rn57rl57rl4yrp4wrp4trq4uro4yrl4xrj4vri4tri4urh4urh4wrh50rd50rb4xrb51r755r857r758r459r35br15cr45er55er85gra5crn5drn5drp5erq5erq5frm5hrh5grg5hrc5gr65ir45gr45hr15kr05mqx5mqx5nqx5nqz5nr15or15oqx5sqs5vqq5xqo61qm63qh65qg65qi68qg6bqi6hqh6kqj6lqj6nqe6rqb6tq86tq86tq66ypy70pp70pr6ypx75pn77ph76pc78pb7bp67ep27fp17fp67jp07koz7poy7sov7sos7moo7mom7pok7uoi7wol7xok7xoi7xoe7woc7uo67uo57vo67to37ro37oo67mo57mo37lo37fo57co877oj6woo6rov6np26npe6lpe6jpb6ipb6dpp6apu68pz63q661q65yq45zq163py64pu65pr66pq65pn62pk5xpi5wpj5vpm5tpp5opq5npp5npn5mpj5lpj5hpj5fpf5bpd5bp95cp85ep85gpa5ipb5jpb5lpc5lpe5npf5opd5spc60p861p761p463oz66oz68ox67os69ou6aos6aop6fol6foc6hoa6io86no16pny6rnw6tns6tnq6tnp6tnq6unq6znk70ni72ni76ng7bne7gn37hmx7gmv7bmo78mf74m972m771m171ly73lt74ls74lp75lp74ll76lf77ld72l36yl16vl16rl46rl26nl36ll06iks6fkp6dkc6ak969kb67k75ujw5pjy5lk25gju59jq58jr57jk55jg53je4zjd4xja4yj74xj34xiy4xiv4xiq4xik4uig4tia4qi84qi74pi64oi44qi04thx4vhx4whv4xhv4zhx4yhv4zhu52hp53hq52ho52hi50he51h550h055h259h25ch15gh25hh15hh45ih25hgx5kgx5lh05oh15ph25oh15lgy5kgw5lgu5mgu5rgw5sgv5vgy61h263h269h46ch46jh26kh36lh16nh36nh16ph16rh46rh26th36uh26wh26vh06yh16yh070gx72gy74h274h675h977h979hg77hn78i275ii76it74iz75j274j874jc75jg77ji7jjl7kjn7ljm7kjl7ujn7tjq7pjs7ojt7pjs7ujr7xjm7xjl7xjo84jm86jf8ajb8cjc8eja8fjb8fjf8gjc8gj68hj68ij78ij38jj38kj38jiz8kiy8mip8mik8oij8oig8qik8rih8sil8sij8sif8tif8uif8vii8xir8yix8xj08uj48wj78wjb8vjc8wjd8wje8wjj8yjh92jh96je98je98jl96jl95jm94jy95k596k298k29dkh9fkj9gkj9lkj9nkl9pkt9tl59tlf9tl79ul59vl99tle9ulf9vlc9vle9ylb9zlca4liabllablnaclpadlsafluahm1ahmaagmcafmeahmdakmeakmkakmoajmqaimpahmqajmsaimuahmualmuanmvamn2ajn7ajn9ajn8amn4ann0aomzarmzasmwatmwaumzaun0aymwb2mvb2mwb4mwb5mvb7mqbcmqbempbjmqbimwbkmxblmzbmn1bkn2bon3bpn1bon0blmxbkmublmrbmmrbpmvbqn5bvncbxnjbvnibtnibrnibongbjnfbinibinmbhnnbgnmbfnlbenibfngbanebanbb9ncb6n7b3n8b0n5b0n8ayn9awncavncaunaauneatnfatngasnlatnoarnpaqnoapnmaonmanntaqnyaqo1auo7atocaroeaqohaqolamomamonakovamovanonaoonapomaqomanotarpeavpjaxprayq1ayq4awq9awqaaxq5atq8asqaatqhawqmazqoazqtb1qwb5r0b7r1b4r0b0qvazqzazr2b5r3bar1bkr0bmr1bor4bsr5bvr9bxrjbvrkbsrqbprrborwborzbrs5bws4bxs4c4s6c5s4c3s1c4rxc8ruc9rwc9rucbrtccruccrucerucgs1cgs1cis5cishcjsicksicjsvcht0chtbcjtdcltccltdcktgcmticmtncotqcnu2cnu2cqtxcqtpcttkcuticutjcvtkcwticut6cvt2ctsucwsvctstcusncssocrslcsskcps7cos5corucmrocmrocorqcprocrrncprlcoricqrhcrrjcrrictrjcuracvracur7cvr5d0r4d3r6d6r6d6r7d7r6d7r7dbr5dcr3dfr4dhr2djr1dlr2dnr5dor6dor8dqr7drrbdsrgdtrfdtrgdurgdurhdvridwridwrle0rve2rwe6s3eas7ebsbeasfebsfecsgeesfeisgeks8els7ems8els5emrwelrpemrlemriemrhelrfejrfejrdejreeirbeirbehrbehr7egr6efr7egr5eer7ear2e6r6e5r6e2r0dyqxdvqnduqlduqidtqiduqgdrqcdrqadqqadqq7dpq6doq4doq6dnq6dlq2dmpzdlq0dkpzdjq0dhpwdiptdhpsdgptdfpwdepudaptd8pud9pqd8prd7pqczpqcyprcwprcwpvcupwcvpzctq2crq7cqq6cpq9cnqbclqcchq3cgq0cgq2chq7cgq7cfq5cdq3c8poc8pfc7plc6pnc5pkc3plc2pkbzpkbzpjbypjbupkbrpibppibfpcbepabep8beoxbeoxbcoxbdovbaorb9oqb6osb5oqb5omb4ogb5obb9ocbfo6bfoabho8bhoabiobbjobbko9bno5bro2bto1bto0bwnzbxnxc0nwc0nvc1ntc4ntc4nrcanrccnqcdnqcdntcenmchnkclnjcknicjnjcinhcfnhccneccnacdn8cdn7ccn8ccn8can4can5c9n4c2mqc0mic0mcc2mbc2mac1m9c1m7c3m8c3m8c3m5c5m1c7lvc9lucclvcam1ccm4cbm1cdlzcem0cglzcjm5cflvcelscelqcflqcjlrcllucklxcmm3cmlycmlxcpm1crm2ctm6csm7cqm6ctm9cumccsm2cplzcolwcmlucklqcmlpcolrcplqcplwcqlrctlqcwlwcvlrcwlpcwlpd0lod2m9d1mcczmcd1mcd3mjd3mhd4mgd5mhd4mgd2mfd2med2m8d3m7d2m6d2m5d2m1d1lsd2lpd3lod5lod6lsd9lndblndblud9m0dam9dam2dblrdclpdelqdelsdgludhlzdgm1dhm7dim8dhm2dhm1djm4dkmcdjmidjmkdjmidkmidlmpdlmpdlm9dnmbdpmjdpmpdomrdmmvdqmqdrmrdsmwdtmvdtmtdumsdvmwdvn2dun1dun2dvn4dwn8dtncdtnedunldvnkdwnldynsdznqe0nte0npdznndynpdxnndunddunbdwn9dwn7dyn7e5nje9nueanweanve9nsebnsecnueeo2edo4edo6egobeeo5efo2ego1ejo3eno8enocepo9eqokesooerodetodeuodeuoeewofeyojeyooezokf0onf1opf2p5f3p5f3p4f3otf7p0f6p5f4p7f5p7f6p8f6p6f7p3f8p3f9p4f9p4f8oyf8oxfaoyfcp2fbp7fcp4fdp4ffpcfcpdfbpgfcpffdphfepfffpefgpefhphfgpnfhpvfiptfipjfipifjpjfkpqfmptfppwfqq1fsq1fuq3fsq8fsqbftq7fuq7fvqcfwqcfxqefxqlftqkfyqofzqsfyqtfvqsfsqpfuqufuqxfwqufyqvfzqvfzr2g0r3g0r5fyrcg1rag3r4g3r9g4rfg3rgg4rhg4rkg4rng1rpg0rsg0rtg1rrg3rtg5rwg6s0g8s5gas3gcs9gasfgbshgaslg7sfg4seg3scg2scg1sdg3shg4sigbsugbswgasxg8svg8swg5svg6t0g9t2gat7gbt3gdt7gcthgatgg8tbg8tfg7teg3teg9tjgatmgatpg8txg8u1g7u3g7u3g6u7g5ubg3ubg1u3g2tlg1tmg0tvfztwfytvfxtwfxu1fyu3fyu4fxu5fyu6fyu9fwuhfxukfyulfyuofzuofxv0fwv0fvuzfwuqfwupfvusfuutfuv0fsv0ftv5fqv4fpv2fqv5fsv8fsvffrvm|evvmevvievvhewvheyv2f0uyf1uzf2unf0uuezuuexuyewv2euv3etv8esv4ervdenvkemvlelvleivjehvhecvmeavme9vne8vme7vm'.split('|').map(function(l){
+const pts = [];
+for(let i=0; i<l.length; i+=4) pts.push([parseInt(l.substr(i, 2), 36) / 12 + 22, parseInt(l.substr(i + 2, 2), 36) / 12 - 60]);
+return pts;
+});
+const UNITS = { mph:{ k:1, lbl:'MPH', u:'mph', ticks:[0,25,50,75,100,125,150,175,200,225] }, kmh:{ k:1.609344, lbl:'KM/H', u:'km/h', ticks:[0,40,80,120,160,200,240,280,320,360] }, kt:{ k:1 / KT_MPH, lbl:'KNOTS', u:'kt', ticks:[0,20,40,60,80,100,120,140,160,180] } };
+const RAMP = [[0,25,55,110,0],[20,28,62,128,95],[40,36,110,190,140],[60,40,170,205,168],[80,48,204,150,182],[100,150,220,70,192],[115,240,220,50,200],[130,255,160,40,208],[150,255,82,62,215],[170,236,58,160,222],[190,166,82,255,228],[215,206,172,255,234],[245,252,246,255,240]];
+const LUT = (function(){
+const n = 601, t = new Uint8ClampedArray(n * 4);
+for(let i=0; i<n; i++){
+const v = i / 2;
+let k = 0;
+while(k < RAMP.length - 2 && v > RAMP[k + 1][0]) k++;
+const a = RAMP[k], b = RAMP[k + 1], f = Math.max(0, Math.min(1, (v - a[0]) / (b[0] - a[0])));
+for(let c=0; c<4; c++) t[i * 4 + c] = a[c + 1] + (b[c + 1] - a[c + 1]) * f;
+}
+return t;
+})();
+const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const WD = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const WDD = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hourCycle:'h23' });
+const DAY = new Intl.DateTimeFormat('en-GB', { timeZone:'UTC', day:'2-digit', month:'short' });
+const J = { d:null, state:'idle', got:0, f:{}, hour:0, unit:'mph', flow:'move', lows:true, map:null, cv:null, fv:null, vel:null, parts:null, raf:0, play:0, open:false, pop:null, popLL:null, lowLayer:null };
+const $ = function(id){ return document.getElementById(id); };
+const bd = $('jsBackdrop'), openBtn = $('jsOpen'), closeBtn = $('jsClose');
+if(!bd || !openBtn) return;
+
+function compass(d){ return COMPASS[((Math.round(d / 22.5) % 16) + 16) % 16]; }
+function spd(mph){ return Math.round(mph * UNITS[J.unit].k) + ' ' + UNITS[J.unit].u; }
+function when(h){ return new Date(J.d.cycleT + h * 3600000); }
+function whenTxt(h){ return WDD.format(when(h)).replace(/,/g, '').toUpperCase(); }
+function msg(html){ const m = $('jsMsg'); m.innerHTML = html; m.classList.toggle('hide', !html); }
+function ink(m){ const li = Math.max(0, Math.min(600, Math.round(m * 2))) * 4; return 'rgb(' + Math.max(90, LUT[li]) + ',' + Math.max(90, LUT[li + 1]) + ',' + Math.max(90, LUT[li + 2]) + ')'; }
+
+/* ---------- data ---------- */
+async function load(){
+if(J.state === 'loading') return;
+if(J.d && Date.now() - J.got < 30 * 60000) return;
+J.state = 'loading';
+if(!J.d) msg('LOADING THE JET STREAM&hellip;');
+try{
+const r = await fetch(URL_JET + '?v=' + Math.floor(Date.now() / 600000), { cache:'no-store' });
+if(r.status === 404){ J.state = J.d ? 'ok' : 'none'; if(!J.d) msg('THE JET STREAM MAP APPEARS AFTER THE NEXT<br>WIND-MAP UPDATE (EVERY 6 HOURS).'); return; }
+if(!r.ok) throw new Error('HTTP ' + r.status);
+const d = await r.json();
+if(!d || !d.u || !d.v || !d.hours || !d.nlat) throw new Error('unexpected file contents');
+d.cycleT = new Date(d.cycle).getTime();
+d.dlat = (d.lat1 - d.lat0) / (d.nlat - 1); d.dlon = (d.lon1 - d.lon0) / (d.nlon - 1);
+const fresh = !J.d || J.d.cycle !== d.cycle;
+J.d = d; J.f = {}; J.got = Date.now(); J.state = 'ok';
+if(fresh) J.hour = nowHour();
+msg('');
+}catch(e){
+console.warn('jet stream not loaded', e);
+J.state = J.d ? 'ok' : 'fail';
+if(!J.d) msg('THE JET STREAM IS NOT AVAILABLE RIGHT NOW.<br>PLEASE TRY AGAIN IN A LITTLE WHILE.');
+}
+buildHours();
+draw();
+}
+/* one forecast time: speed (mph) and the east / north parts of the flow (mph, the way it blows TO) */
+function field(h){
+const i = J.d.hours.indexOf(h);
+if(i < 0 || !J.d.u[i] || !J.d.v[i]) return null;
+if(J.f[i]) return J.f[i];
+const su = J.d.u[i], sv = J.d.v[i], n = J.d.nlat * J.d.nlon, off = J.d.offset || 300;
+const s = new Float32Array(n), u = new Float32Array(n), v = new Float32Array(n);
+for(let k=0; k<n; k++){
+const a = (parseInt(su.substr(k * 2, 2), 36) - off) * KT_MPH, b = (parseInt(sv.substr(k * 2, 2), 36) - off) * KT_MPH;
+u[k] = a; v[k] = b; s[k] = Math.sqrt(a * a + b * b);
+}
+return (J.f[i] = { s:s, u:u, v:v });
+}
+function at(arr, lat, lon){
+const d = J.d, fi = (lat - d.lat0) / d.dlat, fj = (lon - d.lon0) / d.dlon;
+if(!(fi >= 0 && fj >= 0 && fi <= d.nlat - 1 && fj <= d.nlon - 1)) return NaN;
+const i0 = Math.min(d.nlat - 2, Math.floor(fi)), j0 = Math.min(d.nlon - 2, Math.floor(fj)), a = fi - i0, b = fj - j0;
+const r0 = i0 * d.nlon + j0, r1 = r0 + d.nlon;
+return arr[r0] * (1 - a) * (1 - b) + arr[r0 + 1] * (1 - a) * b + arr[r1] * a * (1 - b) + arr[r1 + 1] * a * b;
+}
+function nowHour(){
+if(!J.d) return 0;
+const last = J.d.hours[J.d.hours.length - 1];
+return Math.max(0, Math.min(last, Math.round((Date.now() - J.d.cycleT) / 21600000) * 6));
+}
+
+/* ---------- hours ---------- */
+function buildHours(){
+const box = $('jsHours');
+if(!J.d || box.dataset.cycle === J.d.cycle) return;
+box.dataset.cycle = J.d.cycle;
+box.innerHTML = '';
+J.d.hours.forEach(function(h){
+const b = document.createElement('button');
+b.type = 'button'; b.dataset.h = h;
+b.innerHTML = '<span class="sthn">' + h + '</span><small>&nbsp;</small>';
+b.addEventListener('click', function(){ stop(); setHour(h); });
+box.appendChild(b);
+});
+}
+function markHours(){
+if(!J.d) return;
+const nowH = nowHour();
+let prev = '', act = null;
+$('jsHours').querySelectorAll('button').forEach(function(b){
+const h = Number(b.dataset.h), parts = WD.formatToParts(when(h));
+const hh = (parts.find(p => p.type === 'hour') || {}).value || '';
+const day = ((parts.find(p => p.type === 'weekday') || {}).value || '').toUpperCase();
+const newDay = h > 0 && day !== prev;
+prev = day;
+b.querySelector('.sthn').textContent = h === nowH ? 'NOW' : (h === 0 ? 'RUN' : h);
+b.querySelector('small').textContent = h === 0 ? 'START' : (newDay ? day + ' ' + hh : hh + 'h');
+b.classList.toggle('day', newDay);
+b.classList.toggle('active', h === J.hour);
+b.disabled = !field(h);
+if(h === J.hour) act = b;
+});
+if(act){
+const box = $('jsHours'), br = box.getBoundingClientRect(), ar = act.getBoundingClientRect();
+if(ar.left < br.left || ar.right > br.right) box.scrollLeft += (ar.left - br.left) - br.width / 2 + ar.width / 2;
+}
+}
+function setHour(h){ J.hour = h; draw(); }
+function stop(){
+if(J.play){ clearInterval(J.play); J.play = 0; }
+$('jsPlay').innerHTML = '&#9654; PLAY'; $('jsPlay').classList.remove('playing');
+}
+function playToggle(){
+if(J.play || !J.d){ stop(); return; }
+const hs = J.d.hours;
+if(J.hour >= hs[hs.length - 1]) J.hour = nowHour() - 6;
+$('jsPlay').innerHTML = '&#10073;&#10073; PAUSE'; $('jsPlay').classList.add('playing');
+const step = function(){
+const nh = J.hour + 6;
+if(nh > hs[hs.length - 1] || !field(nh)){ stop(); return; }
+setHour(nh);
+};
+J.play = setInterval(step, 1100);
+step();
+}
+
+/* ---------- the map ---------- */
+function initMap(){
+const map = L.map('js-map', { zoomControl:false, zoomSnap:0.05, dragging:false, touchZoom:false, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, worldCopyJump:false });
+J.map = map;
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, attribution:'Tiles &copy; Esri &middot; jet stream: NOAA GFS' }).addTo(map);
+[['jetPane', 250], ['refPane', 260], ['flowPane', 270]].forEach(function(p){ map.createPane(p[0]); map.getPane(p[0]).style.zIndex = p[1]; map.getPane(p[0]).style.pointerEvents = 'none'; });
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom:8, opacity:0.8, pane:'refPane' }).addTo(map);
+J.cv = L.DomUtil.create('canvas', 'js-cv', map.getPane('jetPane'));
+J.fv = L.DomUtil.create('canvas', 'js-cv', map.getPane('flowPane'));
+L.marker(JSY, { icon:L.divIcon({ className:'st-icon', html:'<div class="js-jsy"><i></i><span>JERSEY</span></div>', iconSize:[0,0], iconAnchor:[0,0] }), interactive:false, keyboard:false, zIndexOffset:2000 }).addTo(map);
+J.lowLayer = L.layerGroup().addTo(map);
+map.on('click', mapClick);
+map.on('popupclose', function(e){ if(e.popup === J.pop) J.popLL = null; });
+lock();
+let last = '';
+const el = $('js-map');
+const fit = function(){ const k = el.clientWidth + 'x' + el.clientHeight; if(k !== last && el.clientWidth > 0){ last = k; lock(); draw(); } };
+if(window.ResizeObserver) new ResizeObserver(fit).observe(el); else window.addEventListener('resize', fit);
+}
+/* fixed view of the North Atlantic and Europe, filling the frame (a little is trimmed at the edges) */
+function lock(){
+const map = J.map, b = L.latLngBounds(VIEW);
+map.invalidateSize({ animate:false });
+const z = map.getBoundsZoom(b, true);
+const c = map.unproject(map.project(b.getNorthWest(), z).add(map.project(b.getSouthEast(), z)).divideBy(2), z);
+map.setView(c, z, { animate:false });
+const sz = map.getSize(), pos = map.containerPointToLayerPoint([0, 0]), dpr = Math.min(1.5, window.devicePixelRatio || 1);
+[J.cv, J.fv].forEach(function(cv, i){
+const r = i === 0 ? 1 : dpr;
+cv.width = Math.max(1, Math.round(sz.x * r)); cv.height = Math.max(1, Math.round(sz.y * r));
+cv.style.width = sz.x + 'px'; cv.style.height = sz.y + 'px';
+L.DomUtil.setPosition(cv, pos);
+});
+J.vel = null; J.parts = null;
+}
+/* the colours, worked out for every pixel at the map's own size, then the coastlines on top */
+function paint(F){
+const cv = J.cv, W = cv.width, H = cv.height, ctx = cv.getContext('2d'), d = J.d;
+const img = ctx.createImageData(W, H), px = img.data;
+const lonX = new Float32Array(W), latY = new Float32Array(H);
+for(let x=0; x<W; x++) lonX[x] = J.map.containerPointToLatLng([x + 0.5, 0]).lng;
+for(let y=0; y<H; y++) latY[y] = J.map.containerPointToLatLng([0, y + 0.5]).lat;
+const A = F.s, n2 = d.nlon;
+for(let y=0; y<H; y++){
+const fi = (latY[y] - d.lat0) / d.dlat;
+if(!(fi >= 0 && fi <= d.nlat - 1)) continue;
+const i0 = Math.min(d.nlat - 2, Math.floor(fi)), a = fi - i0;
+for(let x=0; x<W; x++){
+const fj = (lonX[x] - d.lon0) / d.dlon;
+if(!(fj >= 0 && fj <= n2 - 1)) continue;
+const j0 = Math.min(n2 - 2, Math.floor(fj)), b = fj - j0, r0 = i0 * n2 + j0, r1 = r0 + n2;
+const v = A[r0] * (1 - a) * (1 - b) + A[r0 + 1] * (1 - a) * b + A[r1] * a * (1 - b) + A[r1 + 1] * a * b;
+const li = Math.max(0, Math.min(600, Math.round(v * 2))) * 4, o = (y * W + x) * 4;
+px[o] = LUT[li]; px[o + 1] = LUT[li + 1]; px[o + 2] = LUT[li + 2]; px[o + 3] = LUT[li + 3];
+}
+}
+ctx.putImageData(img, 0, 0);
+const path = new Path2D();
+COAST.forEach(function(line){
+for(let i=0; i<line.length; i++){
+const q = J.map.latLngToContainerPoint(line[i]);
+if(i) path.lineTo(q.x, q.y); else path.moveTo(q.x, q.y);
+}
+});
+ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+ctx.strokeStyle = 'rgba(5,8,13,0.85)'; ctx.lineWidth = 2; ctx.stroke(path);
+ctx.strokeStyle = 'rgba(233,246,245,0.45)'; ctx.lineWidth = 0.7; ctx.stroke(path);
+}
+/* the flow on screen in pixels per frame, on an 8-pixel grid (quick to look up while animating) */
+function velocity(F){
+const cv = J.fv, r = cv.width / J.map.getSize().x, W = cv.width, H = cv.height, C = 8;
+const cols = Math.ceil(W / C) + 1, rows = Math.ceil(H / C) + 1;
+const vx = new Float32Array(cols * rows), vy = new Float32Array(cols * rows), sp = new Float32Array(cols * rows);
+const k = 0.016 * Math.max(0.7, Math.min(1.4, J.map.getSize().x / 1000)) * r;
+for(let j=0; j<rows; j++){
+for(let i=0; i<cols; i++){
+const ll = J.map.containerPointToLatLng([i * C / r, j * C / r]);
+const u = at(F.u, ll.lat, ll.lng), v = at(F.v, ll.lat, ll.lng);
+if(isNaN(u)) continue;
+const m = k / Math.cos(ll.lat * Math.PI / 180), n = j * cols + i;
+vx[n] = u * m; vy[n] = -v * m; sp[n] = Math.sqrt(u * u + v * v);
+}
+}
+J.vel = { vx:vx, vy:vy, sp:sp, cols:cols, rows:rows, C:C, W:W, H:H };
+}
+function velAt(x, y){
+const V = J.vel, fx = x / V.C, fy = y / V.C, i = Math.floor(fx), j = Math.floor(fy);
+if(i < 0 || j < 0 || i >= V.cols - 1 || j >= V.rows - 1) return null;
+const a = fx - i, b = fy - j, n = j * V.cols + i, m = n + V.cols;
+return [
+V.vx[n] * (1 - a) * (1 - b) + V.vx[n + 1] * a * (1 - b) + V.vx[m] * (1 - a) * b + V.vx[m + 1] * a * b,
+V.vy[n] * (1 - a) * (1 - b) + V.vy[n + 1] * a * (1 - b) + V.vy[m] * (1 - a) * b + V.vy[m + 1] * a * b,
+V.sp[n]
+];
+}
+/* moving lines: little particles carried by the flow, leaving short fading trails */
+function seed(p){ p.x = Math.random() * J.vel.W; p.y = Math.random() * J.vel.H; p.age = 0; p.max = 40 + Math.floor(Math.random() * 70); }
+function frame(){
+J.raf = 0;
+if(!J.open || J.flow !== 'move' || !J.vel || document.hidden) return;
+const cv = J.fv, ctx = cv.getContext('2d'), r = cv.width / J.map.getSize().x;
+if(!J.parts){
+const n = Math.min(3000, Math.round(cv.width * cv.height / (r * r) / 280));
+J.parts = [];
+for(let i=0; i<n; i++){ const p = {}; seed(p); p.age = Math.floor(Math.random() * p.max); J.parts.push(p); }
+}
+ctx.globalCompositeOperation = 'destination-in';
+ctx.fillStyle = 'rgba(0,0,0,0.90)';
+ctx.fillRect(0, 0, cv.width, cv.height);
+ctx.globalCompositeOperation = 'source-over';
+const slow = new Path2D(), fast = new Path2D();
+for(let i=0; i<J.parts.length; i++){
+const p = J.parts[i];
+if(++p.age > p.max){ seed(p); continue; }
+const v = velAt(p.x, p.y);
+if(!v){ seed(p); continue; }
+const nx = p.x + v[0], ny = p.y + v[1], path = v[2] >= 70 ? fast : slow;
+path.moveTo(p.x, p.y); path.lineTo(nx, ny);
+p.x = nx; p.y = ny;
+}
+ctx.lineCap = 'round';
+ctx.lineWidth = 1.1 * r; ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.stroke(slow);
+ctx.lineWidth = 1.4 * r; ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.stroke(fast);
+J.raf = requestAnimationFrame(frame);
+}
+/* still lines: short curved streaks with an arrow head, drawn once */
+function still(){
+const cv = J.fv, ctx = cv.getContext('2d'), r = cv.width / J.map.getSize().x, G = 30 * r;
+ctx.clearRect(0, 0, cv.width, cv.height);
+ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+let row = 0;
+for(let gy = G / 2; gy < cv.height; gy += G, row++){
+for(let gx = G / 2 + (row % 2 ? G / 2 : 0); gx < cv.width; gx += G){
+let x = gx, y = gy;
+const v0 = velAt(x, y);
+if(!v0) continue;
+const strong = v0[2] >= 70, pts = [[x, y]];
+for(let s=0; s<14; s++){
+const v = velAt(x, y);
+if(!v) break;
+const m = Math.sqrt(v[0] * v[0] + v[1] * v[1]) || 1, st = Math.min(2.2 * r, m * 1.2);
+x += v[0] / m * st; y += v[1] / m * st;
+pts.push([x, y]);
+}
+if(pts.length < 4) continue;
+ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+for(let s=1; s<pts.length; s++) ctx.lineTo(pts[s][0], pts[s][1]);
+const e = pts[pts.length - 1], q = pts[pts.length - 3], dx = e[0] - q[0], dy = e[1] - q[1], dm = Math.sqrt(dx * dx + dy * dy) || 1;
+const ux = dx / dm, uy = dy / dm, hs = 4 * r;
+ctx.moveTo(e[0] - ux * hs - uy * hs * 0.6, e[1] - uy * hs + ux * hs * 0.6); ctx.lineTo(e[0], e[1]); ctx.lineTo(e[0] - ux * hs + uy * hs * 0.6, e[1] - uy * hs - ux * hs * 0.6);
+ctx.strokeStyle = strong ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)'; ctx.lineWidth = (strong ? 1.5 : 1.1) * r;
+ctx.stroke();
+}
+}
+}
+function flow(){
+if(!J.fv) return;
+const ctx = J.fv.getContext('2d');
+if(J.raf){ cancelAnimationFrame(J.raf); J.raf = 0; }
+if(J.flow === 'off' || !J.vel){ ctx.clearRect(0, 0, J.fv.width, J.fv.height); return; }
+if(J.flow === 'still'){ still(); return; }
+J.raf = requestAnimationFrame(frame);
+}
+/* the lows from the Storm Tracker at the same time, with where they go over the next 48 hours */
+function trackPos(t, h){
+const i = (h - t.path_start_hour) / 6, P = t.path || [];
+if(i < 0 || i > P.length - 1) return null;
+const i0 = Math.floor(i), i1 = Math.min(i0 + 1, P.length - 1), f = i - i0;
+return [P[i0][0] + (P[i1][0] - P[i0][0]) * f, P[i0][1] + (P[i1][1] - P[i0][1]) * f];
+}
+function trackPres(t, h){
+const pts = t.points || [];
+if(!pts.length) return t.min_hpa;
+if(h <= pts[0].h) return pts[0].p;
+for(let i=1; i<pts.length; i++) if(h <= pts[i].h){ const a = pts[i - 1], b = pts[i]; return a.p + (b.p - a.p) * (h - a.h) / (b.h - a.h || 1); }
+return pts[pts.length - 1].p;
+}
+function lows(){
+J.lowLayer.clearLayers();
+const SD = (typeof ST !== 'undefined' && ST.data) ? ST.data : null;
+if(!J.lows || !SD || !SD.tracks || !J.d) return;
+const h = Math.round((when(J.hour).getTime() - new Date(SD.cycle).getTime()) / 3600000);
+const vb = J.map.getBounds(), maxP = (typeof ST !== 'undefined' && ST.maxP) || 1004;
+SD.tracks.forEach(function(t){
+if(t.min_hpa > maxP) return;
+const pos = trackPos(t, h);
+if(!pos || !vb.contains(L.latLng(pos[0], pos[1]))) return;
+const p = trackPres(t, h), c = typeof stColor === 'function' ? stColor(p) : '#4cd3ff', path = [pos];
+for(let k=6; k<=48; k+=6){ const q = trackPos(t, h + k); if(q) path.push(q); }
+if(path.length > 1) J.lowLayer.addLayer(L.polyline(path, { color:'#ffffff', weight:2, opacity:0.75, dashArray:'2 6', lineCap:'round', interactive:false }));
+const lab = (typeof stLabel === 'function' ? stLabel(t) : String(t.num || '')).replace(/[&<>"]/g, '');
+J.lowLayer.addLayer(L.marker(pos, { icon:L.divIcon({ className:'st-icon', html:'<div class="js-low" style="--c:' + c + ';"><b>L</b><span>' + (lab ? lab + ' &middot; ' : '') + Math.round(p) + '</span></div>', iconSize:[0,0], iconAnchor:[0,0] }), interactive:false, keyboard:false, zIndexOffset:1000 }));
+});
+}
+/* tap the map: the jet at that spot */
+function mapClick(ev){
+if(!J.pop) J.pop = L.popup({ className:'st-pop-wrap', autoPan:false, maxWidth:280, closeOnClick:false });
+J.popLL = ev.latlng;
+J.pop.setLatLng(ev.latlng).setContent(popHtml(ev.latlng)).openOn(J.map);
+}
+function popHtml(ll){
+let h = '<div class="st-pop"><div class="hd">' + Math.abs(ll.lat).toFixed(1) + '&deg;' + (ll.lat >= 0 ? 'N' : 'S') + ' ' + Math.abs(ll.lng).toFixed(1) + '&deg;' + (ll.lng >= 0 ? 'E' : 'W') + '</div>';
+if(!J.d) return h + '</div>';
+h += '<div class="dm">' + whenTxt(J.hour) + ' &middot; ABOUT 10 KM UP</div>';
+const F = field(J.hour);
+if(!F) return h + '<div class="dm">NO DATA FOR THIS TIME</div></div>';
+const u = at(F.u, ll.lat, ll.lng), v = at(F.v, ll.lat, ll.lng);
+if(isNaN(u)) return h + '<div class="dm">OUTSIDE THE MAP AREA</div></div>';
+const m = Math.sqrt(u * u + v * v);
+h += '<div class="rw"><span>JET STREAM</span><b style="color:' + ink(m) + ';">' + spd(m) + '</b></div>';
+h += '<div class="rw"><span>FROM THE</span><b>' + compass((Math.atan2(-u, -v) * 180 / Math.PI + 360) % 360) + '</b></div>';
+h += '<div class="dm">' + Math.round(m) + ' mph &middot; ' + Math.round(m * 1.609344) + ' km/h &middot; ' + Math.round(m / KT_MPH) + ' kt</div>';
+return h + '</div>';
+}
+/* the key under the map */
+function legend(){
+const U = UNITS[J.unit], top = U.ticks[U.ticks.length - 1], stops = [];
+for(let i=0; i<=20; i++){
+const mph = top * i / 20 / U.k, li = Math.max(0, Math.min(600, Math.round(mph * 2))) * 4;
+stops.push('rgba(' + LUT[li] + ',' + LUT[li + 1] + ',' + LUT[li + 2] + ',' + Math.max(0.25, LUT[li + 3] / 255).toFixed(2) + ') ' + (i * 5) + '%');
+}
+$('jsLegend').innerHTML = '<span>SPEED (' + U.lbl + '):</span><span class="st-key js-keybox"><i class="js-grad" style="background:linear-gradient(90deg,' + stops.join(',') + ');"></i><i class="js-gradlbl">' + U.ticks.map((x, i) => '<span>' + x + (i === U.ticks.length - 1 ? '+' : '') + '</span>').join('') + '</i></span><span class="st-key">WHITE LINES = THE WAY IT FLOWS</span>';
+}
+/* the box under the map: the jet over Jersey, where its core is, the fastest part of the map */
+function info(F){
+const el = $('jsInfo');
+if(!F){ el.innerHTML = J.state === 'ok' ? 'NO JET STREAM DATA FOR THIS TIME.' : '&nbsp;'; return; }
+const d = J.d, m = at(F.s, JSY[0], JSY[1]), u = at(F.u, JSY[0], JSY[1]), v = at(F.v, JSY[0], JSY[1]);
+const from = (Math.atan2(-u, -v) * 180 / Math.PI + 360) % 360;
+/* the core on Jersey's longitude: the fastest point between 35 and 65N */
+const j = Math.round((JSY[1] - d.lon0) / d.dlon);
+let bi = -1, bv = 0;
+for(let i=0; i<d.nlat; i++){ const lat = d.lat0 + i * d.dlat; if(lat < 35 || lat > 65) continue; const x = F.s[i * d.nlon + j]; if(x > bv){ bv = x; bi = i; } }
+let h = '<b>OVER JERSEY AT ' + whenTxt(J.hour) + '</b>: the jet stream is <b>' + spd(m) + '</b> from the <b>' + compass(from) + '</b>';
+if(bi >= 0){
+const dl = d.lat0 + bi * d.dlat - JSY[0];
+if(bv < 90) h += ' &middot; no strong jet near Jersey at this time';
+else if(Math.abs(dl) <= 2.5) h += ' &middot; <b>its core is right over us</b> (' + spd(bv) + ')';
+else h += ' &middot; its core is about <b>' + Math.round(Math.abs(dl) * 69 / 10) * 10 + ' miles to the ' + (dl > 0 ? 'north' : 'south') + '</b> (' + spd(bv) + ')';
+}
+const vb = J.map.getBounds();
+let best = -1, bk = 0;
+for(let i=0; i<d.nlat; i++) for(let jj=0; jj<d.nlon; jj++){ const lat = d.lat0 + i * d.dlat, lon = d.lon0 + jj * d.dlon; if(!vb.contains([lat, lon])) continue; const x = F.s[i * d.nlon + jj]; if(x > best){ best = x; bk = i * d.nlon + jj; } }
+if(best > 0){ const bl = d.lat0 + Math.floor(bk / d.nlon) * d.dlat, bo = d.lon0 + (bk % d.nlon) * d.dlon; h += '<br><b>FASTEST ON THE MAP</b>: ' + spd(best) + ' near ' + Math.round(bl) + '&deg;N ' + Math.abs(Math.round(bo)) + '&deg;' + (bo < 0 ? 'W' : 'E'); }
+h += '<br><span class="dm">THE WIND WHERE AIRLINERS CRUISE, NOT THE WIND YOU FEEL. LOWS USUALLY RIDE ALONG ITS NORTHERN (COLD) SIDE.</span>';
+el.innerHTML = h;
+}
+function badge(){
+const el = $('jsBadge');
+if(!J.d){ el.innerHTML = ''; return; }
+const c = new Date(J.d.cycle);
+el.innerHTML = '<span class="k">MODEL</span><span class="v">NOAA GFS &middot; 250 hPa</span><span class="k">RUN</span><span class="v cy">' + String(c.getUTCHours()).padStart(2, '0') + 'Z ' + WD.format(c).slice(0, 3).toUpperCase() + ' ' + DAY.format(c).toUpperCase() + '</span>';
+}
+/* redraw everything for the chosen time */
+function draw(){
+if(!J.map || !J.open) return;
+if(!J.d){ $('jsValid').innerHTML = '--<small></small>'; return; }
+const F = field(J.hour), nowH = nowHour();
+$('jsValid').innerHTML = WD.format(when(J.hour)).replace(/,/g, '').toUpperCase() + '<small>' + (J.hour === nowH ? 'NOW' : (J.hour > nowH ? '+' + (J.hour - nowH) + ' HOURS FROM NOW' : (nowH - J.hour) + ' HOURS AGO')) + ' &middot; JERSEY TIME</small>';
+markHours();
+badge();
+if(!F){
+J.cv.getContext('2d').clearRect(0, 0, J.cv.width, J.cv.height);
+J.vel = null; flow(); info(null); lows();
+return;
+}
+paint(F);
+velocity(F);
+J.fv.getContext('2d').clearRect(0, 0, J.fv.width, J.fv.height);
+flow();
+lows();
+info(F);
+if(J.pop && J.popLL && J.map.hasLayer(J.pop)) J.pop.setContent(popHtml(J.popLL));
+}
+
+/* ---------- opening and closing ---------- */
+function open(){
+const calm = document.documentElement.getAttribute('data-motion') === 'calm' || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+if(!J.wired){
+J.wired = true;
+const chips = function(id, fn){
+document.querySelectorAll('#' + id + ' .sw-chip').forEach(function(b){
+b.addEventListener('click', function(){
+document.querySelectorAll('#' + id + ' .sw-chip').forEach(function(x){ x.classList.toggle('active', x === b); });
+fn(b.dataset.v);
+});
+});
+};
+chips('jsFlow', function(v){ J.flow = v; if(J.fv) J.fv.getContext('2d').clearRect(0, 0, J.fv.width, J.fv.height); J.parts = null; flow(); });
+chips('jsLows', function(v){ J.lows = v === '1'; if(J.map) lows(); });
+chips('jsUnit', function(v){ J.unit = v; legend(); draw(); });
+$('jsPlay').addEventListener('click', playToggle);
+if(calm){ J.flow = 'still'; document.querySelectorAll('#jsFlow .sw-chip').forEach(function(x){ x.classList.toggle('active', x.dataset.v === 'still'); }); }
+legend();
+}
+bd.classList.add('open'); document.body.style.overflow = 'hidden'; closeBtn.focus();
+J.open = true;
+requestAnimationFrame(function(){
+if(!J.map) initMap(); else lock();
+if(J.d) J.hour = J.hour || nowHour();
+draw();
+load();
+});
+/* the lows come from the Storm Tracker, which may still be loading if the page was opened at #jetstream */
+[4000, 10000].forEach(function(ms){ setTimeout(function(){ if(J.open && J.map && J.d) lows(); }, ms); });
+}
+function close(){
+J.open = false; stop();
+if(J.raf){ cancelAnimationFrame(J.raf); J.raf = 0; }
+bd.classList.remove('open'); document.body.style.overflow = ''; openBtn.focus();
+if(location.hash === '#jetstream'){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
+}
+openBtn.addEventListener('click', open);
+closeBtn.addEventListener('click', close);
+bd.addEventListener('click', function(e){ if(e.target === bd) close(); });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && bd.classList.contains('open')) close(); });
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && J.open && J.flow === 'move' && !J.raf) flow(); });
+if(location.hash === '#jetstream') open();
 })();
 </script>
 <!-- LIVE IMAGERY -->
