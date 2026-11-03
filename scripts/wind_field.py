@@ -30,6 +30,16 @@ This script builds the data for that picture.
    The file says enc = "b36x2" so index.html knows to decode it; the page can
    still read the older plain-number files too.
 4. index.html reads that file and paints it on the map.
+5. THE JET STREAM (since November 2026): for the same hours it also downloads
+   the wind about 10 km up (the 250 hPa level, where airliners cruise), for a
+   much wider area - the North Atlantic and Europe, 30-70N and 45W-30E - at
+   every 2nd point of the 0.25 degree grid (0.5 degree, about 30 miles). That is
+   written to jet-stream.json next to wind-field.json, for the JET STREAM
+   pop-up on Live Ops (index.html#jetstream). Each grid point stores the
+   east-west (u) and north-south (v) parts of the wind in knots, plus 300 so
+   nothing is negative, as two base-36 characters each. If the jet maps cannot
+   be had, wind-field.json is still written as normal and the website keeps
+   the previous jet-stream.json.
 
 It is run automatically by .github/workflows/wind-field.yml every 6 hours,
 about 20 minutes after the storm tracks job. The workflow publishes the file on
@@ -61,6 +71,16 @@ MSLP_BASE = 900.0
 MSLP_SCALE = 2.0
 MIN_HOURS_NEEDED = 30           # of the 41 pressure maps; fewer = give up
 
+# The jet stream for the JET STREAM pop-up (see 5. above). The area must stay
+# inside storm_tracks' own decoding window (30-75N, 80W-40E), and index.html's
+# jet map is locked inside it.
+JET_LEVEL = "250 mb"
+JET_LAT_MIN, JET_LAT_MAX = 30.0, 70.0
+JET_LON_MIN, JET_LON_MAX = -45.0, 30.0
+JET_EVERY = 2                   # keep every 2nd grid point: 0.25 -> 0.5 degree
+JET_OFFSET_KT = 300             # stored value = knots + 300
+MS_TO_KT = 1.943844
+
 
 def log(msg):
     print(msg, flush=True)
@@ -81,6 +101,13 @@ def crop(lats, lons, arr):
     """Cut a decoded map (latitude and longitude both ascending) to the saved area."""
     li = np.where((lats >= LAT_MIN - 1e-6) & (lats <= LAT_MAX + 1e-6))[0]
     lj = np.where((lons >= LON_MIN - 1e-6) & (lons <= LON_MAX + 1e-6))[0]
+    return lats[li], lons[lj], arr[np.ix_(li, lj)]
+
+
+def jet_crop(lats, lons, arr):
+    """Cut a decoded map to the jet-stream area, keeping every JET_EVERY-th point."""
+    li = np.where((lats >= JET_LAT_MIN - 1e-6) & (lats <= JET_LAT_MAX + 1e-6))[0][::JET_EVERY]
+    lj = np.where((lons >= JET_LON_MIN - 1e-6) & (lons <= JET_LON_MAX + 1e-6))[0][::JET_EVERY]
     return lats[li], lons[lj], arr[np.ix_(li, lj)]
 
 
@@ -120,17 +147,22 @@ def build(cycle, hours):
                 return job, st.download_message(st.make_session(), cycle, fh, "UGRD", "10 m above ground")
             if kind == "v":
                 return job, st.download_message(st.make_session(), cycle, fh, "VGRD", "10 m above ground")
+            if kind == "ju":
+                return job, st.download_message(st.make_session(), cycle, fh, "UGRD", JET_LEVEL)
+            if kind == "jv":
+                return job, st.download_message(st.make_session(), cycle, fh, "VGRD", JET_LEVEL)
             return job, st.download_message(st.make_session(), cycle, fh, "GUST", "surface")
         except Exception as e:                       # noqa: BLE001 - report and carry on
             log("  f%03d %s: download failed (%s)" % (fh, kind, e))
             return job, None
 
-    jobs = [(fh, k) for fh in hours for k in ("mslp", "gust", "u", "v")]
+    jobs = [(fh, k) for fh in hours for k in ("mslp", "gust", "u", "v", "ju", "jv")]
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         blobs = dict(pool.map(fetch, jobs))
 
     grid = None
-    out = {"mslp": {}, "gust": {}, "u": {}, "v": {}}
+    jgrid = None
+    out = {"mslp": {}, "gust": {}, "u": {}, "v": {}, "ju": {}, "jv": {}}
     for (fh, kind), blob in sorted(blobs.items()):
         if blob is None:
             continue
@@ -140,9 +172,20 @@ def build(cycle, hours):
                 a = a                                   # already hPa
             else:
                 lats, lons, a = st.decode_field(blob)   # m/s
-            lats, lons, a = crop(lats, lons, a)
+            if kind in ("ju", "jv"):
+                lats, lons, a = jet_crop(lats, lons, a)
+            else:
+                lats, lons, a = crop(lats, lons, a)
         except Exception as e:                       # noqa: BLE001
             log("  f%03d %s: could not read (%s)" % (fh, kind, e))
+            continue
+        if kind in ("ju", "jv"):                     # the jet stream has its own, wider grid
+            if jgrid is None:
+                jgrid = (lats, lons)
+            elif a.shape != (len(jgrid[0]), len(jgrid[1])):
+                log("  f%03d %s: unexpected grid size, skipped" % (fh, kind))
+                continue
+            out[kind][fh] = a
             continue
         if grid is None:
             grid = (lats, lons)
@@ -150,7 +193,7 @@ def build(cycle, hours):
             log("  f%03d %s: unexpected grid size, skipped" % (fh, kind))
             continue
         out[kind][fh] = a
-    return grid, out
+    return grid, out, jgrid
 
 
 def simulate(cycle, hours):
@@ -171,12 +214,61 @@ def simulate(cycle, hours):
         spd = np.hypot(u, v)
         out["mslp"][h], out["u"][h], out["v"][h] = p, u, v
         out["gust"][h] = spd * 1.4 + 2.0
-    return (lats, lons), out
+    # a made-up jet stream: a wavy ribbon of 90 m/s (about 200 mph) drifting east
+    jstep = (0.25 if RESOLUTION == "0p25" else 0.5) * JET_EVERY
+    jlats = np.arange(JET_LAT_MIN, JET_LAT_MAX + 1e-6, jstep)
+    jlons = np.arange(JET_LON_MIN, JET_LON_MAX + 1e-6, jstep)
+    JA, JO = np.meshgrid(jlats, jlons, indexing="ij")
+    out["ju"], out["jv"] = {}, {}
+    for h in hours:
+        ph = (JO + 20.0) / 18.0 + h / 40.0
+        core = 50.0 + 7.0 * np.sin(ph)
+        slope = 7.0 / 18.0 * np.cos(ph)
+        spd = 18.0 + 72.0 * np.exp(-((JA - core) / 5.0) ** 2)
+        norm = np.hypot(1.0, slope)
+        out["ju"][h], out["jv"][h] = spd / norm, spd * slope / norm
+    return (lats, lons), out, (jlats, jlons)
+
+
+def write_jet(path, now, cycle, hours, jgrid, data):
+    """jet-stream.json for the JET STREAM pop-up (see 5. at the top). Never stops wind-field.json."""
+    have = [h for h in hours if h in data.get("ju", {}) and h in data.get("jv", {})]
+    log("Got %d jet-stream maps (%s)" % (len(have), JET_LEVEL))
+    if jgrid is None or len(have) < MIN_HOURS_NEEDED:
+        log("Too few jet-stream maps - jet-stream.json not written this time (the website keeps the last one).")
+        return
+    lats, lons = jgrid
+
+    def enc(a):
+        return encode_b36x2(np.clip(np.rint(a * MS_TO_KT) + JET_OFFSET_KT, 0, 1295))
+
+    result = {
+        "generated": st.iso(now),
+        "cycle": st.iso(cycle),
+        "model": "NOAA GFS 0.25 degree, every %d points" % JET_EVERY,
+        "level": JET_LEVEL.replace(" mb", " hPa"),
+        "enc": "b36x2",
+        "uv": "knots + %d" % JET_OFFSET_KT,
+        "offset": JET_OFFSET_KT,
+        "step_hours": st.STEP_HOURS,
+        "hours": hours,
+        "lat0": round(float(lats[0]), 3), "lat1": round(float(lats[-1]), 3),
+        "lon0": round(float(lons[0]), 3), "lon1": round(float(lons[-1]), 3),
+        "nlat": int(len(lats)), "nlon": int(len(lons)),
+        "u": [enc(data["ju"][h]) if h in have else None for h in hours],
+        "v": [enc(data["jv"][h]) if h in have else None for h in hours],
+    }
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result, separators=(",", ":")), encoding="utf-8")
+    peak = max(float(np.hypot(data["ju"][h], data["jv"][h]).max()) for h in have) * MS_TO_KT
+    log("Wrote %s (%d bytes, grid %d x %d, fastest %d kt)" % (path, path.stat().st_size, len(lats), len(lons), peak))
 
 
 def main():
     ap = argparse.ArgumentParser(description="Build data/wind-field.json from NOAA GFS")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "data" / "wind-field.json"))
+    ap.add_argument("--jet-out", help="where to write jet-stream.json (default: next to --out)")
     ap.add_argument("--cycle", help="force a run, e.g. 2026100812 (default: newest complete run)")
     ap.add_argument("--simulate", action="store_true", help="no NOAA: write a made-up storm for testing the page")
     args = ap.parse_args()
@@ -192,7 +284,7 @@ def main():
     log("Using GFS run %s" % cycle.strftime("%Y-%m-%d %HZ"))
 
     hours = list(st.FORECAST_HOURS)
-    grid, data = simulate(cycle, hours) if args.simulate else build(cycle, hours)
+    grid, data, jgrid = simulate(cycle, hours) if args.simulate else build(cycle, hours)
     got = len(data["mslp"])
     log("Got %d pressure maps and %d gust maps" % (got, len(data["gust"])))
     if grid is None or got < MIN_HOURS_NEEDED:
@@ -233,6 +325,12 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, separators=(",", ":")), encoding="utf-8")
     log("Wrote %s (%d bytes, grid %d x %d)" % (out, out.stat().st_size, len(lats), len(lons)))
+
+    # The jet stream: a problem here must never stop the wind map above from being published
+    try:
+        write_jet(args.jet_out or out.with_name("jet-stream.json"), now, cycle, hours, jgrid, data)
+    except Exception as e:                           # noqa: BLE001
+        log("Jet stream not written (%s) - the wind map is unaffected." % e)
     return 0
 
 
