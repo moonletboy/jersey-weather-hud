@@ -1,8 +1,9 @@
 {
   "about": "What's New lines for the Settings panel, newest first. Add or remove lines with the 'Add What's New line' form: GitHub > Actions > Add What's New line > Run workflow.",
-  "next_id": 17,
-  "updated": "2026-11-03T21:27:03Z",
+  "next_id": 18,
+  "updated": "2026-11-04T21:12:02Z",
   "items": [
+    {"id": 17, "date": "2026-11-04", "text": "Congratulations! New personal weather Station The Smokey Shed - ISAINT11921 added in St John."},
     {"id": 16, "date": "2026-11-03", "text": "New on Live Ops: the JET STREAM map"},
     {"id": 15, "date": "2026-11-02", "text": "October 2026 Monthly Recap added."},
     {"id": 14, "date": "2026-10-31", "text": "New and experimental: SPOUT WATCH, a funnel cloud and waterspout outlook for Jersey, now in the tab bar."},
