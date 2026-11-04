@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "cac02a79c39c",
+ "hash": "d50e5123190d",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -10,7 +10,7 @@
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "08:54 UTC Tuesday 03 November",
+   "issued": "08:38 UTC Wednesday 04 November",
    "message": "E to NE wind F6 continuing.",
    "missing": 0,
    "lower": 0
@@ -18,11 +18,11 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-03T09:00:00.0381178Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:54 UTC Tuesday 03 November E to NE wind F6 continuing.",
- "checkedAt": "2026-11-03T09:00:00.0381178Z",
- "lastAlertAt": "2026-11-03T09:05:00Z",
+ "lastFetch": "2026-11-04T08:45:00.0262855Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:38 UTC Wednesday 04 November E to NE wind F6 continuing.",
+ "checkedAt": "2026-11-04T08:45:00.0262855Z",
+ "lastAlertAt": "2026-11-04T08:50:07Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-03T09:05:00Z",
- "lastChange": "yellow Channel Islands Shipping Area Wind re-issued 08:54 UTC Tuesday 03 November (was 08:37 UTC Monday 02 November)"
+ "lastChangeAt": "2026-11-04T08:50:07Z",
+ "lastChange": "yellow Channel Islands Shipping Area Wind re-issued 08:38 UTC Wednesday 04 November (was 08:54 UTC Tuesday 03 November)"
 }
