@@ -1,28 +1,14 @@
 {
- "severity": "orange",
+ "severity": "none",
  "hash": "",
- "warnings": {
-  "channel islands shipping area wind": {
-   "key": "channel islands shipping area wind",
-   "colour": "orange",
-   "level": 2,
-   "name": "Channel Islands Shipping Area Wind",
-   "area": "Channel Islands Shipping Area",
-   "hazard": "wind",
-   "sea": true,
-   "issued": "02:09 UTC Thursday 05 November",
-   "message": "Strong wind now ceased. No warning in force.",
-   "missing": 1,
-   "lower": 0
-  }
- },
+ "warnings": {},
  "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-05T01:52:22.282Z",
+ "lastFetch": "2026-11-05T02:52:40.328Z",
  "snippet": "",
- "checkedAt": "2026-11-05T01:52:22.282Z",
+ "checkedAt": "2026-11-05T02:52:40.328Z",
  "lastAlertAt": "2026-11-05T02:20:05Z",
  "lastAlertKind": "new",
- "lastChangeAt": "2026-11-05T02:20:05Z",
- "lastChange": "orange Channel Islands Shipping Area Wind"
+ "lastChangeAt": "2026-11-05T02:54:42Z",
+ "lastChange": "orange Channel Islands Shipping Area Wind cleared by gov.je"
 }
