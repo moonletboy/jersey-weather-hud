@@ -8,7 +8,9 @@
  *   4. on the Storm Reports page, can remember your name and parish on this device;
  *   5. in the installed app, opens on the start page you picked;
  *   6. keeps the latest Open-Meteo forecasts on this device, so if Open-Meteo stops answering the page can show
- *      the last saved forecast (with a strip under the tab bar saying when it was saved) instead of empty panels.
+ *      the last saved forecast (with a strip under the tab bar saying when it was saved) instead of empty panels;
+ *   7. puts a SEARCH magnifier next to the gear and a Search view in the panel. It searches the list in
+ *      data/search-index.json, the written recaps and (on Storm Reports) the live reports, and takes the visitor to the panel.
  *
  * Every page loads it near the top of <head>, WITHOUT defer:
  *     <script src="jwc-settings.js"></script>
@@ -22,7 +24,7 @@
  * Actions tab > Add What's New line > Run workflow. No need to edit this file. Anyone who hasn't seen the
  * newest line yet gets a small amber dot on the gear.
  *
- * Links that open the panel from anywhere: add #settings, #about, #systems or #whats-new to a page address,
+ * Links that open the panel from anywhere: add #settings, #about, #systems, #whats-new or #search to a page address,
  * or give a button the attribute data-jwc-open="about" (or "settings", "privacy", "systems", "news").
  */
 (function(){
@@ -712,6 +714,33 @@
     '.jwcs-om-x{flex:0 0 auto;width:36px;height:36px;min-height:0;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--dim,#6f8d99);font-family:inherit;font-size:20px;line-height:1;cursor:pointer;box-shadow:none}',
     '.jwcs-om-x:hover{color:var(--text,#e9f6f5)}',
     '.jwcs-om button:focus-visible{outline:2px solid var(--cyan,#4cd3ff);outline-offset:2px}',
+    /* Search: the magnifier beside the gear, the box and the list of results, and the pulse on the panel you are taken to */
+    '.jwcs-mag{min-width:44px;padding:0 11px}',
+    '.jwcs-mag .jwcs-word{display:none!important}',
+    '.jwcs-mag:hover svg{transform:none}',
+    '.jwcs-mag svg{stroke-linecap:round}',
+    '.jwcs-sx-box{position:relative;margin:14px 0 0}',
+    '.jwcs-sx-input{display:block;width:100%;box-sizing:border-box;min-height:48px;margin:0;padding:10px 44px 10px 40px;font-family:"JetBrains Mono",monospace;font-size:16px;color:var(--text,#e9f6f5);background:rgba(255,255,255,.05);border:1px solid var(--line,rgba(76,211,255,.14));border-radius:10px;-webkit-appearance:none;appearance:none}',
+    '.jwcs-sx-input::placeholder{color:var(--dim,#6f8d99);opacity:1}',
+    '.jwcs-sx-input:focus{outline:none;border-color:var(--cyan,#4cd3ff);box-shadow:0 0 0 2px rgba(76,211,255,.25)}',
+    '.jwcs-sx-input::-webkit-search-cancel-button,.jwcs-sx-input::-webkit-search-decoration{-webkit-appearance:none;display:none}',
+    '.jwcs-sx-ico{position:absolute;left:12px;top:15px;width:18px;height:18px;fill:none;stroke:var(--dim,#6f8d99);stroke-width:1.8;stroke-linecap:round;pointer-events:none}',
+    '.jwcs-sx-clear{position:absolute;right:2px;top:2px;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--dim,#6f8d99);font-family:inherit;font-size:22px;line-height:1;cursor:pointer}',
+    '.jwcs-sx-clear:hover{color:var(--text,#e9f6f5)}',
+    '.jwcs-sx-clear[hidden]{display:none}',
+    '.jwcs-sx-sum{margin:14px 0 0}',
+    '.jwcs-sx-group{padding-top:16px}',
+    '.jwcs-sx-count{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:1px;color:var(--dim,#6f8d99)}',
+    '.jwcs-sx-more{margin-top:8px;width:100%}',
+    '.jwcs-sx-try{margin-top:16px}',
+    '.jwcs-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
+    '.jwcs-hit small{display:block}',
+    '.jwcs-mark{background:rgba(76,211,255,.22);color:inherit;border-radius:2px;padding:0 1px}',
+    '.jwcs-found{outline:2px solid var(--cyan,#4cd3ff)!important;outline-offset:4px;border-radius:6px;animation:jwcsFound 1.1s ease-in-out 3}',
+    '@keyframes jwcsFound{0%,100%{box-shadow:0 0 0 0 rgba(76,211,255,0)}50%{box-shadow:0 0 22px 2px rgba(76,211,255,.45)}}',
+    '@media (prefers-reduced-motion:reduce){.jwcs-found{animation:none}}',
+    'html[data-theme="light"] .jwcs-sx-input{background:rgba(12,26,34,.04)}',
+    'html[data-theme="light"] .jwcs-mark{background:rgba(0,109,150,.16)}',
     /* Calm display: no pulsing, spinning or scrolling effects (works on every page) */
     'html[data-motion="calm"] *,html[data-motion="calm"] *::before,html[data-motion="calm"] *::after{animation:none!important;transition:none!important}',
     'html[data-motion="calm"]{scroll-behavior:auto!important}',
@@ -758,6 +787,7 @@
   /* ================= 4. icons ================= */
   var GEAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.76,10.07 L21.86,9.37 L21.86,14.63 L19.76,13.93 L18.85,16.13 L20.83,17.11 L17.11,20.83 L16.13,18.85 L13.93,19.76 L14.63,21.86 L9.37,21.86 L10.07,19.76 L7.87,18.85 L6.89,20.83 L3.17,17.11 L5.15,16.13 L4.24,13.93 L2.14,14.63 L2.14,9.37 L4.24,10.07 L5.15,7.87 L3.17,6.89 L6.89,3.17 L7.87,5.15 L10.07,4.24 L9.37,2.14 L14.63,2.14 L13.93,4.24 L16.13,5.15 L17.11,3.17 L20.83,6.89 L18.85,7.87Z"/><circle cx="12" cy="12" r="3.4"/></svg>';
   var CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  var SX_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4L21 21"/></svg>';
   var PHONE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.6l2.6.4 1.3 4.2-2.2 1.6c1.1 2.5 3 4.4 5.4 5.4l1.6-2.2 4.2 1.3.4 2.6c.1 1-.6 1.9-1.6 2.1C10.6 20 4 13.4 5.1 5.2c.2-1 1.1-1.7 2.1-1.6z"/></svg>';
   var FB_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="#ffffff" aria-hidden="true"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.196 2.238.196v2.475h-1.26c-1.243 0-1.63.775-1.63 1.57v1.888h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>';
 
@@ -825,6 +855,7 @@
       (DISPLAY_FOR_EVERYONE ? '' : '<p class="jwcs-note">Preview: only your own devices show this section (each opened once with #admin). Everyone else still sees the dark look.</p>') + '</div>';
   var MAIN_HTML =
     '<p class="jwcs-intro">Saved on this device only. No account, and nothing is sent to us.</p>' +
+    '<div class="jwcs-group" style="padding-top:12px"><button type="button" class="jwcs-nav first" data-jwcs-go="search"><span><b>Search the site</b><small>Find a panel, a page, a storm recap or a report</small></span>' + SX_ICON + '</button></div>' +
     DISPLAY_HTML +
     '<div class="jwcs-group"><div class="jwcs-ghead"><h3>WHAT&rsquo;S NEW</h3><span class="jwcs-bar"></span></div>' +
       '<ul class="jwcs-news" id="jwcs-news-top"></ul>' +
@@ -861,7 +892,14 @@
 
   var NEWS_HTML = '<ul class="jwcs-news" id="jwcs-news-all" style="padding-top:16px"></ul>';
 
-  var TITLES = { main:'SETTINGS', about:'ABOUT & DISCLAIMER', privacy:'PRIVACY & COOKIES', systems:'SYSTEMS CHECK', news:'WHAT\u2019S NEW' };
+  var TITLES = { main:'SETTINGS', about:'ABOUT & DISCLAIMER', privacy:'PRIVACY & COOKIES', systems:'SYSTEMS CHECK', news:'WHAT\u2019S NEW', search:'SEARCH' };
+  var SEARCH_HTML =
+    '<form class="jwcs-sx-box" role="search" id="jwcs-sx-form" action="#">' +
+      SX_ICON.replace('<svg ', '<svg class="jwcs-sx-ico" ') +
+      '<input type="search" class="jwcs-sx-input" id="jwcs-sx-in" placeholder="Search: tide times, aurora, hail\u2026" aria-label="Search the site" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" maxlength="80">' +
+      '<button type="button" class="jwcs-sx-clear" id="jwcs-sx-clear" aria-label="Clear search" hidden>&times;</button>' +
+    '</form>' +
+    '<div id="jwcs-sx-out" aria-live="polite"></div>';
 
   /* ================= 6. building the gear and the panel ================= */
   var layer, sheet, titleEl, backBtn, headIco, gearBtn, views = {}, current = 'main', lastFocus = null, sysTimer = null;
@@ -976,6 +1014,8 @@
     if(view === 'privacy'){ cookieState(); syncRemember(); }
     if(view === 'systems') renderSystems();
     if(view === 'news') renderNews('jwcs-news-all', 99);
+    if(view === 'main' || view === 'search') SX.back = false;
+    if(view === 'search'){ try{ searchShown(); }catch(e){} }
     var body = sheet.querySelector('.jwcs-body'); if(body) body.scrollTop = 0;
   }
   function open(view){
@@ -1003,7 +1043,10 @@
   /* after opening or switching pages inside the panel, put keyboard focus on Back (or Close) so it isn't lost */
   function focusHead(){
     setTimeout(function(){
-      try{ (backBtn && !backBtn.hidden ? backBtn : sheet.querySelector('.jwcs-close')).focus({ preventScroll:true }); }catch(e){}
+      try{
+        if(current === 'search' && sxInput){ sxInput.focus({ preventScroll:true }); return; }
+        (backBtn && !backBtn.hidden ? backBtn : sheet.querySelector('.jwcs-close')).focus({ preventScroll:true });
+      }catch(e){}
     }, 30);
   }
   function close(){
@@ -1012,7 +1055,7 @@
     document.body.style.overflow = '';
     clearInterval(sysTimer);
     if(gearBtn) gearBtn.setAttribute('aria-expanded', 'false');
-    if(/^#(settings|about|systems|whats-new)$/.test(location.hash)){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
+    if(/^#(settings|about|systems|whats-new|search)$/.test(location.hash)){ try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){} }
     try{ if(lastFocus && lastFocus.focus) lastFocus.focus(); }catch(e){}
   }
 
@@ -1040,6 +1083,15 @@
     gearBtn.setAttribute('aria-expanded', 'false');
     gearBtn.innerHTML = GEAR + '<span class="jwcs-word">SETTINGS</span>';
     gearBtn.addEventListener('click', function(){ open('main'); });
+    /* the magnifier sits just before the gear and opens the panel on Search */
+    var magBtn = document.createElement('button');
+    magBtn.type = 'button';
+    magBtn.className = 'jwcs-gear jwcs-mag';
+    magBtn.setAttribute('aria-label', 'Search the site');
+    magBtn.setAttribute('aria-haspopup', 'dialog');
+    magBtn.innerHTML = SX_ICON;
+    magBtn.addEventListener('click', function(){ open('search'); });
+    bar.appendChild(magBtn);
     bar.appendChild(gearBtn);
     /* fade the right-hand end of the tabs while there are more tabs to scroll to */
     function more(){ nav.classList.toggle('jwcs-more', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2); }
@@ -1084,6 +1136,7 @@
           '<div class="jwcs-view" data-view="privacy" hidden>' + PRIVACY_HTML + '</div>' +
           '<div class="jwcs-view" data-view="systems" hidden>' + SYSTEMS_HTML + '</div>' +
           '<div class="jwcs-view" data-view="news" hidden>' + NEWS_HTML + '</div>' +
+          '<div class="jwcs-view" data-view="search" hidden>' + SEARCH_HTML + '</div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(layer);
@@ -1096,7 +1149,7 @@
 
     layer.querySelector('.jwcs-scrim').addEventListener('click', close);
     layer.querySelector('.jwcs-close').addEventListener('click', close);
-    backBtn.addEventListener('click', function(){ show('main'); focusHead(); });
+    backBtn.addEventListener('click', function(){ show(SX.back && current !== 'search' ? 'search' : 'main'); focusHead(); });
     layer.addEventListener('click', function(e){
       var go = e.target.closest ? e.target.closest('[data-jwcs-go]') : null;
       if(go){ e.preventDefault(); show(go.getAttribute('data-jwcs-go')); focusHead(); return; }
@@ -1129,6 +1182,7 @@
       if(a) a.addEventListener('click', function(){ a.href = mailtoHref(); });
     });
     feedListeners.push(function(){ if(layer && !layer.hidden) renderSystems(); });
+    try{ sxWire(); }catch(e){}
   }
 
   /* buttons and links anywhere on a page can open the panel: data-jwc-open="about" etc., or #settings / #about in the address */
@@ -1145,6 +1199,7 @@
       else if(h === '#about') open('about');
       else if(h === '#systems') open('systems');
       else if(h === '#whats-new') open('news');
+      else if(h === '#search') open('search');
     }
     window.addEventListener('hashchange', fromHash);
     fromHash();
@@ -1571,6 +1626,428 @@
     instListeners.push(draw); draw();
   }
 
+  /* ================= 7c. Search: look through the whole site from the panel =================
+     The list it searches is data/search-index.json (one line per panel; Claude keeps it up to date when a panel or page is
+     added). On top of that it searches the written recaps (word for word) and, on the Storm Reports page, the live reports.
+     Choosing a result on another page goes there and scrolls to the panel, which pulses for a moment so it is easy to spot.
+     Nothing the visitor types leaves the device. If anything here fails, Settings and the tab bar carry on as before. */
+  var SEARCH_URL = 'data/search-index.json', K_JUMP = 'jwc-jump';
+  var SX = { state:'idle', entries:[], pages:{}, recaps:null, recapState:'idle', items:[], showAll:{}, back:false, q:'' };
+  var sxInput = null, sxClear = null, sxOut = null, sxTimer = null;
+  var SX_STOP = { the:1, a:1, an:1, of:1, in:1, on:1, at:1, is:1, it:1, to:1, for:1, and:1, my:1, me:1, what:1, whats:1, how:1, will:1,
+                  there:1, be:1, do:1, does:1, are:1, can:1, i:1, we:1, you:1, show:1, find:1, where:1, when:1, with:1 };
+  var SX_CHIPS = ['tide times', 'aurora tonight', 'rainfall radar', 'wind gusts', 'storm recap', 'hail report'];
+  var SX_PER_GROUP = 4;
+
+  function sxPf(){ return (typeof pageFetch === 'function') ? pageFetch : window.fetch; }
+  /* lower case, no accents or apostrophes, anything else becomes a single space */
+  function sxNorm(s){
+    s = String(s == null ? '' : s);
+    try{ if(s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); }catch(e){}
+    return s.toLowerCase().replace(/['‘’“”]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/^ | $/g, '');
+  }
+  /* a word and its plain forms: "flooding" also looks for "flood", "gusts" for "gust" */
+  function sxVariants(t){
+    var v = [t];
+    if(t.length >= 4){
+      if(/ing$/.test(t) && t.length > 5) v.push(t.slice(0, -3));
+      if(/ies$/.test(t)) v.push(t.slice(0, -3) + 'y');
+      if(/es$/.test(t)) v.push(t.slice(0, -2));
+      if(/s$/.test(t)) v.push(t.slice(0, -1));
+    }
+    return v;
+  }
+  /* how well one word fits one piece of text: 4 whole word, 3 start of a word, 2 inside a word, 0 not at all */
+  function sxField(norm, tok){
+    if(!norm) return 0;
+    var padded = ' ' + norm + ' ';
+    if(padded.indexOf(' ' + tok + ' ') >= 0) return 4;
+    if(padded.indexOf(' ' + tok) >= 0) return 3;
+    if(tok.length >= 4 && norm.indexOf(tok) >= 0) return 2;
+    return 0;
+  }
+  function sxTokScore(e, variants){
+    var best = 0;
+    for(var v = 0; v < variants.length; v++){
+      var t = variants[v], a = sxField(e.tN, t);
+      if(a) best = Math.max(best, 10 + a * 3);
+      a = sxField(e.kN, t); if(a) best = Math.max(best, 5 + a * 2);
+      a = sxField(e.dN, t); if(a) best = Math.max(best, 2 + a);
+      a = sxField(e.pN, t); if(a) best = Math.max(best, 1 + a);
+    }
+    return best;
+  }
+  function sxTokens(q){
+    var raw = sxNorm(q).split(' '), keep = [], all = [], i;
+    for(i = 0; i < raw.length; i++){ if(!raw[i]) continue; all.push(raw[i]); if(!SX_STOP[raw[i]]) keep.push(raw[i]); }
+    return keep.length ? keep : all;
+  }
+  function sxPageName(p){ return (SX.pages && SX.pages[p]) || pageName(p) || p; }
+  function sxTitleCase(s){
+    return String(s || '').toLowerCase().replace(/(^|[\s—–(])([a-zà-ÿ])/g, function(m, a, b){ return a + b.toUpperCase(); });
+  }
+  function sxEscRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  /* the text with the words that were searched for picked out */
+  function sxMark(text, toks){
+    var src = String(text || '');
+    if(!toks.length) return esc(src);
+    var words = [], i, k;
+    for(i = 0; i < toks.length; i++){ var vs = sxVariants(toks[i]); for(k = 0; k < vs.length; k++) words.push(sxEscRe(vs[k])); }
+    words.sort(function(a, b){ return b.length - a.length; });
+    var re; try{ re = new RegExp('(' + words.join('|') + ')', 'gi'); }catch(e){ return esc(src); }
+    var out = '', last = 0, m;
+    while((m = re.exec(src)) !== null){
+      if(m[0].length === 0){ re.lastIndex++; continue; }
+      out += esc(src.slice(last, m.index)) + '<mark class="jwcs-mark">' + esc(m[0]) + '</mark>';
+      last = m.index + m[0].length;
+    }
+    return out + esc(src.slice(last));
+  }
+  /* about 150 characters around the first place the words turn up */
+  function sxSnippet(text, toks){
+    var src = String(text || '').replace(/\s+/g, ' '), low = src.toLowerCase(), at = -1, i, vs, k;
+    for(i = 0; i < toks.length && at < 0; i++){
+      vs = sxVariants(toks[i]);
+      for(k = 0; k < vs.length && at < 0; k++){ at = low.indexOf(vs[k]); }
+    }
+    if(at < 0) at = 0;
+    var a = Math.max(0, at - 60), b = Math.min(src.length, at + 100);
+    if(a > 0){ var sp = src.indexOf(' ', a); if(sp > -1 && sp < at) a = sp + 1; }
+    if(b < src.length){ var sp2 = src.lastIndexOf(' ', b); if(sp2 > at) b = sp2; }
+    return (a > 0 ? '…' : '') + src.slice(a, b) + (b < src.length ? '…' : '');
+  }
+
+  /* ---------- loading the list ---------- */
+  function sxPrepare(list){
+    var out = [];
+    for(var i = 0; i < list.length; i++){
+      var e = list[i] || {};
+      if(!e.title) continue;
+      if(!e.open && !e.page) continue;
+      e.tN = sxNorm(e.title); e.dN = sxNorm(e.desc); e.kN = sxNorm(e.keywords);
+      e.pN = e.open ? 'settings help' : sxNorm(sxPageName(e.page));
+      e.n = out.length;
+      out.push(e);
+    }
+    return out;
+  }
+  /* if the list can't be loaded the tabs are still searchable, so the box never just says "error" */
+  function sxFallbackEntries(){
+    var list = [];
+    for(var i = 0; i < PAGES.length; i++) list.push({ page:PAGES[i][0], title:PAGES[i][1], desc:'Open this page', keywords:'' });
+    return list;
+  }
+  function sxEnsureIndex(){
+    if(SX.state !== 'idle') return;
+    SX.state = 'loading';
+    function done(){ try{ sxRun(); }catch(e){} }
+    try{
+      sxPf().call(window, SEARCH_URL, { cache:'no-cache' }).then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      }).then(function(j){
+        var list = (j && Array.isArray(j.entries)) ? j.entries : [];
+        if(!list.length) throw new Error('empty');
+        SX.pages = (j.pages && typeof j.pages === 'object') ? j.pages : {};
+        SX.entries = sxPrepare(list);
+        SX.state = 'ok';
+      }).catch(function(){
+        SX.state = 'fail';
+        SX.entries = sxPrepare(sxFallbackEntries());
+      }).then(done);
+    }catch(e){ SX.state = 'fail'; SX.entries = sxPrepare(sxFallbackEntries()); done(); }
+  }
+  /* reads the RECAPS list out of the Storm Reports page's own text: the array of recaps is found by counting brackets
+     (skipping anything inside quotes or comments) and then read as data */
+  function sxParseRecaps(src){
+    var m = /(?:const|let|var)\s+RECAPS\s*=\s*\[/.exec(src);
+    if(!m) return null;
+    var start = m.index + m[0].length - 1, depth = 0, q = '', n = src.length, i, c;
+    for(i = start; i < n; i++){
+      c = src.charAt(i);
+      if(q){ if(c === '\\') i++; else if(c === q) q = ''; continue; }
+      if(c === '/' && src.charAt(i + 1) === '/'){ while(i < n && src.charAt(i) !== '\n') i++; continue; }
+      if(c === '/' && src.charAt(i + 1) === '*'){ i = src.indexOf('*/', i + 2); if(i < 0) return null; i++; continue; }
+      if(c === '\'' || c === '"' || c === '`'){ q = c; continue; }
+      if(c === '[') depth++;
+      else if(c === ']'){ depth--; if(depth === 0) break; }
+    }
+    if(depth !== 0) return null;
+    var list = (new Function('return ' + src.slice(start, i + 1)))();
+    return Array.isArray(list) ? list : null;
+  }
+  function sxLoadRecaps(){
+    if(SX.recapState !== 'idle') return;
+    if(thisPage() === 'jersey-storm-reports.html'){ SX.recapState = 'local'; return; }   /* that page already holds them */
+    SX.recapState = 'loading';
+    try{
+      sxPf().call(window, 'jersey-storm-reports.html', { cache:'no-cache' }).then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      }).then(function(t){
+        SX.recaps = sxParseRecaps(t);
+        SX.recapState = SX.recaps ? 'ok' : 'fail';
+      }).catch(function(){ SX.recapState = 'fail'; }).then(function(){ try{ sxRun(); }catch(e){} });
+    }catch(e){ SX.recapState = 'fail'; }
+  }
+  function sxRecapList(){
+    try{ if(typeof RECAPS !== 'undefined' && RECAPS && RECAPS.length) return RECAPS; }catch(e){}
+    return SX.recaps || [];
+  }
+  function sxLiveReports(){
+    try{ if(typeof cachedReports !== 'undefined' && cachedReports && cachedReports.length) return cachedReports; }catch(e){}
+    return [];
+  }
+
+  /* ---------- finding matches ---------- */
+  function sxSearch(q){
+    var toks = sxTokens(q), vars = [], i, j;
+    for(i = 0; i < toks.length; i++) vars.push(sxVariants(toks[i]));
+    var phrase = toks.join(' '), full = [], part = [], items = [];
+    for(i = 0; i < SX.entries.length; i++){
+      var e = SX.entries[i], tot = 0, hit = 0;
+      for(j = 0; j < toks.length; j++){ var s = sxTokScore(e, vars[j]); if(s){ hit++; tot += s; } }
+      if(!hit) continue;
+      if(hit === toks.length){
+        if(e.tN.indexOf(phrase) >= 0) tot += 12; else if(e.kN.indexOf(phrase) >= 0) tot += 5;
+        full.push({ e:e, s:tot });
+      } else part.push({ e:e, s:tot, m:hit });
+    }
+    function fromEntry(r, partial){
+      var e = r.e;
+      return { group: e.open ? '_open' : e.page, title:e.title, desc:e.desc || '', page:e.page || '', open:e.open || '',
+               jump:{ id:e.id || '', find:e.find || '' }, href: e.open ? '#' : (e.page + (e.id ? '#' + e.id : '')),
+               s:r.s + (partial ? 0 : 20), n:e.n, partial:!!partial, snip:false };
+    }
+    for(i = 0; i < full.length; i++) items.push(fromEntry(full[i], false));
+
+    /* the written recaps, word for word */
+    var recaps = sxRecapList(), page = 'jersey-storm-reports.html';
+    for(i = 0; i < recaps.length; i++){
+      var r = recaps[i] || {}, body = (r.body || []).join(' '), hay = sxNorm((r.title || '') + ' ' + (r.period || '') + ' ' + body), tN = sxNorm(r.title), ok = true, sc = 0;
+      for(j = 0; j < toks.length && ok; j++){
+        var found = false;
+        for(var v = 0; v < vars[j].length; v++){ if((' ' + hay).indexOf(' ' + vars[j][v]) >= 0 || (vars[j][v].length >= 4 && hay.indexOf(vars[j][v]) >= 0)){ found = true; break; } }
+        if(!found) ok = false; else sc += (tN.indexOf(toks[j]) >= 0) ? 6 : 3;
+      }
+      if(!ok) continue;
+      /* the paragraph that mentions the words most is the one shown */
+      var bestP = '', bestN = -1, paras = (r.body || []);
+      for(j = 0; j < paras.length; j++){
+        var pn = sxNorm(paras[j]), cnt = 0;
+        for(var t2 = 0; t2 < toks.length; t2++){ if(pn.indexOf(toks[t2]) >= 0) cnt++; }
+        if(cnt > bestN){ bestN = cnt; bestP = paras[j]; }
+      }
+      items.push({ group:page, title:(r.type === 'event' ? 'Storm recap: ' : 'Monthly recap: ') + sxTitleCase(String(r.title || '').replace(/^(monthly recap|storm recap)\s*[—–-]\s*/i, '')),
+                   desc: sxSnippet(bestP || r.period || '', toks), page:page, open:'', jump:{ id: r.id ? 'recap-' + r.id : 'recaps', find:'' },
+                   href: page + '#' + (r.id ? 'recap-' + r.id : 'recaps'), s: 24 + sc, n: 9000 + i, partial:false, snip:true });
+    }
+
+    /* the live reports from islanders (only on the Storm Reports page, where they are already loaded) */
+    var live = sxLiveReports();
+    for(i = 0; i < live.length; i++){
+      var lr = live[i] || {}, lh = sxNorm([lr.type, lr.parish, lr.description, lr.severity, lr.reporter].join(' ')), lok = true, ls = 0;
+      for(j = 0; j < toks.length && lok; j++){
+        var lf = false;
+        for(var v2 = 0; v2 < vars[j].length; v2++){ if((' ' + lh).indexOf(' ' + vars[j][v2]) >= 0 || (vars[j][v2].length >= 4 && lh.indexOf(vars[j][v2]) >= 0)){ lf = true; break; } }
+        if(!lf) lok = false; else ls += 2;
+      }
+      if(!lok) continue;
+      items.push({ group:'_live', title:(lr.type === 'Observation' ? 'Weather observation' : String(lr.type || 'Report')) + ' — ' + String(lr.parish || ''),
+                   desc: sxSnippet(lr.description || '', toks), page:'jersey-storm-reports.html', open:'', jump:{ id:'report-map', find:'' },
+                   href:'jersey-storm-reports.html#report-map', s: 10 + ls, n: 20000 + i, partial:false, snip:true });
+    }
+
+    var note = '';
+    if(!items.length && part.length){
+      part.sort(function(a, b){ return (b.m - a.m) || (b.s - a.s) || (a.e.n - b.e.n); });
+      for(i = 0; i < part.length && i < 8; i++) items.push(fromEntry(part[i], true));
+      note = 'partial';
+    }
+    return { items:items, toks:toks, note:note };
+  }
+
+  /* ---------- showing them ---------- */
+  function sxGroupName(k){ return k === '_open' ? 'SETTINGS & HELP' : k === '_live' ? 'LIVE STORM REPORTS' : sxPageName(k).toUpperCase(); }
+  function sxRender(res, q){
+    var items = res.items, toks = res.toks, groups = {}, order = [], i;
+    SX.items = items;
+    for(i = 0; i < items.length; i++){
+      var g = items[i].group;
+      if(!groups[g]){ groups[g] = { key:g, list:[], best:0 }; order.push(groups[g]); }
+      groups[g].list.push(items[i]);
+      if(items[i].s > groups[g].best) groups[g].best = items[i].s;
+    }
+    order.sort(function(a, b){
+      var ra = a.key === '_open' ? 1 : 0, rb = b.key === '_open' ? 1 : 0;
+      return (ra - rb) || (b.best - a.best);
+    });
+    var h = '';
+    if(!items.length){
+      h = '<p class="jwcs-note">Nothing found for <b>' + esc(q) + '</b>. Try a simpler word (for example <b>rain</b>, <b>tide</b>, <b>wind</b> or <b>aurora</b>), or a different spelling.</p>' + sxChips('Or try');
+    } else {
+      h = '<p class="jwcs-desc jwcs-sx-sum">' + (res.note === 'partial' ? 'No page has all of those words. Showing the closest matches.' :
+          items.length + (items.length === 1 ? ' result' : ' results') + (order.length > 1 ? ' in ' + order.length + ' places' : '')) + '</p>';
+      for(var gi = 0; gi < order.length; gi++){
+        var grp = order[gi];
+        grp.list.sort(function(a, b){ return (b.s - a.s) || (a.n - b.n); });
+        var limit = SX.showAll[grp.key] ? grp.list.length : SX_PER_GROUP;
+        h += '<div class="jwcs-group jwcs-sx-group"><div class="jwcs-ghead"><h3>' + esc(sxGroupName(grp.key)) + '</h3><span class="jwcs-bar"></span><span class="jwcs-sx-count">' + grp.list.length + '</span></div>';
+        for(i = 0; i < grp.list.length && i < limit; i++){
+          var it = grp.list[i], idx = items.indexOf(it);
+          h += '<a class="jwcs-nav jwcs-hit' + (i === 0 ? ' first' : '') + '" href="' + esc(it.href) + '" data-sx="' + idx + '"><span><b>' + sxMark(it.title, toks) + '</b>' +
+               (it.desc ? '<small>' + sxMark(it.desc, toks) + '</small>' : '') + '</span>' + CHEV + '</a>';
+        }
+        if(grp.list.length > limit) h += '<button type="button" class="jwcs-btn ghost jwcs-sx-more" data-sx-more="' + esc(grp.key) + '">SHOW ' + (grp.list.length - limit) + ' MORE</button>';
+        h += '</div>';
+      }
+    }
+    sxOut.innerHTML = h;
+  }
+  function sxChips(label){
+    var h = '<div class="jwcs-sx-try"><span class="jwcs-label">' + esc(label) + '</span><div class="jwcs-chips">';
+    for(var i = 0; i < SX_CHIPS.length; i++) h += '<button type="button" class="jwcs-btn ghost" data-sx-q="' + esc(SX_CHIPS[i]) + '">' + esc(SX_CHIPS[i].toUpperCase()) + '</button>';
+    return h + '</div></div>';
+  }
+  function sxRun(){
+    if(!sxInput || !sxOut) return;
+    var q = sxInput.value.replace(/\s+/g, ' ').replace(/^ | $/g, '');
+    if(sxClear) sxClear.hidden = !sxInput.value;
+    if(q !== SX.q){ SX.showAll = {}; SX.q = q; }
+    if(sxNorm(q).length < 2){
+      SX.items = [];
+      sxOut.innerHTML = '<p class="jwcs-intro" style="padding-top:12px">Type what you’re looking for: a kind of weather, a panel, a page, or a word from a storm recap. It lists every match.</p>' + sxChips('Try');
+      return;
+    }
+    if(SX.state === 'idle' || SX.state === 'loading'){ sxOut.innerHTML = '<p class="jwcs-desc" style="padding-top:12px">Loading the search list…</p>'; return; }
+    sxRender(sxSearch(q), q);
+    if(SX.state === 'fail') sxOut.insertAdjacentHTML('afterbegin', '<p class="jwcs-note">The full search list didn’t load just now, so only the pages can be searched. Check your connection and reopen Search to try again.</p>');
+  }
+
+  /* ---------- going to a result ---------- */
+  function sxFindTarget(t){
+    var el = null;
+    if(t.id){ el = document.getElementById(t.id); if(el && layer && layer.contains(el)) el = null; }
+    if(el || !t.find) return el;
+    var want = String(t.find).replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if(!want) return null;
+    var nodes = document.querySelectorAll('h1,h2,h3,h4,summary,.panel-head span'), loose = null, i;
+    for(i = 0; i < nodes.length; i++){
+      if(layer && layer.contains(nodes[i])) continue;
+      var tx = (nodes[i].textContent || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if(!tx) continue;
+      if(tx === want) return nodes[i];
+      if(!loose && tx.indexOf(want) >= 0) loose = nodes[i];
+    }
+    return loose;
+  }
+  function sxReveal(el){
+    var d = el.closest ? el.closest('details') : null;
+    while(d){ d.open = true; d = d.parentElement && d.parentElement.closest ? d.parentElement.closest('details') : null; }
+    var box = (el.closest && (el.closest('.stat-block,.tile,.glance,.panel,details') || el.closest('section'))) || el;
+    var moved = false;
+    function mark(){ moved = true; }
+    window.addEventListener('wheel', mark, { passive:true, once:true });
+    window.addEventListener('touchstart', mark, { passive:true, once:true });
+    function place(smooth){
+      var off = 12;
+      try{
+        var bar = document.querySelector('.jwcs-navbar'), pos = bar ? window.getComputedStyle(bar).position : '';
+        if(bar && (pos === 'sticky' || pos === 'fixed')) off += bar.getBoundingClientRect().height;
+      }catch(e){}
+      var y = box.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0) - off;
+      y = Math.max(0, y);
+      if(!smooth && Math.abs(y - (window.pageYOffset || 0)) < 40) return;
+      try{ window.scrollTo({ top:y, behavior: (smooth && !calmOn()) ? 'smooth' : 'auto' }); }catch(e){ window.scrollTo(0, y); }
+    }
+    place(true);
+    /* maps and pictures finish loading a moment later and can nudge the page: settle once, unless the visitor has scrolled */
+    setTimeout(function(){ if(!moved) place(false); }, 900);
+    box.classList.add('jwcs-found');
+    setTimeout(function(){ try{ box.classList.remove('jwcs-found'); }catch(e){} }, 3600);
+  }
+  /* some panels are drawn only after their data arrives, so keep looking for up to 12 seconds */
+  function jumpTo(t){
+    if(!t || (!t.id && !t.find)) return;
+    var tries = 0;
+    (function attempt(){
+      var el = null;
+      try{ el = sxFindTarget(t); }catch(e){}
+      if(!el){ if(++tries < 48) setTimeout(attempt, 250); return; }
+      try{ sxReveal(el); }catch(e){}
+    })();
+  }
+  function consumeJump(){
+    var raw = null;
+    try{ raw = window.sessionStorage.getItem(K_JUMP); window.sessionStorage.removeItem(K_JUMP); }catch(e){}
+    if(!raw) return;
+    var j = null;
+    try{ j = JSON.parse(raw); }catch(e){}
+    if(!j || j.page !== thisPage() || !j.t || Date.now() - j.t > 20000) return;
+    jumpTo({ id:j.id || '', find:j.find || '' });
+  }
+  function sxGo(it){
+    if(!it) return;
+    if(it.open){ show(it.open); SX.back = true; focusHead(); return; }
+    if(it.page === thisPage()){
+      close();
+      setTimeout(function(){ jumpTo(it.jump); }, 80);
+      return;
+    }
+    try{ window.sessionStorage.setItem(K_JUMP, JSON.stringify({ page:it.page, id:it.jump.id, find:it.jump.find, t:Date.now() })); }catch(e){}
+    location.href = it.href;
+  }
+
+  /* ---------- wiring ---------- */
+  function searchShown(){
+    if(SX.state === 'fail') SX.state = 'idle';
+    sxEnsureIndex();
+    if(sxNorm(sxInput ? sxInput.value : '').length >= 2) sxLoadRecaps();
+    sxRun();
+  }
+  function sxWire(){
+    sxInput = document.getElementById('jwcs-sx-in');
+    sxClear = document.getElementById('jwcs-sx-clear');
+    sxOut = document.getElementById('jwcs-sx-out');
+    if(!sxInput || !sxOut) return;
+    var form = document.getElementById('jwcs-sx-form');
+    if(form) form.addEventListener('submit', function(e){ e.preventDefault(); });
+    sxInput.addEventListener('input', function(){
+      if(sxNorm(sxInput.value).length >= 2) sxLoadRecaps();
+      clearTimeout(sxTimer);
+      sxTimer = setTimeout(sxRun, 90);
+    });
+    sxClear.addEventListener('click', function(){ sxInput.value = ''; sxRun(); sxInput.focus(); });
+    sxInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); var first = sxOut.querySelector('a.jwcs-hit'); if(first) sxGo(SX.items[+first.getAttribute('data-sx')]); }
+      else if(e.key === 'ArrowDown'){ var f = sxOut.querySelector('a.jwcs-hit'); if(f){ e.preventDefault(); f.focus(); } }
+    });
+    sxOut.addEventListener('keydown', function(e){
+      if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      var links = sxOut.querySelectorAll('a.jwcs-hit'), at = -1, i;
+      for(i = 0; i < links.length; i++){ if(links[i] === document.activeElement) at = i; }
+      if(at < 0) return;
+      e.preventDefault();
+      if(e.key === 'ArrowDown'){ if(at < links.length - 1) links[at + 1].focus(); }
+      else if(at > 0) links[at - 1].focus(); else sxInput.focus();
+    });
+    sxOut.addEventListener('click', function(e){
+      var a = e.target.closest ? e.target.closest('a.jwcs-hit') : null;
+      if(a){
+        if(e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;   /* open in a new tab as normal */
+        e.preventDefault(); sxGo(SX.items[+a.getAttribute('data-sx')]); return;
+      }
+      var more = e.target.closest ? e.target.closest('[data-sx-more]') : null;
+      if(more){ SX.showAll[more.getAttribute('data-sx-more')] = true; sxRun(); return; }
+      var chip = e.target.closest ? e.target.closest('[data-sx-q]') : null;
+      if(chip){ sxInput.value = chip.getAttribute('data-sx-q'); sxLoadRecaps(); sxRun(); sxInput.focus(); }
+    });
+  }
+  function searchFor(q){
+    open('search');
+    if(sxInput){ sxInput.value = q || ''; sxLoadRecaps(); sxRun(); }
+  }
+
   /* ================= 8. start-up ================= */
   function init(){
     var panel = true;
@@ -1592,9 +2069,11 @@
     try{ wireAlertStrip(); }catch(e){}
     try{ wireAppStrip(); }catch(e){}
     try{ alertInit(); }catch(e){}
+    /* arriving from a Search result on another page: scroll to the panel */
+    try{ consumeJump(); }catch(e){}
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.JWCSettings = { open:open, close:close, feeds:function(){ return FEEDS; } };
+  window.JWCSettings = { open:open, close:close, search:searchFor, feeds:function(){ return FEEDS; } };
 })();
