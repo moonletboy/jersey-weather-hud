@@ -1,14 +1,28 @@
 {
- "severity": "none",
- "hash": "",
- "warnings": {},
- "source": "Apps Script page check",
+ "severity": "orange",
+ "hash": "5f57cbd4fff3",
+ "warnings": {
+  "channel islands shipping area wind": {
+   "key": "channel islands shipping area wind",
+   "colour": "orange",
+   "level": 2,
+   "name": "Channel Islands Shipping Area Wind",
+   "area": "Channel Islands Shipping Area",
+   "hazard": "wind",
+   "sea": true,
+   "issued": "02:09 UTC Thursday 05 November",
+   "message": "Strong wind now ceased. No warning in force.",
+   "missing": 0,
+   "lower": 0
+  }
+ },
+ "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-05T01:52:22.282Z",
- "snippet": "",
- "checkedAt": "2026-11-05T01:52:22.282Z",
- "lastAlertAt": "2026-11-04T08:50:07Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-05T01:54:45Z",
- "lastChange": "yellow Channel Islands Shipping Area Wind cleared by gov.je"
+ "lastFetch": "2026-11-05T02:15:00.0327383Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:09 UTC Thursday 05 November Strong wind now ceased. No warning in force.",
+ "checkedAt": "2026-11-05T02:15:00.0327383Z",
+ "lastAlertAt": "2026-11-05T02:20:05Z",
+ "lastAlertKind": "new",
+ "lastChangeAt": "2026-11-05T02:20:05Z",
+ "lastChange": "orange Channel Islands Shipping Area Wind"
 }
