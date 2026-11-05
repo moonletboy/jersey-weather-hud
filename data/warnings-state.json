@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "5f57cbd4fff3",
+ "hash": "",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -12,15 +12,15 @@
    "sea": true,
    "issued": "02:09 UTC Thursday 05 November",
    "message": "Strong wind now ceased. No warning in force.",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
- "source": "gov.je data feed",
+ "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-05T02:15:00.0327383Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:09 UTC Thursday 05 November Strong wind now ceased. No warning in force.",
- "checkedAt": "2026-11-05T02:15:00.0327383Z",
+ "lastFetch": "2026-11-05T01:52:22.282Z",
+ "snippet": "",
+ "checkedAt": "2026-11-05T01:52:22.282Z",
  "lastAlertAt": "2026-11-05T02:20:05Z",
  "lastAlertKind": "new",
  "lastChangeAt": "2026-11-05T02:20:05Z",
