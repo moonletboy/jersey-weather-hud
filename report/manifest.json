@@ -1,0 +1,25 @@
+{
+  "name": "JWC Storm Report",
+  "short_name": "JWC Report",
+  "description": "Send a storm or weather report to Jersey Weather Chat in under a minute. Reports appear on the map at www.jerseyweatherchat.com.",
+  "id": "/report/",
+  "start_url": "./?source=app",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05080d",
+  "theme_color": "#05080d",
+  "lang": "en-GB",
+  "categories": ["weather"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Report a funnel cloud or waterspout", "short_name": "Funnel / spout", "url": "./?type=funnel&source=app", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Report hail", "short_name": "Hail", "url": "./?type=hail&source=app", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Report lightning", "short_name": "Lightning", "url": "./?type=lightning&source=app", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Weather observation", "short_name": "Observation", "url": "./?type=obs&source=app", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

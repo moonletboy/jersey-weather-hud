@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05080d">
+<script>/* the same light or dark look the site last showed on this device (jwc-settings.js keeps it in "jwc-look") */
+try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ document.documentElement.setAttribute('data-theme', 'light'); document.querySelector('meta[name="theme-color"]').setAttribute('content', '#e7edf0'); } if(/calm/.test(jl)) document.documentElement.setAttribute('data-motion', 'calm'); }catch(e){}</script>
+<!--
+  JWC STORM REPORT - the "SR" mini app (jerseyweatherchat.com/report/)
+  One page that does one thing: send a storm or weather report. It posts exactly the same fields to the same
+  Apps Script as the SUBMIT REPORT form on jersey-storm-reports.html, so reports land in the same sheet, the same
+  email and the same map. Nothing on the backend changes.
+  It installs as its own home-screen app (manifest.json in this folder: red SR icon, opens straight here),
+  separate from the main JWC Weather app. It shares the "remember my name and parish" choice with the
+  Storm Reports page, and keeps the community PIN on the device once the server has accepted it.
+  No map, no cookies, no analytics.
+-->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="JWC Report">
+<script>if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('../sw.js').catch(function(){}); }); }</script>
+<title>Send a Storm Report | Jersey Weather Chat</title>
+<meta name="description" content="Send a storm or weather report to Jersey Weather Chat in under a minute. Hail, flooding, lightning, funnel clouds, damaging wind or just what the sky is doing: it goes on the map at www.jerseyweatherchat.com.">
+<link rel="canonical" href="https://jerseyweatherchat.com/report/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Jersey Weather Chat">
+<meta property="og:title" content="Send a Storm Report | Jersey Weather Chat">
+<meta property="og:description" content="Seen hail, lightning, a funnel cloud or flooding? Send a report in under a minute. It goes on the map at www.jerseyweatherchat.com.">
+<meta property="og:url" content="https://jerseyweatherchat.com/report/">
+<meta property="og:image" content="https://jerseyweatherchat.com/report/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Send a Storm Report | Jersey Weather Chat">
+<meta name="twitter:image" content="https://jerseyweatherchat.com/report/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822;
+    --line:rgba(76,211,255,0.14);
+    --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --orange:#ff6b35;
+    --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58;
+    --red-fill:#ff4b5c; --orange-fill:#ff6b35;
+    --pick:rgba(255,75,92,0.14);
+    --card-shadow:none;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  [hidden]{ display:none !important; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,75,92,0.09), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(76,211,255,0.06), transparent 50%),
+      var(--bg);
+    color:var(--text); font-family:'JetBrains Mono', Consolas, monospace; min-height:100vh; position:relative;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.35;
+    background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:42px 42px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%, black, transparent 75%); mask-image:radial-gradient(ellipse at 50% 0%, black, transparent 75%);
+  }
+  a{ color:var(--cyan); }
+  .wrap{
+    position:relative; z-index:1; max-width:580px; margin:0 auto;
+    padding:calc(14px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  }
+
+  /* HEADER */
+  header{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:12px; margin-bottom:14px; border-bottom:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:11px; min-width:0; }
+  .brand img{ width:40px; height:40px; border-radius:9px; flex:0 0 auto; box-shadow:0 0 16px rgba(255,75,92,0.45); }
+  .brand h1{ font-family:'Orbitron', sans-serif; font-weight:900; font-size:17px; letter-spacing:2px; white-space:nowrap; }
+  .brand span{ display:block; font-size:9.5px; letter-spacing:2.5px; color:var(--dim); margin-top:3px; white-space:nowrap; }
+  #clock{ font-family:'Orbitron', sans-serif; color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; flex:0 0 auto; }
+
+  .intro{ font-size:12.5px; line-height:1.65; color:var(--dim); margin:0 2px 14px; }
+  .intro b{ color:var(--text); font-weight:700; }
+  .intro a{ color:var(--cyan); font-weight:700; text-decoration:none; border-bottom:1px solid currentColor; }
+
+  /* install card */
+  .install{ display:flex; align-items:center; gap:12px; padding:12px 12px 12px 14px; margin-bottom:14px; border-radius:12px;
+    border:1px dashed rgba(255,107,53,0.6); background:rgba(255,107,53,0.07); }
+  .install img{ width:38px; height:38px; border-radius:9px; flex:0 0 auto; }
+  .install .it{ flex:1; min-width:0; }
+  .install b{ display:block; font-family:'Orbitron', sans-serif; font-size:10.5px; letter-spacing:1.5px; color:var(--orange); margin-bottom:3px; }
+  .install p{ font-size:11px; line-height:1.55; color:var(--text); }
+  .install p b{ display:inline; font-family:inherit; font-size:inherit; letter-spacing:0; color:var(--text); }
+  .install .ib{ display:flex; flex-direction:column; gap:6px; align-items:flex-end; flex:0 0 auto; }
+  .install button.go{ font-family:'Orbitron', sans-serif; font-size:10.5px; font-weight:700; letter-spacing:1.5px; color:#05080d; background:var(--orange-fill); border:0; border-radius:7px; padding:10px 12px; cursor:pointer; min-height:40px; }
+  .install button.x{ background:none; border:0; color:var(--dim); font-size:18px; line-height:1; padding:4px 6px; cursor:pointer; }
+
+  /* the form */
+  form{ counter-reset:step; }
+  .step{ background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); border:1px solid var(--line); border-radius:14px; padding:16px 14px 16px; margin-bottom:12px; box-shadow:var(--card-shadow); }
+  .step-h{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .step-h::before{ counter-increment:step; content:counter(step, decimal-leading-zero); font-family:'Orbitron', sans-serif; font-size:10px; font-weight:900; color:#05080d; background:var(--red-fill); border-radius:4px; padding:3px 6px; letter-spacing:1px; }
+  .step-h h2{ font-family:'Orbitron', sans-serif; font-size:12px; font-weight:700; letter-spacing:2px; }
+  .step-h .opt{ margin-left:auto; font-size:9.5px; color:var(--dim); letter-spacing:1.5px; }
+  .step.need{ border-color:var(--red); box-shadow:0 0 0 1px var(--red) inset; }
+  .err{ display:none; margin-top:10px; font-size:11.5px; color:var(--red); font-weight:700; letter-spacing:0.3px; line-height:1.5; }
+  .step.need .err, .err.show{ display:block; }
+  .hint{ font-size:10.5px; color:var(--dim); line-height:1.55; margin-top:8px; letter-spacing:0.2px; }
+  .hint b{ color:var(--text); }
+
+  .types{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tile{ display:flex; align-items:center; gap:9px; text-align:left; min-height:52px; padding:9px 10px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--text);
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; line-height:1.3; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+  .tile .em{ font-size:21px; line-height:1; flex:0 0 auto; width:26px; text-align:center; }
+  .tile[aria-pressed="true"]{ border-color:var(--red); background:var(--pick); box-shadow:0 0 14px rgba(255,75,92,0.25); }
+  .tile:focus-visible, .chip:focus-visible, .sev:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  select, input[type=text], input[type=url], input[type=email], input[type=time], textarea{
+    width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text); font-family:'JetBrains Mono', monospace;
+    font-size:16px; padding:12px 12px; border-radius:8px; outline:none; transition:border-color .2s ease; -webkit-appearance:none; appearance:none;
+  }
+  select{ background-image:linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    background-position:calc(100% - 18px) 52%, calc(100% - 13px) 52%; background-size:5px 5px, 5px 5px; background-repeat:no-repeat; padding-right:34px; }
+  select option{ background:var(--bg-panel); color:var(--text); }
+  select:focus, input:focus, textarea:focus{ border-color:var(--cyan); }
+  textarea{ resize:vertical; min-height:96px; line-height:1.5; }
+  label.fl{ display:block; font-size:10px; letter-spacing:2px; color:var(--dim); margin:12px 0 7px; }
+  label.fl:first-child{ margin-top:0; }
+
+  .switch{ display:flex; align-items:flex-start; gap:10px; margin-top:12px; cursor:pointer; font-size:11.5px; line-height:1.5; }
+  .switch input{ width:20px; height:20px; flex:0 0 auto; margin-top:1px; accent-color:var(--red); cursor:pointer; }
+  .switch small{ display:block; font-size:10.5px; color:var(--dim); }
+
+  .sevs{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
+  .sevs.three{ grid-template-columns:repeat(3, 1fr); }
+  .sev{ padding:10px 4px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--dim); cursor:pointer; text-align:center;
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:800; letter-spacing:0.6px; line-height:1.25; }
+  .sev small{ display:block; font-size:9px; font-weight:500; letter-spacing:0.2px; margin-top:4px; opacity:0.85; text-transform:none; }
+  .sev[data-c="g"][aria-pressed="true"]{ background:rgba(45,225,160,0.15); border-color:var(--green); color:var(--green); }
+  .sev[data-c="a"][aria-pressed="true"]{ background:rgba(255,176,32,0.15); border-color:var(--amber); color:var(--amber); }
+  .sev[data-c="o"][aria-pressed="true"]{ background:rgba(255,107,53,0.15); border-color:var(--orange); color:var(--orange); }
+  .sev[data-c="r"][aria-pressed="true"]{ background:rgba(255,75,92,0.18); border-color:var(--red); color:var(--red); box-shadow:0 0 12px rgba(255,75,92,0.35); }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{ padding:9px 11px; min-height:38px; border-radius:20px; border:1px solid var(--line); background:var(--bg); color:var(--dim); cursor:pointer;
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:700; letter-spacing:0.8px; }
+  .chip[aria-pressed="true"]{ color:var(--text); border-color:var(--cyan); background:rgba(76,211,255,0.12); }
+  .other-time{ display:flex; gap:8px; margin-top:10px; align-items:center; }
+  .other-time .chips{ flex:0 0 auto; }
+  .other-time input{ flex:1; min-width:0; }
+
+  .pin-ok{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 12px; border-radius:8px; border:1px solid rgba(45,225,160,0.45); background:rgba(45,225,160,0.07); font-size:11.5px; color:var(--green); font-weight:700; letter-spacing:0.5px; }
+  .linkbtn{ background:none; border:0; color:var(--cyan); font-family:inherit; font-size:10.5px; font-weight:700; letter-spacing:1px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:6px 0; }
+
+  details.extras{ margin-bottom:12px; border:1px solid var(--line); border-radius:14px; background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); box-shadow:var(--card-shadow); }
+  details.extras summary{ list-style:none; cursor:pointer; padding:14px; font-size:10.5px; letter-spacing:1.5px; font-weight:700; color:var(--cyan); }
+  details.extras summary::-webkit-details-marker{ display:none; }
+  details.extras summary::before{ content:"+ "; }
+  details.extras[open] summary::before{ content:"\2212  "; }
+  details.extras .in{ padding:0 14px 16px; }
+
+  .send{ width:100%; min-height:58px; border:0; border-radius:12px; cursor:pointer; margin-top:4px;
+    font-family:'Orbitron', sans-serif; font-size:14px; font-weight:900; letter-spacing:3px; color:#05080d;
+    background:linear-gradient(120deg, var(--red-fill), var(--orange-fill)); box-shadow:0 8px 26px -8px rgba(255,75,92,0.6); transition:transform .15s ease; }
+  .send:active{ transform:scale(0.99); }
+  .send:disabled{ opacity:0.55; cursor:wait; }
+  .status{ display:none; margin-top:12px; padding:12px 14px; border-radius:10px; font-size:12px; letter-spacing:0.4px; font-weight:700; line-height:1.55; border:1px solid var(--dim2); }
+  .status.sending{ display:block; color:var(--amber); border-color:rgba(255,176,32,0.5); background:rgba(255,176,32,0.08); }
+  .status.waiting{ display:block; color:var(--cyan); border-color:rgba(76,211,255,0.5); background:rgba(76,211,255,0.08); }
+  .status.failed{ display:block; color:var(--red); border-color:rgba(255,75,92,0.6); background:rgba(255,75,92,0.1); }
+  .status button{ margin-top:8px; }
+  .note{ font-size:10.5px; color:var(--dim); line-height:1.6; margin-top:12px; letter-spacing:0.2px; }
+  .note a{ color:var(--cyan); }
+  .draft{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:10.5px; color:var(--amber); letter-spacing:0.5px; margin:-4px 2px 12px; }
+
+  /* after sending */
+  .done{ text-align:center; padding:28px 18px 24px; border:1px solid rgba(45,225,160,0.5); border-radius:16px; background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2)); box-shadow:var(--card-shadow); }
+  .tick{ width:68px; height:68px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:900; color:#05080d; background:var(--green); box-shadow:0 0 26px rgba(45,225,160,0.5); }
+  .done h2{ font-family:'Orbitron', sans-serif; font-size:16px; letter-spacing:2.5px; color:var(--green); margin-bottom:10px; }
+  .done p{ font-size:12.5px; line-height:1.65; margin:0 auto 14px; max-width:420px; }
+  .done p a{ font-weight:700; }
+  .sum{ display:inline-block; font-size:11px; letter-spacing:1px; font-weight:700; padding:8px 12px; border-radius:20px; border:1px solid var(--line); color:var(--text); margin-bottom:18px; }
+  .btns{ display:flex; flex-direction:column; gap:10px; max-width:340px; margin:0 auto; }
+  .btn{ display:block; text-align:center; text-decoration:none; padding:14px 16px; border-radius:10px; font-family:'Orbitron', sans-serif; font-size:11.5px; font-weight:700; letter-spacing:2px; cursor:pointer; border:1px solid var(--cyan); color:var(--cyan); background:transparent; }
+  .btn.solid{ background:var(--cyan); color:#05080d; border-color:var(--cyan); }
+  .fb{ font-size:11px; color:var(--dim); margin-top:16px; line-height:1.6; }
+
+  footer{ margin-top:22px; padding-top:14px; border-top:1px solid var(--line); text-align:center; font-size:10px; color:var(--dim); letter-spacing:0.8px; line-height:1.9; }
+  footer a{ color:var(--dim); }
+  footer .sos{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 6px; font-size:11.5px; font-weight:800; color:var(--text); text-decoration:none; letter-spacing:1px; }
+  footer .sos b{ color:var(--red); text-decoration:underline; text-underline-offset:3px; }
+
+  @media (min-width:520px){ .types{ grid-template-columns:1fr 1fr 1fr; } .tile{ flex-direction:column; justify-content:center; text-align:center; gap:6px; min-height:74px; } .tile .em{ width:auto; } }
+  @media (max-width:360px){ .brand h1{ font-size:15px; } .sev{ font-size:9.5px; letter-spacing:0.2px; } }
+
+  /* LIGHT MODE: follows the look the site last showed on this device (Settings > Display on any JWC page) */
+  html[data-theme="light"]{ color-scheme:light; --bg:#e7edf0; --bg-panel:#fbfcfd; --bg-panel-2:#f1f5f7; --line:rgba(0,98,138,0.2);
+    --cyan:#006d96; --green:#00764f; --amber:#995700; --red:#c0112d; --orange:#b04700; --text:#0c1a22; --dim:#4a616c; --dim2:#526873;
+    --red-fill:#e0384c; --orange-fill:#f07c22; --pick:rgba(224,56,76,0.09);
+    --card-shadow:0 1px 2px rgba(12,40,55,0.06), 0 10px 24px -14px rgba(12,40,55,0.24); }
+  html[data-theme="light"] body{ background:radial-gradient(ellipse at 18% -12%, rgba(224,56,76,0.08), transparent 52%), radial-gradient(ellipse at 92% 6%, rgba(0,150,200,0.06), transparent 46%), var(--bg); }
+  html[data-theme="light"] body::before{ opacity:0.5; }
+  html[data-theme="light"] .brand img{ box-shadow:0 2px 4px rgba(120,20,30,0.2), 0 6px 16px -6px rgba(192,17,45,0.45); }
+  html[data-theme="light"] :is(select, input[type=text], input[type=url], input[type=email], input[type=time], textarea, .tile, .sev, .chip){ background:#ffffff; }
+  html[data-theme="light"] :is(input, textarea)::placeholder{ color:var(--dim); opacity:1; }
+  html[data-theme="light"] select option{ background:#fbfcfd; color:#0c1a22; }
+  html[data-theme="light"] .tile[aria-pressed="true"]{ background:#fff2f3; box-shadow:0 0 0 3px rgba(224,56,76,0.14); }
+  html[data-theme="light"] .step-h::before{ color:#ffffff; background:var(--red); }
+  html[data-theme="light"] .sev[data-c="o"][aria-pressed="true"]{ background:rgba(240,124,34,0.14); }
+  html[data-theme="light"] .sev[data-c="r"][aria-pressed="true"]{ box-shadow:0 0 0 3px rgba(224,56,76,0.16); }
+  html[data-theme="light"] .chip[aria-pressed="true"]{ background:rgba(14,152,204,0.1); }
+  html[data-theme="light"] .install{ background:rgba(240,124,34,0.08); border-color:rgba(176,71,0,0.5); }
+  html[data-theme="light"] .install button.go{ color:#ffffff; background:var(--orange); }
+  html[data-theme="light"] .send{ background:linear-gradient(120deg, var(--red), var(--orange)); color:#ffffff; box-shadow:0 8px 24px -10px rgba(192,17,45,0.55); }
+  html[data-theme="light"] .tick{ color:#ffffff; background:#13a574; box-shadow:0 6px 20px -6px rgba(0,118,79,0.55); }
+  html[data-theme="light"] .btn.solid{ color:#ffffff; }
+  html[data-theme="light"] .pin-ok{ background:rgba(19,165,116,0.08); }
+  html[data-motion="calm"] *{ animation:none !important; transition:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <img src="icon-192.png" alt="" width="40" height="40">
+      <div>
+        <h1>STORM REPORT</h1>
+        <span>JERSEY WEATHER CHAT</span>
+      </div>
+    </div>
+    <div id="clock" aria-label="Time in Jersey">--:--</div>
+  </header>
+
+  <p class="intro" id="intro">Seen something? Send it in under a minute. Your report goes on the map at <a href="../jersey-storm-reports.html#report-map">www.jerseyweatherchat.com</a> for everyone to see, and helps us build a picture of what the weather really did across the island.</p>
+
+  <div class="install" id="install" hidden>
+    <img src="icon-192.png" alt="" width="38" height="38">
+    <div class="it">
+      <b id="instTitle">PUT SR ON YOUR HOME SCREEN</b>
+      <p id="instText">Next time, one tap opens this form, ready to go.</p>
+    </div>
+    <div class="ib">
+      <button type="button" class="x" id="instX" aria-label="Hide this">&times;</button>
+      <button type="button" class="go" id="instBtn" hidden>ADD</button>
+    </div>
+  </div>
+
+  <div class="draft" id="draftNote" hidden><span>UNSENT REPORT RESTORED</span><button type="button" class="linkbtn" id="draftClear">START AGAIN</button></div>
+
+  <form id="reportForm" novalidate>
+
+    <div class="step" id="stType" role="group" aria-labelledby="hType">
+      <div class="step-h"><h2 id="hType">WHAT DID YOU SEE?</h2></div>
+      <div class="types" id="types">
+        <button type="button" class="tile" data-v="Observation" aria-pressed="false"><span class="em">🌡️</span><span>Weather observation</span></button>
+        <button type="button" class="tile" data-v="Hail" aria-pressed="false"><span class="em">🧊</span><span>Hail</span></button>
+        <button type="button" class="tile" data-v="Damaging Wind" aria-pressed="false"><span class="em">💨</span><span>Damaging wind</span></button>
+        <button type="button" class="tile" data-v="Flooding" aria-pressed="false"><span class="em">🌊</span><span>Flooding</span></button>
+        <button type="button" class="tile" data-v="Lightning Strike" aria-pressed="false"><span class="em">⚡</span><span>Lightning strike</span></button>
+        <button type="button" class="tile" data-v="Funnel Cloud / Waterspout" aria-pressed="false"><span class="em">🌪️</span><span>Funnel cloud / waterspout</span></button>
+        <button type="button" class="tile" data-v="Heavy Snow / Ice" aria-pressed="false"><span class="em">❄️</span><span>Heavy snow / ice</span></button>
+        <button type="button" class="tile" data-v="Storm Damage" aria-pressed="false"><span class="em">🏚️</span><span>Storm damage</span></button>
+        <button type="button" class="tile" data-v="Earthquake Report" aria-pressed="false"><span class="em">🌎</span><span>Earthquake</span></button>
+        <button type="button" class="tile" data-v="Other" aria-pressed="false"><span class="em">📋</span><span>Other</span></button>
+      </div>
+      <div class="hint">Thunder, a downpour or just a dramatic sky? Choose <b>Weather observation</b>.</div>
+      <div class="err">Tap what you saw.</div>
+    </div>
+
+    <div class="step" id="stWhere">
+      <div class="step-h"><h2>WHERE?</h2></div>
+      <select id="f-parish" aria-label="Parish">
+        <option value="">Choose parish&hellip;</option>
+        <option>St Helier</option>
+        <option>St Saviour</option>
+        <option>St Clement</option>
+        <option>Grouville</option>
+        <option>St Martin</option>
+        <option>Trinity</option>
+        <option>St John</option>
+        <option>St Mary</option>
+        <option>St Ouen</option>
+        <option>St Peter</option>
+        <option>St Brelade</option>
+        <option>St Lawrence</option>
+      </select>
+      <label class="switch"><input type="checkbox" id="f-loc"><span>Pin my exact spot on the map<small>Off: your report shows at the parish centre instead. Best turned off if you&rsquo;re at home.</small></span></label>
+      <div class="err">Choose the parish.</div>
+    </div>
+
+    <div class="step" id="stSev" role="group" aria-labelledby="hSev">
+      <div class="step-h"><h2 id="hSev">HOW BAD WAS IT?</h2></div>
+      <div class="sevs" id="sevs"></div>
+      <div id="quakeExtra" hidden>
+        <label class="fl" for="f-damage">WAS THERE ANY DAMAGE?</label>
+        <select id="f-damage">
+          <option value="No damage">No damage</option>
+          <option value="Minor">Minor</option>
+          <option value="Moderate">Moderate</option>
+          <option value="Heavy">Heavy</option>
+        </select>
+        <div id="damageDetailsWrap" hidden>
+          <label class="fl" for="f-damage-details">DAMAGE DETAILS</label>
+          <textarea id="f-damage-details" placeholder="Describe the damage&hellip;"></textarea>
+        </div>
+      </div>
+      <div class="err">Tap how bad it was.</div>
+    </div>
+
+    <div class="step" id="stDesc">
+      <div class="step-h"><h2 id="descLabel">TELL US WHAT HAPPENED</h2></div>
+      <textarea id="f-desc" placeholder="e.g. Golf-ball sized hail for about 5 minutes, dented the car roof&hellip;" maxlength="1500"></textarea>
+      <div class="err">Add a few words about what you saw.</div>
+    </div>
+
+    <div class="step" id="stWhen" role="group" aria-labelledby="hWhen">
+      <div class="step-h"><h2 id="hWhen">WHEN?</h2></div>
+      <div class="chips" id="when">
+        <button type="button" class="chip" data-m="0" aria-pressed="true">JUST NOW</button>
+        <button type="button" class="chip" data-m="15" aria-pressed="false">15 MIN AGO</button>
+        <button type="button" class="chip" data-m="30" aria-pressed="false">30 MIN AGO</button>
+        <button type="button" class="chip" data-m="60" aria-pressed="false">1 HOUR AGO</button>
+        <button type="button" class="chip" data-m="120" aria-pressed="false">2 HOURS AGO</button>
+        <button type="button" class="chip" data-m="other" aria-pressed="false">EARLIER&hellip;</button>
+      </div>
+      <div class="other-time" id="otherTime" hidden>
+        <div class="chips" id="whenDay">
+          <button type="button" class="chip" data-d="0" aria-pressed="true">TODAY</button>
+          <button type="button" class="chip" data-d="1" aria-pressed="false">YESTERDAY</button>
+        </div>
+        <input type="time" id="f-time" aria-label="Time it happened">
+      </div>
+      <div class="err" id="whenErr">Choose the time it happened.</div>
+    </div>
+
+    <div class="step" id="stYou">
+      <div class="step-h"><h2>YOUR DETAILS</h2></div>
+      <label class="fl" for="f-name">NAME OR NICKNAME (SHOWN WITH YOUR REPORT)</label>
+      <input type="text" id="f-name" placeholder="e.g. Sam B or your Facebook name" autocomplete="name" maxlength="80">
+      <label class="fl" for="f-pin" id="pinLabel">COMMUNITY PIN</label>
+      <div class="pin-ok" id="pinOk" hidden><span>&#10004; PIN SAVED ON THIS DEVICE</span><button type="button" class="linkbtn" id="pinChange">CHANGE</button></div>
+      <div id="pinWrap">
+        <input type="text" id="f-pin" placeholder="From the group's pinned post" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="40">
+        <div class="hint">It&rsquo;s in the pinned post of the <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">Jersey Weather Chat Facebook group</a>. You only need to type it once on this device.</div>
+      </div>
+      <div class="err show" id="pinErr" hidden></div>
+      <label class="switch"><input type="checkbox" id="f-remember"><span>Remember my name, parish and the PIN on this device</span></label>
+      <div class="err" id="youErr">Add your name and the community PIN.</div>
+    </div>
+
+    <details class="extras" id="extras">
+      <summary>ADD A PHOTO LINK OR GET AN EMAIL COPY</summary>
+      <div class="in">
+        <label class="fl" for="f-media">PHOTO / VIDEO LINK</label>
+        <input type="url" id="f-media" placeholder="https://&hellip;" inputmode="url" autocomplete="off">
+        <div class="hint">Post your photo or video in the Facebook group, then tap <b>&bull;&bull;&bull;</b> on your post, <b>Copy link</b>, and paste it here.</div>
+        <label class="fl" for="f-email">EMAIL ME A COPY</label>
+        <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" inputmode="email">
+        <div class="hint">Only used to send you a copy. Never shown on the site.</div>
+      </div>
+    </details>
+
+    <button type="submit" class="send" id="sendBtn">SEND REPORT</button>
+    <div class="status" id="status" aria-live="polite"></div>
+    <p class="note">Reports are public: what you write, the name you give and, if you pin your spot, your exact location appear on the map at www.jerseyweatherchat.com. Use a first name or nickname if you prefer. Ask us any time to remove a report. <a href="../alerts-help.html#privacy">Privacy note &rarr;</a></p>
+  </form>
+
+  <div class="done" id="done" hidden aria-live="polite">
+    <div class="tick" aria-hidden="true">&#10004;</div>
+    <h2>REPORT RECEIVED</h2>
+    <p id="doneText">Thank you. Your report is on the map at <a href="../jersey-storm-reports.html#report-map">www.jerseyweatherchat.com</a> now. It can take a few minutes to show for everyone else.</p>
+    <div class="sum" id="doneSum"></div>
+    <div class="btns">
+      <a class="btn solid" href="../jersey-storm-reports.html#report-map">SEE IT ON THE MAP</a>
+      <button type="button" class="btn" id="again">SEND ANOTHER REPORT</button>
+    </div>
+    <p class="fb">Got photos? Share them in the <a href="https://www.facebook.com/groups/jerseywxchat/" target="_blank" rel="noopener">Jersey Weather Chat Facebook group</a>.</p>
+  </div>
+
+  <footer>
+    <a class="sos" href="tel:999">In an emergency call <b>999</b></a><br>
+    Volunteer-run &middot; reports are from members and unverified &middot; Jersey Met is the official authority<br>
+    <a href="../index.html">jerseyweatherchat.com</a> &middot; <a href="../alerts-help.html#privacy">Privacy note</a> &middot; JOIC registration no. 104194<br>
+    <a href="#" id="instShow" hidden>Add SR to your home screen</a>
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* Same Apps Script web app and the same fields as the SUBMIT REPORT form on jersey-storm-reports.html. */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzqw6EZ01rKNo8FJrP-VHwpNCRe9AWV2FAeVH3AvVzX2wXWpuprFNRQngIgJC0K08FHcg/exec';
+  var SITE_LINK = 'https://jerseyweatherchat.com/report/';
+
+  /* Saved on this device only. The first two are shared with the Storm Reports page (jwc-settings.js), and the
+     last-report memory is shared with that page's duplicate check, so both places behave the same. */
+  var K_REMEMBER = 'jwc-remember-report';     /* 'off' = don't remember anything */
+  var K_DETAILS = 'jwc-report-details';       /* {name, parish} */
+  var K_PIN = 'jwc-report-pin';               /* the community PIN, saved only after the server has accepted it */
+  var K_LOC = 'jwc-report-loc';               /* 'off' = don't pin my exact spot */
+  var K_DRAFT = 'jwc-report-draft';           /* what's been typed so far, so nothing is lost if the app is closed */
+  var K_PENDING = 'jwc-report-pending';       /* a report pressed SEND while offline, waiting for signal */
+  var K_INST_HIDE = 'jwc-report-inst-hide';   /* when the home-screen card was dismissed */
+  var K_LAST = 'jwcLastReportSent';           /* {fp, at} the last report sent from this device */
+
+  function $(id){ return document.getElementById(id); }
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  function readJSON(k){ try{ return JSON.parse(lsGet(k) || 'null'); }catch(e){ return null; } }
+  function rememberOn(){ return lsGet(K_REMEMBER) !== 'off'; }
+
+  /* ---------- clock (Jersey time) ---------- */
+  var fmtHM = new Intl.DateTimeFormat('en-GB', { hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' });
+  function tick(){ $('clock').textContent = fmtHM.format(new Date()); }
+  tick(); setInterval(tick, 15000);
+
+  /* ---------- report types ---------- */
+  var TYPE_KEYS = { obs:'Observation', observation:'Observation', hail:'Hail', wind:'Damaging Wind', flood:'Flooding', flooding:'Flooding',
+    lightning:'Lightning Strike', funnel:'Funnel Cloud / Waterspout', waterspout:'Funnel Cloud / Waterspout', snow:'Heavy Snow / Ice', ice:'Heavy Snow / Ice',
+    damage:'Storm Damage', quake:'Earthquake Report', earthquake:'Earthquake Report', other:'Other' };
+  var TYPE_ICON = { 'Observation':'🌡️', 'Hail':'🧊', 'Damaging Wind':'💨', 'Flooding':'🌊', 'Lightning Strike':'⚡',
+    'Funnel Cloud / Waterspout':'🌪️', 'Heavy Snow / Ice':'❄️', 'Storm Damage':'🏚️', 'Earthquake Report':'🌎', 'Other':'📋' };
+  var TYPE_SHORT = { 'Observation':'WEATHER OBSERVATION', 'Earthquake Report':'EARTHQUAKE', 'Funnel Cloud / Waterspout':'FUNNEL CLOUD / WATERSPOUT' };
+  var DESC = {
+    'Observation':      ['WHAT DID YOU SEE, HEAR OR MEASURE?', 'e.g. Sudden heavy downpour and thunder over St Aubin, a big black cloud to the west, or 14°C and 30 mph gusts on my weather station…'],
+    'Hail':             ['TELL US ABOUT THE HAIL', 'e.g. Pea-sized hail for about 5 minutes, garden white over…'],
+    'Damaging Wind':    ['TELL US ABOUT THE WIND', 'e.g. Very strong gusts for 10 minutes, fence panels down, branches across the lane…'],
+    'Flooding':         ['TELL US ABOUT THE FLOODING', 'e.g. Road under about 20 cm of water near the church, cars turning back…'],
+    'Lightning Strike': ['TELL US ABOUT THE LIGHTNING', 'e.g. Strike hit a tree in the field behind us, very loud bang straight after the flash…'],
+    'Funnel Cloud / Waterspout': ['TELL US WHAT YOU SAW', 'e.g. Funnel hanging from a shower cloud off St Ouen’s Bay, moving north, lasted about 3 minutes, didn’t touch the sea…'],
+    'Heavy Snow / Ice': ['TELL US ABOUT THE SNOW OR ICE', 'e.g. 3 cm of snow settling, roads icy on the hill…'],
+    'Storm Damage':     ['TELL US ABOUT THE DAMAGE', 'e.g. Roof tiles blown off on our street, tree down blocking the lane…'],
+    'Earthquake Report':['WHAT DID YOU FEEL OR HEAR?', 'e.g. House shook for a few seconds, a low rumble, windows rattled…'],
+    'Other':            ['TELL US WHAT HAPPENED', 'e.g. What you saw, where, and how long it lasted…']
+  };
+  var SEV_SETS = {
+    normal: [ ['Minor', 'MINOR', 'worth noting', 'g'], ['Moderate', 'MODERATE', 'disruptive', 'a'], ['Severe', 'SEVERE', 'damaging', 'o'], ['Extreme', 'EXTREME', 'dangerous', 'r'] ],
+    quake:  [ ['Light Shaking', 'LIGHT', 'shaking', 'g'], ['Moderate Shaking', 'MODERATE', 'shaking', 'a'], ['Heavy Shaking', 'HEAVY', 'shaking', 'r'] ]
+  };
+
+  var DESC_DEFAULT_PH = 'e.g. Golf-ball sized hail for about 5 minutes, dented the car roof…';
+  var state = { type:'', sev:'', when:'0', day:'0' };
+  var sessionPin = '';     /* the PIN typed this time, kept for SEND ANOTHER even when remembering is off */
+
+  function setType(v){
+    state.type = v;
+    var tiles = $('types').querySelectorAll('.tile');
+    for(var i = 0; i < tiles.length; i++) tiles[i].setAttribute('aria-pressed', tiles[i].getAttribute('data-v') === v ? 'true' : 'false');
+    var isObs = v === 'Observation', isQuake = v === 'Earthquake Report';
+    $('stSev').hidden = isObs;
+    drawSev(isQuake ? 'quake' : 'normal');
+    $('quakeExtra').hidden = !isQuake;
+    var d = DESC[v] || DESC.Other;
+    $('descLabel').textContent = d[0];
+    $('f-desc').placeholder = d[1];
+    clearNeed('stType');
+  }
+  function drawSev(set){
+    var box = $('sevs');
+    if(box.getAttribute('data-set') === set) return;
+    box.setAttribute('data-set', set);
+    box.className = 'sevs' + (set === 'quake' ? ' three' : '');
+    box.innerHTML = '';
+    var keep = state.sev; state.sev = '';
+    SEV_SETS[set].forEach(function(s){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'sev'; b.setAttribute('data-sev', s[0]); b.setAttribute('data-c', s[3]);
+      b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = s[1] + '<small>' + s[2] + '</small>';
+      b.addEventListener('click', function(){ setSev(s[0]); saveDraft(); });
+      box.appendChild(b);
+      if(s[0] === keep) state.sev = keep;
+    });
+    if(state.sev) setSev(state.sev);
+  }
+  function setSev(v){
+    state.sev = v;
+    var b = $('sevs').querySelectorAll('.sev');
+    for(var i = 0; i < b.length; i++) b[i].setAttribute('aria-pressed', b[i].getAttribute('data-sev') === v ? 'true' : 'false');
+    clearNeed('stSev');
+  }
+  function pressIn(groupId, attr, val){
+    var b = $(groupId).querySelectorAll('.chip');
+    for(var i = 0; i < b.length; i++) b[i].setAttribute('aria-pressed', b[i].getAttribute(attr) === val ? 'true' : 'false');
+  }
+  function setWhen(m){
+    state.when = m;
+    pressIn('when', 'data-m', m);
+    $('otherTime').hidden = m !== 'other';
+    clearNeed('stWhen');
+    if(m === 'other' && !$('f-time').value){ try{ $('f-time').focus(); }catch(e){} }
+  }
+  function setDay(d){ state.day = d; pressIn('whenDay', 'data-d', d); clearNeed('stWhen'); }
+
+  $('types').addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('.tile') : null;
+    if(!t) return;
+    setType(t.getAttribute('data-v')); saveDraft(); warmLocation();
+  });
+  $('when').addEventListener('click', function(e){
+    var c = e.target.closest ? e.target.closest('.chip') : null;
+    if(c){ setWhen(c.getAttribute('data-m')); saveDraft(); }
+  });
+  $('whenDay').addEventListener('click', function(e){
+    var c = e.target.closest ? e.target.closest('.chip') : null;
+    if(c){ setDay(c.getAttribute('data-d')); saveDraft(); }
+  });
+  $('f-damage').addEventListener('change', function(){ $('damageDetailsWrap').hidden = this.value === 'No damage'; saveDraft(); });
+
+  /* ---------- required-field messages (instead of a pop-up alert) ---------- */
+  function need(id){ $(id).classList.add('need'); }
+  var missingShown = false;
+  function clearNeed(id){
+    $(id).classList.remove('need');
+    if(missingShown && !document.querySelector('.step.need')){ missingShown = false; status('', ''); }
+  }
+  $('f-parish').addEventListener('change', function(){ clearNeed('stWhere'); saveDraft(); });
+  $('f-desc').addEventListener('input', function(){ if(this.value.trim()) clearNeed('stDesc'); saveDraft(); });
+  $('f-time').addEventListener('input', function(){ clearNeed('stWhen'); saveDraft(); });
+  ['f-name', 'f-pin'].forEach(function(id){ $(id).addEventListener('input', function(){ clearNeed('stYou'); $('pinErr').hidden = true; }); });
+  ['f-media', 'f-damage-details'].forEach(function(id){ $(id).addEventListener('input', saveDraft); });
+
+  /* ---------- remembered name, parish, PIN and location choice ---------- */
+  function savedPin(){ return rememberOn() ? (lsGet(K_PIN) || '') : ''; }
+  function showPin(){
+    var has = !!savedPin();
+    $('pinOk').hidden = !has;
+    $('pinWrap').hidden = has;
+  }
+  $('pinChange').addEventListener('click', function(){
+    lsDel(K_PIN); $('f-pin').value = ''; showPin(); $('f-pin').focus();
+  });
+  $('f-remember').checked = rememberOn();
+  $('f-remember').addEventListener('change', function(){
+    if(this.checked){ lsSet(K_REMEMBER, 'on'); }
+    else{
+      lsSet(K_REMEMBER, 'off'); lsDel(K_DETAILS);
+      var p = lsGet(K_PIN); if(p && !$('f-pin').value) $('f-pin').value = p;   /* keep it in the box for this report */
+      lsDel(K_PIN);
+    }
+    showPin();
+  });
+  $('f-loc').checked = lsGet(K_LOC) !== 'off';
+  $('f-loc').addEventListener('change', function(){ lsSet(K_LOC, this.checked ? 'on' : 'off'); if(this.checked) warmLocation(); });
+  function fillRemembered(){
+    if(!rememberOn()) return;
+    var d = readJSON(K_DETAILS);
+    if(d && d.name && !$('f-name').value) $('f-name').value = d.name;
+    if(d && d.parish && !$('f-parish').value){
+      var sel = $('f-parish');
+      for(var i = 0; i < sel.options.length; i++){ if(sel.options[i].value === d.parish){ sel.value = d.parish; break; } }
+    }
+  }
+
+  /* ---------- location: only when "Pin my exact spot" is on ----------
+     If this device already allows location for the site, start finding it as soon as a type is tapped, so the
+     report isn't kept waiting at the end. Otherwise the browser asks when SEND is pressed, as on the Storm Reports page. */
+  var LOC = { fix:null, at:0, busy:null };
+  function getLocation(waitMs){
+    if(!$('f-loc').checked || !navigator.geolocation) return Promise.resolve(null);
+    if(LOC.fix && Date.now() - LOC.at < 5 * 60000) return Promise.resolve(LOC.fix);
+    if(!LOC.busy){
+      LOC.busy = new Promise(function(resolve){
+        navigator.geolocation.getCurrentPosition(
+          function(pos){ LOC.fix = { lat:pos.coords.latitude, lon:pos.coords.longitude }; LOC.at = Date.now(); LOC.busy = null; resolve(LOC.fix); },
+          function(){ LOC.busy = null; resolve(null); },
+          { timeout:8000, maximumAge:120000, enableHighAccuracy:false }
+        );
+      });
+    }
+    var busy = LOC.busy;
+    return new Promise(function(resolve){
+      var done = false;
+      var t = setTimeout(function(){ if(!done){ done = true; resolve(LOC.fix); } }, waitMs);
+      busy.then(function(f){ if(!done){ done = true; clearTimeout(t); resolve(f); } });
+    });
+  }
+  /* how long SEND waits for the location: a few seconds when already allowed, longer while the phone asks */
+  function locWait(){
+    if(!$('f-loc').checked || !navigator.geolocation) return Promise.resolve(0);
+    if(!navigator.permissions || !navigator.permissions.query) return Promise.resolve(20000);
+    return navigator.permissions.query({ name:'geolocation' }).then(function(p){
+      return p.state === 'granted' ? 6000 : p.state === 'denied' ? 0 : 30000;
+    }, function(){ return 20000; });
+  }
+  function warmLocation(){
+    if(!$('f-loc').checked || !navigator.permissions || !navigator.permissions.query) return;
+    navigator.permissions.query({ name:'geolocation' }).then(function(p){ if(p.state === 'granted') getLocation(0); }, function(){});
+  }
+
+  /* ---------- draft: keep what's been typed if the app is closed half way ---------- */
+  var restoring = false;
+  function saveDraft(){
+    if(restoring) return;
+    var d = { at:Date.now(), type:state.type, sev:state.sev, when:state.when, day:state.day, time:$('f-time').value,
+      desc:$('f-desc').value, damage:$('f-damage').value, damageDetails:$('f-damage-details').value, media:$('f-media').value, parish:$('f-parish').value };
+    if(!d.type && !d.desc.trim() && !d.media) { lsDel(K_DRAFT); return; }
+    lsSet(K_DRAFT, JSON.stringify(d));
+  }
+  function restoreDraft(){
+    var d = readJSON(K_DRAFT);
+    if(!d || !d.at || Date.now() - d.at > 12 * 3600000){ lsDel(K_DRAFT); return false; }
+    if(!d.type && !(d.desc || '').trim()) return false;
+    restoring = true;
+    if(d.type) setType(d.type);
+    if(d.sev) setSev(d.sev);
+    if(d.damage){ $('f-damage').value = d.damage; $('damageDetailsWrap').hidden = d.damage === 'No damage'; }
+    $('f-damage-details').value = d.damageDetails || '';
+    $('f-desc').value = d.desc || '';
+    $('f-media').value = d.media || '';
+    if(d.parish) $('f-parish').value = d.parish;
+    /* "just now" and "x min ago" were relative to when it was typed: switch to the actual time instead */
+    if(d.when && d.when !== '0' && d.when !== 'other'){
+      var t = new Date(d.at - (+d.when) * 60000);
+      setWhen('other'); setDay(sameLocalDay(t, new Date()) ? '0' : '1'); $('f-time').value = hhmm(t);
+    }else if(d.when === 'other'){ setWhen('other'); setDay(d.day || '0'); $('f-time').value = d.time || ''; }
+    restoring = false;
+    if(d.media) $('extras').open = true;
+    return true;
+  }
+  $('draftClear').addEventListener('click', function(){ lsDel(K_DRAFT); resetForm(); $('draftNote').hidden = true; });
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function hhmm(d){ return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function sameLocalDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+
+  /* when it happened, as a Date; null if the EARLIER time is missing or in the future */
+  function eventTime(){
+    var now = new Date();
+    if(state.when !== 'other') return new Date(now.getTime() - (+state.when || 0) * 60000);
+    var v = $('f-time').value;
+    if(!/^\d{1,2}:\d{2}/.test(v)) return null;
+    var p = v.split(':');
+    var t = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (+state.day || 0), +p[0], +p[1], 0, 0);
+    if(t.getTime() > now.getTime() + 2 * 60000) return null;
+    return t;
+  }
+
+  /* ---------- duplicate guard (same rules as the Storm Reports page) ---------- */
+  function fingerprint(r){ return [r.type, r.parish, String(r.description).toLowerCase().replace(/\s+/g, ' '), String(r.reporter).toLowerCase()].join('|'); }
+  function isRecentDuplicate(r){
+    var last = readJSON(K_LAST);
+    return !!(last && last.fp === fingerprint(r) && (Date.now() - last.at) < 10 * 60000);
+  }
+
+  /* ---------- status line ---------- */
+  function status(cls, text, btn){
+    var el = $('status');
+    el.className = 'status' + (cls ? ' ' + cls : '');
+    el.textContent = text || '';
+    if(btn){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'linkbtn'; b.textContent = btn[0];
+      b.addEventListener('click', btn[1]);
+      el.appendChild(document.createElement('br')); el.appendChild(b);
+    }
+    $('sendBtn').disabled = cls === 'sending';
+  }
+
+  /* ---------- sending ---------- */
+  var inFlight = false;
+  function post(report){
+    var fd = new FormData();
+    Object.keys(report).forEach(function(k){ fd.append(k, report[k]); });
+    return fetch(API_URL, { method:'POST', body:fd })
+      .then(function(res){ return res.json(); })
+      .then(function(j){
+        if(j && j.status === 'ok') return { ok:true };
+        return { ok:false, message:(j && j.message) || 'The report wasn’t accepted. Please check the PIN and try again.' };
+      }, function(){ return { ok:false, net:true }; });
+  }
+
+  function send(report, fromPending){
+    inFlight = true;
+    status('sending', 'SENDING YOUR REPORT…');
+    var slow = setTimeout(function(){ if(inFlight) status('sending', 'STILL SENDING… the server can take a few seconds to wake up. Keep this open.'); }, 6000);
+    return post(report).then(function(r){
+      clearTimeout(slow); inFlight = false;
+      if(r.ok){ sent(report); return; }
+      if(r.net){
+        if(navigator.onLine === false){ holdPending(report); return; }
+        status('failed', 'COULDN’T REACH THE SERVER. Check your signal and press SEND REPORT again — everything you typed is still here.');
+        if(fromPending) showPendingBanner();
+        return;
+      }
+      /* the server said no: almost always the PIN */
+      lsDel(K_PENDING);
+      if(/pin/i.test(r.message)){
+        lsDel(K_PIN);
+        if(fromPending) loadIntoForm(report);
+        showPin();
+        $('f-pin').value = report.pin;
+        $('pinErr').textContent = r.message; $('pinErr').hidden = false;
+        need('stYou');
+        status('failed', 'NOT SENT — the community PIN wasn’t right. Type it again above and press SEND REPORT.');
+        scrollToEl($('stYou'));
+      }else{
+        if(fromPending) loadIntoForm(report);
+        status('failed', 'NOT SENT — ' + r.message);
+      }
+    });
+  }
+
+  function sent(report){
+    sessionPin = report.pin;
+    lsSet(K_LAST, JSON.stringify({ fp:fingerprint(report), at:Date.now() }));
+    if(rememberOn()){
+      lsSet(K_DETAILS, JSON.stringify({ name:report.reporter, parish:report.parish }));
+      lsSet(K_PIN, report.pin);
+    }
+    lsDel(K_DRAFT); lsDel(K_PENDING);
+    status('', '');
+    $('draftNote').hidden = true;
+    var first = String(report.reporter).split(/\s+/)[0];
+    $('doneText').firstChild.textContent = first ? 'Thank you, ' + first + '. Your report is on the map at ' : 'Thank you. Your report is on the map at ';
+    var t = new Date(report.timestamp);
+    $('doneSum').textContent = (TYPE_ICON[report.type] || '') + ' ' + (TYPE_SHORT[report.type] || report.type.toUpperCase()) + ' · ' + report.parish.toUpperCase() + ' · ' + fmtHM.format(t);
+    $('reportForm').hidden = true;
+    $('done').hidden = false;
+    window.scrollTo(0, 0);
+  }
+
+  /* No signal at all when SEND was pressed: keep the finished report and send it the moment the phone is back online. */
+  function holdPending(report){
+    lsSet(K_PENDING, JSON.stringify(report));
+    status('waiting', 'NO SIGNAL RIGHT NOW. Your report is saved on this phone and will send by itself as soon as you’re back online — keep this screen open.');
+  }
+  window.addEventListener('online', function(){
+    var p = readJSON(K_PENDING);
+    if(p && !inFlight) send(p, true);
+  });
+  function showPendingBanner(){
+    var p = readJSON(K_PENDING);
+    if(!p) return;
+    var t = new Date(+String(p.id).replace(/^r/, '') || Date.now());
+    status('waiting', 'YOU HAVE A REPORT THAT HASN’T BEEN SENT YET (' + (TYPE_SHORT[p.type] || p.type.toUpperCase()) + ', ' + p.parish.toUpperCase() + ', pressed at ' + fmtHM.format(t) + ').',
+      ['SEND IT NOW', function(){ if(!inFlight) send(p, true); }]);
+    var el = $('status'), b2 = document.createElement('button');
+    b2.type = 'button'; b2.className = 'linkbtn'; b2.style.marginLeft = '16px'; b2.textContent = 'DISCARD';
+    b2.addEventListener('click', function(){ lsDel(K_PENDING); status('', ''); });
+    el.appendChild(b2);
+  }
+  function loadIntoForm(r){
+    resetForm();
+    setType(r.type);
+    if(r.severity && r.severity !== 'Observation') setSev(r.severity);
+    $('f-parish').value = r.parish;
+    $('f-desc').value = r.description;
+    $('f-name').value = r.reporter;
+    $('f-media').value = r.media || '';
+    $('f-email').value = r.emailCopy || '';
+    var t = new Date(r.timestamp);
+    setWhen('other'); setDay(sameLocalDay(t, new Date()) ? '0' : '1'); $('f-time').value = hhmm(t);
+  }
+
+  function scrollToEl(el){ try{ el.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){ el.scrollIntoView(); } }
+
+  $('reportForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(inFlight) return;
+    var type = state.type, parish = $('f-parish').value, desc = $('f-desc').value.trim();
+    var name = $('f-name').value.trim(), pin = $('f-pin').value.trim() || savedPin();
+    var isObs = type === 'Observation', isQuake = type === 'Earthquake Report';
+    var when = eventTime();
+    var missing = [];
+    if(!type) missing.push('stType');
+    if(!parish) missing.push('stWhere');
+    if(type && !isObs && !state.sev) missing.push('stSev');
+    if(!desc) missing.push('stDesc');
+    if(!when){ missing.push('stWhen'); $('whenErr').textContent = $('f-time').value ? 'That time is in the future. Check TODAY / YESTERDAY.' : 'Choose the time it happened.'; }
+    if(!name || !pin) missing.push('stYou');
+    if(missing.length){
+      missing.forEach(need);
+      missingShown = true;
+      status('failed', missing.length === 1 ? 'ONE THING MISSING — see the red box above.' : missing.length + ' THINGS MISSING — see the red boxes above.');
+      scrollToEl($(missing[0]));
+      return;
+    }
+    var draft = { type:type, parish:parish, description:desc, reporter:name };
+    if(isRecentDuplicate(draft) && !confirm('You already sent this exact report from this device a few minutes ago. Send it again anyway?')) return;
+
+    lsDel(K_PENDING);      /* this report replaces any older unsent one */
+    inFlight = true;
+    status('sending', $('f-loc').checked ? 'FINDING YOUR SPOT… if your phone asks, allow location (or untick “Pin my exact spot”).' : 'SENDING YOUR REPORT…');
+    locWait().then(function(ms){ return ms ? getLocation(ms) : null; }).then(function(loc){
+      var report = {
+        id: 'r' + Date.now(),
+        type: type, parish: parish, severity: isObs ? 'Observation' : state.sev,
+        description: desc,
+        damage: isQuake ? $('f-damage').value : '',
+        damageDetails: isQuake ? $('f-damage-details').value.trim() : '',
+        reporter: name,
+        pin: pin,
+        media: $('f-media').value.trim(),
+        emailCopy: $('f-email').value.trim(),
+        lat: loc ? loc.lat : '', lon: loc ? loc.lon : '',
+        timestamp: when.toISOString()
+      };
+      inFlight = false;
+      if(navigator.onLine === false){ holdPending(report); return; }
+      send(report, false);
+    });
+  });
+
+  function resetForm(){
+    restoring = true;
+    $('reportForm').reset();
+    state.type = ''; state.sev = '';
+    var tiles = $('types').querySelectorAll('.tile');
+    for(var i = 0; i < tiles.length; i++) tiles[i].setAttribute('aria-pressed', 'false');
+    $('stSev').hidden = false; $('sevs').removeAttribute('data-set'); drawSev('normal');
+    $('quakeExtra').hidden = true; $('damageDetailsWrap').hidden = true;
+    $('descLabel').textContent = 'TELL US WHAT HAPPENED';
+    $('f-desc').placeholder = DESC_DEFAULT_PH;
+    setWhen('0'); setDay('0');
+    ['stType', 'stWhere', 'stSev', 'stDesc', 'stWhen', 'stYou'].forEach(clearNeed);
+    $('pinErr').hidden = true;
+    $('f-remember').checked = rememberOn();
+    $('f-loc').checked = lsGet(K_LOC) !== 'off';
+    $('extras').open = false;
+    fillRemembered(); showPin();
+    restoring = false;
+  }
+
+  $('again').addEventListener('click', function(){
+    var keepName = $('f-name').value, keepParish = $('f-parish').value;
+    resetForm();
+    if(!$('f-name').value) $('f-name').value = keepName;
+    if(!$('f-parish').value) $('f-parish').value = keepParish;
+    if(!savedPin() && sessionPin) $('f-pin').value = sessionPin;
+    $('done').hidden = true; $('reportForm').hidden = false;
+    window.scrollTo(0, 0);
+  });
+
+  /* ---------- putting SR on the home screen ----------
+     Chrome and Edge offer an install prompt (the ADD button). iPhone/iPad: Share > Add to Home Screen.
+     Facebook's own browser can't add apps, so it says how to open this page in the phone's browser. */
+  var UA = navigator.userAgent;
+  var IS_IOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var IS_ANDROID = /Android/i.test(UA);
+  var IN_FB = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(UA);
+  function standalone(){ return !!((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true); }
+  var INST = { mode:'', deferred:null };
+  function instHow(m){
+    if(m === 'facebook') return IS_IOS
+      ? 'Facebook can’t add apps. Tap <b>•••</b> (top right), <b>Open in external browser</b>, then in Safari tap <b>Share</b> → <b>Add to Home Screen</b>. You can still send a report from here.'
+      : 'Facebook can’t add apps. Tap <b>⋮</b> (top right), <b>Open in Chrome</b>, then <b>⋮</b> → <b>Add to Home screen</b> → <b>Install</b>. You can still send a report from here.';
+    if(m === 'ios') return 'Tap <b>Share</b> (the square with an arrow ↑), then <b>Add to Home Screen</b>. One tap opens this form next time.';
+    if(m === 'android') return 'Tap Chrome’s <b>⋮</b> menu (top right), then <b>Add to Home screen</b> and choose <b>Install</b>. One tap opens this form next time.';
+    if(m === 'prompt') return 'One tap opens this form next time, ready to go. No app store needed.';
+    if(m === 'done') return 'Done. Look for the red <b>JWC Report</b> icon on your home screen or in your apps.';
+    return 'In <b>Chrome</b> or <b>Edge</b>, click the install icon at the right-hand end of the address bar.';
+  }
+  function drawInstall(){
+    var box = $('install'), m = INST.mode;
+    var hiddenAt = +(lsGet(K_INST_HIDE) || 0);
+    var dismissed = hiddenAt && Date.now() - hiddenAt < 30 * 86400000;
+    if(!m || m === 'installed'){ box.hidden = true; $('instShow').hidden = true; return; }
+    $('instShow').hidden = !dismissed;
+    box.hidden = !!dismissed && m !== 'done';
+    $('instTitle').textContent = m === 'done' ? 'SR IS ON YOUR HOME SCREEN' : 'PUT SR ON YOUR HOME SCREEN';
+    $('instText').innerHTML = instHow(m);
+    var b = $('instBtn');
+    if(m === 'prompt'){ b.hidden = false; b.textContent = 'ADD'; }
+    else if(m === 'facebook'){ b.hidden = !(navigator.clipboard && navigator.clipboard.writeText); b.textContent = 'COPY LINK'; }
+    else b.hidden = true;
+  }
+  (function(){
+    if(standalone()){ INST.mode = 'installed'; return; }
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); INST.deferred = e; INST.mode = 'prompt'; drawInstall(); });
+    window.addEventListener('appinstalled', function(){ INST.deferred = null; INST.mode = 'done'; drawInstall(); });
+    if(IN_FB && (IS_IOS || IS_ANDROID)) INST.mode = 'facebook';
+    else if(IS_IOS) INST.mode = 'ios';
+    else if(IS_ANDROID) setTimeout(function(){ if(!INST.deferred && !INST.mode){ INST.mode = 'android'; drawInstall(); } }, 3000);
+    else setTimeout(function(){ if(!INST.deferred && !INST.mode){ INST.mode = 'computer'; drawInstall(); } }, 3000);
+  })();
+  $('instBtn').addEventListener('click', function(){
+    if(INST.mode === 'facebook'){
+      navigator.clipboard.writeText(SITE_LINK).then(function(){ $('instBtn').textContent = 'COPIED'; }, function(){});
+      return;
+    }
+    var d = INST.deferred; if(!d) return;
+    INST.deferred = null;
+    try{ d.prompt(); }catch(err){ INST.mode = IS_ANDROID ? 'android' : 'computer'; drawInstall(); return; }
+    d.userChoice.then(function(c){
+      INST.mode = (c && c.outcome === 'accepted') ? 'done' : (IS_ANDROID ? 'android' : 'computer');
+      drawInstall();
+    }, function(){});
+  });
+  $('instX').addEventListener('click', function(){ lsSet(K_INST_HIDE, String(Date.now())); if(INST.mode === 'done') INST.mode = 'installed'; drawInstall(); });
+  $('instShow').addEventListener('click', function(e){ e.preventDefault(); lsDel(K_INST_HIDE); drawInstall(); scrollToEl($('install')); });
+
+  /* ---------- start ---------- */
+  drawSev('normal');
+  fillRemembered();
+  showPin();
+  var hadDraft = restoreDraft();
+  /* a link or home-screen shortcut can choose the type: ?type=funnel, hail, lightning, flood, wind, snow, damage, quake, obs */
+  var want = '';
+  try{ want = (new URLSearchParams(location.search).get('type') || '').toLowerCase(); }catch(e){}
+  if(TYPE_KEYS[want] && (!hadDraft || !state.type)) setType(TYPE_KEYS[want]);
+  if(hadDraft) $('draftNote').hidden = false;
+  drawInstall();
+  if(readJSON(K_PENDING)){
+    if(navigator.onLine !== false) showPendingBanner();
+    else status('waiting', 'NO SIGNAL RIGHT NOW. Your unsent report is saved on this phone and will send by itself as soon as you’re back online — keep this screen open.');
+  }
+})();
+</script>
+</body>
+</html>

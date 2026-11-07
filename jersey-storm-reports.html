@@ -241,6 +241,14 @@ transition:all .2s ease;
     font-size:11px; letter-spacing:0.5px; padding:12px 16px; border-radius:8px; margin-bottom:22px; line-height:1.6;
   }
 
+  /* link to the SR quick report app (report/) */
+  .sr-app{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); margin-bottom:14px; padding:11px 14px; border-radius:10px; border:1px dashed rgba(255,107,53,0.6); background:rgba(255,107,53,0.06); font-size:11.5px; line-height:1.5; }
+  .sr-app img{ width:40px; height:40px; border-radius:9px; flex:0 0 auto; }
+  .sr-app b{ display:block; font-family:'Orbitron',sans-serif; font-size:10.5px; letter-spacing:1.5px; color:#ff6b35; margin-bottom:2px; }
+  .sr-app u{ color:var(--cyan); text-underline-offset:2px; }
+  .sr-app .sr-go{ margin-left:auto; color:#ff6b35; font-size:18px; }
+  .sr-app:hover{ border-color:#ff6b35; }
+
   /* FORM */
   .form-panel{
     background:linear-gradient(160deg, var(--bg-panel), var(--bg-panel-2));
@@ -373,6 +381,8 @@ html[data-theme="light"] .rl-open{ color:#ffffff; }
 html[data-theme="light"] :is(.field input, .field textarea)::placeholder{ color:var(--dim); opacity:1; }
 html[data-theme="light"] .sev-btn[data-sev="Severe"].active{ background:rgba(240,124,34,0.14); border-color:var(--orange); color:var(--orange); }
 html[data-theme="light"] .sev-btn[data-sev="Extreme"].active, html[data-theme="light"] .sev-btn[data-sev="Heavy Shaking"].active{ box-shadow:0 0 0 3px rgba(224,56,76,0.16); }
+html[data-theme="light"] .sr-app{ background:rgba(240,124,34,0.08); border-color:rgba(176,71,0,0.5); }
+html[data-theme="light"] .sr-app b, html[data-theme="light"] .sr-app .sr-go{ color:var(--orange); }
 html[data-theme="light"] .submit-btn{ background:linear-gradient(120deg, var(--red), var(--orange)); color:#ffffff; }
 html[data-theme="light"] .submit-btn:hover{ box-shadow:0 8px 24px rgba(192,17,45,0.3); }
 html[data-theme="light"] .toast{ color:#ffffff; box-shadow:0 10px 30px rgba(12,40,55,0.3); }
@@ -439,6 +449,12 @@ html[data-theme="light"] .rc-timestamp{ opacity:1; }
       <div class="bar"></div>
       <div class="tag">PUBLIC INPUT</div>
     </div>
+
+    <a class="sr-app" href="report/">
+      <img src="report/icon-192.png" alt="" width="40" height="40">
+      <span><b>QUICK REPORT APP</b>Put a red SR button on your phone&rsquo;s home screen: one tap opens this form. <u>jerseyweatherchat.com/report</u></span>
+      <span class="sr-go" aria-hidden="true">&rarr;</span>
+    </a>
 
     <div class="form-panel">
       <form id="reportForm">
