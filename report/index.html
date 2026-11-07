@@ -76,6 +76,9 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
   .brand img{ width:40px; height:40px; border-radius:9px; flex:0 0 auto; box-shadow:0 0 16px rgba(255,75,92,0.45); }
   .brand h1{ font-family:'Orbitron', sans-serif; font-weight:900; font-size:17px; letter-spacing:2px; white-space:nowrap; }
   .brand span{ display:block; font-size:9.5px; letter-spacing:2.5px; color:var(--dim); margin-top:3px; white-space:nowrap; }
+  .hr{ display:flex; align-items:center; gap:10px; flex:0 0 auto; }
+  .home{ font-family:'Orbitron', sans-serif; font-size:9.5px; font-weight:700; letter-spacing:1.5px; color:var(--cyan); text-decoration:none; border:1px solid var(--line); border-radius:6px; padding:8px 9px; white-space:nowrap; }
+  .home::before{ content:"\2190  "; }
   #clock{ font-family:'Orbitron', sans-serif; color:var(--cyan); font-size:14px; font-weight:700; letter-spacing:1px; flex:0 0 auto; }
 
   .intro{ font-size:12.5px; line-height:1.65; color:var(--dim); margin:0 2px 14px; }
@@ -190,6 +193,7 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
   footer .sos b{ color:var(--red); text-decoration:underline; text-underline-offset:3px; }
 
   @media (min-width:520px){ .types{ grid-template-columns:1fr 1fr 1fr; } .tile{ flex-direction:column; justify-content:center; text-align:center; gap:6px; min-height:74px; } .tile .em{ width:auto; } }
+  @media (max-width:380px){ #clock{ display:none; } }
   @media (max-width:360px){ .brand h1{ font-size:15px; } .sev{ font-size:9.5px; letter-spacing:0.2px; } }
 
   /* LIGHT MODE: follows the look the site last showed on this device (Settings > Display on any JWC page) */
@@ -228,7 +232,10 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
         <span>JERSEY WEATHER CHAT</span>
       </div>
     </div>
-    <div id="clock" aria-label="Time in Jersey">--:--</div>
+    <div class="hr">
+      <a class="home" href="../index.html" title="Open Jersey Weather Chat">LIVE OPS</a>
+      <div id="clock" aria-label="Time in Jersey">--:--</div>
+    </div>
   </header>
 
   <p class="intro" id="intro">Seen something? Send it in under a minute. Your report goes on the map at <a href="../jersey-storm-reports.html#report-map">www.jerseyweatherchat.com</a> for everyone to see, and helps us build a picture of what the weather really did across the island.</p>
@@ -842,6 +849,14 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
   var IS_ANDROID = /Android/i.test(UA);
   var IN_FB = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(UA);
   function standalone(){ return !!((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true); }
+  /* The JWC Weather app covers the whole site, so this page can also be opened INSIDE it (the strip on Storm
+     Reports, a link the phone hands to that app, or its "Send a report" shortcut). Nothing can be installed from
+     inside an app, so there it explains the shortcut instead. The SR app itself starts at ?source=app. */
+  var SRC = '';
+  try{ SRC = new URLSearchParams(location.search).get('source') || ''; }catch(e){}
+  try{ if(SRC === 'app') sessionStorage.setItem('jwc-in-sr', '1'); if(SRC === 'jwc-app') sessionStorage.setItem('jwc-in-sr', 'shortcut'); }catch(e){}
+  var IN_SR = '';
+  try{ IN_SR = sessionStorage.getItem('jwc-in-sr') || ''; }catch(e){}
   var INST = { mode:'', deferred:null };
   function instHow(m){
     if(m === 'facebook') return IS_IOS
@@ -851,6 +866,7 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
     if(m === 'android') return 'Tap Chrome’s <b>⋮</b> menu (top right), then <b>Add to Home screen</b> and choose <b>Install</b>. One tap opens this form next time.';
     if(m === 'prompt') return 'One tap opens this form next time, ready to go. No app store needed.';
     if(m === 'done') return 'Done. Look for the red <b>JWC Report</b> icon on your home screen or in your apps.';
+    if(m === 'inapp') return 'You\u2019re in the JWC Weather app. Press and hold the <b>JWC Weather</b> icon on your home screen and drag <b>Send a report</b> onto the screen to make a red SR button. Or open <b>jerseyweatherchat.com/report</b> in Chrome and add it from there.';
     return 'In <b>Chrome</b> or <b>Edge</b>, click the install icon at the right-hand end of the address bar.';
   }
   function drawInstall(){
@@ -860,7 +876,7 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
     if(!m || m === 'installed'){ box.hidden = true; $('instShow').hidden = true; return; }
     $('instShow').hidden = !dismissed;
     box.hidden = !!dismissed && m !== 'done';
-    $('instTitle').textContent = m === 'done' ? 'SR IS ON YOUR HOME SCREEN' : 'PUT SR ON YOUR HOME SCREEN';
+    $('instTitle').textContent = m === 'done' ? 'SR IS ON YOUR HOME SCREEN' : m === 'inapp' ? 'WANT A RED SR BUTTON?' : 'PUT SR ON YOUR HOME SCREEN';
     $('instText').innerHTML = instHow(m);
     var b = $('instBtn');
     if(m === 'prompt'){ b.hidden = false; b.textContent = 'ADD'; }
@@ -868,7 +884,7 @@ try{ var jl = localStorage.getItem('jwc-look') || ''; if(/^light/.test(jl)){ doc
     else b.hidden = true;
   }
   (function(){
-    if(standalone()){ INST.mode = 'installed'; return; }
+    if(standalone()){ INST.mode = (IS_ANDROID && !IN_SR) ? 'inapp' : 'installed'; return; }
     window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); INST.deferred = e; INST.mode = 'prompt'; drawInstall(); });
     window.addEventListener('appinstalled', function(){ INST.deferred = null; INST.mode = 'done'; drawInstall(); });
     if(IN_FB && (IS_IOS || IS_ANDROID)) INST.mode = 'facebook';

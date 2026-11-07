@@ -17,6 +17,7 @@
     { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
+    { "name": "Send a storm report", "short_name": "Send a report", "url": "./report/?source=jwc-app", "icons": [{ "src": "report/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
     { "name": "Storm Scenarios", "short_name": "Scenarios", "url": "./jersey-storm-scenarios.html?source=app", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Sea & Tides", "short_name": "Tides", "url": "./jersey-sea-tides.html?source=app", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Storm Reports", "short_name": "Reports", "url": "./jersey-storm-reports.html?source=app", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
