@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "1283d808448c",
+ "hash": "",
  "warnings": {
   "thunderstorm": {
    "key": "thunderstorm",
@@ -12,15 +12,15 @@
    "sea": false,
    "issued": "5:07 a.m. Saturday 07 November",
    "message": "",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
- "source": "gov.je data feed",
+ "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-07T05:12:17.5511098Z",
- "snippet": "Yellow - Thunderstorm Warning Issued at 5:07 a.m. Saturday 07 November",
- "checkedAt": "2026-11-07T05:12:17.5511098Z",
+ "lastFetch": "2026-11-07T16:49:35.529Z",
+ "snippet": "",
+ "checkedAt": "2026-11-07T16:49:35.529Z",
  "lastAlertAt": "2026-11-07T05:15:08Z",
  "lastAlertKind": "new",
  "lastChangeAt": "2026-11-07T05:15:08Z",
