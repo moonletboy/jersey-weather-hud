@@ -1,14 +1,28 @@
 {
- "severity": "none",
- "hash": "",
- "warnings": {},
- "source": "Apps Script page check",
+ "severity": "yellow",
+ "hash": "1283d808448c",
+ "warnings": {
+  "thunderstorm": {
+   "key": "thunderstorm",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Thunderstorm",
+   "area": "Jersey",
+   "hazard": "thunderstorm",
+   "sea": false,
+   "issued": "5:07 a.m. Saturday 07 November",
+   "message": "",
+   "missing": 0,
+   "lower": 0
+  }
+ },
+ "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-05T02:52:40.328Z",
- "snippet": "",
- "checkedAt": "2026-11-05T02:52:40.328Z",
- "lastAlertAt": "2026-11-05T02:20:05Z",
+ "lastFetch": "2026-11-07T05:12:17.5511098Z",
+ "snippet": "Yellow - Thunderstorm Warning Issued at 5:07 a.m. Saturday 07 November",
+ "checkedAt": "2026-11-07T05:12:17.5511098Z",
+ "lastAlertAt": "2026-11-07T05:15:08Z",
  "lastAlertKind": "new",
- "lastChangeAt": "2026-11-05T02:54:42Z",
- "lastChange": "orange Channel Islands Shipping Area Wind cleared by gov.je"
+ "lastChangeAt": "2026-11-07T05:15:08Z",
+ "lastChange": "yellow Thunderstorm"
 }
