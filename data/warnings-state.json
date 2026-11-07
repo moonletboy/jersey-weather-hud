@@ -1,28 +1,14 @@
 {
- "severity": "yellow",
+ "severity": "none",
  "hash": "",
- "warnings": {
-  "thunderstorm": {
-   "key": "thunderstorm",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Thunderstorm",
-   "area": "Jersey",
-   "hazard": "thunderstorm",
-   "sea": false,
-   "issued": "5:07 a.m. Saturday 07 November",
-   "message": "",
-   "missing": 1,
-   "lower": 0
-  }
- },
+ "warnings": {},
  "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-07T16:49:35.529Z",
+ "lastFetch": "2026-11-07T17:49:54.894Z",
  "snippet": "",
- "checkedAt": "2026-11-07T16:49:35.529Z",
+ "checkedAt": "2026-11-07T17:49:54.894Z",
  "lastAlertAt": "2026-11-07T05:15:08Z",
  "lastAlertKind": "new",
- "lastChangeAt": "2026-11-07T05:15:08Z",
- "lastChange": "yellow Thunderstorm"
+ "lastChangeAt": "2026-11-07T17:49:58Z",
+ "lastChange": "yellow Thunderstorm cleared by gov.je"
 }
