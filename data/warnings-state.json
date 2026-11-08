@@ -1,14 +1,28 @@
 {
- "severity": "none",
- "hash": "",
- "warnings": {},
- "source": "Apps Script page check",
+ "severity": "yellow",
+ "hash": "04fc01b3bc34",
+ "warnings": {
+  "channel islands shipping area wind": {
+   "key": "channel islands shipping area wind",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Channel Islands Shipping Area Wind",
+   "area": "Channel Islands Shipping Area",
+   "hazard": "wind",
+   "sea": true,
+   "issued": "14:46 UTC Sunday 08 November",
+   "message": "E wind F6 especially in the north of the area expected later.",
+   "missing": 0,
+   "lower": 0
+  }
+ },
+ "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-07T17:49:54.894Z",
- "snippet": "",
- "checkedAt": "2026-11-07T17:49:54.894Z",
- "lastAlertAt": "2026-11-07T05:15:08Z",
+ "lastFetch": "2026-11-08T14:48:23.5012165Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 14:46 UTC Sunday 08 November E wind F6 especially in the north of the area expected later.",
+ "checkedAt": "2026-11-08T14:48:23.5012165Z",
+ "lastAlertAt": "2026-11-08T14:50:01Z",
  "lastAlertKind": "new",
- "lastChangeAt": "2026-11-07T17:49:58Z",
- "lastChange": "yellow Thunderstorm cleared by gov.je"
+ "lastChangeAt": "2026-11-08T14:50:01Z",
+ "lastChange": "yellow Channel Islands Shipping Area Wind"
 }
