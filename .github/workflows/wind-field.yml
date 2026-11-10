@@ -1,10 +1,15 @@
 # Wind-field map data for the Jersey Weather Chat HUD
 #
-# Every 6 hours (about 20 minutes after the "Storm tracks" job) this downloads
+# Each time NOAA publishes a new run (every 6 hours) this downloads
 # NOAA's 0.25-degree forecast wind-gust, wind and pressure maps, trims them to
 # the Storm Tracker's map window and builds data/wind-field.json. The Storm
 # Tracker map on the website reads that file to paint the wind shading and the
 # pressure lines.
+#
+# GitHub's scheduler often starts jobs hours late or skips them, so this is
+# triggered several times after each run is due. Each trigger first checks
+# whether the newest complete NOAA run is already on the data branch and stops
+# in a few seconds if it is, so extra triggers cost almost nothing.
 #
 # Since November 2026 the same run also saves the jet stream (the wind about
 # 10 km up, 250 hPa) over the North Atlantic and Europe as jet-stream.json, for
@@ -26,7 +31,7 @@ name: Wind field
 
 on:
   schedule:
-    - cron: "47 5,11,17,23 * * *"
+    - cron: "47 5,6,7,11,12,13,17,18,19,23,0,1 * * *"
   workflow_dispatch:
 
 permissions:
@@ -44,18 +49,60 @@ jobs:
       - name: Get the repository
         uses: actions/checkout@v4
 
+      - name: Check whether a new NOAA run is waiting
+        id: check
+        run: |
+          python3 - <<'PY'
+          import datetime as dt, json, os, urllib.request
+          B = "https://noaa-gfs-bdp-pds.s3.amazonaws.com"
+          now = dt.datetime.now(dt.timezone.utc)
+          base = now.replace(minute=0, second=0, microsecond=0)
+          base -= dt.timedelta(hours=base.hour % 6)
+          latest = None
+          for k in range(6):
+              c = base - dt.timedelta(hours=6 * k)
+              h = c.strftime("%H")
+              url = "%s/gfs.%s/%s/atmos/gfs.t%sz.pgrb2.0p25.f240.idx" % (B, c.strftime("%Y%m%d"), h, h)
+              try:
+                  req = urllib.request.Request(url, method="HEAD")
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      if r.status == 200:
+                          latest = c
+                          break
+              except Exception:
+                  pass
+          have = None
+          try:
+              repo = os.environ["GITHUB_REPOSITORY"]
+              u = "https://raw.githubusercontent.com/%s/data/wind-field.json?nc=%d" % (repo, int(now.timestamp()))
+              with urllib.request.urlopen(u, timeout=60) as r:
+                  have = json.load(r).get("cycle")
+          except Exception as e:
+              print("Could not read the published file (%s) - will build." % e)
+          want = latest.strftime("%Y-%m-%dT%H:00:00Z") if latest else None
+          print("Newest complete NOAA run:", want, "| on data branch:", have)
+          manual = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
+          go = manual or latest is None or want != have
+          print("Manual run - building." if manual else ("Building." if go else "Already current - nothing to do."))
+          open(os.environ["GITHUB_OUTPUT"], "a").write("build=%s\n" % ("true" if go else "false"))
+          PY
+
       - name: Set up Python
+        if: steps.check.outputs.build == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install Python packages
+        if: steps.check.outputs.build == 'true'
         run: pip install numpy scipy requests eccodes
 
       - name: Build the wind field and the jet stream
+        if: steps.check.outputs.build == 'true'
         run: python scripts/wind_field.py --out out/wind-field.json --jet-out out/jet-stream.json
 
       - name: Publish on the data branch
+        if: steps.check.outputs.build == 'true'
         run: |
           if [ ! -s out/wind-field.json ]; then
             echo "No file was built - leaving the data branch as it is."
