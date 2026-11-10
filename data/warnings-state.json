@@ -1,28 +1,14 @@
 {
- "severity": "yellow",
+ "severity": "none",
  "hash": "",
- "warnings": {
-  "channel islands shipping area wind": {
-   "key": "channel islands shipping area wind",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Channel Islands Shipping Area Wind",
-   "area": "Channel Islands Shipping Area",
-   "hazard": "wind",
-   "sea": true,
-   "issued": "08:37 UTC Tuesday 10 November",
-   "message": "E wind F6 especially in the north of the area continuing.",
-   "missing": 1,
-   "lower": 0
-  }
- },
+ "warnings": {},
  "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-10T11:09:54.034Z",
+ "lastFetch": "2026-11-10T11:09:59.846Z",
  "snippet": "",
- "checkedAt": "2026-11-10T11:09:54.034Z",
+ "checkedAt": "2026-11-10T11:09:59.846Z",
  "lastAlertAt": "2026-11-10T08:39:58Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-10T08:39:58Z",
- "lastChange": "yellow Channel Islands Shipping Area Wind re-issued 08:37 UTC Tuesday 10 November (was 08:35 UTC Monday 09 November)"
+ "lastChangeAt": "2026-11-10T11:14:43Z",
+ "lastChange": "yellow Channel Islands Shipping Area Wind cleared by gov.je"
 }
