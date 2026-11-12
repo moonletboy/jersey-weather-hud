@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "7bd8efe269db",
+ "hash": "",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -12,15 +12,15 @@
    "sea": true,
    "issued": "08:46 UTC Thursday 12 November",
    "message": "NE wind F6 especially in the north of the area continuing.",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
- "source": "gov.je data feed",
+ "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-12T09:00:00.0517769Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:46 UTC Thursday 12 November NE wind F6 especially in the north of the area continuing.",
- "checkedAt": "2026-11-12T09:00:00.0517769Z",
+ "lastFetch": "2026-11-12T21:19:02.417Z",
+ "snippet": "",
+ "checkedAt": "2026-11-12T21:19:02.417Z",
  "lastAlertAt": "2026-11-12T09:05:00Z",
  "lastAlertKind": "reissued",
  "lastChangeAt": "2026-11-12T09:05:00Z",
