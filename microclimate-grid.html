@@ -414,6 +414,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
         <button type="button" class="tgl" data-m="gust">GUSTS</button>
         <button type="button" class="tgl" data-m="rain">RAIN TODAY</button>
         <button type="button" class="tgl" data-m="hum">HUMIDITY</button>
+        <button type="button" class="tgl" data-m="feels">FEELS LIKE</button>
       </div>
       <div class="btn-group" id="styleGroup">
         <button type="button" class="tgl small active" data-s="parish">PARISHES</button>
@@ -427,6 +428,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
     </div>
 
     <p class="map-explainer">PARISHES colours each parish by the average of the stations inside it. BANDS and SMOOTH estimate values between stations across the island (the nearest stations count most) and are a guide rather than a measurement. The dots are the stations themselves. Dashed lines are the parish borders, which run out to the low-water mark, so some shading sits over the tidal shore. Tap a dot or a parish for details.</p>
+    <p class="map-explainer" id="feelsKey" style="display:none">Feels like is worked out here from each station's own temperature, wind and humidity (it is not a Weather Underground figure). In cool, breezy conditions (10&deg;C or below with wind over about 3 mph) it is the wind chill; in hot, humid conditions (about 27&deg;C and above) it is the heat index. In between, it simply equals the temperature. It uses the steady wind, not gusts, and station anemometers are often lower than the standard 10 m height, so real wind chill can be a little stronger than shown. It uses the same fixed 0&ndash;30&deg;C colours as TEMPERATURE.</p>
     <p class="map-explainer" id="windKey" style="display:none">Wind barbs: the staff points into the wind, each full feather is 10 knots, a half feather 5 knots and a flag 50 knots; a ring means calm. Barbs sway more on gusty stations and faster in stronger wind. The moving streaks show the wind flow estimated between stations.</p>
     <div id="pws-map"></div>
     <div class="legend">
@@ -537,7 +539,8 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
     wind:{ label:'WIND SPEED',  key:'wind', unit:' mph', dec:0, ramp:'wind' },
     gust:{ label:'WIND GUSTS',  key:'gust', unit:' mph', dec:0, ramp:'wind' },
     rain:{ label:'RAIN TODAY',  key:'rain', unit:' mm',  dec:1, ramp:'rain' },
-    hum: { label:'HUMIDITY',    key:'hum',  unit:'%',    dec:0, ramp:'hum'  }
+    hum: { label:'HUMIDITY',    key:'hum',  unit:'%',    dec:0, ramp:'hum'  },
+    feels:{ label:'FEELS LIKE',  key:'feels',unit:'°C',  dec:1, ramp:'temp' }
   };
   const RAMP_HEX = {
     temp:['#2b6cff','#4cd3ff','#2de1a0','#ffd34c','#ffb020','#ff4b5c'],
@@ -569,7 +572,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
   function scaleFor(mk, vals){
     if(!vals.length) return null;
     let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
-    if(mk === 'temp'){
+    if(mk === 'temp' || mk === 'feels'){
       // FIXED absolute scale (0-30 C) so colour always means the real temperature:
       // a cold November morning stays blue/cyan, a heatwave goes amber/red.
       // Values outside the range simply clamp to the end colours.
@@ -731,8 +734,33 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
   /* ============================================================
      DATA LAYER
      ============================================================ */
+  // ---- FEELS LIKE (wind chill / heat index), worked out from temp + wind + humidity ----
+  function feelsLike(o){
+    const T = o.temp;
+    if(T === null || T === undefined) return null;
+    const V = (o.wind === null || o.wind === undefined) ? 0 : o.wind * 1.609344;       // mph -> km/h
+    if(T <= 10 && V > 4.8){                                                           // wind chill (Met Office / Environment Canada formula)
+      const v = Math.pow(V, 0.16);
+      return Math.round((13.12 + 0.6215 * T - 11.37 * v + 0.3965 * T * v) * 10) / 10;
+    }
+    const F = T * 9 / 5 + 32, RH = o.hum;
+    if(F >= 80 && RH !== null && RH !== undefined){                                    // heat index (US National Weather Service formula)
+      let hi = -42.379 + 2.04901523 * F + 10.14333127 * RH - 0.22475541 * F * RH - 0.00683783 * F * F
+             - 0.05481717 * RH * RH + 0.00122874 * F * F * RH + 0.00085282 * F * RH * RH - 0.00000199 * F * F * RH * RH;
+      if(RH < 13 && F <= 112) hi -= ((13 - RH) / 4) * Math.sqrt((17 - Math.abs(F - 95)) / 17);
+      if(RH > 85 && F <= 87) hi += ((RH - 85) / 10) * ((87 - F) / 5);
+      return Math.round(Math.max(T, (hi - 32) * 5 / 9) * 10) / 10;
+    }
+    return T;
+  }
+  function syncFeels(){
+    obs.forEach(function(o){ o.feels = feelsLike(o); });
+    const k = document.getElementById('feelsKey');
+    if(k) k.style.display = (activeMetric === 'feels') ? '' : 'none';
+  }
+
   function blank(s, status, why){
-    return { id:s.id, name:s.name, lat:s.lat, lng:s.lng, temp:null, wind:null, gust:null, rain:null, hum:null, press:null, dir:null, time:null, status:status, why:why || '' };
+    return { id:s.id, name:s.name, lat:s.lat, lng:s.lng, temp:null, wind:null, gust:null, rain:null, hum:null, press:null, dir:null, feels:null, time:null, status:status, why:why || '' };
   }
 
   function demoObs(s){
@@ -1109,7 +1137,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
     const age = o.time ? hhmm(o.time) : '--:--';
     return '<b>' + escapeHtml(o.name) + '</b>' + (isNewStation(o) ? '<span class="pp-new">NEW</span>' : '') + '<br>' +
       '<span style="color:#6f8d99">' + escapeHtml(o.id) + '</span><br>' +
-      'Temp: ' + fmt(o.temp, 1) + '°C<br>' +
+      'Temp: ' + fmt(o.temp, 1) + '°C' + ((o.feels !== null && o.feels !== undefined && o.temp !== null && Math.abs(o.feels - o.temp) >= 0.5) ? ' (feels ' + fmt(o.feels, 1) + '°C)' : '') + '<br>' +
       'Wind: ' + fmt(o.wind, 0) + ' mph ' + compass(o.dir) + ' (gust ' + fmt(o.gust, 0) + ')<br>' +
       'Rain today: ' + fmt(o.rain, 1) + ' mm<br>' +
       'Humidity: ' + fmt(o.hum, 0) + '%<br>' +
@@ -1320,7 +1348,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
           '<div class="pws-top"><span class="pws-id">' + escapeHtml(o.id) + '</span>' + (isNewStation(o) ? '<span class="pws-new">NEW</span>' : '') + '<span class="dot' + dotCls + '"></span></div>' +
           '<div class="pws-name">' + escapeHtml(o.name) + '</div>' +
           '<div class="metric-value" style="color:' + col + ';--tc:' + col + '">' + val + '</div>' +   /* light mode reads --tc (see LIGHT MODE in the styles) */
-          '<div class="pws-meta"><span>T ' + fmt(o.temp, 1) + '°</span><span>W ' + fmt(o.wind, 0) + '/' + fmt(o.gust, 0) + ' ' + compass(o.dir) + '</span><span>R ' + fmt(o.rain, 1) + '</span><span>H ' + fmt(o.hum, 0) + '%</span></div>' +
+          '<div class="pws-meta"><span>T ' + fmt(o.temp, 1) + '°</span><span>W ' + fmt(o.wind, 0) + '/' + fmt(o.gust, 0) + ' ' + compass(o.dir) + '</span><span>R ' + fmt(o.rain, 1) + '</span><span>H ' + fmt(o.hum, 0) + '%</span>' + ((o.feels !== null && o.feels !== undefined && o.temp !== null && Math.abs(o.feels - o.temp) >= 0.5) ? '<span>FL ' + fmt(o.feels, 1) + '°</span>' : '') + '</div>' +
           '<div class="pws-age">' + age + '</div>' +
           '</div>';
       });
@@ -1340,6 +1368,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
   }
 
   function renderAll(){
+    syncFeels();
     renderPill();
     renderBanner();
     renderRefreshNote();
@@ -1356,6 +1385,7 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
       document.querySelectorAll('#metricGroup .tgl').forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
       activeMetric = btn.getAttribute('data-m');
+      syncFeels();
       renderStats(); renderMap(); renderCards();
     });
   });
