@@ -570,8 +570,10 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
     if(!vals.length) return null;
     let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
     if(mk === 'temp'){
-      lo = Math.floor(lo*2)/2; hi = Math.ceil(hi*2)/2;
-      if(hi - lo < 2){ const mid = (hi+lo)/2; lo = mid-1; hi = mid+1; }
+      // FIXED absolute scale (0-30 C) so colour always means the real temperature:
+      // a cold November morning stays blue/cyan, a heatwave goes amber/red.
+      // Values outside the range simply clamp to the end colours.
+      return { lo:0, hi:30, step:2 };
     } else if(mk === 'hum'){
       lo = Math.floor(lo/2)*2; hi = Math.ceil(hi/2)*2;
       if(hi - lo < 10){ const mid = (hi+lo)/2; lo = mid-5; hi = mid+5; }
