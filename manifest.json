@@ -7,8 +7,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#05080d",
-  "theme_color": "#05080d",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "lang": "en-GB",
   "categories": ["weather", "news"],
   "icons": [

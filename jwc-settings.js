@@ -130,7 +130,7 @@
     if(root.getAttribute('data-theme') !== shown) root.setAttribute('data-theme', shown);
     if(calmOn()) root.setAttribute('data-motion', 'calm'); else root.removeAttribute('data-motion');
     var meta = document.querySelector('meta[name="theme-color"]');
-    if(meta) meta.setAttribute('content', shown === 'light' ? '#e7edf0' : '#05080d');   /* the phone's status bar */
+    if(meta) meta.setAttribute('content', shown === 'light' ? '#e7edf0' : '#000000');   /* the phone's status bar */
     lsSet('jwc-look', shown + (calmOn() ? ' calm' : ''));   /* the offline page (offline.html) reads this to match */
     /* SUN: switch at the next sunrise or sunset (checked again every 10 minutes in case the device slept) */
     clearTimeout(displayTimer);
@@ -575,7 +575,7 @@
     '.jwcs-gear:hover svg{transform:rotate(45deg)}',
     '.jwcs-gear .jwcs-word{display:none}',
     '@media (min-width:900px){.jwcs-gear .jwcs-word{display:inline}}',
-    '.jwcs-gear.jwcs-has-news::after{content:"";position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--amber,#ffb020);box-shadow:0 0 0 2px var(--bg,#05080d)}',
+    '.jwcs-gear.jwcs-has-news::after{content:"";position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--amber,#ffb020);box-shadow:0 0 0 2px var(--bg,#000000)}',
     '.jwcs-layer{position:fixed;inset:0;z-index:1500}',
     '.jwcs-layer[hidden]{display:none}',
     '.jwcs-scrim{position:absolute;inset:0;background:rgba(2,6,10,.62);animation:jwcsFade .2s ease}',

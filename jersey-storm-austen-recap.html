@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- installable app: name, icons, colours and the offline helper (see manifest.json and sw.js) -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#05080d">
+<meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -36,7 +36,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{
-    --bg:#05080d;
+    --bg:#000000;
     --bg-panel:#0b131c;
     --bg-panel-2:#0e1822;
     --line:rgba(76,211,255,0.14);
@@ -52,10 +52,7 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   html{scroll-behavior:smooth;}
   body{
-    background:
-      radial-gradient(ellipse at 20% -10%, rgba(255,75,92,0.07), transparent 55%),
-      radial-gradient(ellipse at 90% 10%, rgba(76,211,255,0.06), transparent 50%),
-      var(--bg);
+    background: var(--bg);
     color:var(--text);
     font-family:'JetBrains Mono', monospace;
     min-height:100vh;
@@ -116,7 +113,7 @@ display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrol
 scrollbar-width:none; -ms-overflow-style:none;
 position:sticky; top:0; z-index:30;
 margin:0 -20px 14px; padding:8px 20px;
-background:rgba(5,8,13,0.94);
+background:rgba(0,0,0,0.94);
 border-bottom:1px solid var(--line);
 }
 nav.tabs::-webkit-scrollbar{ display:none; }
@@ -314,7 +311,7 @@ transition:all .2s ease;
    touches. The chart panels and the storm-track map keep the dark look, like screens in a bright room. */
 html[data-theme="light"] :is(.chart, #trackMap){
   color-scheme:dark; color:var(--text);
-  --bg:#05080d; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
+  --bg:#000000; --bg-panel:#0b131c; --bg-panel-2:#0e1822; --line:rgba(76,211,255,0.14);
   --cyan:#4cd3ff; --green:#2de1a0; --amber:#ffb020; --red:#ff4b5c; --text:#e9f6f5; --dim:#6f8d99; --dim2:#3a4e58; --orange:#ff6b35;
 }
 html[data-theme="light"] .chart{ background:var(--bg-panel); border-color:#16232d; box-shadow:0 2px 4px rgba(5,8,13,0.14), 0 22px 40px -22px rgba(5,8,13,0.6); }
