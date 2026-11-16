@@ -1,28 +1,28 @@
 {
- "severity": "yellow",
- "hash": "ec992abc1f9e",
+ "severity": "orange",
+ "hash": "5ede99e5b4b7",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
-   "colour": "yellow",
-   "level": 1,
+   "colour": "orange",
+   "level": 2,
    "name": "Channel Islands Shipping Area Wind",
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "08:50 UTC Monday 16 November",
-   "message": "SE wind F6 expected soon, veering SW later.",
+   "issued": "14:39 UTC Monday 16 November",
+   "message": "SE wind F6 imminent veering SW gale F8 later.",
    "missing": 0,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-16T08:51:52.537552Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:50 UTC Monday 16 November SE wind F6 expected soon, veering SW later.",
- "checkedAt": "2026-11-16T08:51:52.537552Z",
- "lastAlertAt": "2026-11-16T08:55:01Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-16T08:55:01Z",
- "lastChange": "yellow Channel Islands Shipping Area Wind re-issued 08:50 UTC Monday 16 November (was 02:46 UTC Monday 16 November)"
+ "lastFetch": "2026-11-16T14:43:40.3876601Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 14:39 UTC Monday 16 November SE wind F6 imminent veering SW gale F8 later.",
+ "checkedAt": "2026-11-16T14:43:40.3876601Z",
+ "lastAlertAt": "2026-11-16T14:45:11Z",
+ "lastAlertKind": "upgraded",
+ "lastChangeAt": "2026-11-16T14:45:11Z",
+ "lastChange": "yellow -> orange Channel Islands Shipping Area Wind"
 }
