@@ -216,6 +216,8 @@ transition:all .2s ease;
   .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px currentColor; color:var(--green); }
   .dot.stale{ background:var(--amber); color:var(--amber); }
   .dot.offline{ background:var(--red); color:var(--red); box-shadow:none; }
+  .dot.suspect{ background:var(--amber); color:var(--amber); box-shadow:none; }
+  .pws-flag{ font-size:9px; color:var(--amber); margin-top:5px; letter-spacing:0.5px; line-height:1.4; }
   .dot.demo{ background:var(--cyan); color:var(--cyan); }
   .pws-name{ font-weight:700; font-size:12.5px; margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .metric-value{ font-family:'Orbitron',sans-serif; font-size:25px; font-weight:800; margin-bottom:10px; }
@@ -785,11 +787,30 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
     });
   }
 
+  // Data-quality check on a station that is otherwise 'ok'.
+  //  - no temperature at all: the station is left out of every map and the
+  //    STATIONS REPORTING count (status 'suspect', reason shown on its card)
+  //  - wind speed above the gust figure is impossible: wind and gust are
+  //    ignored for that station, it stays in the count, and a flag is shown
+  function vet(o){
+    if(o.status !== 'ok') return;
+    if(o.temp === null){
+      o.status = 'suspect';
+      o.why = 'no temperature reading (incomplete station)';
+      return;
+    }
+    if(o.wind !== null && o.gust !== null && o.wind > o.gust + 0.5){
+      o.flag = 'wind ' + fmt(o.wind, 0) + ' mph is above gust ' + fmt(o.gust, 0) + ' mph, so wind and gust are ignored';
+      o.wind = null; o.gust = null;
+    }
+  }
+
   // a reading that has aged past STALE_MIN since it was saved
   function restale(list){
     const now = Date.now();
     list.forEach(function(o){
       if(o.status === 'ok' && o.time !== null && (now - o.time) > CONFIG.STALE_MIN * 60000){ o.status = 'stale'; o.why = 'stale reading'; }
+      vet(o);
     });
     return list;
   }
@@ -989,7 +1010,9 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
     set('stOnline', okCount + '/' + obs.length);
     const stale = obs.filter(function(o){ return o.status === 'stale'; }).length;
     const off = obs.filter(function(o){ return o.status === 'offline'; }).length;
-    set('stOnlineSub', mode === 'demo' ? 'DEMO DATA' : (stale + ' STALE, ' + off + ' OFFLINE'));
+    const sus = obs.filter(function(o){ return o.status === 'suspect'; }).length;
+    const flagged = obs.filter(function(o){ return usable(o) && o.flag; }).length;
+    set('stOnlineSub', mode === 'demo' ? 'DEMO DATA' : (stale + ' STALE, ' + off + ' OFFLINE' + (sus ? ', ' + sus + ' EXCLUDED' : '') + (flagged ? ', ' + flagged + ' FLAGGED' : '')));
     document.getElementById('gridTag').textContent = obs.length + ' STATIONS';
     const newest = obs.reduce(function(a, o){ return (o.time && o.time > a) ? o.time : a; }, 0);
     document.getElementById('updTime').textContent = hhmm(newest || fetchedAt);
@@ -1138,7 +1161,8 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
       'Wind: ' + fmt(o.wind, 0) + ' mph ' + compass(o.dir) + ' (gust ' + fmt(o.gust, 0) + ')<br>' +
       'Rain today: ' + fmt(o.rain, 1) + ' mm<br>' +
       'Humidity: ' + fmt(o.hum, 0) + '%<br>' +
-      '<small>Reading: ' + age + (o.why && !usable(o) ? ' &middot; ' + escapeHtml(o.why) : '') + '</small>' +
+      '<small>Reading: ' + age + (o.why && !usable(o) ? ' &middot; not used: ' + escapeHtml(o.why) : '') + '</small>' +
+      (o.flag && usable(o) ? '<br><small style="color:#ffb020">&#9888; ' + escapeHtml(o.flag) + '</small>' : '') +
       (mode === 'live' ? '<br><a href="' + link + '" target="_blank" rel="noopener">Weather Underground &rarr;</a>' : '');
   }
 
@@ -1340,13 +1364,14 @@ html[data-theme="light"] .pws-new{ color:#0c1a22; background:var(--orange-fill);
         const dotCls = o.status === 'ok' ? '' : (' ' + o.status);
         const cardCls = usable(o) ? '' : ' off';
         const val = good ? (fmt(o[m.key], m.dec) + '<small>' + escapeHtml(m.unit.trim()) + '</small>') : '&mdash;';
-        const age = usable(o) ? ('READING ' + hhmm(o.time)) : ('OFFLINE' + (o.why ? ' &middot; ' + escapeHtml(o.why).toUpperCase() : ''));
+        const age = usable(o) ? ('READING ' + hhmm(o.time)) : ((o.status === 'suspect' ? 'NOT USED' : o.status === 'stale' ? 'STALE' : 'OFFLINE') + (o.why ? ' &middot; ' + escapeHtml(o.why).toUpperCase() : ''));
+        const flagHtml = (usable(o) && o.flag) ? '<div class="pws-flag">&#9888; ' + escapeHtml(o.flag) + '</div>' : '';
         html += '<div class="pws-card' + cardCls + '" data-id="' + escapeHtml(o.id) + '">' +
           '<div class="pws-top"><span class="pws-id">' + escapeHtml(o.id) + '</span>' + (isNewStation(o) ? '<span class="pws-new">NEW</span>' : '') + '<span class="dot' + dotCls + '"></span></div>' +
           '<div class="pws-name">' + escapeHtml(o.name) + '</div>' +
           '<div class="metric-value" style="color:' + col + ';--tc:' + col + '">' + val + '</div>' +   /* light mode reads --tc (see LIGHT MODE in the styles) */
           '<div class="pws-meta"><span>T ' + fmt(o.temp, 1) + '°</span><span>W ' + fmt(o.wind, 0) + '/' + fmt(o.gust, 0) + ' ' + compass(o.dir) + '</span><span>R ' + fmt(o.rain, 1) + '</span><span>H ' + fmt(o.hum, 0) + '%</span>' + ((o.feels !== null && o.feels !== undefined && o.temp !== null && Math.abs(o.feels - o.temp) >= 0.5) ? '<span>FL ' + fmt(o.feels, 1) + '°</span>' : '') + '</div>' +
-          '<div class="pws-age">' + age + '</div>' +
+          '<div class="pws-age">' + age + '</div>' + flagHtml +
           '</div>';
       });
       html += '</div>';
