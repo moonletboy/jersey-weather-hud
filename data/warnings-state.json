@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "7e5025c35dfd",
+ "hash": "472da2d98512",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -23,19 +23,19 @@
    "area": "Jersey",
    "hazard": "thunderstorm",
    "sea": false,
-   "issued": "10:34 a.m. Tuesday 17 November",
+   "issued": "7:58 p.m. Tuesday 17 November",
    "message": "",
-   "missing": 1,
+   "missing": 0,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-17T19:55:30.5431607Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 08:58 UTC Tuesday 17 November W to SW gale F8 with gusts to 50kt continuing.",
- "checkedAt": "2026-11-17T19:55:30.5431607Z",
- "lastAlertAt": "2026-11-17T10:49:58Z",
- "lastAlertKind": "new",
- "lastChangeAt": "2026-11-17T10:49:58Z",
- "lastChange": "yellow Thunderstorm"
+ "lastFetch": "2026-11-17T20:00:00.0371047Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 08:58 UTC Tuesday 17 November W to SW gale F8 with gusts to 50kt continuing. Yellow - Thunderstorm",
+ "checkedAt": "2026-11-17T20:00:00.0371047Z",
+ "lastAlertAt": "2026-11-17T20:04:57Z",
+ "lastAlertKind": "reissued",
+ "lastChangeAt": "2026-11-17T20:04:57Z",
+ "lastChange": "yellow Thunderstorm re-issued 7:58 p.m. Tuesday 17 November (was 10:34 a.m. Tuesday 17 November)"
 }
