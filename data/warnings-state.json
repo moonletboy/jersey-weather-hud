@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "d6848e6bda1d",
+ "hash": "1813fc62f407",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -14,15 +14,28 @@
    "message": "W to SW wind F7 continuing.",
    "missing": 0,
    "lower": 0
+  },
+  "thunderstorm": {
+   "key": "thunderstorm",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Thunderstorm",
+   "area": "Jersey",
+   "hazard": "thunderstorm",
+   "sea": false,
+   "issued": "9:10 a.m. Wednesday 18 November",
+   "message": "",
+   "missing": 0,
+   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-18T08:45:00.01682Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:39 UTC Wednesday 18 November W to SW wind F7 continuing.",
- "checkedAt": "2026-11-18T08:45:00.01682Z",
- "lastAlertAt": "2026-11-18T02:49:56Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-18T08:49:52Z",
- "lastChange": "orange -> yellow Channel Islands Shipping Area Wind"
+ "lastFetch": "2026-11-18T09:15:00.1113148Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:39 UTC Wednesday 18 November W to SW wind F7 continuing. Yellow - Thunderstorm Warning Issued a",
+ "checkedAt": "2026-11-18T09:15:00.1113148Z",
+ "lastAlertAt": "2026-11-18T09:19:59Z",
+ "lastAlertKind": "new",
+ "lastChangeAt": "2026-11-18T09:19:59Z",
+ "lastChange": "yellow Thunderstorm"
 }
