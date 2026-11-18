@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "6ce70812032a",
+ "hash": "9079cc3a0a66",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -25,15 +25,15 @@
    "sea": false,
    "issued": "7:58 p.m. Tuesday 17 November",
    "message": "",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-18T02:45:00.0355485Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:40 UTC Wednesday 18 November W to SW wind F7 with gusts to 45kt continuing. Yellow - Thundersto",
- "checkedAt": "2026-11-18T02:45:00.0355485Z",
+ "lastFetch": "2026-11-18T05:49:15.5201691Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:40 UTC Wednesday 18 November W to SW wind F7 with gusts to 45kt continuing.",
+ "checkedAt": "2026-11-18T05:49:15.5201691Z",
  "lastAlertAt": "2026-11-18T02:49:56Z",
  "lastAlertKind": "reissued",
  "lastChangeAt": "2026-11-18T02:49:56Z",
