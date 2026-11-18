@@ -14,28 +14,15 @@
    "message": "W to SW wind F7 continuing.",
    "missing": 0,
    "lower": 0
-  },
-  "thunderstorm": {
-   "key": "thunderstorm",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Thunderstorm",
-   "area": "Jersey",
-   "hazard": "thunderstorm",
-   "sea": false,
-   "issued": "9:10 a.m. Wednesday 18 November",
-   "message": "",
-   "missing": 1,
-   "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-18T12:56:11.6988487Z",
+ "lastFetch": "2026-11-18T13:00:00.0563429Z",
  "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:39 UTC Wednesday 18 November W to SW wind F7 continuing.",
- "checkedAt": "2026-11-18T12:56:11.6988487Z",
+ "checkedAt": "2026-11-18T13:00:00.0563429Z",
  "lastAlertAt": "2026-11-18T09:19:59Z",
  "lastAlertKind": "new",
- "lastChangeAt": "2026-11-18T09:19:59Z",
- "lastChange": "yellow Thunderstorm"
+ "lastChangeAt": "2026-11-18T13:05:00Z",
+ "lastChange": "yellow Thunderstorm cleared by gov.je"
 }
