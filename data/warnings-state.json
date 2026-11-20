@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "d1902ff74b9d",
+ "hash": "2fd6ac0bf6d6",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -10,8 +10,8 @@
    "area": "Channel Islands Shipping Area",
    "hazard": "wind",
    "sea": true,
-   "issued": "20:28 UTC Thursday 19 November",
-   "message": "W gale F8 with gusts to 50kt imminent.",
+   "issued": "02:50 UTC Friday 20 November",
+   "message": "W gale F8 with gusts of 50kt imminent veering NW F6 soon.",
    "missing": 0,
    "lower": 0
   },
@@ -31,11 +31,11 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-19T20:30:28.3825586Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 20:28 UTC Thursday 19 November W gale F8 with gusts to 50kt imminent. Yellow - Thunderstorm Warnin",
- "checkedAt": "2026-11-19T20:30:28.3825586Z",
- "lastAlertAt": "2026-11-19T20:34:59Z",
+ "lastFetch": "2026-11-20T03:00:00.0432465Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:50 UTC Friday 20 November W gale F8 with gusts of 50kt imminent veering NW F6 soon. Yellow - Th",
+ "checkedAt": "2026-11-20T03:00:00.0432465Z",
+ "lastAlertAt": "2026-11-20T03:05:01Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-19T20:34:59Z",
- "lastChange": "orange Channel Islands Shipping Area Wind re-issued 20:28 UTC Thursday 19 November (was 14:34 UTC Thursday 19 November)"
+ "lastChangeAt": "2026-11-20T03:05:01Z",
+ "lastChange": "orange Channel Islands Shipping Area Wind re-issued 02:50 UTC Friday 20 November (was 20:28 UTC Thursday 19 November)"
 }
