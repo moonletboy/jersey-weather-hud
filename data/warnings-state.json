@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "2fd6ac0bf6d6",
+ "hash": "42577e55d3ab",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -17,13 +17,13 @@
   },
   "thunderstorm": {
    "key": "thunderstorm",
-   "colour": "yellow",
-   "level": 1,
+   "colour": "orange",
+   "level": 2,
    "name": "Thunderstorm",
    "area": "Jersey",
    "hazard": "thunderstorm",
    "sea": false,
-   "issued": "4:25 p.m. Thursday 19 November",
+   "issued": "4:40 a.m. Friday 20 November",
    "message": "",
    "missing": 0,
    "lower": 0
@@ -31,11 +31,11 @@
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-20T03:00:00.0432465Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:50 UTC Friday 20 November W gale F8 with gusts of 50kt imminent veering NW F6 soon. Yellow - Th",
- "checkedAt": "2026-11-20T03:00:00.0432465Z",
- "lastAlertAt": "2026-11-20T03:05:01Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-20T03:05:01Z",
- "lastChange": "orange Channel Islands Shipping Area Wind re-issued 02:50 UTC Friday 20 November (was 20:28 UTC Thursday 19 November)"
+ "lastFetch": "2026-11-20T04:45:00.0322121Z",
+ "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 02:50 UTC Friday 20 November W gale F8 with gusts of 50kt imminent veering NW F6 soon. Orange - Th",
+ "checkedAt": "2026-11-20T04:45:00.0322121Z",
+ "lastAlertAt": "2026-11-20T04:50:07Z",
+ "lastAlertKind": "upgraded",
+ "lastChangeAt": "2026-11-20T04:50:07Z",
+ "lastChange": "yellow -> orange Thunderstorm"
 }
