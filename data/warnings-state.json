@@ -1,41 +1,14 @@
 {
- "severity": "yellow",
+ "severity": "none",
  "hash": "",
- "warnings": {
-  "channel islands shipping area wind": {
-   "key": "channel islands shipping area wind",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Channel Islands Shipping Area Wind",
-   "area": "Channel Islands Shipping Area",
-   "hazard": "wind",
-   "sea": true,
-   "issued": "14:28 UTC Friday 20 November",
-   "message": "W to NW wind F6 with gusts to 35kt continuing.",
-   "missing": 1,
-   "lower": 0
-  },
-  "thunderstorm": {
-   "key": "thunderstorm",
-   "colour": "yellow",
-   "level": 1,
-   "name": "Thunderstorm",
-   "area": "Jersey",
-   "hazard": "thunderstorm",
-   "sea": false,
-   "issued": "4:46 a.m. Friday 20 November",
-   "message": "",
-   "missing": 1,
-   "lower": 0
-  }
- },
+ "warnings": {},
  "source": "Apps Script page check",
  "fallback": 0,
- "lastFetch": "2026-11-20T20:44:05.621Z",
+ "lastFetch": "2026-11-20T21:44:38.549Z",
  "snippet": "",
- "checkedAt": "2026-11-20T20:44:05.621Z",
+ "checkedAt": "2026-11-20T21:44:38.549Z",
  "lastAlertAt": "2026-11-20T08:44:55Z",
  "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-20T14:49:49Z",
- "lastChange": "orange -> yellow Channel Islands Shipping Area Wind"
+ "lastChangeAt": "2026-11-20T21:44:56Z",
+ "lastChange": "yellow Thunderstorm cleared by gov.je"
 }
