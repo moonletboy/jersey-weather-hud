@@ -1,14 +1,28 @@
 {
- "severity": "none",
- "hash": "",
- "warnings": {},
- "source": "Apps Script page check",
+ "severity": "yellow",
+ "hash": "75d8b9057d09",
+ "warnings": {
+  "channel islands shipping area wind": {
+   "key": "channel islands shipping area wind",
+   "colour": "yellow",
+   "level": 1,
+   "name": "Channel Islands Shipping Area Wind",
+   "area": "Channel Islands Shipping Area",
+   "hazard": "wind",
+   "sea": true,
+   "issued": "02:38 UTC Saturday 21 November",
+   "message": "SE wind F7 expected later.",
+   "missing": 0,
+   "lower": 0
+  }
+ },
+ "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-20T21:44:38.549Z",
- "snippet": "",
- "checkedAt": "2026-11-20T21:44:38.549Z",
- "lastAlertAt": "2026-11-20T08:44:55Z",
- "lastAlertKind": "reissued",
- "lastChangeAt": "2026-11-20T21:44:56Z",
- "lastChange": "yellow Thunderstorm cleared by gov.je"
+ "lastFetch": "2026-11-21T02:39:28.8646489Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 02:38 UTC Saturday 21 November SE wind F7 expected later.",
+ "checkedAt": "2026-11-21T02:39:28.8646489Z",
+ "lastAlertAt": "2026-11-21T02:39:54Z",
+ "lastAlertKind": "new",
+ "lastChangeAt": "2026-11-21T02:39:54Z",
+ "lastChange": "yellow Channel Islands Shipping Area Wind"
 }
