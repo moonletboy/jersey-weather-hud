@@ -1,6 +1,6 @@
 {
  "severity": "orange",
- "hash": "e93ccc5eaeb9",
+ "hash": "24ad0c05f5aa",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -13,14 +13,14 @@
    "issued": "14:42 UTC Sunday 22 November",
    "message": "W to NW gale F8 with gusts to 55kt veering N wind F6 with gusts to 35kt imminent.",
    "missing": 0,
-   "lower": 0
+   "lower": 1
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-22T14:45:00.0478293Z",
- "snippet": "Orange - Channel Islands Shipping Area Wind Warning Issued at 14:42 UTC Sunday 22 November W to NW gale F8 with gusts to 55kt veering N wind F6 with gusts to 35",
- "checkedAt": "2026-11-22T14:45:00.0478293Z",
+ "lastFetch": "2026-11-22T20:47:11.5291359Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 20:42 UTC Sunday 22 November NW wind F6 especially in the southwest of the area continuing.",
+ "checkedAt": "2026-11-22T20:47:11.5291359Z",
  "lastAlertAt": "2026-11-22T14:50:03Z",
  "lastAlertKind": "reissued",
  "lastChangeAt": "2026-11-22T14:50:03Z",
