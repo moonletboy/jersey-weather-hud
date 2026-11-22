@@ -1,6 +1,13 @@
 {
- "updated": "2026-11-22T02:34:55Z",
+ "updated": "2026-11-22T09:04:52Z",
  "alerts": [
+  {
+   "at": "2026-11-22T09:04:52Z",
+   "kind": "warning",
+   "title": "JWC: Jersey Met ORANGE wind warning updated (at sea)",
+   "body": "Channel Islands Shipping Area - at sea, not a land warning. W to NW severe gale F9 with gusts to 60kt imminent. Issued 08:59 UTC Sunday 22 November. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.",
+   "sent": 869
+  },
   {
    "at": "2026-11-22T02:34:55Z",
    "kind": "warning",
@@ -132,13 +139,6 @@
    "kind": "warning",
    "title": "JWC: Jersey Met YELLOW thunderstorm warning",
    "body": "For Jersey. Issued 10:34 a.m. Tuesday 17 November. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.",
-   "sent": 874
-  },
-  {
-   "at": "2026-11-17T09:04:51Z",
-   "kind": "warning",
-   "title": "JWC: Jersey Met ORANGE wind warning updated (at sea)",
-   "body": "Channel Islands Shipping Area - at sea, not a land warning. W to SW gale F8 with gusts to 50kt continuing. Issued 08:58 UTC Tuesday 17 November. Automated alert from Jersey Weather Chat. Official warning issued by Jersey Met, text © States of Jersey: see gov.je.",
    "sent": 874
   }
  ]
