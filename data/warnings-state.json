@@ -1,6 +1,6 @@
 {
  "severity": "yellow",
- "hash": "890263198897",
+ "hash": "4dbcbdc7fba0",
  "warnings": {
   "channel islands shipping area wind": {
    "key": "channel islands shipping area wind",
@@ -25,15 +25,15 @@
    "sea": false,
    "issued": "10:36 a.m. Friday 27 November",
    "message": "",
-   "missing": 0,
+   "missing": 1,
    "lower": 0
   }
  },
  "source": "gov.je data feed",
  "fallback": 0,
- "lastFetch": "2026-11-28T08:43:59.0419141Z",
- "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:41 UTC Saturday 28 November S to SE wind F7 continuing. Yellow - Tide Warning Issued at 10:36 a",
- "checkedAt": "2026-11-28T08:43:59.0419141Z",
+ "lastFetch": "2026-11-28T09:21:03.3390575Z",
+ "snippet": "Yellow - Channel Islands Shipping Area Wind Warning Issued at 08:41 UTC Saturday 28 November S to SE wind F7 continuing.",
+ "checkedAt": "2026-11-28T09:21:03.3390575Z",
  "lastAlertAt": "2026-11-28T08:44:56Z",
  "lastAlertKind": "reissued",
  "lastChangeAt": "2026-11-28T08:44:56Z",
